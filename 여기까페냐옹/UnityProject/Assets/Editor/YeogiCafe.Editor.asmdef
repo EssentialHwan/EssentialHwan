@@ -1,0 +1,14 @@
+{
+    "name": "YeogiCafe.Editor",
+    "rootNamespace": "YeogiCafe.EditorTools",
+    "references": [ "YeogiCafe.Runtime" ],
+    "includePlatforms": [ "Editor" ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
