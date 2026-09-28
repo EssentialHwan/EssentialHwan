@@ -1,0 +1,113 @@
+key,ko,en
+ui.title.continue,이어하기,Continue
+ui.title.new,새 게임,New Game
+ui.title.settings,설정,Settings
+ui.title.quit,종료,Quit
+ui.cafe.customers,손님 {n},Guests {n}
+ui.shop.start,영업 시작,Open Shop
+ui.shop.buy,구매,Buy
+ui.shop.insufficient,골드가 부족해요,Not enough gold
+ui.shop.hint,새로운 행동을 볼 수도 있어요,You might see new behavior
+ui.settle.title,오늘의 정산,Today's Report
+ui.settle.revenue,매출,Revenue
+ui.settle.cost,재료비,Cost
+ui.settle.net,순익,Net
+ui.settle.record,기록,Record
+ui.settle.needmore,더 지켜봐야 해요,Need more observation
+ui.settle.next,다음 날,Next Day
+ui.catalog.title,관찰 도감,Catalog
+ui.catalog.discovered,발견 {a}/{b},Discovered {a}/{b}
+ui.catalog.observing,관찰 중,Observing
+ui.axis.food,음식,Food
+ui.axis.seat,좌석,Seat
+ui.axis.facility,시설,Facility
+ui.regular.stage,단골 {s}단계,Regular Lv.{s}
+ui.discover.toast,{name}의 취향을 하나 알아냈어요!,You discovered one of {name}'s preferences!
+ui.pause.resume,계속하기,Resume
+ui.pause.settings,설정,Settings
+ui.pause.catalog,도감,Catalog
+ui.pause.totitle,타이틀로,To Title
+cat.cat_cheese.name,치즈냥,Cheddar
+cat.cat_calico.name,삼색냥,Patches
+cat.cat_cow.name,젖소냥,Moo
+cat.cat_black.name,까망냥,Shadow
+cat.cat_tuxedo.name,턱시도냥,Tux
+cat.cat_mackerel.name,고등어냥,Mackerel
+cat.cat_siamese.name,샴냥,Sia
+cat.cat_gray.name,회색냥,Misty
+menu.menu_americano,아메리카노,Americano
+menu.menu_milk,우유,Milk
+menu.menu_fishcake,생선케이크,Fish Cake
+menu.menu_parfait,딸기파르페,Strawberry Parfait
+menu.menu_tuna_sand,참치샌드위치,Tuna Sandwich
+menu.menu_catnip_tea,캣닢차,Catnip Tea
+menu.menu_pudding,푸딩,Pudding
+menu.menu_grilled_fish,구운생선,Grilled Fish
+furn.furn_seat_normal,일반석,Normal Seat
+furn.furn_seat_window,창가석,Window Seat
+furn.furn_seat_corner,구석석,Corner Seat
+furn.furn_seat_two,2인석,Two Seat
+furn.furn_seat_sofa,소파,Sofa
+furn.furn_fac_tower,캣타워,Cat Tower
+furn.furn_fac_cushion,쿠션,Cushion
+furn.furn_fac_toybox,장난감바구니,Toy Basket
+furn.furn_fac_scratch,스크래처,Scratcher
+furn.furn_fac_plant,화분,Plant
+furn.furn_fac_window,창문,Window
+furn.furn_deco_clock,벽시계,Wall Clock
+furn.furn_deco_frame,액자,Picture Frame
+furn.furn_deco_rug,러그,Rug
+furn.furn_deco_lamp,조명,Lamp
+furn.furn_deco_curtain,커튼,Curtain
+furn.furn_deco_vase,화병,Vase
+pers.Relaxed,느긋함,Laid-back
+pers.Curious,호기심,Curious
+pers.Social,사교적,Social
+pers.Lonely,외로움,Lonely
+pers.Active,활발함,Energetic
+pers.Introvert,내향적,Shy
+pers.Glutton,식탐,Foodie
+pers.Playful,장난꾸러기,Playful
+pers.Fickle,변덕,Fickle
+tut.step0.narr.01,"당신의 카페, 《여기까페냐옹》에 온 걸 환영해요.",Welcome to your cafe.
+tut.step0.narr.02,고양이 손님들이 하나둘 찾아올 거예요. 잘 지켜봐 주세요.,Cat guests will visit. Watch them closely.
+tut.step3.narr.01,치즈냥이 자꾸 창문 쪽을 보네요… 뭔가 아쉬운 걸까요?,Cheddar keeps glancing at the window... missing something?
+tut.step5.narr.01,치즈냥이 창문을 그리워하는 것 같지 않았나요?,Did Cheddar seem to miss the window?
+tut.step5.narr.02,카페를 바꾸면 못 보던 행동을 볼 수 있을지도 몰라요.,Change your cafe and you may see new behavior.
+tut.step8.narr.01,봐요! 치즈냥이 창가석에 앉았어요!,Look! Cheddar took the window seat!
+tut.step8.narr.02,"이게 이 게임의 전부예요. 관찰하고, 바꾸고, 발견하는 것.",That's the heart of this game: observe, change, discover.
+tut.step9.narr.01,이제 당신의 카페예요. 더 많은 고양이를 이해해보세요.,Now it's your cafe. Understand more cats.
+narr.seat.window,{name}가 창밖을 오래 바라본다.,{name} gazes out the window.
+narr.seat.fallback,{name}가 아무 자리에나 앉았다.,{name} sat down anywhere.
+narr.facility.tower,{name}가 캣타워 꼭대기에 올라갔다.,{name} climbed to the top of the cat tower.
+narr.facility.cushion,{name}가 쿠션에서 눈을 감았다.,{name} closed its eyes on the cushion.
+narr.food.fast,{name}가 순식간에 접시를 비웠다.,{name} cleared the plate in an instant.
+narr.seat.corner,{name}가 구석에 조용히 자리 잡았다.,{name} settled quietly in the corner.
+narr.facility.toybox,{name}가 장난감을 굴리며 논다.,{name} plays with a toy.
+narr.food.slow,{name}가 음미하듯 천천히 먹는다.,{name} savors the meal slowly.
+narr.seat.generic,{name}가 자리에 앉았다.,{name} took a seat.
+narr.facility.scratch,{name}가 스크래처를 긁는다.,{name} scratches the post.
+narr.facility.plant,{name}가 화분 뒤에 몸을 숨긴다.,{name} hides behind the plant.
+narr.facility.generic,{name}가 시설을 이용한다.,{name} uses the facility.
+narr.lonely,{name}가 주위를 두리번거린다.,{name} looks around restlessly.
+narr.social,{name}가 옆자리를 힐끔거린다.,{name} glances at the next seat.
+ep.cat_cheese.regular3.01,…음. 여기 앉아 있으면 시간이 천천히 흐르는 것 같아.,...Mm. Time feels slower when I sit here.
+ep.cat_cheese.regular3.02,"고마워. 이 자리, 나한테 딱이야.",Thanks. This spot is perfect for me.
+ep.cat_calico.regular3.01,"오늘은 저기, 내일은 여기! 매번 다른 게 재밌잖아?","There today, here tomorrow! Isn't variety fun?"
+ep.cat_calico.regular3.02,"이 카페, 볼 게 자꾸 늘어나서 좋아.",I love that there's always something new to see here.
+ep.cat_cow.regular3.01,혼자 오는 날은 좀… 그래도 여긴 북적여서 덜 외로워.,Coming alone is a bit... but it's lively here so I feel less lonely.
+ep.cat_cow.regular3.02,다음엔 친구 데려와도 돼?,Can I bring a friend next time?
+ep.cat_black.regular3.01,…조용하네. (작게) 이런 데가 편해.,...It's quiet. (softly) I like places like this.
+ep.cat_black.regular3.02,너는 시끄럽게 안 굴어서 좋아.,I like that you're not noisy.
+ep.cat_tuxedo.regular3.01,여기 몸 풀기 딱 좋아! 하루 종일 뛰어도 안 질려.,Perfect place to stretch! I could run all day.
+ep.cat_tuxedo.regular3.02,다음엔 더 재밌는 거 없어? 기대할게!,Anything more fun next time? I'll be looking forward to it!
+ep.cat_mackerel.regular3.01,…또 왔어. 여기 그거, 진짜 못 잊겠더라.,...I'm back. I just can't forget that thing here.
+ep.cat_mackerel.regular3.02,치즈 걔랑 취향이 겹치나 봐. 웃기지.,"Seems I share tastes with Cheddar. Funny, huh."
+ep.cat_siamese.regular3.01,"흠, 오늘 기분은… 이쪽. 내일은 모르지.","Hmm, today's mood is... this way. Tomorrow, who knows."
+ep.cat_siamese.regular3.02,이 카페는 고급스러운 구석이 있어서 마음에 들어.,This cafe has an elegant touch I like.
+ep.cat_gray.regular3.01,…자리에 누가 있으면 옆에 앉고 싶어져.,...When someone's there, I want to sit beside them.
+ep.cat_gray.regular3.02,"젖소 걔, 어쩐지 낯이 익어.",Moo... somehow looks familiar.
+rel_gray_cow.01,회색냥과 젖소냥이 나란히 앉아 조용히 골골거린다.,Misty and Moo sit side by side, purring quietly.
+rel_gray_cow.02,"둘은 이제 늘 함께 온다. 어쩐지 닮은 구석이 있다.",The two always come together now. They seem alike somehow.
+rel_calico_tuxedo.01,삼색냥과 턱시도냥이 캣타워에서 신나게 논다.,Patches and Tux play energetically on the cat tower.
+rel_calico_tuxedo.02,활발한 둘이 친구가 되어 카페가 더 시끌벅적해졌다.,The lively pair became friends and the cafe got livelier.
