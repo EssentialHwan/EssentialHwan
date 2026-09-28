@@ -7,6 +7,11 @@ namespace YeogiCafe.Progression
     // 사양서 §3.7 — 다음날 재방문 롤.
     public static class RevisitSystem
     {
+        // [프리플라이트 권장] 세이브의 '지난 방문 실제 결과'를 그대로 사용하는 오버로드.
+        //   → Recorded 상태가 아니라 실제 이용 여부로 판정(오보너스 방지).
+        public static float RevisitChance(CatSaveData cat, int currentDay, BalanceConfig cfg)
+            => RevisitChance(cat, currentDay, cat.lastServedFavorite, cat.lastUsedPreferredSeat, cfg);
+
         public static float RevisitChance(CatSaveData cat, int currentDay,
                                            bool lastServedFavorite, bool lastUsedPreferredSeat,
                                            BalanceConfig cfg)

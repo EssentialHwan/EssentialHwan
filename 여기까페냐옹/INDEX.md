@@ -4,7 +4,7 @@
 
 관찰·추리형 고양이 카페 경영 시뮬 (PC/Steam, 1인+AI 개발). **이 파일이 전체 산출물의 진입점이다.**
 
-> **한 줄 상태**: 기획 전 영역 완성 + **기획서의 거의 모든 시스템을 코드로 구현**(S1 코어·S2 정식확장·S3 콘텐츠·관계 시스템). **62 EditMode 테스트 통과(dotnet 검증)**, 밸런스/다일 시뮬 검증, 콘텐츠 생성기·로컬라이즈·서술 세분화·UI 뷰 헬퍼 완비. **남은 것은 오직 Unity 에디터 GUI 작업(M1 씬 배선) → 재미 게이트(M2).**
+> **한 줄 상태**: 기획 전 영역 완성 + **기획서의 거의 모든 시스템을 코드로 구현**(S1 코어·S2 정식확장·S3 콘텐츠·관계 시스템). **66 EditMode 테스트 통과(dotnet 헤드리스 검증)**, 밸런스/다일 시뮬 검증, 콘텐츠 생성기·로컬라이즈·서술 세분화·UI 뷰 헬퍼 완비. **남은 것은 오직 Unity 에디터 GUI 작업(M1 씬 배선) → 재미 게이트(M2).**
 
 ## 📄 핵심 문서 (읽는 순서)
 
@@ -49,11 +49,11 @@ Scripts/Core/         CafeContext, DayManager, CatManager, CustomerSpawner, Econ
 Scripts/UI/           ObservationCardModel, BehaviorNarrationRelay, SettlementCardView, HudFormatter
 Scripts/Observation/  ObservationManager, SatisfactionCalculator, NarrationCatalog
 Scripts/Localization/ Localization(L 로더, 한/영·토큰치환·폴백)
-Editor/               ContentGenerator (8마리·8메뉴·17가구·8에피소드·성장·해금·관계 SO 원클릭)
+Editor/               ContentGenerator (8마리·8메뉴·18가구·8에피소드·성장·해금·관계 SO 원클릭)
 Localization/         strings.csv (한/영)
 ```
 
-## ✅ 테스트 (62 EditMode, 전부 통과 — dotnet 검증)
+## ✅ 테스트 (66 EditMode [Test], 전부 통과 — dotnet 헤드리스 검증; Unity Test Runner 실행은 M1 후)
 - Observation·SeatSelection·SatisfactionAndOrder·FacilityChannel·Atmosphere·FoodTier
 - RegularAndBranch·CafeGrowth·Unlock(Condition·Service)·Relationship·Event·OrderSystem
 - SaveContract·Localization·StringsCsvIntegrity·NarrationCatalog·HudFormatter
@@ -76,4 +76,4 @@ Localization/         strings.csv (한/영)
 - **로드맵**: `기획/10_개발_로드맵_마일스톤.md`
 
 ## 📌 첫 출시 1.0 수치
-고양이 8 · 메뉴 8 · 가구 18 · 시설 6 · 좌석 5 · 맵 1 · 이벤트 0 · 단골 에피소드 8 · 단골 3단계 · 성장 3레벨 · UI 8종 · 한/영
+고양이 8 · 메뉴 8 · 가구 18(좌석6+시설6+장식6) · 맵 1 · 이벤트 0 · 단골 에피소드 8 · 단골 3단계 · 성장 3레벨 · UI 8종 · 한/영

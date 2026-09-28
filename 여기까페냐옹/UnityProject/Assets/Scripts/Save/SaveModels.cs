@@ -55,7 +55,10 @@ namespace YeogiCafe.Save
         public List<float> satisfactionHistory = new();  // 단일 소스 (P5)
         public int regularStage = 1;
         public bool personality2Revealed;                 // 부록 J-C
-        public string favoriteSeatId;                     // 단골 "늘 그 자리"(27장)
+        // [프리플라이트] 재방문 판정용 "지난 방문 실제 결과"(Recorded 상태가 아니라 실제 이용 여부)
+        public bool lastServedFavorite;
+        public bool lastUsedPreferredSeat;
+        public bool lastUsedPreferredFacility;
         public ObservationRecord observation = new();     // 필수 저장, Truth 미포함
 
         // ── 만족도 파생값 (저장 안 함) ──

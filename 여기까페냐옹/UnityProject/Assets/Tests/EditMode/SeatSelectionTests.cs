@@ -79,23 +79,24 @@ namespace YeogiCafe.Tests
             Assert.IsTrue(choice.isFallback);
         }
 
-        // 단골 "늘 그 자리"(27장): 높은 단계면 이전 자리 강하게 선호
+        // [프리플라이트] 부분일치 제거 검증: Quiet 태그만 있는 구석석은 창가석 선호에 가산 없음(fallback 동일)
         [Test]
-        public void RegularFavoriteSeat_BiasesChoice()
+        public void NoPartialMatch_QuietSeatIsPlainFallback()
         {
-            // 취향 좌석이 아닌 일반석2를 favorite로 지정, 단골 5단계 → 그 자리 선호
-            var normal1 = new StubSeat { SeatId = "n1", TagsList = { SeatTag.Normal } };
-            var normal2 = new StubSeat { SeatId = "n2", TagsList = { SeatTag.Normal } };
-            var seats = new List<ISeat> { normal1, normal2 };
-            // 취향(창가석)이 후보에 없어 둘 다 pref_none. favorite=n2 + 5단계 → n2 +100
-            int n2Count = 0;
-            for (int i = 0; i < 20; i++)
+            var corner = new StubSeat { SeatId = "c1", TagsList = { SeatTag.Corner, SeatTag.Quiet } };
+            var normal = new StubSeat { SeatId = "n1", TagsList = { SeatTag.Normal } };
+            // 치즈냥(느긋·식탐, 내향 아님) — 구석/Quiet 성격 보너스도 없음.
+            // 창가석 없음 → 구석석·일반석 둘 다 pref_none → 어느 쪽도 취향 신호로 굳어지면 안 됨.
+            int cornerCount = 0;
+            for (int i = 0; i < 40; i++)
             {
-                var choice = SeatSelector.Choose(cheese, seats, Vector3.zero, _ => 0, _ => 0, cfg,
-                                                 favoriteSeatId: "n2", regularStage: 5);
-                if (choice.seat.SeatId == "n2") n2Count++;
+                var choice = SeatSelector.Choose(cheese, new List<ISeat> { corner, normal },
+                                                 Vector3.zero, _ => 0, _ => 0, cfg);
+                if (choice.seat.SeatId == "c1") cornerCount++;
+                Assert.IsTrue(choice.isFallback, "창가석 아니면 항상 fallback");
             }
-            Assert.Greater(n2Count, 18, "단골 5단계는 늘 그 자리에 앉는 경향");
+            // 랜덤 편차로 대략 반반이어야 함(구석석이 부분일치로 지배하면 안 됨)
+            Assert.Less(cornerCount, 36, "Quiet 태그가 구석석을 취향처럼 만들면 안 됨(부분일치 제거)");
         }
 
         // 전 좌석 만석 → seat == null (성격분기 트리거)
