@@ -45,13 +45,7 @@ namespace YeogiCafe.Core
             brain.NearbyFriends = _ => cafe.CountFriendsSeated(myId);
             brain.NearbyStrangers = cafe.NearbyStrangers;
             brain.SetOccupant = cafe.SetSeatOccupant;
-            // 단골 "늘 그 자리"(27장): 세이브에서 단계·선호자리 주입
-            if (save != null)
-            {
-                var cs = save.GetOrCreateCat(myId);
-                brain.RegularStage = cs.regularStage;
-                brain.FavoriteSeatId = cs.favoriteSeatId;
-            }
+            // [프리플라이트] 단골 고정자리 주입 제거(favoriteSeat는 포스트 MVP)
 
             go.transform.position = cafe.Entrance;
             active.Add(brain);

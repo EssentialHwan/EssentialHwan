@@ -52,7 +52,7 @@ Unity에서 Window ▸ General ▸ Test Runner ▸ EditMode ▸ Run All.
 - 좌석 점유/반납: 착석 시 `Occupy`, Pay 시 `Vacate` → 실제 만석/회전 동작.
 
 ## 빠른 실행 (에디터)
-1. 메뉴 **여기까페냐옹 ▸ 1.0 콘텐츠 에셋 생성** → 8마리/8메뉴/11가구 SO 자동 생성 (`Assets/Data/`)
+1. 메뉴 **여기까페냐옹 ▸ 1.0 콘텐츠 에셋 생성** → 8마리/8메뉴/18가구 SO 자동 생성 (`Assets/Data/`)
 2. `BalanceConfig` 에셋 1개 생성 (Create ▸ YeogiCafe ▸ BalanceConfig)
 3. 빈 GameObject에 `S1Bootstrap` 추가 → `balance`, `starterCats`(치즈/삼색/젖소), `starterMenus`, `starterSeats`(일반석), `windowSeatData`(창가석) 연결
 4. Play → 고양이 스폰·착석·관찰 단서 로그 확인

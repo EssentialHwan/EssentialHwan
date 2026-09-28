@@ -149,9 +149,11 @@ namespace YeogiCafe.Core
             catSave.visitCount += 1;
             catSave.lastVisitDay = day.CurrentDay;
 
-            // 단골 "늘 그 자리"(27장): 만족스러운 방문이면 그 자리를 선호 자리로 기억
-            if (satisfaction >= 70 && !string.IsNullOrEmpty(brain.ChosenSeatId))
-                catSave.favoriteSeatId = brain.ChosenSeatId;
+            // [프리플라이트 수정] 재방문 판정용 "이번 방문 실제 결과" 저장.
+            //   재방문 보너스가 Recorded 상태가 아니라 '실제로 이번에 최애/선호좌석을 이용했는지'를 근거로.
+            catSave.lastServedFavorite = brain.ServedFavorite;
+            catSave.lastUsedPreferredSeat = brain.UsedPreferredSeat;
+            catSave.lastUsedPreferredFacility = brain.UsedPreferredFacility;
 
             cats.Despawn(brain, satisfaction);
         }
@@ -178,9 +180,8 @@ namespace YeogiCafe.Core
             {
                 var cd = lookup(cs.catId);
                 if (cd == null) continue;
-                bool servedFav = cs.observation.food.state == ObsState.Recorded; // 근사
-                bool prefSeat = cs.observation.seat.state == ObsState.Recorded;
-                float chance = RevisitSystem.RevisitChance(cs, day.CurrentDay, servedFav, prefSeat, cfg);
+                // [프리플라이트 수정] Recorded 상태가 아니라 '지난 방문 실제 결과'로 재방문 판정
+                float chance = RevisitSystem.RevisitChance(cs, day.CurrentDay, cfg);
                 if (Random.value < chance) queue.Add(cd);
             }
             return queue;   // 스포너에 SetQueue로 전달(미발견 신규는 스포너 spawnWeight 테이블에서 추가)

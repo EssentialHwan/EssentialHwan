@@ -25,9 +25,7 @@ namespace YeogiCafe.AI
         public ObservationManager Obs;
         // 좌석 점유자 등록 콜백(정식 관계용). (seat, catId or null)
         public System.Action<ISeat, string> SetOccupant;
-        // 단골 "늘 그 자리"(27장): 매니저가 주입
-        public int RegularStage = 1;
-        public string FavoriteSeatId;
+        // [프리플라이트] 단골 고정자리(favoriteSeat)는 MVP 제거 → 포스트 MVP. RegularStage/FavoriteSeatId 삭제.
 
         CatState state = CatState.Enter;
         ISeat seat; bool seatFallback;
@@ -42,7 +40,6 @@ namespace YeogiCafe.AI
         public bool ForcedSecond { get; private set; }
         public bool UsedPreferredSeat { get; private set; }
         public bool UsedPreferredFacility { get; private set; }
-        public string ChosenSeatId { get; private set; }
         public CatState State => state;
         public bool IsFinished => state == CatState.Leave ||
                                   state == CatState.LeaveDisappointed;
@@ -93,8 +90,7 @@ namespace YeogiCafe.AI
 
         void DoFindSeat()
         {
-            var choice = SeatSelector.Choose(data, GetSeats(), Entrance, NearbyFriends, NearbyStrangers, cfg,
-                                             FavoriteSeatId, RegularStage);
+            var choice = SeatSelector.Choose(data, GetSeats(), Entrance, NearbyFriends, NearbyStrangers, cfg);
             if (choice.seat == null)
             {
                 // 만석 → 성격분기 (부록 J-B)
@@ -102,7 +98,6 @@ namespace YeogiCafe.AI
                 return;
             }
             seat = choice.seat; seatFallback = choice.isFallback;
-            ChosenSeatId = seat.SeatId;
             seat.Occupy(this);                 // 좌석 점유 → 다른 고양이 후보에서 제외
             SetOccupant?.Invoke(seat, data.catId);  // 관계 근접 판정용
             UsedPreferredSeat = !seatFallback;

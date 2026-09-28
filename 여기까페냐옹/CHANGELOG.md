@@ -32,7 +32,8 @@ A 3:4:5 / B 만석 성격분기 / C 성격1즉시·2관찰 / D HFSM+Utility / E 
 - S3 콘텐츠: 해금(UnlockCondition/Service)·이벤트(에피소드)·서술 세분화.
 - 정식 관계 시스템(RelationshipManager) + 친구→좌석선택 반영.
 - 전 시스템 배선(성장→해금→스폰, 발견→곡선, 관계→좌석).
-- EditMode 62 테스트 통과(dotnet 검증). 10일 다일 시뮬 포함.
+- EditMode 66 테스트 통과(dotnet 헤드리스 검증). 10일 다일 시뮬 포함. (Unity Test Runner 실행 결과는 M1 씬 셋업 후 별도 확보 예정)
+- [프리플라이트 수정] 좌석 부분일치·좌석 AI 분위기 보너스 제거, 재방문 판정을 '지난 방문 실제 결과'로, 단골 고정자리(favoriteSeat) 포스트 MVP로 이동, 가구 18개(좌석6)로 통일.
 - 콘텐츠 생성기·로컬라이즈(한/영)·UI 뷰 헬퍼·데브콘솔·이동 추상화.
 - 남은 것: Unity 에디터 씬 배선·NavMesh·UI 위젯·아트·PlayMode 테스트·Steam (실제 Unity 필요).
 

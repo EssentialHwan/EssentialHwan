@@ -33,7 +33,7 @@
 | menu_pudding     | 푸딩         | 50 | 18 | 5 | Sweet |
 | menu_grilled_fish| 구운생선     | 90 | 35 | 8 | Fish,Meal,Warm |
 
-## 3. FurnitureData — 좌석5/시설6/장식6 (§E.2)
+## 3. FurnitureData — 좌석6/시설6/장식6 = 18 (§E.2)
 
 ### 좌석
 | furnitureId | 표시명 | seatTags | atmosphere | price |
@@ -43,6 +43,7 @@
 | furn_seat_corner | 구석석 | Corner,Quiet | Quiet+3 | 150 |
 | furn_seat_two    | 2인석  | TwoSeat,Social | Lively+2 | 220 |
 | furn_seat_sofa   | 소파   | Sofa,Soft | Warm+3,Luxury+1 | 300 |
+| furn_seat_bar    | 바테이블 | BarTable | Luxury+2 | 260 |
 
 ### 시설
 | furnitureId | 표시명 | facilityTags | actions | atmosphere | price |
