@@ -49,8 +49,10 @@ Scripts/Core/         CafeContext, DayManager, CatManager, CustomerSpawner, Econ
 Scripts/UI/           ObservationCardModel, BehaviorNarrationRelay, SettlementCardView, HudFormatter
 Scripts/Observation/  ObservationManager, SatisfactionCalculator, NarrationCatalog
 Scripts/Localization/ Localization(L 로더, 한/영·토큰치환·폴백)
-Editor/               ContentGenerator (8마리·8메뉴·18가구·8에피소드·성장·해금·관계 SO 원클릭)
+Scripts/Art/          PixelPalette(단일팔레트)·PixelCanvas(공용붓)·SpriteDrawing·FurnitureDrawing
+Editor/               ContentGenerator (SO 원클릭) · PixelArtGenerator (도트 PNG 34개 원클릭)
 Localization/         strings.csv (한/영)
+Art/                  Generated/ (생성된 PNG: 고양이8·가구18·아이콘8) — 톤 통일
 ```
 
 ## ✅ 테스트 (66 EditMode [Test], 전부 통과 — dotnet 헤드리스 검증; Unity Test Runner 실행은 M1 후)
