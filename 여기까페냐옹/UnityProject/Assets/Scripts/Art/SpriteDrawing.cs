@@ -10,14 +10,62 @@ namespace YeogiCafe.Art
         // ─────────────────────────────────────────────
         // 고양이 (32×32, 정면 앉은 포즈). catId로 팔레트 스왑 + 고유 무늬.
         // ─────────────────────────────────────────────
-        public static PixelCanvas Cat(string catId)
+        // 고양이 애니메이션 상태(프레임 변형 파라미터로 통일된 실루엣 유지)
+        public enum CatPose { Idle, Walk, Sleep, Eat }
+
+        public static PixelCanvas Cat(string catId) => Cat(catId, CatPose.Idle, 0);
+
+        // pose/frame으로 같은 고양이의 상태별 프레임을 생성. 실루엣·팔레트·아웃라인은 전부 동일.
+        public static PixelCanvas Cat(string catId, CatPose pose, int frame)
         {
             var c = new PixelCanvas(32, 32);
             var fur = PixelPalette.Fur(catId);
 
-            // 접지 그림자
-            c.GroundShadow(16, 4, 10);
+            if (pose == CatPose.Sleep) { DrawCatSleeping(c, catId, fur); return c; }
 
+            // 프레임별 미세 변형: 몸 들썩임(bob), 꼬리 위치, 눈 깜빡임
+            int bob = (pose == CatPose.Walk && frame == 1) ? 1 : 0;   // 걷기 2프레임 상하
+            int idleBob = (pose == CatPose.Idle && frame == 1) ? 1 : 0;
+            int yOff = bob + idleBob;
+
+            // 접지 그림자(고정)
+            c.GroundShadow(16, 4, 10);
+            DrawCatBody(c, catId, fur, yOff, pose, frame);
+            c.AutoOutline(PixelPalette.Outline);
+            return c;
+        }
+
+        // 잠자는 포즈(웅크림) — 별도 실루엣이지만 같은 팔레트/아웃라인
+        static void DrawCatSleeping(PixelCanvas c, string catId, PixelPalette.FurSet fur)
+        {
+            c.GroundShadow(16, 5, 12);
+            // 웅크린 타원 몸통
+            c.Disc(16, 11, 9, fur.mid);
+            c.Disc(16, 10, 8, fur.light);
+            c.Disc(16, 13, 7, fur.shade);          // 아래 그림자
+            // 말린 꼬리
+            c.HLine(8, 24, 7, fur.mid); c.Set(24, 8, fur.mid); c.Set(23, 9, fur.mid);
+            // 머리(옆으로 기댄)
+            c.Disc(10, 13, 5, fur.light);
+            DrawEar(c, 7, 17, fur); DrawEar(c, 12, 17, fur);
+            // 감은 눈(ㅡ)
+            c.HLine(8, 9, 13, PixelPalette.Outline);
+            c.Set(11, 12, PixelPalette.CatNose);   // 코
+            // Zzz
+            c.Set(22, 20, PixelPalette.OutlineSoft); c.Set(24, 22, PixelPalette.OutlineSoft); c.Set(26, 24, PixelPalette.OutlineSoft);
+            ApplyMarkings(c, catId, fur);
+            c.AutoOutline(PixelPalette.Outline);
+        }
+
+        // 공용 몸통 드로잉(idle/walk/eat 공유)
+        static void DrawCatBody(PixelCanvas c, string catId, PixelPalette.FurSet fur, int yOff, CatPose pose, int frame)
+        {
+            // (원래 Cat 본문을 yOff 적용해 재사용)
+            DrawCatCore(c, catId, fur, yOff, pose, frame);
+        }
+
+        static void DrawCatCore(PixelCanvas c, string catId, PixelPalette.FurSet fur, int yOff, CatPose pose, int frame)
+        {
             // 몸통(둥근 사다리꼴) — 아래가 넓은 안정적 실루엣
             for (int y = 5; y <= 16; y++)
             {
@@ -39,28 +87,41 @@ namespace YeogiCafe.Art
             DrawEar(c, 10, 27, fur);
             DrawEar(c, 21, 27, fur);
 
-            // 눈 2개(통일 초록) + 하이라이트
-            c.Set(13, 23, PixelPalette.CatEye); c.Set(13, 24, PixelPalette.CatEye);
-            c.Set(18, 23, PixelPalette.CatEye); c.Set(18, 24, PixelPalette.CatEye);
-            c.Set(13, 24, PixelPalette.Highlight); c.Set(18, 24, PixelPalette.Highlight);
+            // 눈: eat는 반쯤 감음, idle frame1은 깜빡임
+            bool blink = (pose == CatPose.Idle && frame == 1);
+            bool halfEye = (pose == CatPose.Eat);
+            if (blink)
+            {
+                c.HLine(13, 14, 23, PixelPalette.Outline); c.HLine(18, 19, 23, PixelPalette.Outline);
+            }
+            else
+            {
+                c.Set(13, 23, PixelPalette.CatEye); c.Set(13, 24, halfEye ? PixelPalette.CatEye : PixelPalette.Highlight);
+                c.Set(18, 23, PixelPalette.CatEye); c.Set(18, 24, halfEye ? PixelPalette.CatEye : PixelPalette.Highlight);
+                if (halfEye) { c.Set(13, 24, PixelPalette.Outline); c.Set(18, 24, PixelPalette.Outline); }
+            }
 
             // 코(연분홍) + 입
             c.Set(15, 21, PixelPalette.CatNose); c.Set(16, 21, PixelPalette.CatNose);
             c.Set(15, 20, PixelPalette.OutlineSoft); c.Set(16, 20, PixelPalette.OutlineSoft);
+            // eat: 음식 그릇
+            if (pose == CatPose.Eat)
+            {
+                c.FillRect(12, 2, 19, 4, PixelPalette.CreamMid);
+                c.Disc(16, 4, 2, PixelPalette.PinkMid);   // 음식
+            }
 
-            // 꼬리(오른쪽으로 말린)
-            c.VLine(24, 6, 11, fur.mid); c.HLine(24, 27, 11, fur.mid); c.VLine(27, 9, 12, fur.mid);
+            // 꼬리(walk frame1은 위로 흔들림)
+            int tailTop = (pose == CatPose.Walk && frame == 1) ? 14 : 11;
+            c.VLine(24, 6, tailTop, fur.mid); c.HLine(24, 27, tailTop, fur.mid); c.VLine(27, tailTop - 2, tailTop + 1, fur.mid);
 
-            // 앞발 2개
-            c.FillRect(12, 4, 14, 6, fur.light);
-            c.FillRect(17, 4, 19, 6, fur.light);
+            // 앞발 2개(bob 적용)
+            c.FillRect(12, 4 + yOff, 14, 6 + yOff, fur.light);
+            c.FillRect(17, 4 + yOff, 19, 6 + yOff, fur.light);
 
             // 고유 무늬
             ApplyMarkings(c, catId, fur);
-
-            // 통일 아웃라인
-            c.AutoOutline(PixelPalette.Outline);
-            return c;
+            // ※ 아웃라인은 호출자(Cat)가 마지막에 적용
         }
 
         static void DrawEar(PixelCanvas c, int baseX, int baseY, PixelPalette.FurSet fur)
@@ -100,6 +161,65 @@ namespace YeogiCafe.Art
                     break;
                 // cat_black, cat_gray: 단색 — 셰이딩만으로 충분
             }
+        }
+
+        // ─────────────────────────────────────────────
+        // 고양이 스프라이트시트 (프레임 가로 배치, 각 32×32).
+        // 순서: idle0, idle1, walk0, walk1, eat0, eat1, sleep  (총 7프레임)
+        // ─────────────────────────────────────────────
+        public const int CatFrameCount = 7;
+
+        public static PixelCanvas CatSheet(string catId)
+        {
+            var frames = new[]
+            {
+                Cat(catId, CatPose.Idle, 0), Cat(catId, CatPose.Idle, 1),
+                Cat(catId, CatPose.Walk, 0), Cat(catId, CatPose.Walk, 1),
+                Cat(catId, CatPose.Eat, 0),  Cat(catId, CatPose.Eat, 1),
+                Cat(catId, CatPose.Sleep, 0),
+            };
+            var sheet = new PixelCanvas(32 * frames.Length, 32);
+            for (int f = 0; f < frames.Length; f++)
+                Blit(sheet, frames[f], f * 32, 0);
+            return sheet;
+        }
+
+        static void Blit(PixelCanvas dst, PixelCanvas src, int ox, int oy)
+        {
+            for (int y = 0; y < src.H; y++)
+                for (int x = 0; x < src.W; x++)
+                {
+                    var p = src.Get(x, y);
+                    if (p.a != 0) dst.Set(ox + x, oy + y, p);
+                }
+        }
+
+        // ─────────────────────────────────────────────
+        // 배경 타일 (32×32, 심리스) — 카페 바닥/벽
+        // ─────────────────────────────────────────────
+        public static PixelCanvas FloorTile()
+        {
+            var c = new PixelCanvas(32, 32);
+            c.FillRect(0, 0, 31, 31, PixelPalette.WoodLight);
+            // 나무 판자 결(가로 2줄) + 이음새
+            c.HLine(0, 31, 0, PixelPalette.WoodMid);
+            c.HLine(0, 31, 16, PixelPalette.WoodMid);
+            for (int x = 2; x < 32; x += 7) { c.Set(x, 5, PixelPalette.WoodDark); c.Set(x + 3, 21, PixelPalette.WoodDark); }
+            // 세로 이음새(엇갈리게)
+            c.VLine(10, 1, 15, PixelPalette.WoodMid); c.VLine(22, 17, 31, PixelPalette.WoodMid);
+            return c;
+        }
+
+        public static PixelCanvas WallTile()
+        {
+            var c = new PixelCanvas(32, 32);
+            c.FillRect(0, 0, 31, 31, PixelPalette.CreamLight);
+            // 은은한 세로 줄무늬 벽지
+            for (int x = 0; x < 32; x += 6) c.VLine(x, 0, 31, PixelPalette.CreamMid);
+            // 하단 걸레받이(나무)
+            c.FillRect(0, 0, 31, 3, PixelPalette.WoodMid);
+            c.HLine(0, 31, 4, PixelPalette.WoodDark);
+            return c;
         }
 
         // ─────────────────────────────────────────────

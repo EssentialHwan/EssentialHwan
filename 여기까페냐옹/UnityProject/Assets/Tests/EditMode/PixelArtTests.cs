@@ -108,6 +108,51 @@ namespace YeogiCafe.Tests
         }
 
         [Test]
+        public void CatSheet_HasSevenFrames_EachNonEmpty()
+        {
+            foreach (var id in CatIds)
+            {
+                var sheet = SpriteDrawing.CatSheet(id);
+                Assert.AreEqual(32 * SpriteDrawing.CatFrameCount, sheet.W, $"{id}: 7프레임 가로폭");
+                Assert.AreEqual(32, sheet.H);
+                // 각 32칸 프레임이 비어있지 않은지
+                for (int f = 0; f < SpriteDrawing.CatFrameCount; f++)
+                {
+                    int opaque = 0;
+                    for (int y = 0; y < 32; y++)
+                        for (int x = 0; x < 32; x++)
+                            if (sheet.Get(f * 32 + x, y).a == 255) opaque++;
+                    Assert.Greater(opaque, 60, $"{id} frame{f}: 비어있으면 안 됨");
+                }
+            }
+        }
+
+        [Test]
+        public void CatPoses_ProduceDifferentSilhouettes()
+        {
+            // idle과 sleep은 실루엣이 달라야(같은 프레임 복붙이 아님)
+            var idle = SpriteDrawing.Cat("cat_cheese", SpriteDrawing.CatPose.Idle, 0);
+            var sleep = SpriteDrawing.Cat("cat_cheese", SpriteDrawing.CatPose.Sleep, 0);
+            int diff = 0;
+            for (int i = 0; i < idle.Pixels.Length; i++)
+            {
+                var a = idle.Pixels[i]; var b = sleep.Pixels[i];
+                if (a.a != b.a || a.r != b.r) diff++;
+            }
+            Assert.Greater(diff, 50, "idle/sleep 포즈는 뚜렷이 달라야");
+        }
+
+        [Test]
+        public void BackgroundTiles_AreFullyOpaque_32()
+        {
+            foreach (var t in new[] { SpriteDrawing.FloorTile(), SpriteDrawing.WallTile() })
+            {
+                Assert.AreEqual(32, t.W); Assert.AreEqual(32, t.H);
+                foreach (var p in t.Pixels) Assert.AreEqual((byte)255, p.a, "배경 타일은 완전 불투명(심리스)");
+            }
+        }
+
+        [Test]
         public void Canvas_GroundShadow_IsSemiTransparent()
         {
             var c = new PixelCanvas(16, 8);

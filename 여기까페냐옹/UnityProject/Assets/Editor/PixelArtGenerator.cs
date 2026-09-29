@@ -25,9 +25,19 @@ namespace YeogiCafe.EditorTools
             EnsureDir($"{Root}/furniture");
             EnsureDir($"{Root}/icons");
 
-            // 고양이 8종
+            EnsureDir($"{Root}/cats_sheet");
+            EnsureDir($"{Root}/bg");
+
+            // 고양이 8종 — 단일 프레임(정지) + 애니메이션 스프라이트시트(7프레임)
             foreach (var id in CatIds)
+            {
                 Save(SpriteDrawing.Cat(id), $"{Root}/cats/{id}.png", pixelsPerUnit: 32);
+                SaveSheet(SpriteDrawing.CatSheet(id), $"{Root}/cats_sheet/{id}_sheet.png", 32);
+            }
+
+            // 배경 타일(심리스)
+            Save(SpriteDrawing.FloorTile(), $"{Root}/bg/floor.png", 32);
+            Save(SpriteDrawing.WallTile(),  $"{Root}/bg/wall.png", 32);
 
             // 가구 18종
             SaveFurn("furn_seat_normal", FurnitureDrawing.SeatNormal());
@@ -60,11 +70,51 @@ namespace YeogiCafe.EditorTools
             SaveIcon("icon_heart",     SpriteDrawing.IconHeart());
 
             AssetDatabase.Refresh();
-            Debug.Log("[PixelArtGenerator] 픽셀 아트 생성 완료: 고양이 8 · 가구 18 · 아이콘 8 = 34개");
+            Debug.Log("[PixelArtGenerator] 픽셀 아트 생성 완료: 고양이 8(+시트 8) · 가구 18 · 아이콘 8 · 배경 2 = 44개");
         }
 
         static void SaveFurn(string id, PixelCanvas c) => Save(c, $"{Root}/furniture/{id}.png", 32);
         static void SaveIcon(string id, PixelCanvas c) => Save(c, $"{Root}/icons/{id}.png", 16);
+
+        // 스프라이트시트: Multiple 모드로 32×32 그리드 슬라이스
+        static void SaveSheet(PixelCanvas canvas, string assetPath, int cell)
+        {
+            var tex = new Texture2D(canvas.W, canvas.H, TextureFormat.RGBA32, false);
+            tex.SetPixels32(canvas.Pixels);
+            tex.Apply();
+            File.WriteAllBytes(Path.GetFullPath(assetPath), tex.EncodeToPNG());
+            Object.DestroyImmediate(tex);
+            AssetDatabase.ImportAsset(assetPath);
+
+            var ti = (TextureImporter)AssetImporter.GetAtPath(assetPath);
+            if (ti == null) return;
+            ti.textureType = TextureImporterType.Sprite;
+            ti.spriteImportMode = SpriteImportMode.Multiple;
+            ti.filterMode = FilterMode.Point;
+            ti.textureCompression = TextureImporterCompression.Uncompressed;
+            ti.spritePixelsPerUnit = cell;
+            ti.mipmapEnabled = false;
+            ti.alphaIsTransparency = true;
+
+            // 프레임 슬라이스 메타 지정
+            int frames = canvas.W / cell;
+            var metas = new SpriteMetaData[frames];
+            string[] names = { "idle0","idle1","walk0","walk1","eat0","eat1","sleep" };
+            for (int i = 0; i < frames; i++)
+            {
+                metas[i] = new SpriteMetaData
+                {
+                    name = (i < names.Length ? names[i] : "frame" + i),
+                    rect = new Rect(i * cell, 0, cell, cell),
+                    pivot = new Vector2(0.5f, 0.1f),         // 발밑 피벗(접지)
+                    alignment = (int)SpriteAlignment.Custom
+                };
+            }
+#pragma warning disable CS0618
+            ti.spritesheet = metas;
+#pragma warning restore CS0618
+            ti.SaveAndReimport();
+        }
 
         static void Save(PixelCanvas canvas, string assetPath, int pixelsPerUnit)
         {

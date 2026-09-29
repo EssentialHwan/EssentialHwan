@@ -52,7 +52,7 @@ Scripts/Localization/ Localization(L 로더, 한/영·토큰치환·폴백)
 Scripts/Art/          PixelPalette(단일팔레트)·PixelCanvas(공용붓)·SpriteDrawing·FurnitureDrawing
 Editor/               ContentGenerator (SO 원클릭) · PixelArtGenerator (도트 PNG 34개 원클릭)
 Localization/         strings.csv (한/영)
-Art/                  Generated/ (생성된 PNG: 고양이8·가구18·아이콘8) — 톤 통일
+Art/                  Generated/ (PNG 44개: 고양이8+시트8(7프레임 애니)·가구18·아이콘8·배경2) — 톤 통일
 ```
 
 ## ✅ 테스트 (66 EditMode [Test], 전부 통과 — dotnet 헤드리스 검증; Unity Test Runner 실행은 M1 후)
