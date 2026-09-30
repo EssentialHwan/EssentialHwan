@@ -10,6 +10,7 @@ namespace YeogiCafe.Data
         public string furnitureId;
         public string displayNameKey;
         public FurnitureType type;
+        public Sprite worldSprite;           // 씬 표시용
 
         [Header("Seat (type==Seat)")]
         public SeatTag[] seatTags;

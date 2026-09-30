@@ -9,7 +9,8 @@ namespace YeogiCafe.Data
         [Header("식별")]
         public string catId;                 // "cat_cheese"
         public string displayNameKey;        // 로컬라이즈 키
-        public Sprite portrait;
+        public Sprite portrait;              // 도감용
+        public Sprite worldSprite;           // 씬 표시용(정지 스프라이트)
         public string species;
 
         [Header("성격 (부록 J-C: [0]=첫방문 즉시공개, [1]=관찰공개)")]

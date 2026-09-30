@@ -40,32 +40,39 @@ namespace YeogiCafe.EditorTools
                 AssetDatabase.SaveAssets();
             }
 
+            // 생성된 도트 스프라이트를 데이터에 자동 연결(있으면). 없으면 프리미티브로만 보임.
+            LinkSprites(cats, furn);
+
             // 새 씬
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
-            // 카메라 (탑다운 약간 기울임, 직교)
+            // 카메라 — 2D 정면 직교(스프라이트가 정면으로 보이게)
             var camGo = new GameObject("Main Camera");
             camGo.tag = "MainCamera";
             var cam = camGo.AddComponent<Camera>();
             cam.orthographic = true;
-            cam.orthographicSize = 6f;
+            cam.orthographicSize = 5f;
             cam.backgroundColor = new Color(0.96f, 0.93f, 0.87f);
             cam.clearFlags = CameraClearFlags.SolidColor;
-            camGo.transform.position = new Vector3(2f, 8f, -6f);
-            camGo.transform.rotation = Quaternion.Euler(50f, 0f, 0f);
+            camGo.transform.position = new Vector3(3f, 3f, -10f);   // 정면(z 뒤에서)
+            camGo.transform.rotation = Quaternion.identity;
 
-            // 조명
-            var lightGo = new GameObject("Directional Light");
-            var light = lightGo.AddComponent<Light>();
-            light.type = LightType.Directional;
-            light.intensity = 1f;
-            lightGo.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
-
-            // 바닥
-            var floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            floor.name = "Floor";
-            floor.transform.position = new Vector3(2f, 0f, 2f);
-            floor.transform.localScale = new Vector3(2f, 1f, 2f);
+            // 바닥 타일(2D 스프라이트로 카펫처럼 깔기) — floor 스프라이트 있으면 사용
+            var floorSprite = LoadSprite("Assets/Art/Generated/bg/floor.png");
+            var floorRoot = new GameObject("Floor").transform;
+            for (int x = -1; x <= 7; x++)
+                for (int y = -1; y <= 6; y++)
+                {
+                    var t = new GameObject($"floor_{x}_{y}");
+                    t.transform.SetParent(floorRoot);
+                    t.transform.position = new Vector3(x, y, 0f);
+                    if (floorSprite != null)
+                    {
+                        var sr = t.AddComponent<SpriteRenderer>();
+                        sr.sprite = floorSprite;
+                        sr.sortingOrder = -10;
+                    }
+                }
 
             // GameRoot + S1Bootstrap
             var root = new GameObject("[GameRoot]");
@@ -77,12 +84,12 @@ namespace YeogiCafe.EditorTools
             boot.starterMenus = menus;
             boot.allCats = cats;
             boot.allEvents = events;
-            // 시작 큐: 치즈/삼색/젖소(있으면), 없으면 앞 3마리
             boot.starterCats = PickStarters(cats);
-            // 시작 좌석: 일반석 + (있으면) 여분 좌석 몇 개
             boot.starterSeats = PickStarterSeats(furn);
-            // 창가석(상점 구매 대상)
             boot.windowSeatData = furn.FirstOrDefault(f => f.furnitureId == "furn_seat_window");
+            // 좌석을 카메라 화면 중앙 근처에 배치
+            boot.seatSpacing = 2.2f;
+            boot.seatsPerRow = 3;
 
             // 씬 저장
             const string dir = "Assets/Scenes";
@@ -114,6 +121,28 @@ namespace YeogiCafe.EditorTools
             if (result.Count == 0) result = seats.Take(3).ToList();
             return result;
         }
+
+        // 생성된 PNG(Assets/Art/Generated)에서 스프라이트를 찾아 데이터에 연결·저장
+        static void LinkSprites(List<CatData> cats, List<FurnitureData> furn)
+        {
+            bool dirty = false;
+            foreach (var c in cats)
+            {
+                if (c.worldSprite != null) continue;
+                var s = LoadSprite($"Assets/Art/Generated/cats/{c.catId}.png");
+                if (s != null) { c.worldSprite = s; EditorUtility.SetDirty(c); dirty = true; }
+            }
+            foreach (var f in furn)
+            {
+                if (f.worldSprite != null) continue;
+                var s = LoadSprite($"Assets/Art/Generated/furniture/{f.furnitureId}.png");
+                if (s != null) { f.worldSprite = s; EditorUtility.SetDirty(f); dirty = true; }
+            }
+            if (dirty) AssetDatabase.SaveAssets();
+        }
+
+        static Sprite LoadSprite(string path)
+            => AssetDatabase.LoadAssetAtPath<Sprite>(path);
 
         static List<T> LoadAll<T>(string folder) where T : Object
         {

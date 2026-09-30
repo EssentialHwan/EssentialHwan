@@ -24,5 +24,17 @@ namespace YeogiCafe.Cafe
         public void Occupy(object cat) => occupant = cat;
         public void Vacate() => occupant = null;
         public void SetLocalDominant(AtmosphereAxis axis) => localDominant = axis;
+
+        void Start() => EnsureVisual();
+
+        // 씬에 스프라이트 표시(없으면 자동 생성). source.worldSprite가 있으면 그걸 사용.
+        public void EnsureVisual()
+        {
+            if (source == null || source.worldSprite == null) return;
+            var sr = GetComponent<SpriteRenderer>();
+            if (sr == null) sr = gameObject.AddComponent<SpriteRenderer>();
+            sr.sprite = source.worldSprite;
+            sr.sortingOrder = 0;                 // 가구는 바닥 위, 고양이 아래
+        }
     }
 }
