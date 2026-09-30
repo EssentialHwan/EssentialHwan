@@ -31,6 +31,14 @@ namespace YeogiCafe.Core
             // 이동: 프리팹에 ICatMover(NavMeshCatMover 등)가 있으면 사용, 없으면 SimpleLerpMover 부착
             var mover = go.GetComponent<ICatMover>() ?? go.AddComponent<SimpleLerpMover>();
 
+            // 비주얼: 도트 스프라이트 표시(없으면 안 보이지만 로직은 정상)
+            if (data.worldSprite != null)
+            {
+                var sr = go.GetComponent<SpriteRenderer>() ?? go.AddComponent<SpriteRenderer>();
+                sr.sprite = data.worldSprite;
+                sr.sortingOrder = 10;            // 고양이는 가구 위에
+            }
+
             brain.data = data;
             brain.cfg = cfg;
             brain.Obs = obs;
