@@ -16,6 +16,15 @@ namespace YeogiCafe.DevTools
 
         bool show;
 
+        void Start()
+        {
+            // S1Bootstrap이 Awake에서 만든 매니저를 자동 탐색(인스펙터 미연결 시).
+            if (economy == null) economy = FindObjectOfType<EconomyManager>();
+            if (day == null) day = FindObjectOfType<DayManager>();
+            if (cats == null) cats = FindObjectOfType<CatManager>();
+            if (flow == null) flow = FindObjectOfType<GameFlowController>();
+        }
+
         void Update()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

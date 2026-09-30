@@ -43,6 +43,9 @@ namespace YeogiCafe.EditorTools
             // 생성된 도트 스프라이트를 데이터에 자동 연결(있으면). 없으면 프리미티브로만 보임.
             LinkSprites(cats, furn);
 
+            // 로컬라이즈 CSV를 Resources로 동기화(런타임 L.EnsureLoaded()가 Resources.Load<TextAsset>("strings") 사용).
+            SyncStringsToResources();
+
             // 새 씬
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
@@ -87,9 +90,18 @@ namespace YeogiCafe.EditorTools
             boot.starterCats = PickStarters(cats);
             boot.starterSeats = PickStarterSeats(furn);
             boot.windowSeatData = furn.FirstOrDefault(f => f.furnitureId == "furn_seat_window");
+            // 상점 판매 목록: 시작 좌석 외 모든 가구(창가석·시설·데코 포함)
+            boot.shopFurniture = PickShopItems(furn, boot.starterSeats);
             // 좌석을 카메라 화면 중앙 근처에 배치
             boot.seatSpacing = 2.2f;
             boot.seatsPerRow = 3;
+
+            // UI 총괄 컨트롤러(런타임에 Canvas/HUD/상점/정산/도감 생성)
+            var ui = root.AddComponent<YeogiCafe.UI.GameUiController>();
+            ui.bootstrap = boot;
+
+            // DevConsole(F1) 자동 배치 — 플레이테스트 가속(배속·골드 치트)
+            var dev = root.AddComponent<YeogiCafe.DevTools.DevConsole>();
 
             // 씬 저장
             const string dir = "Assets/Scenes";
@@ -122,6 +134,13 @@ namespace YeogiCafe.EditorTools
             return result;
         }
 
+        // 상점 판매 목록: 시작 시 이미 놓인 좌석을 제외한 모든 가구(창가석·시설·데코 포함)
+        static List<FurnitureData> PickShopItems(List<FurnitureData> all, List<FurnitureData> starterSeats)
+        {
+            var starterIds = new HashSet<string>(starterSeats.Select(s => s.furnitureId));
+            return all.Where(f => f != null && !starterIds.Contains(f.furnitureId)).ToList();
+        }
+
         // 생성된 PNG(Assets/Art/Generated)에서 스프라이트를 찾아 데이터에 연결·저장
         static void LinkSprites(List<CatData> cats, List<FurnitureData> furn)
         {
@@ -139,6 +158,18 @@ namespace YeogiCafe.EditorTools
                 if (s != null) { f.worldSprite = s; EditorUtility.SetDirty(f); dirty = true; }
             }
             if (dirty) AssetDatabase.SaveAssets();
+        }
+
+        // Localization/strings.csv → Resources/strings.csv 복사(단일 소스 유지).
+        static void SyncStringsToResources()
+        {
+            const string src = "Assets/Localization/strings.csv";
+            const string dstDir = "Assets/Resources";
+            const string dst = "Assets/Resources/strings.csv";
+            if (!System.IO.File.Exists(src)) return;
+            if (!AssetDatabase.IsValidFolder(dstDir)) AssetDatabase.CreateFolder("Assets", "Resources");
+            System.IO.File.Copy(System.IO.Path.GetFullPath(src), System.IO.Path.GetFullPath(dst), overwrite: true);
+            AssetDatabase.ImportAsset(dst);
         }
 
         static Sprite LoadSprite(string path)
