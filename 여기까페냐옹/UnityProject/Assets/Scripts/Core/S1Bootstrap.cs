@@ -74,16 +74,38 @@ namespace YeogiCafe.Core
             flow.spawner = spawner; flow.cafeManager = cafeManager; flow.relationships = relationships; flow.events = events;
         }
 
+        [Header("씬 배치")]
+        public Transform entrance;              // 없으면 자동 생성(원점 근처)
+        public Transform seatRoot;              // 좌석을 놓을 부모(없으면 자동)
+        public float seatSpacing = 2f;          // 좌석 간격
+        public int seatsPerRow = 3;
+
         void SeedCafe()
         {
             cafe.SetMenu(starterMenus);
-            // 시작 좌석 배치(FurnitureManager 슬롯이 없으면 직접 생성)
+
+            // 입구 설정(없으면 생성)
+            if (entrance == null)
+            {
+                var e = new GameObject("Entrance");
+                e.transform.position = new Vector3(-4f, 0f, -4f);
+                entrance = e.transform;
+            }
+            cafe.entrance = entrance;
+
+            // 좌석 배치: 격자로 분산(겹침 방지)
+            if (seatRoot == null) seatRoot = new GameObject("Seats").transform;
+            int i = 0;
             foreach (var seatData in starterSeats)
             {
                 var go = new GameObject("Seat_" + seatData.furnitureId);
+                go.transform.SetParent(seatRoot);
+                int col = i % seatsPerRow, row = i / seatsPerRow;
+                go.transform.position = new Vector3(col * seatSpacing, 0f, row * seatSpacing);
                 var sb = go.AddComponent<SeatBehaviour>();
                 sb.source = seatData;
                 cafe.RegisterSeat(sb);
+                i++;
             }
         }
 
