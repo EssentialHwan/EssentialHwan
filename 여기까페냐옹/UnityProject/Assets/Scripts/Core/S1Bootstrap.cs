@@ -19,6 +19,7 @@ namespace YeogiCafe.Core
         public List<MenuData> starterMenus = new();
         public List<FurnitureData> starterSeats = new(); // 최소 일반석
         public FurnitureData windowSeatData;             // 상점 구매 대상(창가석)
+        public List<FurnitureData> shopFurniture = new();// 상점 UI 판매 목록(가구/기물 전체)
         public CafeLevelConfig cafeLevelConfig;          // 성장 조건 SO
 
         [Header("매니저 (비우면 자동 생성)")]
@@ -79,6 +80,7 @@ namespace YeogiCafe.Core
         public Transform seatRoot;              // 좌석을 놓을 부모(없으면 자동)
         public float seatSpacing = 2f;          // 좌석 간격
         public int seatsPerRow = 3;
+        public int shopSlotCount = 6;           // 상점 구매 가구를 놓을 빈 슬롯 수
 
         void SeedCafe()
         {
@@ -107,9 +109,28 @@ namespace YeogiCafe.Core
                 cafe.RegisterSeat(sb);
                 i++;
             }
+
+            // 상점 구매 가구를 놓을 빈 슬롯 생성(없으면 BuyAndPlace가 '공간 부족'으로 실패).
+            // 기존 좌석 격자 다음 행부터 이어서 배치.
+            if (furniture.slots.Count == 0)
+            {
+                int startRow = (starterSeats.Count + seatsPerRow - 1) / seatsPerRow;
+                var slotRoot = new GameObject("FurnitureSlots").transform;
+                for (int s = 0; s < shopSlotCount; s++)
+                {
+                    int col = s % seatsPerRow, row = startRow + s / seatsPerRow;
+                    var slotGo = new GameObject("Slot_" + s);
+                    slotGo.transform.SetParent(slotRoot);
+                    slotGo.transform.position = new Vector3(col * seatSpacing, 0f, row * seatSpacing);
+                    furniture.slots.Add(new FurnitureManager.SlotEntry { slot = slotGo.transform });
+                }
+            }
         }
 
         // 상점 버튼에서 호출: 창가석 구매
         public bool BuyWindowSeat() => windowSeatData != null && furniture.BuyAndPlace(windowSeatData);
+
+        // 상점 UI에서 호출: 임의 가구 구매·배치(→ CafeContext 등록 → 관찰 채널 개방)
+        public bool BuyFurniture(FurnitureData data) => data != null && furniture.BuyAndPlace(data);
     }
 }
