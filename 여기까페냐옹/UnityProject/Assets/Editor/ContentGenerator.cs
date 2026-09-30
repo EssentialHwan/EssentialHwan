@@ -48,9 +48,9 @@ namespace YeogiCafe.EditorTools
                        A((AtmosphereAxis.Natural, 3), (AtmosphereAxis.Quiet, 2)));
             CreateSeat("furn_seat_corner", "구석석", 150, new[] { SeatTag.Corner, SeatTag.Quiet },
                        A((AtmosphereAxis.Quiet, 3)));
-            CreateSeat("furn_seat_two", "2인석", 220, new[] { SeatTag.TwoSeat, SeatTag.Social },
+            CreateSeat("furn_seat_two", "2인석", 220, new[] { SeatTag.TwoSeat },
                        A((AtmosphereAxis.Lively, 2)));
-            CreateSeat("furn_seat_sofa", "소파", 300, new[] { SeatTag.Sofa, SeatTag.Soft },
+            CreateSeat("furn_seat_sofa", "소파", 300, new[] { SeatTag.Sofa },
                        A((AtmosphereAxis.Warm, 3), (AtmosphereAxis.Luxury, 1)));
             CreateSeat("furn_seat_bar", "바테이블", 260, new[] { SeatTag.BarTable },
                        A((AtmosphereAxis.Luxury, 2)));
