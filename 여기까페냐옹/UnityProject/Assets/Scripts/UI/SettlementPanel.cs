@@ -14,7 +14,8 @@ namespace YeogiCafe.UI
     {
         readonly GameUiController owner;
         readonly GameObject rootGo;
-        Text revenueText, cardsInfo;
+        Text revenueText, cardsInfo, levelText, expandInfo;
+        Button expandBtn;
         RectTransform cardsContent;
 
         public SettlementPanel(GameUiController owner, Transform parent)
@@ -28,10 +29,12 @@ namespace YeogiCafe.UI
 
             var panel = UiFactory.Panel("SettlePanel", scrim.transform, UiFactory.PanelBg);
             UiFactory.SetRect(panel, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                              Vector2.zero, new Vector2(760, 560));
+                              Vector2.zero, new Vector2(840, 640));
 
-            UiFactory.Label("Title", panel.transform, "📊 " + L.Get("ui.settle.title"), 30,
-                            TextAnchor.UpperCenter, UiFactory.Ink);
+            var title = UiFactory.Label("Title", panel.transform, L.Get("ui.settle.title"), 26,
+                                        TextAnchor.MiddleCenter, UiFactory.Ink);
+            UiFactory.SetRect((RectTransform)title.transform, new Vector2(0, 1), new Vector2(1, 1),
+                              new Vector2(0.5f, 1), new Vector2(0, -10), new Vector2(0, 40));
 
             revenueText = UiFactory.Label("Revenue", panel.transform, "", 22, TextAnchor.UpperLeft, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)revenueText.transform, new Vector2(0, 1), new Vector2(1, 1),
@@ -41,20 +44,40 @@ namespace YeogiCafe.UI
             cardsGo.transform.SetParent(panel.transform, false);
             cardsContent = (RectTransform)cardsGo.transform;
             UiFactory.SetRect(cardsContent, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f),
-                              new Vector2(0, -30), new Vector2(-40, -220));
+                              new Vector2(0, -14), new Vector2(-40, -230));
             var vlg = cardsGo.GetComponent<VerticalLayoutGroup>();
-            vlg.spacing = 8; vlg.childControlHeight = false; vlg.childForceExpandHeight = false;
+            vlg.spacing = 6; vlg.childControlHeight = false; vlg.childForceExpandHeight = false;
             vlg.childControlWidth = true; vlg.childForceExpandWidth = true;
 
             cardsInfo = UiFactory.Label("CardsInfo", panel.transform, "", 20, TextAnchor.LowerLeft, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)cardsInfo.transform, new Vector2(0, 0), new Vector2(1, 0),
-                              new Vector2(0.5f, 0), new Vector2(0, 78), new Vector2(-40, 36));
+                              new Vector2(0.5f, 0), new Vector2(0, 104), new Vector2(-40, 30));
 
             var nextBtn = UiFactory.Button("Next", panel.transform, L.Get("ui.settle.next"),
                                            UiFactory.Green, UiFactory.Ink, out _);
             UiFactory.SetRect((RectTransform)nextBtn.transform, new Vector2(0.5f, 0), new Vector2(0.5f, 0),
                               new Vector2(0.5f, 0), new Vector2(0, 24), new Vector2(220, 56));
             nextBtn.onClick.AddListener(() => owner.StartNextDay());
+            UiFactory.SetRect((RectTransform)nextBtn.transform, new Vector2(1, 0), new Vector2(1, 0),
+                              new Vector2(1, 0), new Vector2(-24, 20), new Vector2(200, 52));
+
+            // 카페 넓히기(성장) — 관찰 성과 또는 가구 수로 열리는 같은 방 확장(P3 OR 경로)
+            expandBtn = UiFactory.Button("Expand", panel.transform, L.Get("ui.settle.expand"),
+                                         UiFactory.Wood, UiFactory.Cream, out _);
+            UiFactory.SetRect((RectTransform)expandBtn.transform, new Vector2(0, 0), new Vector2(0, 0),
+                              new Vector2(0, 0), new Vector2(24, 20), new Vector2(180, 52));
+            expandBtn.onClick.AddListener(() =>
+            {
+                owner.TryExpandCafe(out var msg);
+                expandInfo.text = msg;
+                RenderLevel();
+            });
+            levelText = UiFactory.Label("Level", panel.transform, "", 20, TextAnchor.MiddleLeft, UiFactory.Ink);
+            UiFactory.SetRect((RectTransform)levelText.transform, new Vector2(0, 0), new Vector2(0, 0),
+                              new Vector2(0, 0), new Vector2(214, 20), new Vector2(140, 52));
+            expandInfo = UiFactory.Label("ExpandInfo", panel.transform, "", 16, TextAnchor.MiddleLeft, UiFactory.WoodDark);
+            UiFactory.SetRect((RectTransform)expandInfo.transform, new Vector2(0, 0), new Vector2(1, 0),
+                              new Vector2(0, 0), new Vector2(24, 76), new Vector2(-48, 24));
 
             rootGo.SetActive(false);
         }
@@ -62,8 +85,15 @@ namespace YeogiCafe.UI
         public void Show()
         {
             rootGo.SetActive(true);
+            if (expandInfo != null) expandInfo.text = "";
             RenderEconomy();
             RenderCards();
+            RenderLevel();
+        }
+
+        void RenderLevel()
+        {
+            levelText.text = L.Get("ui.settle.cafelevel", ("n", owner.CafeLevel.ToString()));
         }
         public void Hide() => rootGo.SetActive(false);
 
@@ -105,7 +135,7 @@ namespace YeogiCafe.UI
         {
             var card = ObservationCardBuilder.Build(data, cs, null);
             var row = UiFactory.Panel("Card_" + data.catId, cardsContent, UiFactory.Cream);
-            ((RectTransform)row.transform).sizeDelta = new Vector2(0, 64);
+            ((RectTransform)row.transform).sizeDelta = new Vector2(0, 44);
 
             string catName = L.Get($"cat.{data.catId}.name");
             string axisSummary =
@@ -113,7 +143,7 @@ namespace YeogiCafe.UI
                 $"{L.Get("ui.axis.seat")}{ObservationCardBuilder.StateIcon(card.seat.state)} " +
                 $"{L.Get("ui.axis.facility")}{ObservationCardBuilder.StateIcon(card.facility.state)}";
 
-            var label = UiFactory.Label("Name", row.transform, $"{catName}    {axisSummary}", 22,
+            var label = UiFactory.Label("Name", row.transform, $"{catName}    {axisSummary}", 20,
                                         TextAnchor.MiddleLeft, UiFactory.Ink);
             UiFactory.SetRect((RectTransform)label.transform, new Vector2(0, 0), new Vector2(1, 1),
                               new Vector2(0, 0.5f), new Vector2(20, 0), new Vector2(-320, 0));
@@ -134,7 +164,7 @@ namespace YeogiCafe.UI
                                        canRecord ? UiFactory.Pink : UiFactory.Wood, UiFactory.Cream, out var lbl);
             lbl.fontSize = 16;
             UiFactory.SetRect((RectTransform)btn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f),
-                              new Vector2(1, 0.5f), new Vector2(xOffset, 0), new Vector2(92, 48));
+                              new Vector2(1, 0.5f), new Vector2(xOffset, 0), new Vector2(92, 36));
             btn.interactable = canRecord;
             var capturedAxis = axis;
             btn.onClick.AddListener(() =>

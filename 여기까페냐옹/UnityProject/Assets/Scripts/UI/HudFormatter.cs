@@ -6,14 +6,14 @@ namespace YeogiCafe.UI
     // HUD 표시 문자열 포맷(로직). UI 위젯과 분리 → 테스트 가능.
     public static class HudFormatter
     {
-        public static string Gold(int g) => $"💰 {g}G";
+        public static string Gold(int g) => $"{g}G";
 
         public static string Phase(DayPhase p) => p switch
         {
-            DayPhase.Morning => "🌅 아침",
-            DayPhase.Lunch => "☀ 점심",
-            DayPhase.Evening => "🌆 저녁",
-            DayPhase.Settlement => "📊 정산",
+            DayPhase.Morning => "아침",
+            DayPhase.Lunch => "☼ 점심",
+            DayPhase.Evening => "저녁",
+            DayPhase.Settlement => "정산",
             _ => "준비"
         };
 

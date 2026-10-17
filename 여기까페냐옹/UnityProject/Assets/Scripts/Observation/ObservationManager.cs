@@ -23,6 +23,7 @@ namespace YeogiCafe.Observation
         readonly Dictionary<string, List<Clue>> stagedToday = new();
 
         public event Action<string> OnBehaviorNarration; // (narrationText) — UI 말풍선
+        public event Action<string, string> OnCatNarration; // (catId, narrationText) — 고양이 머리 위 말풍선
         public event Action<string, PrefAxis> OnPreferenceRecorded;
 
         public ObservationManager(BalanceConfig cfg, SaveGame save) { this.cfg = cfg; this.save = save; }
@@ -35,7 +36,11 @@ namespace YeogiCafe.Observation
                          : cfg.clueMedium;
             if (!stagedToday.TryGetValue(catId, out var list)) { list = new(); stagedToday[catId] = list; }
             list.Add(new Clue { type = type, target = target, weight = weight, isFallback = isFallback });
-            if (!string.IsNullOrEmpty(narration)) OnBehaviorNarration?.Invoke(narration);
+            if (!string.IsNullOrEmpty(narration))
+            {
+                OnBehaviorNarration?.Invoke(narration);
+                OnCatNarration?.Invoke(catId, narration);
+            }
         }
 
         // §3.5 영업 종료 — 승격 (fallback cap → …/★, 강한 반증 강등)

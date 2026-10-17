@@ -41,6 +41,9 @@ namespace YeogiCafe.AI
         public bool UsedPreferredSeat { get; private set; }
         public bool UsedPreferredFacility { get; private set; }
         public CatState State => state;
+        public ISeat CurrentSeat => seat;                                   // 표현(CatView)용 읽기 전용
+        public Vector3 CurrentSeatPos => seat != null ? seat.WorldPos : transform.position;
+        public System.Action<IFacility> OnFacilityUse;                      // 표현용: 시설 이용 순간
         public bool IsFinished => state == CatState.Leave ||
                                   state == CatState.LeaveDisappointed;
 
@@ -132,7 +135,8 @@ namespace YeogiCafe.AI
             if (order.primary != null)
                 Obs?.RecordClue(data.catId, ClueType.FoodEat, order.primary.menuId,
                                 isFallback: order.wasForcedSecond,
-                                order.wasFavorite ? $"{data.displayNameKey}가 맛있게 먹는다." : null);
+                                // 최애면 '순식간에 비움', 아니면 '천천히' — 플레이어가 차이를 읽을 수 있는 서술(수치 노출 없음)
+                                Narrate(order.wasFavorite ? "narr.food.fast" : "narr.food.slow"));
 
             // [S2] OrderSystem 있으면 티켓 등록 후 서빙 대기, 없으면 S1 직행
             if (OrderSystem != null && order.primary != null)
@@ -172,6 +176,7 @@ namespace YeogiCafe.AI
             if (!dec.isIdle && dec.facility != null)
             {
                 recentUse[dec.facility.FacilityId] = 0.3f; // 반복 억제
+                OnFacilityUse?.Invoke(dec.facility);
                 bool pref = SharesFacilityPref(dec.facility);
                 if (pref) UsedPreferredFacility = true;
                 Obs?.RecordClue(data.catId, ClueType.FacilityUse, FacilityKey(dec.facility),
@@ -187,6 +192,16 @@ namespace YeogiCafe.AI
         {
             if (seat != null) { SetOccupant?.Invoke(seat, null); seat.Vacate(); seat = null; } // 자리 반납(회전)
             state = CatState.Leave; /* 만족도·결제·세션확정은 매니저가 OnLeave에서 */
+        }
+
+        // 영업 종료 시 남은 손님 정리: 자리를 반납하고 세션을 즉시 확정(결제·만족 파이프라인 1회 실행).
+        public void ForceLeave()
+        {
+            if (sessionCompleted) return;
+            if (seat != null) { SetOccupant?.Invoke(seat, null); seat.Vacate(); seat = null; }
+            state = CatState.Leave;
+            sessionCompleted = true;
+            OnSessionComplete?.Invoke(this);
         }
 
         // ── helpers ──

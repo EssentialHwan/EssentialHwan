@@ -197,6 +197,7 @@ namespace YeogiCafe.EditorTools
             var so = GetOrCreate<FurnitureData>($"{FurnDir}/{id}.asset");
             so.furnitureId = id; so.displayNameKey = name; so.type = FurnitureType.Facility;
             so.facilityTags = tags; so.price = price; so.atmosphere = atmo;
+            so.wallMounted = WallMountedIds.Contains(id);
             EditorUtility.SetDirty(so);
         }
         static void CreateDeco(string id, string name, int price, FurnitureData.AtmoContribution[] atmo)
@@ -204,8 +205,11 @@ namespace YeogiCafe.EditorTools
             var so = GetOrCreate<FurnitureData>($"{FurnDir}/{id}.asset");
             so.furnitureId = id; so.displayNameKey = name; so.type = FurnitureType.Decoration;
             so.price = price; so.atmosphere = atmo;
+            so.wallMounted = WallMountedIds.Contains(id);
             EditorUtility.SetDirty(so);
         }
+        static readonly System.Collections.Generic.HashSet<string> WallMountedIds = new()
+            { "furn_fac_window", "furn_deco_clock", "furn_deco_frame", "furn_deco_curtain" };
         static void CreateCat(string id, string name, PersonalityTag p1, PersonalityTag p2,
                               string fav, SeatTag seat, FacilityTag fac, AtmosphereAxis atmo,
                               UnlockCondition unlock)

@@ -31,13 +31,20 @@ namespace YeogiCafe.EditorTools
             // 고양이 8종 — 단일 프레임(정지) + 애니메이션 스프라이트시트(7프레임)
             foreach (var id in CatIds)
             {
-                Save(SpriteDrawing.Cat(id), $"{Root}/cats/{id}.png", pixelsPerUnit: 32);
+                Save(SpriteDrawing.Cat(id), $"{Root}/cats/{id}.png", 32, GroundPivot(32));
                 SaveSheet(SpriteDrawing.CatSheet(id), $"{Root}/cats_sheet/{id}_sheet.png", 32);
             }
 
-            // 배경 타일(심리스)
-            Save(SpriteDrawing.FloorTile(), $"{Root}/bg/floor.png", 32);
-            Save(SpriteDrawing.WallTile(),  $"{Root}/bg/wall.png", 32);
+            // 배경 타일(심리스) + 공간 소품 — 피벗: 타일=좌하단, 벽 소품=하단중앙, 천장 조명=상단중앙
+            Save(RoomDrawing.FloorTile(),    $"{Root}/bg/floor.png", 32, new Vector2(0f, 0f));
+            Save(RoomDrawing.WallTile(),     $"{Root}/bg/wall.png", 32, new Vector2(0f, 0f));
+            Save(RoomDrawing.WainscotTile(), $"{Root}/bg/wainscot.png", 32, new Vector2(0f, 0f));
+            Save(RoomDrawing.WindowBig(),    $"{Root}/bg/window_big.png", 32, new Vector2(0.5f, 0f));
+            Save(RoomDrawing.Door(),         $"{Root}/bg/door.png", 32, new Vector2(0.5f, 0f));
+            Save(RoomDrawing.MenuBoard(),    $"{Root}/bg/menu_board.png", 32, new Vector2(0.5f, 0f));
+            Save(RoomDrawing.PendantLamp(),  $"{Root}/bg/pendant_lamp.png", 32, new Vector2(0.5f, 1f));
+            Save(RoomDrawing.Counter(),      $"{Root}/bg/counter.png", 32, GroundPivot(56));
+            Save(RoomDrawing.BigPlant(),     $"{Root}/bg/big_plant.png", 32, GroundPivot(48));
 
             // 가구 18종
             SaveFurn("furn_seat_normal", FurnitureDrawing.SeatNormal());
@@ -70,10 +77,18 @@ namespace YeogiCafe.EditorTools
             SaveIcon("icon_heart",     SpriteDrawing.IconHeart());
 
             AssetDatabase.Refresh();
-            Debug.Log("[PixelArtGenerator] 픽셀 아트 생성 완료: 고양이 8(+시트 8) · 가구 18 · 아이콘 8 · 배경 2 = 44개");
+            Debug.Log("[PixelArtGenerator] 픽셀 아트 생성 완료: 고양이 8(+시트 8) · 가구 18 · 아이콘 8 · 공간 9");
         }
 
-        static void SaveFurn(string id, PixelCanvas c) => Save(c, $"{Root}/furniture/{id}.png", 32);
+        // 가구: 벽걸이는 중앙 피벗(벽 슬롯 중심), 바닥 가구는 접지선(y=4px) 피벗 → 위치 = 바닥 위 발 딛는 점.
+        static readonly System.Collections.Generic.HashSet<string> WallMounted = new()
+            { "furn_fac_window", "furn_deco_clock", "furn_deco_frame", "furn_deco_curtain" };
+        static void SaveFurn(string id, PixelCanvas c) =>
+            Save(c, $"{Root}/furniture/{id}.png", 32,
+                 WallMounted.Contains(id) || id == "furn_deco_rug" ? new Vector2(0.5f, 0.5f) : GroundPivot(c.H));
+
+        // 접지선 4px 기준 피벗(캔버스 높이별)
+        static Vector2 GroundPivot(int canvasHeight) => new Vector2(0.5f, 4f / canvasHeight);
         static void SaveIcon(string id, PixelCanvas c) => Save(c, $"{Root}/icons/{id}.png", 16);
 
         // 스프라이트시트: Multiple 모드로 32×32 그리드 슬라이스
@@ -106,7 +121,7 @@ namespace YeogiCafe.EditorTools
                 {
                     name = (i < names.Length ? names[i] : "frame" + i),
                     rect = new Rect(i * cell, 0, cell, cell),
-                    pivot = new Vector2(0.5f, 0.1f),         // 발밑 피벗(접지)
+                    pivot = new Vector2(0.5f, 4f / cell),    // 발밑 피벗(접지선 4px, 단일 스프라이트와 동일)
                     alignment = (int)SpriteAlignment.Custom
                 };
             }
@@ -117,6 +132,9 @@ namespace YeogiCafe.EditorTools
         }
 
         static void Save(PixelCanvas canvas, string assetPath, int pixelsPerUnit)
+            => Save(canvas, assetPath, pixelsPerUnit, new Vector2(0.5f, 0.5f));
+
+        static void Save(PixelCanvas canvas, string assetPath, int pixelsPerUnit, Vector2 pivot)
         {
             var tex = new Texture2D(canvas.W, canvas.H, TextureFormat.RGBA32, false);
             tex.SetPixels32(canvas.Pixels);
@@ -138,6 +156,12 @@ namespace YeogiCafe.EditorTools
                 ti.spritePixelsPerUnit = pixelsPerUnit;
                 ti.mipmapEnabled = false;
                 ti.alphaIsTransparency = true;
+                var st = new TextureImporterSettings();
+                ti.ReadTextureSettings(st);
+                st.spriteAlignment = (int)SpriteAlignment.Custom;
+                st.spritePivot = pivot;
+                st.spriteMeshType = SpriteMeshType.FullRect;     // 도트 가장자리 깎임 방지
+                ti.SetTextureSettings(st);
                 ti.SaveAndReimport();
             }
         }

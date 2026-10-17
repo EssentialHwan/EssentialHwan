@@ -27,17 +27,15 @@ namespace YeogiCafe.Core
         public CatBrain Spawn(CatData data)
         {
             GameObject go = catPrefab != null ? Instantiate(catPrefab) : new GameObject("Cat_" + data.catId);
-            var brain = go.GetComponent<CatBrain>() ?? go.AddComponent<CatBrain>();
+            // Unity 객체는 ?? 연산자 금지(에디터의 fake-null 때문에 AddComponent가 건너뛰어짐)
+            var brain = go.GetComponent<CatBrain>(); if (brain == null) brain = go.AddComponent<CatBrain>();
             // 이동: 프리팹에 ICatMover(NavMeshCatMover 등)가 있으면 사용, 없으면 SimpleLerpMover 부착
-            var mover = go.GetComponent<ICatMover>() ?? go.AddComponent<SimpleLerpMover>();
+            ICatMover mover = go.GetComponent<ICatMover>();
+            if (mover == null || (mover as UnityEngine.Object) == null) mover = go.AddComponent<SimpleLerpMover>();
 
-            // 비주얼: 도트 스프라이트 표시(없으면 안 보이지만 로직은 정상)
-            if (data.worldSprite != null)
-            {
-                var sr = go.GetComponent<SpriteRenderer>() ?? go.AddComponent<SpriteRenderer>();
-                sr.sprite = data.worldSprite;
-                sr.sortingOrder = 10;            // 고양이는 가구 위에
-            }
+            // 비주얼: 표현 전담 컴포넌트(애니메이션·앉은 높이·시설 이동·퇴장). 로직과 분리.
+            var view = go.GetComponent<YeogiCafe.Visual.CatView>();
+            if (view == null) view = go.AddComponent<YeogiCafe.Visual.CatView>();
 
             brain.data = data;
             brain.cfg = cfg;
@@ -56,6 +54,7 @@ namespace YeogiCafe.Core
             // [프리플라이트] 단골 고정자리 주입 제거(favoriteSeat는 포스트 MVP)
 
             go.transform.position = cafe.Entrance;
+            view.Init(data);
             active.Add(brain);
             OnCatSpawned?.Invoke(brain);
             return brain;
@@ -65,9 +64,19 @@ namespace YeogiCafe.Core
         {
             active.Remove(brain);
             OnCatLeft?.Invoke(brain, satisfaction);
-            if (brain != null) Destroy(brain.gameObject);
+            if (brain == null) return;
+            // 로직은 여기서 끝. 화면에서는 문까지 걸어나간 뒤 사라진다(표현).
+            var view = brain.GetComponent<YeogiCafe.Visual.CatView>();
+            if (view != null) view.BeginExit(cafe.Entrance);
+            else Destroy(brain.gameObject);
         }
 
         public bool HasActiveCats => active.Count > 0;
+
+        public bool IsInCafe(string catId)
+        {
+            foreach (var b in active) if (b != null && b.data != null && b.data.catId == catId) return true;
+            return false;
+        }
     }
 }

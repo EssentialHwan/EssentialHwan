@@ -17,7 +17,7 @@ namespace YeogiCafe.Tests
         [Test]
         public void Gold_Formats()
         {
-            Assert.AreEqual("💰 300G", HudFormatter.Gold(300));
+            Assert.AreEqual("300G", HudFormatter.Gold(300));
         }
 
         [Test]

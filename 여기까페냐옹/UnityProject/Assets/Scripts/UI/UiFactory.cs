@@ -14,13 +14,38 @@ namespace YeogiCafe.UI
         public static readonly Color Wood      = new(184f / 255f, 142f / 255f, 100f / 255f, 1f);
         public static readonly Color WoodDark  = new(150f / 255f, 110f / 255f, 74f / 255f, 1f);
         public static readonly Color Ink       = new(74f / 255f, 54f / 255f, 47f / 255f, 1f);
+        public static readonly Color PinkDeep  = new(196f / 255f, 92f / 255f, 110f / 255f, 1f);
         public static readonly Color Pink      = new(230f / 255f, 160f / 255f, 172f / 255f, 1f);
         public static readonly Color Green     = new(150f / 255f, 184f / 255f, 128f / 255f, 1f);
         public static readonly Color PanelBg   = new(245f / 255f, 232f / 255f, 212f / 255f, 0.98f);
         public static readonly Color Scrim     = new(74f / 255f, 54f / 255f, 47f / 255f, 0.55f);
 
-        public static Font DefaultFont =>
-            Font.CreateDynamicFontFromOSFont(new[] { "Malgun Gothic", "AppleGothic", "NanumGothic", "Arial" }, 24);
+        // 게임 내장 폰트(갈무리11, SIL OFL — 상업 이용 가능, Assets/Resources/Fonts/LICENSE_Galmuri.txt).
+        // 이전엔 OS 폰트(맑은 고딕)에 의존 → 한글 폰트 없는 PC·Steam Deck에서 글자가 안 보일 위험.
+        static Font cachedFont;
+        public static Font DefaultFont
+        {
+            get
+            {
+                if (cachedFont != null) return cachedFont;
+                cachedFont = Resources.Load<Font>("Fonts/Galmuri11");
+                if (cachedFont == null)
+                    cachedFont = Font.CreateDynamicFontFromOSFont(new[] { "Malgun Gothic", "AppleGothic", "NanumGothic", "Arial" }, 24);
+                return cachedFont;
+            }
+        }
+
+        static Sprite whiteSprite;
+        public static Sprite WhiteSprite
+        {
+            get
+            {
+                if (whiteSprite != null) return whiteSprite;
+                var tex = new Texture2D(1, 1); tex.SetPixel(0, 0, Color.white); tex.Apply();
+                whiteSprite = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+                return whiteSprite;
+            }
+        }
 
         public static RectTransform Panel(string name, Transform parent, Color color)
         {

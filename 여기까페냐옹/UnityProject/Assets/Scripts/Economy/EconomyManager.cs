@@ -17,6 +17,9 @@ namespace YeogiCafe.Economy
 
         public void Init() { Gold = cfg != null ? cfg.startGold : 300; OnGoldChanged?.Invoke(Gold); }
 
+        // 이어하기: 저장된 잔액 복원(매출 집계에는 포함하지 않음)
+        public void SetGold(int amount) { Gold = Mathf.Max(0, amount); OnGoldChanged?.Invoke(Gold); }
+
         public void AddGold(int amount)
         {
             Gold += amount;

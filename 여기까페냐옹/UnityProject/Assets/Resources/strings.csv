@@ -4,8 +4,36 @@ ui.title.new,새 게임,New Game
 ui.title.settings,설정,Settings
 ui.title.quit,종료,Quit
 ui.cafe.customers,손님 {n},Guests {n}
+ui.cafe.day,{n}일차,Day {n}
+ui.shop.nospace,"자리가 없어요. 정산 화면에서 카페를 넓혀보세요","No space left. Expand the cafe from the daily report"
+ui.shop.bought,배치했어요! 누가 쓰는지 지켜보세요,Placed! Watch who uses it
+ui.settle.expand,카페 넓히기,Expand Cafe
+ui.settle.cafelevel,카페 Lv.{n},Cafe Lv.{n}
+ui.settle.expanded,카페가 넓어졌어요! 새 자리가 생겼어요,The cafe got bigger! New spots opened
 ui.shop.start,영업 시작,Open Shop
 ui.shop.buy,구매,Buy
+ui.shop.title,가구 상점,Furniture Shop
+ui.shop.type.seat,좌석,Seat
+ui.shop.type.facility,놀이 시설,Facility
+ui.shop.type.deco,장식,Decor
+furn.furn_seat_normal.name,일반석,Chair
+furn.furn_seat_window.name,창가석,Window Bench
+furn.furn_seat_corner.name,구석석,Corner Armchair
+furn.furn_seat_two.name,2인석,Loveseat
+furn.furn_seat_sofa.name,소파,Sofa
+furn.furn_seat_bar.name,바테이블,Bar Stool
+furn.furn_fac_tower.name,캣타워,Cat Tower
+furn.furn_fac_cushion.name,쿠션,Cushion
+furn.furn_fac_toybox.name,장난감바구니,Toy Basket
+furn.furn_fac_scratch.name,스크래처,Scratcher
+furn.furn_fac_plant.name,화분,Potted Plant
+furn.furn_fac_window.name,창문,Window
+furn.furn_deco_clock.name,벽시계,Wall Clock
+furn.furn_deco_frame.name,액자,Picture Frame
+furn.furn_deco_rug.name,러그,Rug
+furn.furn_deco_lamp.name,조명,Floor Lamp
+furn.furn_deco_curtain.name,커튼,Curtain
+furn.furn_deco_vase.name,화병,Flower Vase
 ui.shop.insufficient,골드가 부족해요,Not enough gold
 ui.shop.hint,새로운 행동을 볼 수도 있어요,You might see new behavior
 ui.settle.title,오늘의 정산,Today's Report

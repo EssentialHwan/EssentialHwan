@@ -34,6 +34,25 @@ namespace YeogiCafe.Art
         public static readonly Color32 LilacLight= new(210, 196, 230, 255);
         public static readonly Color32 LilacMid  = new(176, 156, 208, 255);
 
+        // ── 3톤 셰이드(어두운 면) — 가구 입체감용. 위 라이트/미드와 한 세트 ──
+        public static readonly Color32 PinkDark  = new(196, 122, 140, 255);
+        public static readonly Color32 GreenDark = new(112, 148, 100, 255);
+        public static readonly Color32 BlueDark  = new(96, 138, 170, 255);
+        public static readonly Color32 LilacDark = new(140, 120, 176, 255);
+        public static readonly Color32 YellowDark= new(200, 160, 84, 255);
+        public static readonly Color32 WoodDeep  = new(116, 82, 58, 255);   // 바닥 이음새·문틀 깊은 갈색
+        public static readonly Color32 CreamDark = new(212, 186, 152, 255);
+
+        // ── 실내 환경(벽·창밖·칠판) ──
+        public static readonly Color32 WallLight = new(250, 238, 220, 255);
+        public static readonly Color32 WallMid   = new(240, 224, 200, 255);
+        public static readonly Color32 SkyTop    = new(150, 196, 226, 255);
+        public static readonly Color32 SkyLow    = new(196, 226, 238, 255);
+        public static readonly Color32 Chalk     = new(72, 92, 80, 255);
+        public static readonly Color32 ChalkLine = new(214, 226, 210, 255);
+        public static readonly Color32 Metal     = new(170, 168, 172, 255);
+        public static readonly Color32 MetalDark = new(120, 118, 126, 255);
+
         // ── 고양이 털색 (8종, 각 라이트/미드/셰이드 3톤 — 소프트 셰이딩 통일) ──
         public struct FurSet { public Color32 light, mid, shade; }
 

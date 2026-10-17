@@ -25,6 +25,7 @@ namespace YeogiCafe.Core
         public YeogiCafe.Cafe.CafeManager cafeManager;  // 성장 승급 연동(선택)
         public RelationshipManager relationships;        // 관계 세이브 연결(선택)
         public EventManager events;                      // 에피소드/관계 이벤트(선택)
+        public System.Func<string, FurnitureData> furnitureLookup;   // 세이브의 배치 가구 복원용(선택)
 
         ObservationManager obs;
         RegularManager regular;
@@ -36,10 +37,19 @@ namespace YeogiCafe.Core
             obs = new ObservationManager(cfg, save);
             regular = new RegularManager();
 
+            // 이어하기 복원: 골드·일차·배치 가구. (이전엔 관찰 기록만 남고 골드/가구가 초기화되던 문제)
             economy.cfg = cfg; economy.Init();
+            if (save.initialized) economy.SetGold(save.gold);
+            else { save.initialized = true; save.gold = economy.Gold; }
+            economy.OnGoldChanged += g => save.gold = g;
+            day.RestoreDay(save.currentDay);
             cats.obs = obs;
             cats.save = save;                                // 단골 단계·선호자리 주입
-            if (furniture != null) furniture.save = save;   // 배치 가구 영속 연결
+            if (furniture != null)
+            {
+                furniture.save = save;                        // 배치 가구 영속 연결
+                if (furnitureLookup != null) furniture.RestoreFromSave(furnitureLookup);
+            }
 
             // 발견 기록 시 스포너 곡선 갱신 (밸런스 문서 06)
             obs.OnPreferenceRecorded += (_, __) => SyncSpawnerProgress();
@@ -160,12 +170,19 @@ namespace YeogiCafe.Core
         // §3.5/3.8 하루 종료
         void HandleDayEnd()
         {
+            // 영업 종료: 아직 카페에 남은 손님을 먼저 정리(결제·만족 확정) → 그 다음 승격.
+            // 순서가 바뀌면 남은 손님의 오늘 단서가 내일로 새거나 정산에서 빠진다.
+            var remaining = new List<CatBrain>(cats.Active);
+            foreach (var b in remaining) if (b != null) b.ForceLeave();
+
             obs.OnDayEnd();                                  // 승격
             foreach (var c in save.cats) regular.Evaluate(c); // 단골(→이벤트 큐잉)
             // 대기 이벤트(단골·관계 에피소드) 재생·보상 (정산 화면에서 순차 표시)
             if (events != null) { while (events.TryPlayNext()) { } }
-            economy.ResetDaily();
             if (saveManager != null) saveManager.Save(save); // 오토세이브
+            // 정산 화면은 '남은 손님 정리 + 승격'이 끝난 뒤에 열어야 오늘 결과(…/★)가 반영된다.
+            // (이전엔 Phase=Settlement 시점에 열려 승격 전 상태가 표시됐다)
+            OnSettlementReady?.Invoke();
             // 정산 화면에서 플레이어가 취향 기록·구매 후 StartNextDay() 호출
         }
 
@@ -184,6 +201,20 @@ namespace YeogiCafe.Core
                 if (Random.value < chance) queue.Add(cd);
             }
             return queue;   // 스포너에 SetQueue로 전달(미발견 신규는 스포너 spawnWeight 테이블에서 추가)
+        }
+
+        // 정산 화면 [다음 날] → 일차 증가 + 기록 결과 저장 + 영업 시작.
+        // (정산 중 플레이어의 [기록]·구매가 HandleDayEnd 이후에 일어나므로 여기서 다시 저장해야 유실이 없다.)
+        public event System.Action OnSettlementReady;
+
+        public void BeginNextDay()
+        {
+            economy.ResetDaily();                            // 정산 화면에서 오늘 매출을 다 보여준 뒤 초기화
+            day.AdvanceToNextDay();
+            save.currentDay = day.CurrentDay;
+            if (saveManager != null) saveManager.Save(save);
+            SyncSpawnerProgress();
+            day.StartDay();
         }
 
         public ObservationManager Observation => obs;

@@ -69,8 +69,8 @@ namespace YeogiCafe.Core
             firstSpawnDone = true;
             var pool = ResolvePool();
             if (pool.Count == 0 || cafe.FreeSeatCount <= 0) return false;
-            var data = pool[queueIndex % pool.Count];
-            queueIndex++;
+            var data = NextNotInCafe(pool);
+            if (data == null) return false;
             cats.Spawn(data);
             return true;
         }
@@ -94,9 +94,20 @@ namespace YeogiCafe.Core
             // P7: 여유 좌석이 없으면 스폰 보류(만석 강요 방지)
             if (cafe.FreeSeatCount <= 0) return;
 
-            var data = pool[queueIndex % pool.Count];
-            queueIndex++;
-            cats.Spawn(data);
+            var data = NextNotInCafe(pool);
+            if (data != null) cats.Spawn(data);
+        }
+
+        // 같은 고양이(개체)가 동시에 두 마리 있을 수 없다 — 이미 카페 안(또는 입장 중)이면 건너뛴다.
+        CatData NextNotInCafe(List<CatData> pool)
+        {
+            for (int tries = 0; tries < pool.Count; tries++)
+            {
+                var d = pool[queueIndex % pool.Count];
+                queueIndex++;
+                if (d != null && !cats.IsInCafe(d.catId)) return d;
+            }
+            return null;
         }
     }
 }

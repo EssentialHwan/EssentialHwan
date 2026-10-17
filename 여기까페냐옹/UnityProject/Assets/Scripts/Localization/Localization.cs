@@ -59,7 +59,25 @@ namespace YeogiCafe.Loc
         {
             string s = Get(key);
             foreach (var (token, value) in args)
+            {
+                // 한국어 조사 자동 보정: "{name}가" → 받침 있으면 "이". (젖소냥가 → 젖소냥이)
+                s = FixJosa(s, "{" + token + "}", value);
                 s = s.Replace("{" + token + "}", value);
+            }
+            return s;
+        }
+
+        // 토큰 바로 뒤 조사(가/는/를/와)를 값의 받침에 맞게 바꾼다. 한글이 아닌 값은 그대로.
+        public static string FixJosa(string s, string tokenLiteral, string value)
+        {
+            if (string.IsNullOrEmpty(value)) return s;
+            char last = value[value.Length - 1];
+            if (last < '가' || last > '힣') return s;
+            bool batchim = (last - '가') % 28 != 0;
+            s = s.Replace(tokenLiteral + "가", value + (batchim ? "이" : "가"));
+            s = s.Replace(tokenLiteral + "는", value + (batchim ? "은" : "는"));
+            s = s.Replace(tokenLiteral + "를", value + (batchim ? "을" : "를"));
+            s = s.Replace(tokenLiteral + "와", value + (batchim ? "과" : "와"));
             return s;
         }
 

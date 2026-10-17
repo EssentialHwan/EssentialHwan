@@ -52,6 +52,12 @@ namespace YeogiCafe.Core
 
         public void AdvanceToNextDay() => CurrentDay++;
 
+        // 세이브에서 일차 복원(이어하기)
+        public void RestoreDay(int dayNumber) { if (dayNumber > 0) CurrentDay = dayNumber; }
+
+        // 개발용: 남은 영업 시간을 건너뛰고 즉시 정산으로
+        public void DebugEndDayNow() { if (running) { DayTimer = cfg.phaseSeconds.x + cfg.phaseSeconds.y + cfg.phaseSeconds.z; EndDay(); } }
+
         public float SpawnInterval => Phase switch
         {
             DayPhase.Morning => cfg.spawnMorning,

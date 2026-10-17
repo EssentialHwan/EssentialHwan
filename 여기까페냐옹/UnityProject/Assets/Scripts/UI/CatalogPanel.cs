@@ -27,8 +27,10 @@ namespace YeogiCafe.UI
             UiFactory.SetRect(panel, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                               Vector2.zero, new Vector2(720, 560));
 
-            UiFactory.Label("Title", panel.transform, "📖 " + L.Get("ui.catalog.title"), 30,
-                            TextAnchor.UpperCenter, UiFactory.Ink);
+            var title = UiFactory.Label("Title", panel.transform, L.Get("ui.catalog.title"), 26,
+                                        TextAnchor.MiddleCenter, UiFactory.Ink);
+            UiFactory.SetRect((RectTransform)title.transform, new Vector2(0, 1), new Vector2(1, 1),
+                              new Vector2(0.5f, 1), new Vector2(0, -10), new Vector2(0, 40));
 
             header = UiFactory.Label("Header", panel.transform, "", 22, TextAnchor.UpperCenter, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)header.transform, new Vector2(0, 1), new Vector2(1, 1),
@@ -43,7 +45,7 @@ namespace YeogiCafe.UI
             vlg.spacing = 6; vlg.childControlHeight = false; vlg.childForceExpandHeight = false;
             vlg.childControlWidth = true; vlg.childForceExpandWidth = true;
 
-            var closeBtn = UiFactory.Button("Close", panel.transform, "✕", UiFactory.Pink, UiFactory.Cream, out _);
+            var closeBtn = UiFactory.Button("Close", panel.transform, "×", UiFactory.Pink, UiFactory.Cream, out _);
             UiFactory.SetRect((RectTransform)closeBtn.transform, new Vector2(1, 1), new Vector2(1, 1),
                               new Vector2(1, 1), new Vector2(-10, -10), new Vector2(48, 48));
             closeBtn.onClick.AddListener(Hide);

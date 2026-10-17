@@ -11,6 +11,7 @@ namespace YeogiCafe.Save
     public class SaveGame
     {
         public int version = 1;
+        public bool initialized;                 // 새 게임 시작 처리 여부(골드 초기값 1회 지급)
         public int gold;
         public int currentDay = 1;
         public int cafeLevel = 1;

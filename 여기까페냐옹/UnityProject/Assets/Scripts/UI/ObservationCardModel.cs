@@ -60,7 +60,7 @@ namespace YeogiCafe.UI
             ObsState.Unknown => "?",
             ObsState.Suspected => "…",
             ObsState.Confirmable => "★",
-            ObsState.Recorded => "✓",
+            ObsState.Recorded => "√",
             _ => "?"
         };
     }

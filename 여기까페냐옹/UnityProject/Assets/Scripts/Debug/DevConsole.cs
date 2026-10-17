@@ -36,7 +36,7 @@ namespace YeogiCafe.DevTools
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (!show) return;
-            GUILayout.BeginArea(new Rect(10, 10, 240, 300), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(10, 80, 260, 340), GUI.skin.box);
             GUILayout.Label("== DevConsole (F1) ==");
             if (economy != null)
             {
@@ -45,9 +45,24 @@ namespace YeogiCafe.DevTools
             }
             if (day != null)
             {
-                GUILayout.Label($"Day {day.CurrentDay} / {day.Phase}");
-                if (GUILayout.Button("배속 x3")) day.speed = 3f;
-                if (GUILayout.Button("배속 x1")) day.speed = 1f;
+                GUILayout.Label($"Day {day.CurrentDay} / {day.Phase}  (timeScale {Time.timeScale:0}x)");
+                // 전체 시뮬레이션 배속: 고양이 이동·착석 시간까지 같이 빨라져야 테스트가 의미 있다.
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("x1")) Time.timeScale = 1f;
+                if (GUILayout.Button("x3")) Time.timeScale = 3f;
+                if (GUILayout.Button("x10")) Time.timeScale = 10f;
+                GUILayout.EndHorizontal();
+                if (GUILayout.Button("영업 즉시 종료 → 정산")) day.DebugEndDayNow();
+            }
+            if (GUILayout.Button("세이브 삭제 후 종료(새 게임)"))
+            {
+                var p = System.IO.Path.Combine(Application.persistentDataPath, "save.json");
+                if (System.IO.File.Exists(p)) System.IO.File.Delete(p);
+#if UNITY_EDITOR
+                UnityEditor.EditorApplication.isPlaying = false;   // 계속 돌면 오토세이브가 다시 만든다
+#else
+                Application.Quit();
+#endif
             }
             GUILayout.Label("(치트는 빌드에서 자동 제외)");
             GUILayout.EndArea();
