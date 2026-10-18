@@ -82,6 +82,7 @@ namespace YeogiCafe.UI
             }
 
             bubbles = new BubbleLayer(root.transform);
+            if (bootstrap != null && bootstrap.interactions != null) bootstrap.interactions.say = ShowCatBubble;
             BuildHud(root.transform);
 
             kitchen = new KitchenView(this, root.transform, bootstrap != null ? bootstrap.orderSystem : null);

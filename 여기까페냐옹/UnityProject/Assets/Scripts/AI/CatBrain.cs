@@ -41,6 +41,9 @@ namespace YeogiCafe.AI
         public bool UsedPreferredSeat { get; private set; }
         public bool UsedPreferredFacility { get; private set; }
         public CatState State => state;
+        // 이번 방문 중 쓰다듬기 기분(표현 레이어가 기록, 만족도에 반영). ±SessionMoodClamp
+        public int TouchMood { get; private set; }
+        public void AddTouchMood(int d) => TouchMood = UnityEngine.Mathf.Clamp(TouchMood + d, -CatTemperament.SessionMoodClamp, CatTemperament.SessionMoodClamp);
         public ISeat CurrentSeat => seat;                                   // 표현(CatView)용 읽기 전용
         public Vector3 CurrentSeatPos => seat != null ? seat.WorldPos : transform.position;
         public System.Action<IFacility> OnFacilityUse;                      // 표현용: 시설 이용 순간

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using YeogiCafe.AI;
 using YeogiCafe.Art;
@@ -43,6 +44,89 @@ namespace YeogiCafe.Visual
 
         // 퇴장
         bool exiting; ICatMover exitMover; float fade = 1f;
+
+        // ── 상호작용 동작(쓰다듬기 반응·고양이끼리) ──
+        // 단계 목록을 차례로 재생. meet가 있으면 그 지점(바닥)까지 걸어가서 하고, 끝나면 자리로 돌아온다.
+        public struct Step { public string clip; public float seconds; public bool hasEmote; public EmoteDrawing.Kind emote; }
+        readonly Queue<Step> steps = new();
+        string stepClip = "sit"; float stepLeft; bool acting; bool actHasMeet; Vector3 actMeet; int actFace; float actMoveT; bool actReturning;
+        const float ActMove = 0.45f;
+
+        // 감정 아이콘
+        SpriteRenderer emoteSr; float emoteT = -1f;
+        const float EmoteLife = 1.6f;
+        float zzzTimer;
+
+        // 쓰다듬기 연속 횟수
+        float lastPetAt = -99f; int petStreak;
+
+        public bool IsActing => acting;
+        public bool IsSeatedNow { get; private set; }
+        public bool IsSleeping => rest == Rest.Sleep;
+        public CatBrain Brain => brain;
+        public SpriteRenderer Renderer => sr;
+        public Vector3 SeatPos => transform.position;
+
+        // 고양이끼리 어울릴 수 있는 상태: 자리에서 쉬는 중(주문 대기·먹기·시설·전환 중 제외)
+        public bool CanSocialize => IsSeatedNow && !exiting && !acting && !hopping && eatTimer <= 0f && !InTransition &&
+                                    brain.State == CatState.Idle;
+        // 쓰다듬을 수 있는 상태: 자리에 있으면 주문 대기 중이어도 OK
+        public bool CanTouch => IsSeatedNow && !exiting && !acting && !hopping;
+
+        public int RegisterPet()
+        {
+            if (Time.time - lastPetAt > 6f) petStreak = 0;
+            petStreak++; lastPetAt = Time.time;
+            return petStreak;
+        }
+
+        public void DoAction(Step[] seq, Vector3? meet = null, int face = 0)
+        {
+            steps.Clear();
+            foreach (var st in seq) steps.Enqueue(st);
+            acting = true; stepLeft = 0f; actReturning = false;
+            actHasMeet = meet.HasValue; actMeet = meet ?? Vector3.zero; actFace = face; actMoveT = 0f;
+            rest = rest == Rest.Sleep ? Rest.Sit : rest;    // 자다가 깨면 앉은 자세로
+            idleTimer = 0f;
+            NextStep();
+        }
+
+        void NextStep()
+        {
+            if (steps.Count == 0) { stepLeft = 0f; return; }
+            var st = steps.Dequeue();
+            stepLeft = st.seconds;
+            stepClip = st.clip;
+            clip = ""; Play(st.clip);
+            if (st.hasEmote) ShowEmote(st.emote);
+        }
+
+        public void ShowEmote(EmoteDrawing.Kind k)
+        {
+            if (emoteSr == null)
+            {
+                var go = new GameObject("Emote");
+                go.transform.SetParent(visual, false);
+                emoteSr = go.AddComponent<SpriteRenderer>();
+            }
+            emoteSr.sprite = RuntimeSprites.Get("emote_" + k, () => EmoteDrawing.Draw(k));
+            emoteSr.gameObject.SetActive(true);
+            emoteT = 0f;
+        }
+
+        void TickEmote(float dt)
+        {
+            if (emoteSr == null || emoteT < 0f) return;
+            emoteT += dt;
+            float k = emoteT / EmoteLife;
+            if (k >= 1f) { emoteSr.gameObject.SetActive(false); emoteT = -1f; return; }
+            float pop = emoteT < 0.15f ? Mathf.Lerp(0.4f, 1.15f, emoteT / 0.15f) : Mathf.Lerp(1.15f, 1f, Mathf.Clamp01((emoteT - 0.15f) / 0.1f));
+            emoteSr.transform.localScale = Vector3.one * pop;
+            float head = rest == Rest.Sleep || clip == "loaf" || clip == "purr" || clip == "rollover" || clip == "flinch" ? 0.75f : 1.15f;
+            emoteSr.transform.localPosition = new Vector3(sr.flipX ? -0.25f : 0.25f, head + k * 0.25f, 0f);
+            emoteSr.color = new Color(1f, 1f, 1f, k > 0.75f ? (1f - k) / 0.25f : 1f);
+            emoteSr.sortingOrder = sr.sortingOrder + 2;
+        }
 
         void Awake()
         {
@@ -132,6 +216,10 @@ namespace YeogiCafe.Visual
             lastState = st;
 
             bool seated = !exiting && !walking && brain.CurrentSeat != null && IsSeatedState(st);
+            IsSeatedNow = seated;
+            // 자리를 떠나면(이동·퇴장) 동작 취소. 주문 결정처럼 잠깐 다른 상태를 거치는 건 무시.
+            if (acting && (exiting || walking || brain.CurrentSeat == null)) { acting = false; steps.Clear(); }
+            if (acting) seated = true;
             float sitH = seated ? SitHeight() : 0f;
 
             // ── 위치(표현 오프셋) ──
@@ -152,6 +240,43 @@ namespace YeogiCafe.Visual
                     sr.flipX = (hopT < HopMove + HopStay) ? toHop.x < 0f : toHop.x > 0f;   // 갈 때/돌아올 때 진행 방향
             }
             else if (!seated) hopping = false;
+
+            // 상호작용: 만날 지점으로 걸어가 동작 → 돌아오기
+            bool actWalking = false;
+            if (acting)
+            {
+                if (actHasMeet)
+                {
+                    Vector3 toMeet = actMeet - pos;
+                    float k;
+                    if (!actReturning) { actMoveT = Mathf.Min(actMoveT + dt, ActMove); k = Smooth(actMoveT / ActMove); actWalking = actMoveT < ActMove; }
+                    else { actMoveT = Mathf.Max(actMoveT - dt, 0f); k = Smooth(actMoveT / ActMove); actWalking = actMoveT > 0f; }
+                    local = Vector3.Lerp(local, toMeet, k);
+                    if (k > 0.5f) sortY = actMeet.y - 0.01f;
+                    if (actWalking && Mathf.Abs(toMeet.x) > 0.01f) sr.flipX = actReturning ? toMeet.x > 0f : toMeet.x < 0f;
+                    else if (!actReturning && actFace != 0) sr.flipX = actFace < 0;
+                }
+                else if (actFace != 0) sr.flipX = actFace < 0;
+
+                if (!actWalking)
+                {
+                    if (!actReturning)
+                    {
+                        stepLeft -= dt;
+                        if (stepLeft <= 0f)
+                        {
+                            if (steps.Count > 0) NextStep();
+                            else if (actHasMeet) actReturning = true;
+                            else acting = false;
+                        }
+                    }
+                    else if (actMoveT <= 0f)
+                    {
+                        acting = false;
+                        if (brain.CurrentSeat is Component sc) sr.flipX = sc.transform.position.x > CafeCenterX;
+                    }
+                }
+            }
             visual.localPosition = local;
 
             // ── 클립 선택 ──
@@ -162,6 +287,7 @@ namespace YeogiCafe.Visual
                 stretchLeft -= dt;
                 if (stretchLeft <= 0f && exitMover != null) exitMover.MoveTo(exitDoor);
             }
+            else if (acting) Play(actWalking ? "walk" : stepClip);
             else if (moving) { Play("walk"); idleTimer = 0f; rest = Rest.None; }
             else if (!seated) { Play(exiting ? "walk" : "stand"); rest = Rest.None; }
             else if (st == CatState.WaitFood) { Play("order"); idleTimer = 0f; rest = Rest.Sit; }
@@ -187,6 +313,8 @@ namespace YeogiCafe.Visual
             Tick(dt);
 
             sr.sortingOrder = YSort.Order(sortY) + YSort.CatAboveSeat;
+            if (clip == "sleep" && !acting) { zzzTimer -= dt; if (zzzTimer <= 0f) { zzzTimer = 3.5f; ShowEmote(EmoteDrawing.Kind.Zzz); } }
+            TickEmote(dt);
 
             // ── 퇴장 처리 ──
             if (exiting)
@@ -209,7 +337,7 @@ namespace YeogiCafe.Visual
         }
 
         static bool IsSeatedState(CatState s) =>
-            s == CatState.Sit || s == CatState.DecideOrder || s == CatState.WaitFood ||
+            s == CatState.Sit || s == CatState.DecideOrder || s == CatState.Order || s == CatState.WaitFood ||
             s == CatState.Eat || s == CatState.Idle || s == CatState.FacilityAction;
 
         static float Smooth(float t) { t = Mathf.Clamp01(t); return t * t * (3f - 2f * t); }

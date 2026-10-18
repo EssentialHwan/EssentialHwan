@@ -30,6 +30,7 @@ namespace YeogiCafe.Data
         [Header("만족도")]
         public int satBase = 50, foodFav = 25, foodTag = 15, foodForced = -5;
         public int seatPref = 15, facilityPref = 15, serviceFast = 5, orderFail = -10;
+        public int touchPerMood = 5;                // 쓰다듬기 반응 1단계당 만족도(±2단계)
         public float atmoMatch = 1.1f, atmoNeutral = 1.0f, atmoOpposite = 0.9f; // MVP=1.0
         public float waitPenaltyPerSec = 0.5f;
         public bool atmosphereAffectsSatisfaction = false; // P2: MVP false

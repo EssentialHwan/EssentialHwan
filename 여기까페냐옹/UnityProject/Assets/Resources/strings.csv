@@ -155,3 +155,30 @@ rel_gray_cow.01,회색냥과 젖소냥이 나란히 앉아 조용히 골골거�
 rel_gray_cow.02,"둘은 이제 늘 함께 온다. 어쩐지 닮은 구석이 있다.",The two always come together now. They seem alike somehow.
 rel_calico_tuxedo.01,삼색냥과 턱시도냥이 캣타워에서 신나게 논다.,Patches and Tux play energetically on the cat tower.
 rel_calico_tuxedo.02,활발한 둘이 친구가 되어 카페가 더 시끌벅적해졌다.,The lively pair became friends and the cafe got livelier.
+touch.say.love,골골골…,Purrr…
+touch.say.rollover,냐앙~,Mrrow~
+touch.say.play,냥!,Mew!
+touch.say.sniff,킁킁?,Sniff sniff?
+touch.say.flinch,…!,…!
+touch.say.hiss,하악!,Hiss!
+touch.say.swat,냥냥펀치!,Cat punch!
+touch.learn.loves,{name}는 쓰다듬어 주는 걸 좋아한다.,{name} loves being petted.
+touch.learn.playful,{name}는 손을 장난감인 줄 안다.,{name} thinks your hand is a toy.
+touch.learn.curious,{name}는 손 냄새부터 맡는다.,{name} sniffs your hand first.
+touch.learn.shy,{name}는 아직 손길이 낯설다.,{name} is still shy of your touch.
+touch.learn.warmed,{name}가 이제 손길을 허락한다!,{name} finally lets you pet them!
+touch.learn.hates,{name}는 만지는 걸 싫어한다.,{name} hates being touched.
+touch.learn.fickle,{name}는 그날 기분 따라 다르다. 변덕쟁이!,{name} is moody. What a fickle cat!
+ui.axis.touch,손길,Touch
+touch.loves,좋아함,Loves it
+touch.playful,장난,Playful
+touch.curious,킁킁,Curious
+touch.shy,낯가림,Shy
+touch.warmed,친해짐,Warmed up
+touch.hates,싫어함,Hates it
+touch.fickle,변덕,Fickle
+social.rub,부비부비,Nuzzle
+social.groom,핥핥,Lick lick
+social.play,냥냥!,Play!
+social.hiss,하악!,Hiss!
+social.fight,냥냥펀치!,Cat fight!

@@ -36,7 +36,7 @@ namespace YeogiCafe.DevTools
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (!show) return;
-            GUILayout.BeginArea(new Rect(10, 80, 260, 340), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(10, 80, 260, 420), GUI.skin.box);
             GUILayout.Label("== DevConsole (F1) ==");
             if (economy != null)
             {
@@ -53,6 +53,21 @@ namespace YeogiCafe.DevTools
                 if (GUILayout.Button("x10")) Time.timeScale = 10f;
                 GUILayout.EndHorizontal();
                 if (GUILayout.Button("영업 즉시 종료 → 정산")) day.DebugEndDayNow();
+            }
+            var dir = FindObjectOfType<YeogiCafe.Visual.CatInteractionDirector>();
+            if (dir != null)
+            {
+                GUILayout.Label("고양이끼리(앉은 아무 둘)");
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("부비")) dir.DebugForce(YeogiCafe.AI.SocialKind.Rub);
+                if (GUILayout.Button("핥기")) dir.DebugForce(YeogiCafe.AI.SocialKind.Groom);
+                if (GUILayout.Button("놀이")) dir.DebugForce(YeogiCafe.AI.SocialKind.Play);
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("킁킁")) dir.DebugForce(YeogiCafe.AI.SocialKind.Sniff);
+                if (GUILayout.Button("하악")) dir.DebugForce(YeogiCafe.AI.SocialKind.Hiss);
+                if (GUILayout.Button("싸움")) dir.DebugForce(YeogiCafe.AI.SocialKind.Fight);
+                GUILayout.EndHorizontal();
             }
             if (GUILayout.Button("세이브 삭제 후 종료(새 게임)"))
             {

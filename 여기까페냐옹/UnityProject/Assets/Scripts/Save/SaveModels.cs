@@ -61,6 +61,8 @@ namespace YeogiCafe.Save
         public bool lastUsedPreferredSeat;
         public bool lastUsedPreferredFacility;
         public ObservationRecord observation = new();     // 필수 저장, Truth 미포함
+        // 쓰다듬기 반응을 '본' 횟수(TouchResult 순서). 기질(Truth)이 아니라 관찰 결과만 저장.
+        public int[] touchSeen = new int[5];
 
         // ── 만족도 파생값 (저장 안 함) ──
         public float LastSatisfaction => satisfactionHistory.Count > 0 ? satisfactionHistory[^1] : 0f;

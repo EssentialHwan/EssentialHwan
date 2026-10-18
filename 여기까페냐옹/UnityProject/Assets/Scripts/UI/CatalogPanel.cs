@@ -83,7 +83,9 @@ namespace YeogiCafe.UI
                     $"{L.Get("ui.axis.seat")}{ObservationCardBuilder.StateIcon(cs.observation.seat.state)}  " +
                     $"{L.Get("ui.axis.facility")}{ObservationCardBuilder.StateIcon(cs.observation.facility.state)}";
 
-                var lbl = UiFactory.Label("Row", row.transform, $"{catName}      {axes}", 20,
+                string touchKey = cs != null ? YeogiCafe.AI.CatTemperament.ObservedKey(cs.touchSeen) : null;
+                string touch = $"{L.Get("ui.axis.touch")} {(touchKey != null ? L.Get(touchKey) : "?")}";
+                var lbl = UiFactory.Label("Row", row.transform, $"{catName}      {axes}      {touch}", 20,
                                           TextAnchor.MiddleLeft, UiFactory.Ink);
                 UiFactory.SetRect((RectTransform)lbl.transform, Vector2.zero, Vector2.one,
                                   new Vector2(0, 0.5f), new Vector2(20, 0), new Vector2(-20, 0));

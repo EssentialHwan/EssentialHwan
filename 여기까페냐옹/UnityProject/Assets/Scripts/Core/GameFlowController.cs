@@ -144,7 +144,8 @@ namespace YeogiCafe.Core
                 totalWaitOver = 0f,     // TODO(밸런스): 주문~서빙 대기시간을 만족도에 반영할지 기획 결정 필요
                 orderFailed = brain.ServedMenu == null,
                 hasDominant = cfg.atmosphereAffectsSatisfaction && atmo.hasDominant,
-                dominantAtmosphere = atmo.dominant
+                dominantAtmosphere = atmo.dominant,
+                touchMood = brain.TouchMood
             };
             float satisfaction = SatisfactionCalculator.Compute(data, sr, cfg);
 

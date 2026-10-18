@@ -19,6 +19,7 @@ namespace YeogiCafe.Observation
         public bool orderFailed;
         public AtmosphereAxis dominantAtmosphere;
         public bool hasDominant;
+        public int touchMood;             // 쓰다듬기 반응 누적(+좋아함/-싫어함, ±2 제한)
     }
 
     public static class SatisfactionCalculator
@@ -53,6 +54,7 @@ namespace YeogiCafe.Observation
             if (r.fastService) s += cfg.serviceFast;
             s -= r.totalWaitOver * cfg.waitPenaltyPerSec;
             if (r.orderFailed) s += cfg.orderFail;
+            s += r.touchMood * cfg.touchPerMood;   // 좋아하는 애를 쓰다듬으면 기분↑, 싫어하는 애를 건드리면↓
 
             return Mathf.Clamp(s, 0f, 100f);
         }

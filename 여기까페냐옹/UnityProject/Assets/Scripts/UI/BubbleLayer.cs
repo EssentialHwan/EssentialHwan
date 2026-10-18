@@ -12,7 +12,7 @@ namespace YeogiCafe.UI
         class Bubble { public RectTransform rt; public CanvasGroup cg; public Text text; public Transform target; public float life; }
 
         const float Life = 3.6f, Fade = 0.5f;
-        const float HeadOffset = 1.2f;           // 고양이 발밑 기준 머리 위(유닛)
+        const float HeadOffset = 1.45f;          // 고양이 발밑 기준 머리 위(유닛)
 
         readonly RectTransform root;
         readonly Dictionary<string, Bubble> byCat = new();

@@ -37,6 +37,7 @@ namespace YeogiCafe.Core
         public List<CatEventData> allEvents = new();     // 에피소드+관계 이벤트
         public GameFlowController flow;
         public YeogiCafe.Order.OrderSystem orderSystem;   // 주문·조리(주방 1인칭 화면)
+        public YeogiCafe.Visual.CatInteractionDirector interactions;   // 쓰다듬기·고양이끼리 상호작용
 
         void Awake()
         {
@@ -78,6 +79,7 @@ namespace YeogiCafe.Core
             if (events == null) events = gameObject.AddComponent<YeogiCafe.Progression.EventManager>();
             if (flow == null) flow = gameObject.AddComponent<GameFlowController>();
             if (orderSystem == null) orderSystem = gameObject.AddComponent<YeogiCafe.Order.OrderSystem>();
+            if (interactions == null) interactions = gameObject.AddComponent<YeogiCafe.Visual.CatInteractionDirector>();
         }
 
         void WireReferences()
@@ -98,6 +100,7 @@ namespace YeogiCafe.Core
             flow.spawner = spawner; flow.cafeManager = cafeManager; flow.relationships = relationships; flow.events = events;
             flow.furnitureLookup = LookupFurniture;
             flow.orderSystem = orderSystem;
+            interactions.cats = cats; interactions.relationships = relationships;
         }
 
         [Header("씬 배치")]
