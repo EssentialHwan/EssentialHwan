@@ -115,7 +115,7 @@ namespace YeogiCafe.UI
 
         public void Toggle()
         {
-            if (rootGo.activeSelf) Hide(); else Show();
+            if (rootGo.activeSelf) Hide(); else { Show(); rootGo.transform.SetAsLastSibling(); }   // 주방 화면 위로
         }
 
         void Show()

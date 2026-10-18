@@ -246,6 +246,7 @@ namespace YeogiCafe.UI
 
         // 정산 화면의 [다음 날] → 영업 재개. (재방문 큐 편성은 flow가 담당하지만 S1은 단순 재시작)
         public DayManager Day => day;
+        public CafeContext Cafe => cafe;
         public CatManager Cats => bootstrap != null ? bootstrap.cats : null;
 
         public void StartNextDay()

@@ -117,7 +117,9 @@ namespace YeogiCafe.Save
         public PrefAxis axis;
         public ObsState state = ObsState.Unknown;   // ? / … / ★ / ✓
         public List<ClueTally> clueWeights = new();
-        public string recordedValue;                // Recorded 시 확정된 태그/메뉴 id
+        public string recordedValue;                // Recorded 시 확정된 태그/메뉴 id (추리 기록이면 플레이어가 고른 메뉴/가구 id)
+        public List<string> wrongGuesses = new();   // 틀린 추리(다시 고를 때 × 표시)
+        public int lastGuessDay = -1;               // 하루 한 번만 추리 가능(찍기 방지)
 
         public ClueTally GetOrCreate(string target)
         {

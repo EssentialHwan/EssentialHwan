@@ -234,6 +234,32 @@ namespace YeogiCafe.AI
         public System.Func<Vector3> RandomFloorPoint;                      // 매니저 주입(없으면 돌아다니지 않음)
 
         float restTimer, restDuration = 6f, facTimer, facDuration;
+
+        // 우다다: 갑자기 카페를 몇 군데 전력질주
+        readonly Queue<Vector3> zoomPath = new();
+        public bool IsZooming { get; private set; }
+        float baseSpeed = -1f;
+
+        public void StartZoomies()
+        {
+            if (RandomFloorPoint == null || Mover == null) return;
+            zoomPath.Clear();
+            int n = Random.Range(3, 6);
+            for (int i = 0; i < n; i++) zoomPath.Enqueue(RandomFloorPoint());
+            IsZooming = true;
+            if (Mover is SimpleLerpMover m) { if (baseSpeed < 0f) baseSpeed = m.speed; m.speed = baseSpeed * 3.2f; }
+            lostSeat = null;
+            Mover.MoveTo(zoomPath.Dequeue());
+        }
+
+        void TickZoomies()
+        {
+            if (IsMoving) return;
+            if (zoomPath.Count > 0) { Mover.MoveTo(zoomPath.Dequeue()); return; }
+            IsZooming = false;
+            if (Mover is SimpleLerpMover m && baseSpeed > 0f) m.speed = baseSpeed;
+            NewRest();
+        }
         const float DismountTime = 0.55f;
 
         void DoActionLoop()
@@ -250,6 +276,7 @@ namespace YeogiCafe.AI
                 return;
             }
 
+            if (IsZooming) { TickZoomies(); return; }
             if (sitTimer >= sitDuration) { state = CatState.Pay; return; }
             if (IsMoving) return;                                            // 걷는 중
             state = CatState.Idle;
@@ -272,6 +299,7 @@ namespace YeogiCafe.AI
             if (data.HasPersonality(PersonalityTag.Active) || data.HasPersonality(PersonalityTag.Playful)) roam += 0.25f;
             if (data.HasPersonality(PersonalityTag.Curious)) roam += 0.15f;
             if (data.HasPersonality(PersonalityTag.Relaxed) || data.HasPersonality(PersonalityTag.Introvert)) roam -= 0.2f;
+            if (Random.value < CatTemperament.ZoomiesChance(data)) { StartZoomies(); return; }   // 우다다!
             float r = Random.value;
             if (r < roam && RandomFloorPoint != null) GoTo(RandomFloorPoint());
             else if (r < roam + 0.2f && seat != null && !AtSeat) GoTo(seat.WorldPos);
@@ -295,6 +323,7 @@ namespace YeogiCafe.AI
         // 다른 고양이에게 다가가기(표현 레이어의 상호작용 연출이 요청). 쉬는 중일 때만.
         public bool RequestApproach(Vector3 p)
         {
+            if (IsZooming) return false;
             if (state != CatState.Idle || FacilityPhase != FacPhase.None || IsMoving || Mover == null) return false;
             GoTo(p);
             restDuration = Mathf.Max(restDuration, 6f);
@@ -369,6 +398,7 @@ namespace YeogiCafe.AI
 
         void DoPay()
         {
+            if (IsZooming) { IsZooming = false; zoomPath.Clear(); if (Mover is SimpleLerpMover m && baseSpeed > 0f) m.speed = baseSpeed; }
             EndFacility();
             if (seat != null) { SetOccupant?.Invoke(seat, null); seat.Vacate(); seat = null; } // 자리 반납(회전)
             state = CatState.Leave; /* 만족도·결제·세션확정은 매니저가 OnLeave에서 */
@@ -379,6 +409,7 @@ namespace YeogiCafe.AI
         {
             if (sessionCompleted) return;
             EndFacility();
+            if (IsZooming) { IsZooming = false; zoomPath.Clear(); if (Mover is SimpleLerpMover m && baseSpeed > 0f) m.speed = baseSpeed; }
             if (seat != null) { SetOccupant?.Invoke(seat, null); seat.Vacate(); seat = null; }
             if (OrderSystem != null) OrderSystem.DropForCat(data.catId);
             if (state == CatState.WaitFood) ServedMenu = null;   // 못 받고 떠나면 결제 없음

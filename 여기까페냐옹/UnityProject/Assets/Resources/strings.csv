@@ -190,3 +190,30 @@ ui.edit.hint,가구를 끌어서 옮겨 보세요. 겹치면 원래 자리로 �
 ui.edit.done,완료,Done
 social.steal,{boss}가 {name}의 자리를 차지했다!,{boss} took {name}'s seat!
 ui.catalog.boss,대장,Boss
+social.ambush,덮쳐랏!,Pounce!
+obs.suspected,짐작 중,Hunch
+obs.confirmable,거의 확실,Almost sure
+tag.seat.Normal,일반석,Regular seat
+tag.seat.Window,창가,Window
+tag.seat.Corner,구석,Corner
+tag.seat.TwoSeat,2인석,Two-seater
+tag.seat.Sofa,소파,Sofa
+tag.seat.BarTable,바 테이블,Bar table
+tag.seat.Quiet,조용한 자리,Quiet spot
+tag.seat.OutsideView,바깥 구경,Outside view
+tag.fac.Play,놀이,Play
+tag.fac.Height,높은 곳,High places
+tag.fac.Active,뛰어놀기,Running around
+tag.fac.Soft,푹신한 곳,Soft spots
+tag.fac.Relax,늘어지기,Lounging
+tag.fac.Quiet,조용한 곳,Quiet spots
+tag.fac.Social,어울리기,Socializing
+tag.fac.Natural,자연,Nature
+ui.guess.btn,추리,Guess
+ui.guess.title,{name}가 좋아하는 {axis}은?,What {axis} does {name} like?
+ui.guess.correct,정답! {name}는 {item}를 좋아해요,Correct! {name} likes {item}
+ui.guess.early,짐작만으로 맞혔어요! 보너스 +{g}G,Sharp guess! Bonus +{g}G
+ui.guess.wrong,음… 아닌 것 같아. 내일 다시 생각해 보자,Hmm… not quite. Let's think again tomorrow
+ui.guess.tried,오늘은 이미 추리했어요,Already guessed today
+ui.guess.none,고를 수 있는 게 아직 없어요,Nothing to choose from yet
+ui.guess.cancel,닫기,Close

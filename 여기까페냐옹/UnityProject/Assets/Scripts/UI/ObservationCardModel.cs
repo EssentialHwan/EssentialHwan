@@ -55,6 +55,26 @@ namespace YeogiCafe.UI
             };
         }
 
+        // 도감·일지 표시용 글자: ? / 짐작 중 / 거의 확실 / (기록하면) 알아낸 것의 이름
+        public static string AxisText(AxisRecord rec)
+        {
+            switch (rec.state)
+            {
+                case ObsState.Suspected: return YeogiCafe.Loc.L.Get("obs.suspected");
+                case ObsState.Confirmable: return YeogiCafe.Loc.L.Get("obs.confirmable");
+                case ObsState.Recorded: return ValueName(rec.axis, rec.recordedValue);
+                default: return "?";
+            }
+        }
+
+        public static string ValueName(PrefAxis axis, string v)
+        {
+            if (string.IsNullOrEmpty(v)) return "?";
+            if (v.StartsWith("menu_")) return YeogiCafe.Loc.L.Get("menu." + v);
+            if (v.StartsWith("furn_")) return YeogiCafe.Loc.L.Get($"furn.{v}.name");
+            return YeogiCafe.Loc.L.Get($"tag.{(axis == PrefAxis.Seat ? "seat" : "fac")}.{v}");   // 예전 방식(태그) 기록
+        }
+
         public static string StateIcon(ObsState s) => s switch
         {
             ObsState.Unknown => "?",

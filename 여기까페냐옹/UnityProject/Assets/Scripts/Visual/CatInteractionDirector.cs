@@ -66,6 +66,7 @@ namespace YeogiCafe.Visual
             if (save == null && relationships != null) save = relationships.save;
             if (Input.GetMouseButtonDown(0)) TryClick();
             TickPending();
+            TickZoomStartle();
             nextSocial -= Time.deltaTime;
             if (nextSocial <= 0f)
             {
@@ -186,6 +187,31 @@ namespace YeogiCafe.Visual
             if (from.Brain.RequestApproach(spot)) pending.Add(new Pending { from = from, to = to, timeout = 9f });
         }
 
+        // 우다다 하는 고양이가 옆을 휙 지나가면 쉬던 고양이가 깜짝(가끔 하악)
+        float startleTimer;
+        void TickZoomStartle()
+        {
+            startleTimer -= Time.deltaTime;
+            if (startleTimer > 0f) return;
+            startleTimer = 0.25f;
+            Collect();
+            foreach (var z in views)
+            {
+                if (!z.Brain.IsZooming || !z.Brain.IsMoving) continue;
+                foreach (var v in views)
+                {
+                    if (v == z || !v.CanSocialize) continue;
+                    if ((v.SeatPos - z.SeatPos).sqrMagnitude > 0.5f) continue;
+                    var st = CatTemperament.Style(v.Data);
+                    int face = z.SeatPos.x >= v.SeatPos.x ? 1 : -1;
+                    if (st == TouchStyle.Grumpy || (st == TouchStyle.Fickle && R() < 0.5f))
+                        v.DoAction(new[] { S("hiss", 1.2f, EmoteDrawing.Kind.Anger) }, null, face);
+                    else
+                        v.DoAction(new[] { S("flinch", 0.9f, EmoteDrawing.Kind.Exclaim) }, null, face);
+                }
+            }
+        }
+
         float Eagerness(CatView v)
         {
             var st = CatTemperament.Style(v.Data);
@@ -234,6 +260,12 @@ namespace YeogiCafe.Visual
             if (x.SeatPos.x > y.SeatPos.x) (x, y) = (y, x);
             Play(kind, x, y, CatTemperament.Style(x.Data), CatTemperament.Style(y.Data));
             return true;
+        }
+
+        public void DebugZoomies()
+        {
+            Collect();
+            foreach (var v in views) if (v.Brain.State == YeogiCafe.Data.CatState.Idle && !v.Brain.IsMoving) { v.Brain.StartZoomies(); return; }
         }
 
         int RelationStage(string a, string b)
@@ -285,6 +317,26 @@ namespace YeogiCafe.Visual
                     SpawnFightCloud(mid + new Vector3(0f, 0.45f, 0f), 0.45f + 0.9f, 1.8f, Mathf.Min(left.SeatPos.y, right.SeatPos.y));
                     say?.Invoke(left.Data.catId, L.Get("social.fight"));
                     break;
+                case SocialKind.Ambush:
+                {
+                    // 캣초딩이 엉덩이 씰룩 → 덮침. 상대 반응은 기질대로(까칠·변덕은 반격, 장난은 같이 놀기, 나머지는 깜짝)
+                    bool leftKid = sl == TouchStyle.Playful;
+                    var kid = leftKid ? left : right; var other = leftKid ? right : left;
+                    var so = leftKid ? sr : sl;
+                    int kf = leftKid ? +1 : -1;
+                    kid.DoAction(new[] { S("pounce", 1.3f, EmoteDrawing.Kind.Exclaim), S("swat", 0.8f) }, leftKid ? ml : mr, kf);
+                    if (so == TouchStyle.Grumpy || so == TouchStyle.Fickle)
+                    {
+                        other.DoAction(new[] { S("flinch", 1.2f, EmoteDrawing.Kind.Exclaim), S("swat", 1.0f, EmoteDrawing.Kind.Anger) }, leftKid ? mr : ml, -kf);
+                        say?.Invoke(other.Data.catId, L.Get("social.fight"));
+                    }
+                    else if (so == TouchStyle.Playful)
+                        other.DoAction(new[] { S("flinch", 1.0f, EmoteDrawing.Kind.Exclaim), S("pounce", 1.2f, EmoteDrawing.Kind.Note) }, leftKid ? mr : ml, -kf);
+                    else
+                        other.DoAction(new[] { S("flinch", 2.0f, EmoteDrawing.Kind.Sweat) }, leftKid ? mr : ml, -kf);
+                    say?.Invoke(kid.Data.catId, L.Get("social.ambush"));
+                    break;
+                }
                 default:
                     left.DoAction(new[] { S("sniff", 2.2f, EmoteDrawing.Kind.Question) }, ml, +1);
                     right.DoAction(new[] { S("sniff", 2.2f) }, mr, -1);

@@ -103,6 +103,39 @@ namespace YeogiCafe.Observation
             return true;
         }
 
+        // ── 추리 기록: 플레이어가 선택지(메뉴/가구) 중 하나를 고른다 ──
+        // 짐작(…)부터 도전 가능, 하루 한 번. 정답이면 ✓ + 보너스(짐작 단계에서 맞히면 1.5배), 오답이면 기록되고 내일 다시.
+        public enum GuessResult { Correct, Wrong, NotReady, TriedToday, AlreadyRecorded }
+
+        public GuessResult CanGuess(string catId, PrefAxis axis, int day)
+        {
+            var rec = save.GetOrCreateCat(catId).observation.Get(axis);
+            if (rec.state == ObsState.Recorded) return GuessResult.AlreadyRecorded;
+            if (rec.state == ObsState.Unknown) return GuessResult.NotReady;
+            if (rec.lastGuessDay == day) return GuessResult.TriedToday;
+            return GuessResult.Correct;   // = 도전 가능
+        }
+
+        public GuessResult TryGuess(string catId, PrefAxis axis, string guessId, bool isCorrect, int day, out int bonusGold)
+        {
+            bonusGold = 0;
+            var can = CanGuess(catId, axis, day);
+            if (can != GuessResult.Correct) return can;
+            var rec = save.GetOrCreateCat(catId).observation.Get(axis);
+            rec.lastGuessDay = day;
+            if (!isCorrect)
+            {
+                if (!rec.wrongGuesses.Contains(guessId)) rec.wrongGuesses.Add(guessId);
+                return GuessResult.Wrong;
+            }
+            bool early = rec.state == ObsState.Suspected;
+            rec.state = ObsState.Recorded;
+            rec.recordedValue = guessId;
+            bonusGold = Mathf.RoundToInt(cfg.discoveryBonusGold * (early ? 1.5f : 1f));
+            OnPreferenceRecorded?.Invoke(catId, axis);
+            return GuessResult.Correct;
+        }
+
         public IReadOnlyDictionary<string, List<Clue>> StagedToday => stagedToday;
     }
 }

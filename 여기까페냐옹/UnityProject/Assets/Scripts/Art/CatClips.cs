@@ -16,6 +16,7 @@ namespace YeogiCafe.Art
             // 기본 행동
             new Def { name = "walk",     fps = 11, loop = true,  frames = 8,  pose = Walk },
             new Def { name = "stand",    fps = 6,  loop = true,  frames = 8,  pose = StandIdle },
+            new Def { name = "run",      fps = 16, loop = true,  frames = 6,  pose = Run },        // 우다다(전력질주)
             new Def { name = "sit",      fps = 6,  loop = true,  frames = 12, pose = SitIdle },
             new Def { name = "loaf",     fps = 4,  loop = true,  frames = 8,  pose = LoafIdle },
             new Def { name = "sleep",    fps = 3,  loop = true,  frames = 6,  pose = SleepIdle },
@@ -61,10 +62,12 @@ namespace YeogiCafe.Art
             float ph = Ph(i, n);
             void Step(ref CatRig.Leg l, float off, float stride, float lift)
             {
+                // 발을 든 동안(sin>0) 앞으로(+x), 딛는 동안 뒤로 밀림 → 몸이 앞으로 나아가는 걸음
+                // (이전엔 부호가 반대라 공중에서 발이 뒤로 가는 '문워크'였음)
                 float a = TAU * (ph + off);
-                l.px += Mathf.Cos(a) * stride;
+                l.px -= Mathf.Cos(a) * stride;
                 l.py += Mathf.Max(0f, Mathf.Sin(a)) * lift;
-                if (l.knee) { l.kx += Mathf.Cos(a) * stride * 0.6f; l.ky += Mathf.Max(0f, Mathf.Sin(a)) * lift * 0.8f; }
+                if (l.knee) { l.kx -= Mathf.Cos(a) * stride * 0.6f; l.ky += Mathf.Max(0f, Mathf.Sin(a)) * lift * 0.8f; }
             }
             Step(ref p.bn, 0.00f, 3.5f, 2.5f); Step(ref p.fn, 0.25f, 4f, 2.5f);
             Step(ref p.bf, 0.50f, 3.5f, 2.5f); Step(ref p.ff, 0.75f, 4f, 2.5f);
@@ -72,6 +75,47 @@ namespace YeogiCafe.Art
             p.bodyY += bob; p.chestY += bob; p.hipY += bob;
             p.headY += bob * 0.6f + Mathf.Sin(TAU * ph) * 0.4f;
             p.tailAng = 2.2f + Mathf.Sin(TAU * ph) * 0.12f; p.tailCurl = -0.09f + Mathf.Sin(TAU * ph + 1f) * 0.03f;
+            return p;
+        }
+
+        // ── 우다다: 뻗기(앞발 앞·뒷발 뒤) ↔ 모으기(네 발이 몸 아래, 등이 둥글게)를 오가는 갤럽 ──
+        static CatRig.Pose RunStretch()
+        {
+            var p = CatRig.Stand();
+            p.bodyX = 31; p.bodyY = 15; p.bodyRx = 14f; p.bodyRy = 6.2f; p.bodyAng = 0.02f;
+            p.chestX = 40; p.chestY = 15.5f; p.chestR = 7f; p.hipX = 21; p.hipY = 15f; p.hipR = 7.2f;
+            p.headX = 48; p.headY = 22; p.headTilt = 0.1f; p.earFold = 0.35f; p.face = CatRig.Face.Wide;
+            p.fn = new CatRig.Leg { jx = 42, jy = 12, px = 52, py = 7, r = 2.6f, show = true };
+            p.ff = new CatRig.Leg { jx = 39, jy = 12, px = 49, py = 9, r = 2.6f, show = true, far = true };
+            p.bn = new CatRig.Leg { jx = 21, jy = 12, px = 10, py = 8, r = 2.7f, show = true };
+            p.bf = new CatRig.Leg { jx = 24, jy = 12, px = 13, py = 10, r = 2.7f, show = true, far = true };
+            p.tailX = 16; p.tailY = 17; p.tailAng = 2.85f; p.tailCurl = 0.02f; p.tailLen = 13;
+            p.shadowRx = 13;
+            return p;
+        }
+
+        static CatRig.Pose RunGather()
+        {
+            var p = CatRig.Stand();
+            p.bodyX = 30; p.bodyY = 17; p.bodyRx = 11.5f; p.bodyRy = 7.6f; p.bodyAng = 0.06f;
+            p.chestX = 37; p.chestY = 16; p.chestR = 7.2f; p.hipX = 23; p.hipY = 18f; p.hipR = 7.6f;
+            p.headX = 45; p.headY = 22; p.headTilt = 0.15f; p.earFold = 0.35f; p.face = CatRig.Face.Wide;
+            p.fn = new CatRig.Leg { jx = 37, jy = 12, px = 33, py = CatRig.Ground, r = 2.6f, show = true };
+            p.ff = new CatRig.Leg { jx = 35, jy = 12, px = 30, py = CatRig.Ground + 1, r = 2.6f, show = true, far = true };
+            p.bn = new CatRig.Leg { jx = 24, jy = 14, px = 32, py = CatRig.Ground + 1, r = 2.7f, show = true };
+            p.bf = new CatRig.Leg { jx = 26, jy = 14, px = 35, py = CatRig.Ground + 2, r = 2.7f, show = true, far = true };
+            p.tailX = 16; p.tailY = 19; p.tailAng = 2.7f; p.tailCurl = -0.04f; p.tailLen = 16;
+            p.shadowRx = 11;
+            return p;
+        }
+
+        static CatRig.Pose Run(int i, int n)
+        {
+            // 0~2: 뻗었다가 모으기, 3~5: 모았다가 뻗기 (몸이 공중에 뜨는 순간 포함)
+            float t = i < 3 ? i / 2f : 1f - (i - 3) / 2f;
+            var p = CatRig.Lerp(RunStretch(), RunGather(), Ease(t));
+            float lift = (i == 0 || i == 5) ? 2f : 0f;                  // 뻗었을 때 살짝 뜸
+            p.bodyY += lift; p.chestY += lift; p.hipY += lift; p.headY += lift;
             return p;
         }
 

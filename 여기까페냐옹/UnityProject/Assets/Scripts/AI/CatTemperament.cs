@@ -10,7 +10,7 @@ namespace YeogiCafe.AI
     // 관찰 결과로 저장되는 반응 종류(세이브 인덱스 고정 — 순서 바꾸지 말 것)
     public enum TouchResult { Love = 0, Play = 1, Sniff = 2, Flinch = 3, Hiss = 4 }
 
-    public enum SocialKind { None, Rub, Groom, Sniff, Play, Hiss, Fight }
+    public enum SocialKind { None, Rub, Groom, Sniff, Play, Hiss, Fight, Ambush }
 
     public static class CatTemperament
     {
@@ -20,6 +20,10 @@ namespace YeogiCafe.AI
         public static bool IsBoss(CatData d) =>
             d != null && d.personalityTags != null && d.personalityTags.Length > 0 && d.personalityTags[0] == PersonalityTag.Introvert;
         public const float BossStealChance = 0.5f;
+
+        // 캣초딩: 장난 기질(첫 성격 활발·장난) — 우다다가 잦고, 쉬는 고양이를 몰래 덮친다
+        public static bool IsKid(CatData d) => Style(d) == TouchStyle.Playful;
+        public static float ZoomiesChance(CatData d) => IsKid(d) ? 0.35f : 0.08f;
 
         public static TouchStyle Style(CatData d)
         {
@@ -99,6 +103,8 @@ namespace YeogiCafe.AI
             bool fickle = a == TouchStyle.Fickle || b == TouchStyle.Fickle;
             bool playful = a == TouchStyle.Playful || b == TouchStyle.Playful;
 
+            // 캣초딩은 친구든 아니든 일단 덮치고 본다
+            if (playful && rnd < 0.45f) return SocialKind.Ambush;
             if (relStage >= 2) return rnd < 0.5f ? SocialKind.Groom : (playful && rnd < 0.75f ? SocialKind.Play : SocialKind.Rub);
             if (grumpy)
             {

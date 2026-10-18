@@ -289,7 +289,12 @@ namespace YeogiCafe.Visual
                 if (stretchLeft <= 0f && exitMover != null) exitMover.MoveTo(exitDoor);
             }
             else if (acting) Play(actWalking ? "walk" : stepClip);
-            else if (moving) { Play("walk"); idleTimer = 0f; rest = Rest.None; }
+            else if (moving)
+            {
+                bool zoom = brain.IsZooming;
+                if (zoom && clip != "run") ShowEmote(EmoteDrawing.Kind.Exclaim);
+                Play(zoom ? "run" : "walk"); idleTimer = 0f; rest = Rest.None;
+            }
             else if (fp == CatBrain.FacPhase.Dismount && perch > 0.05f) Play("jumpdown");
             else if (fp == CatBrain.FacPhase.Perched && brain.FacilityWall) Play("gaze");                      // 창밖 구경
             else if (fp == CatBrain.FacPhase.Perched && facT < JumpUpTime + 0.1f && perch > 0.05f) { }           // 점프 클립 재생 중

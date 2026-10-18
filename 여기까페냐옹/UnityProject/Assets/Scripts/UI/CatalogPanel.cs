@@ -80,13 +80,13 @@ namespace YeogiCafe.UI
                 string catName = visited ? L.Get($"cat.{data.catId}.name") : "???";
                 if (cs != null && cs.bossSeen) catName += $" ({L.Get("ui.catalog.boss")})";
                 string axes = cs == null ? "?  ?  ?" :
-                    $"{L.Get("ui.axis.food")}{ObservationCardBuilder.StateIcon(cs.observation.food.state)}  " +
-                    $"{L.Get("ui.axis.seat")}{ObservationCardBuilder.StateIcon(cs.observation.seat.state)}  " +
-                    $"{L.Get("ui.axis.facility")}{ObservationCardBuilder.StateIcon(cs.observation.facility.state)}";
+                    $"{L.Get("ui.axis.food")} {ObservationCardBuilder.AxisText(cs.observation.food)}   " +
+                    $"{L.Get("ui.axis.seat")} {ObservationCardBuilder.AxisText(cs.observation.seat)}   " +
+                    $"{L.Get("ui.axis.facility")} {ObservationCardBuilder.AxisText(cs.observation.facility)}";
 
                 string touchKey = cs != null ? YeogiCafe.AI.CatTemperament.ObservedKey(cs.touchSeen) : null;
                 string touch = $"{L.Get("ui.axis.touch")} {(touchKey != null ? L.Get(touchKey) : "?")}";
-                var lbl = UiFactory.Label("Row", row.transform, $"{catName}      {axes}      {touch}", 20,
+                var lbl = UiFactory.Label("Row", row.transform, $"{catName}    {axes}    {touch}", 18,
                                           TextAnchor.MiddleLeft, UiFactory.Ink);
                 UiFactory.SetRect((RectTransform)lbl.transform, Vector2.zero, Vector2.one,
                                   new Vector2(0, 0.5f), new Vector2(20, 0), new Vector2(-20, 0));
@@ -128,7 +128,7 @@ namespace YeogiCafe.UI
         {
             bool next = !rootGo.activeSelf;
             rootGo.SetActive(next);
-            if (next) Render();
+            if (next) { Render(); rootGo.transform.SetAsLastSibling(); }   // 주방 화면 위로(겹침 방지)
         }
         public void Hide() => rootGo.SetActive(false);
     }
