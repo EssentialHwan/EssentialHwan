@@ -5,12 +5,13 @@ namespace YeogiCafe.Art
 {
     // 도트 시트 고양이(4×4 = 16포즈, 칸 56×56). Resources/CatSheets/{catId}.png.bytes 가 있으면 리그 대신 이것을 쓴다.
     // 포즈 번호: 0 앉기 · 1 윙크 · 2 눈웃음 · 3 야옹 / 4~7 걷기 / 8 식빵 · 9 잠 · 10 그루밍 · 11 먹기 / 12 엉덩이 들기 · 13 기지개 · 14 웅크림 · 15 꾹꾹이
+    //           16 하악 · 17 뒹굴(옆으로 누움) · 18 점프 · 19 냥펀치(앞발 번쩍)
     // 클립(CatClips 이름)마다 포즈 번호와 살짝 흔들기(dx,dy)·눕히기(rot)를 조합해 프레임을 만든다.
     public static class CatSheet
     {
         public const int Cell = 56;
 
-        struct K { public int f, dx, dy; public bool rot; public K(int f, int dx = 0, int dy = 0, bool rot = false) { this.f = f; this.dx = dx; this.dy = dy; this.rot = rot; } }
+        struct K { public int f, dx, dy; public bool rot, flip; public K(int f, int dx = 0, int dy = 0, bool rot = false, bool flip = false) { this.f = f; this.dx = dx; this.dy = dy; this.rot = rot; this.flip = flip; } }
         static K[] Seq(params int[] f) { var a = new K[f.Length]; for (int i = 0; i < f.Length; i++) a[i] = new K(f[i]); return a; }
         static K[] Rep(int f, int n, int dx = 0, int dy = 0)
         {
@@ -35,19 +36,19 @@ namespace YeogiCafe.Art
             ["liedown"] = Seq(0, 0, 8, 8, 8),
             ["curlup"] = Seq(8, 8, 9, 9, 9),
             ["rub"] = new[] { new K(2), new K(2, 1), new K(1, 1), new K(1), new K(2), new K(2, -1), new K(1, -1), new K(1) },
-            ["rollover"] = new[] { new K(2, 0, 0, true), new K(2, 1, 0, true), new K(2, 2, 0, true), new K(2, 1, 0, true), new K(2, 0, 0, true), new K(2, -1, 0, true), new K(2, -2, 0, true), new K(2, -1, 0, true) },
+            ["rollover"] = new[] { new K(17), new K(17, 1), new K(17, 2), new K(2), new K(17, 0, 0, false, true), new K(17, -1, 0, false, true), new K(17, -2, 0, false, true), new K(2) },
             ["purr"] = Seq(2, 2, 2, 2, 2, 2),
             ["sniff"] = Rep(4, 6, 1, -1),
             ["lick"] = Rep(10, 6, 0, 1),
-            ["pounce"] = new[] { new K(14), new K(14, 1), new K(14), new K(14, 1), new K(5, 2, 4), new K(5, 3, 2), new K(12, 3), new K(12, 3) },
+            ["pounce"] = new[] { new K(14), new K(14, 1), new K(14), new K(14, 1), new K(18, 2, 4), new K(18, 3, 2), new K(12, 3), new K(12, 3) },
             ["meow"] = Seq(3, 3, 3, 0, 0, 0),
             ["flinch"] = Rep(8, 6, -1, 0),
-            ["hiss"] = Rep(3, 6, 1, 0),
-            ["swat"] = Seq(14, 12, 14, 12, 14, 12),
+            ["hiss"] = Rep(16, 6, 1, 0),
+            ["swat"] = Seq(0, 19, 19, 0, 19, 19),
             ["knead"] = Rep(15, 8, 0, 1),
             ["suckle"] = Rep(15, 8, 1, 0),
-            ["jumpup"] = Seq(14, 14, 5, 5, 0, 0),
-            ["jumpdown"] = Seq(0, 14, 5, 5, 14, 0),
+            ["jumpup"] = Seq(14, 14, 18, 18, 0, 0),
+            ["jumpdown"] = Seq(0, 18, 18, 18, 14, 0),
             ["gaze"] = Seq(0, 0, 0, 0, 0, 0, 0, 0, 3, 0),
         };
 
@@ -112,7 +113,7 @@ namespace YeogiCafe.Art
                     {   // 반시계 90°: 머리가 왼쪽, 발이 오른쪽 → 옆으로 누워 뒹굴
                         tx = ox + y - 6; ty = ground + (x - minX);
                     }
-                    else { tx = ox + x; ty = oy + (Cell - 1 - y); }
+                    else { tx = ox + (k.flip ? Cell - 1 - x : x); ty = oy + (Cell - 1 - y); }
                     if (tx < 0 || tx >= w || ty < 0 || ty >= h) continue;
                     o[ty * w + tx] = c;
                 }

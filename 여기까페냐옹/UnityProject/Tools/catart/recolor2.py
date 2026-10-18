@@ -4,7 +4,7 @@ import pickle, numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from scipy import ndimage
 
-cent, frames = pickle.load(open('frames.pkl', 'rb'))
+cent, frames = pickle.load(open('frames20.pkl', 'rb'))
 F = 56
 FONT = "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc"
 W = [1, 7, 11, 6]; O = [0, 10]; B = [4, 9, 2]; OUT = 3; PINK = [5, 8]
@@ -76,7 +76,7 @@ def mix(a, b, t): return tuple(int(a[i] * (1 - t) + b[i] * t) for i in range(3))
 # (cx, cy, 반폭, 방향) 방향 f=정면, s=옆(오른쪽 보기)
 ANCH = {0: (32, 43, 6, 'f'), 1: (29, 43, 6, 'f'), 2: (25, 44, 6, 'f'), 3: (24, 43, 6, 'f'),
         4: (44, 41, 2, 's'), 5: (41, 41, 2, 's'), 6: (39, 41, 2, 's'), 7: (36, 41, 2, 's'),
-        8: (33, 47, 6, 'f'), 15: (22, 45, 6, 'f')}
+        8: (33, 47, 6, 'f'), 15: (22, 45, 6, 'f'), 16: (24, 43, 6, 'f'), 19: (32, 43, 6, 'f')}
 RED, REDD, GOLD, GOLDD = (214, 58, 66), (150, 34, 48), (250, 204, 72), (176, 126, 40)
 
 def accessory(img, g, i, kind):
@@ -126,7 +126,7 @@ def accessory(img, g, i, kind):
             for dx, dy, c in ((1, 2, RED), (2, 2, RED), (1, 3, REDD), (2, 1, RED), (2, 3, RED)): put(cx + dx, cy + dy, c, True)
 
 EYES = {1: [(20, 34, 24, 35), (34, 30, 39, 35)], 8: [(25, 36, 28, 40), (38, 36, 41, 39)], 9: [],
-        14: [(13, 39, 16, 42), (23, 39, 26, 41)], 15: [(15, 37, 18, 37), (26, 37, 29, 37)]}
+        14: [(13, 39, 16, 42), (23, 39, 26, 41)], 15: [(15, 37, 18, 37), (26, 37, 29, 37)], 16: [(14, 30, 18, 35), (28, 30, 33, 34)]}
 def render(key, i):
     g = frames[i]
     spec = CATS[key]
@@ -166,7 +166,7 @@ def render(key, i):
     if spec is not None: accessory(img, g, i, spec.get('acc'))
     return Image.fromarray(img)
 
-REFX = {0: 32.5, 1: 29, 2: 25, 3: 23.5, 4: 48, 5: 44.5, 6: 42, 7: 40, 8: 33, 15: 22}
+REFX = {0: 32.5, 1: 29, 2: 25, 3: 23.5, 4: 48, 5: 44.5, 6: 42, 7: 40, 8: 33, 15: 22, 16: 23.5, 19: 32.5}
 def align(im, i):
     a = np.array(im)
     if i in REFX: dx = round((44 if 4 <= i <= 7 else 28) - REFX[i])
@@ -182,14 +182,14 @@ if __name__ == '__main__':
     names = {'calico': '삼색냥'}
     S = 3; cell = F * S; pad = 6
     sw = cell * 4 + pad * 3
-    big = Image.new('RGBA', ((sw + 40) * 3 + 40, (cell * 4 + pad * 3 + 70) * 3 + 40), (34, 32, 40, 255))
+    big = Image.new('RGBA', ((sw + 40) * 3 + 40, (cell * 5 + pad * 4 + 70) * 3 + 40), (34, 32, 40, 255))
     d = ImageDraw.Draw(big); f = ImageFont.truetype(FONT, 26)
     import os; os.makedirs('out', exist_ok=True)
     for n, key in enumerate(order):
-        ox = 40 + (n % 3) * (sw + 40); oy = 40 + (n // 3) * (cell * 4 + pad * 3 + 70)
+        ox = 40 + (n % 3) * (sw + 40); oy = 40 + (n // 3) * (cell * 5 + pad * 4 + 70)
         d.text((ox, oy + 4), names.get(key) or CATS[key]['name'], font=f, fill=(240, 232, 220))
-        sh = Image.new('RGBA', (F * 4, F * 4), (0, 0, 0, 0))
-        for i in range(16):
+        sh = Image.new('RGBA', (F * 4, F * 5), (0, 0, 0, 0))
+        for i in range(20):
             im = align(render(key, i), i)
             sh.alpha_composite(im, ((i % 4) * F, (i // 4) * F))
             big.alpha_composite(im.resize((cell, cell), Image.NEAREST), (ox + (i % 4) * (cell + pad), oy + 50 + (i // 4) * (cell + pad)))
