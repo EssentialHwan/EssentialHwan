@@ -132,6 +132,30 @@ def accessory(img, g, i, kind):
 EYES = {1: [(20, 34, 24, 35), (34, 30, 39, 35)], 8: [(25, 36, 28, 40), (38, 36, 41, 39)], 9: [],
         14: [(13, 39, 16, 42), (23, 39, 26, 41)], 15: [(15, 37, 18, 37), (26, 37, 29, 37)], 16: [(14, 30, 18, 35), (28, 30, 33, 34)]}
 FACE = {2: (25, 37, 11, 6), 9: (23, 45, 9, 5), 10: (24, 36, 9, 5), 13: (22, 45, 8, 4), 17: (39, 35, 5, 9)}  # 감은 눈 프레임의 샴 얼굴 마스크
+# ── 뜬 눈은 깔끔한 눈 도장으로 새로 그린다(색 바꾸기로는 눈 모양이 지저분해짐) ──
+EYE7 = [".#####.", "#ww####", "#ww####", "#####w#", "#SIIIS#", ".ILLLI.", "..III.."]
+EYE6 = [".####.", "#ww###", "#ww###", "#SIIS#", ".ILLI."]
+EYE5 = [".###.", "#ww##", "#ww##", "#SIS#", ".ILI."]
+OPEN = {0: [(EYE7, 21, 30), (EYE7, 37, 30)], 1: [(EYE7, 33, 30)], 3: [(EYE7, 12, 30), (EYE7, 27, 30)],
+        4: [(EYE5, 46, 32)], 5: [(EYE5, 42, 32)], 6: [(EYE5, 39, 32)], 7: [(EYE5, 38, 32)],
+        8: [(EYE7, 23, 36), (EYE7, 36, 36)], 12: [(EYE6, 27, 42), (EYE6, 36, 42)], 14: [(EYE5, 12, 39), (EYE5, 22, 39)],
+        16: [(EYE7, 12, 30), (EYE7, 27, 30)], 18: [(EYE5, 43, 26)], 19: [(EYE7, 21, 30), (EYE7, 37, 30)]}
+LIDS16 = [(30, 12, 19), (31, 12, 19), (32, 14, 19), (33, 17, 19), (30, 27, 35), (31, 27, 35), (32, 27, 32), (33, 27, 30), (29, 11, 16), (29, 32, 37)]
+PUPIL = (26, 16, 24)
+
+def draw_eyes(img, spec, i):
+    for n, (tpl, x0, y0) in enumerate(OPEN[i]):
+        ic = spec['iris2'] if 'iris2' in spec and n == 1 else spec['iris']
+        light = tuple(min(255, int(v * 1.25 + 20)) for v in ic); shade = tuple(int(v * 0.65) for v in ic)
+        cmap = {'#': PUPIL, 'w': (255, 255, 255), 'I': ic, 'L': light, 'S': shade}
+        for r, row in enumerate(tpl):
+            for c, ch in enumerate(row):
+                if ch in cmap and img[y0 + r, x0 + c, 3] > 0: img[y0 + r, x0 + c] = (*cmap[ch], 255)
+    if i == 16:
+        for y, a, b in LIDS16:
+            for x in range(a, b):
+                if img[y, x, 3] > 0: img[y, x] = (*PUPIL, 255)
+
 def render(key, i):
     g = frames[i]
     spec = CATS[key]
@@ -141,6 +165,9 @@ def render(key, i):
     for x0, y0, x1, y1 in eyes: em[y0:y1 + 2, x0:x1 + 1] = True
     pm = point_mask(g, eyes, FACE.get(i)) if spec and 'point' in spec else None
     rightEyeX = eyes[-1][0] if len(eyes) >= 2 else 999
+    if spec is not None and i in OPEN:
+        em[:] = False
+        for tpl, x0, y0 in OPEN[i]: em[y0:y0 + len(tpl), x0:x0 + len(tpl[0])] = False
     for y in range(F):
         for x in range(F):
             k = g[y, x]
@@ -169,6 +196,7 @@ def render(key, i):
                             col = spec['fur'][min(3, lv + 1)]
                     if pm is not None: col = mix(col, spec['point'][lv], float(np.clip(pm[y, x], 0, 1)))
             img[y, x] = (*col, 255)
+    if spec is not None and i in OPEN: draw_eyes(img, spec, i)
     if spec is not None: accessory(img, g, i, spec.get('acc'))
     return Image.fromarray(img)
 
