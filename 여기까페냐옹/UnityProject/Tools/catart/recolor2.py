@@ -52,14 +52,18 @@ CATS = {
     'moon':    dict(name='달냥', fur=[(255, 255, 255), (240, 240, 250), (220, 222, 238), (188, 192, 214)], X=(84, 86, 112), iris=(80, 150, 236), iris2=(236, 186, 64)),
 }
 
-def point_mask(g, eyes):
+def point_mask(g, eyes, face=None):
     """샴: 귀·얼굴·발·꼬리(가는 부위)를 진하게. 0~1 세기."""
     sil = g >= 0
     core = ndimage.binary_opening(sil, structure=np.ones((7, 7)))
     thin = sil & ~ndimage.binary_dilation(core, iterations=1)
     m = thin.astype(float) * 0.9
     m[np.isin(g, PINK)] = 0
-    if len(eyes) >= 1:
+    if face is not None:
+        cx, cy, rx, ry = face
+        yy, xx = np.mgrid[0:F, 0:F]
+        m = np.maximum(m, np.clip(1.25 - (((xx - cx) / rx) ** 2 + ((yy - cy) / ry) ** 2), 0, 1))
+    elif len(eyes) >= 1:
         cx = np.mean([(a + c) / 2 for a, _, c, _ in eyes]); cy = np.mean([(b + d) / 2 for _, b, _, d in eyes]) + 2.5
         rx = 7.5 if len(eyes) >= 2 else 6; ry = 6
         yy, xx = np.mgrid[0:F, 0:F]
@@ -127,6 +131,7 @@ def accessory(img, g, i, kind):
 
 EYES = {1: [(20, 34, 24, 35), (34, 30, 39, 35)], 8: [(25, 36, 28, 40), (38, 36, 41, 39)], 9: [],
         14: [(13, 39, 16, 42), (23, 39, 26, 41)], 15: [(15, 37, 18, 37), (26, 37, 29, 37)], 16: [(14, 30, 18, 35), (28, 30, 33, 34)]}
+FACE = {2: (25, 37, 11, 6), 9: (23, 45, 9, 5), 10: (24, 36, 9, 5), 13: (22, 45, 8, 4), 17: (39, 35, 5, 9)}  # 감은 눈 프레임의 샴 얼굴 마스크
 def render(key, i):
     g = frames[i]
     spec = CATS[key]
@@ -134,7 +139,7 @@ def render(key, i):
     eyes = EYES[i] if i in EYES else eye_boxes(g)
     em = np.zeros(g.shape, bool)
     for x0, y0, x1, y1 in eyes: em[y0:y1 + 2, x0:x1 + 1] = True
-    pm = point_mask(g, eyes) if spec and 'point' in spec else None
+    pm = point_mask(g, eyes, FACE.get(i)) if spec and 'point' in spec else None
     rightEyeX = eyes[-1][0] if len(eyes) >= 2 else 999
     for y in range(F):
         for x in range(F):
@@ -143,11 +148,12 @@ def render(key, i):
             col = tuple(cent[k].astype(int))
             if spec is not None:
                 r = ROLE.get(k)
-                if em[y, x] and k not in PINK:
+                # 눈 반짝임 = 눈동자(진한색)에 둘러싸인 흰 점. 감은 눈 주변 흰 털은 일반 털로 칠한다.
+                nb = g[max(0, y - 1):y + 2, max(0, x - 1):x + 2]
+                hl = k == 1 and np.isin(nb, [OUT, 10, 0, 2, 9, 4]).sum() >= 4
+                if em[y, x] and k not in PINK and (r != 'W' or hl):
                     if k == OUT: col = (24, 14, 22)
-                    elif k == 1: col = (255, 255, 255)
-                    elif r == 'W':
-                        col = (spec['white'] if 'white' in spec and not spec.get('whiteFaceOnly') else spec['fur'])[LVL[k]]
+                    elif hl: col = (255, 255, 255)
                     else:
                         ic = spec['iris2'] if 'iris2' in spec and x >= rightEyeX else spec['iris']
                         col = ic if k in (10, 0) else tuple(int(v * 0.75) for v in ic)
