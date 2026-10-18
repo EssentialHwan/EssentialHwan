@@ -51,7 +51,7 @@ furn.furn_deco_curtain.name,커튼,Curtain
 furn.furn_deco_vase.name,화병,Flower Vase
 ui.shop.insufficient,골드가 부족해요,Not enough gold
 ui.shop.hint,새로운 행동을 볼 수도 있어요,You might see new behavior
-ui.settle.title,오늘의 정산,Today's Report
+ui.settle.title,오늘 밤의 관찰 일지,Tonight's Cat Journal
 ui.settle.revenue,매출,Revenue
 ui.settle.cost,재료비,Cost
 ui.settle.net,순익,Net
@@ -182,3 +182,11 @@ social.groom,핥핥,Lick lick
 social.play,냥냥!,Play!
 social.hiss,하악!,Hiss!
 social.fight,냥냥펀치!,Cat fight!
+ui.settle.stamp,오늘의 도장,Today's Stamp
+ui.settle.stampday,{n}일차,Day {n}
+ui.catalog.stamps,손도장 {n}개,{n} paw stamps
+ui.edit.open,배치,Arrange
+ui.edit.hint,가구를 끌어서 옮겨 보세요. 겹치면 원래 자리로 돌아가요.,Drag furniture to move it. Overlaps snap back.
+ui.edit.done,완료,Done
+social.steal,{boss}가 {name}의 자리를 차지했다!,{boss} took {name}'s seat!
+ui.catalog.boss,대장,Boss

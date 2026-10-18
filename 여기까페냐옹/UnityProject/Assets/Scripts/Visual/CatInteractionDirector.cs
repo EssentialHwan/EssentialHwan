@@ -37,9 +37,32 @@ namespace YeogiCafe.Visual
         static CatView.Step S(string clip, float sec) => new CatView.Step { clip = clip, seconds = sec };
         static CatView.Step S(string clip, float sec, EmoteDrawing.Kind e) => new CatView.Step { clip = clip, seconds = sec, hasEmote = true, emote = e };
 
+        public static bool Suspended;                 // 가구 배치 모드 등에서 일시 정지
+
+        void OnEnable() => CatBrain.OnSeatStolen += PlaySteal;
+        void OnDisable() => CatBrain.OnSeatStolen -= PlaySteal;
+
+        // 대장냥이: 쉬고 있던 고양이 자리에 와서 하악 → 상대는 움찔하고 비켜남
+        void PlaySteal(CatBrain boss, CatBrain victim)
+        {
+            if (boss == null || victim == null) return;
+            var bv = boss.GetComponent<CatView>(); var vv = victim.GetComponent<CatView>();
+            if (bv == null || vv == null) return;
+            string bossName = L.Get($"cat.{boss.data.catId}.name"), victimName = L.Get($"cat.{victim.data.catId}.name");
+            if ((boss.transform.position - victim.transform.position).sqrMagnitude < 2.5f)
+            {
+                int dir = victim.transform.position.x >= boss.transform.position.x ? 1 : -1;
+                bv.DoAction(new[] { S("hiss", 1.5f, EmoteDrawing.Kind.Anger) }, null, dir);
+                var aside = CafeLayout.ClampFloor(victim.transform.position + new Vector3(dir * 0.7f, -0.25f, 0f));
+                vv.DoAction(new[] { S("flinch", 1.3f, EmoteDrawing.Kind.Sweat) }, aside, -dir);
+            }
+            say?.Invoke(victim.data.catId, L.Get("social.steal", ("boss", bossName), ("name", victimName)));
+            if (save != null) save.GetOrCreateCat(boss.data.catId).bossSeen = true;
+        }
+
         void Update()
         {
-            if (cats == null) return;
+            if (cats == null || Suspended) return;
             if (save == null && relationships != null) save = relationships.save;
             if (Input.GetMouseButtonDown(0)) TryClick();
             TickPending();

@@ -49,9 +49,10 @@ namespace YeogiCafe.Cafe
             if (slot == null) { LastFail = FailReason.NoSpace; return false; }               // 공간 부족
             if (!economy.TrySpend(data.price)) { LastFail = FailReason.NoGold; return false; } // 잔액 부족
 
-            Place(data, slot);
+            PlacedFurnitureDTO dto = null;
+            if (save != null) { dto = new PlacedFurnitureDTO { furnitureId = data.furnitureId }; save.placedFurniture.Add(dto); }
+            Place(data, slot, dto);
             placedData.Add(data);
-            save?.placedFurniture.Add(new PlacedFurnitureDTO { furnitureId = data.furnitureId });
             OnFurniturePlaced?.Invoke(data);
             RecalcAtmosphere();
             return true;
@@ -67,8 +68,15 @@ namespace YeogiCafe.Cafe
                 if (data == null) continue;
                 var slot = FindSlotFor(data);
                 if (slot == null) continue;
-                Place(data, slot);
+                Place(data, slot, dto);
                 placedData.Add(data);
+            }
+            // 시작 좌석을 옮겨 둔 위치 복원
+            foreach (var st in starters)
+            {
+                var dto = FindStarterDto(st.index, false);
+                if (dto != null && dto.hasPos) st.go.transform.position = new Vector3(dto.gridX / 100f, dto.gridY / 100f, 0f);
+                var mvf = st.go.GetComponent<MovableFurniture>(); if (mvf != null) mvf.RefreshVisual();
             }
             RecalcAtmosphere();
         }
@@ -79,9 +87,52 @@ namespace YeogiCafe.Cafe
             OnAtmosphereRecalculated?.Invoke(CurrentAtmosphere);
         }
 
-        void Place(FurnitureData data, SlotEntry slot)
+        // ── 배치 모드(옮기기) ──
+        struct Starter { public GameObject go; public int index; }
+        readonly List<Starter> starters = new();
+
+        // S1Bootstrap이 만든 시작 좌석도 옮길 수 있게 등록
+        public void RegisterStarter(GameObject go, int index)
+        {
+            starters.Add(new Starter { go = go, index = index });
+            var mv = go.AddComponent<MovableFurniture>();
+            mv.area = MovableFurniture.Area.Floor;
+            mv.onMoved = p => { var d = FindStarterDto(index, true); if (d != null) Store(d, p); };
+        }
+
+        PlacedFurnitureDTO FindStarterDto(int index, bool create)
+        {
+            if (save == null) return null;
+            string key = "starter#" + index;
+            foreach (var d in save.starterSeatPos) if (d.furnitureId == key) return d;
+            if (!create) return null;
+            var nd = new PlacedFurnitureDTO { furnitureId = key };
+            save.starterSeatPos.Add(nd);
+            return nd;
+        }
+
+        static void Store(PlacedFurnitureDTO d, Vector3 p)
+        {
+            d.hasPos = true; d.gridX = Mathf.RoundToInt(p.x * 100f); d.gridY = Mathf.RoundToInt(p.y * 100f);
+        }
+
+        void MakeMovable(GameObject go, FurnitureData data, PlacedFurnitureDTO dto)
+        {
+            var mv = go.AddComponent<MovableFurniture>();
+            mv.area = data.wallMounted ? MovableFurniture.Area.Wall
+                    : data.furnitureId == "furn_deco_rug" ? MovableFurniture.Area.FloorFlat
+                    : MovableFurniture.Area.Floor;
+            if (dto != null)
+            {
+                if (dto.hasPos) go.transform.position = new Vector3(dto.gridX / 100f, dto.gridY / 100f, 0f);
+                mv.onMoved = p => Store(dto, p);
+            }
+        }
+
+        void Place(FurnitureData data, SlotEntry slot, PlacedFurnitureDTO dto)
         {
             slot.occupied = true;
+            GameObject placed;
             if (data.type == FurnitureType.Seat)
             {
                 var go = seatPrefab != null ? Instantiate(seatPrefab) : new GameObject("Seat_" + data.furnitureId);
@@ -89,6 +140,7 @@ namespace YeogiCafe.Cafe
                 sb.source = data;
                 go.transform.position = slot.slot != null ? slot.slot.position : Vector3.zero;
                 cafe.RegisterSeat(sb);
+                placed = go;
             }
             else if (data.type == FurnitureType.Facility)
             {
@@ -97,6 +149,7 @@ namespace YeogiCafe.Cafe
                 fb.source = data;
                 go.transform.position = slot.slot != null ? slot.slot.position : Vector3.zero;
                 cafe.RegisterFacility(fb);
+                placed = go;
             }
             else
             {
@@ -105,7 +158,9 @@ namespace YeogiCafe.Cafe
                 var db = go.AddComponent<DecorationBehaviour>();
                 db.source = data;
                 go.transform.position = slot.slot != null ? slot.slot.position : Vector3.zero;
+                placed = go;
             }
+            MakeMovable(placed, data, dto);
         }
 
         // 슬롯 선택: 벽걸이→벽 슬롯 / 창가 좌석→창가 슬롯 우선 / 그 외→창가가 아닌 바닥 슬롯 우선.

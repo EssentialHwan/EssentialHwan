@@ -20,6 +20,8 @@ namespace YeogiCafe.Save
         public List<CatSaveData> cats = new();
         public List<string> completedEventIds = new();
         public List<RelationSaveData> relations = new();   // 정식: 고양이 관계
+        public int pawStamps;
+        public List<PlacedFurnitureDTO> starterSeatPos = new();   // 시작 좌석을 옮긴 위치(furnitureId="starter#i")                              // 하루를 마칠 때 도감에 찍은 손도장 수
 
         public RelationSaveData GetOrCreateRelation(string a, string b)
         {
@@ -43,8 +45,9 @@ namespace YeogiCafe.Save
     public class PlacedFurnitureDTO
     {
         public string furnitureId;
-        public int gridX, gridY;
+        public int gridX, gridY;          // 플레이어가 옮긴 위치(1/100 유닛). hasPos일 때만 사용
         public int rotation;
+        public bool hasPos;
     }
 
     [Serializable]
@@ -63,6 +66,7 @@ namespace YeogiCafe.Save
         public ObservationRecord observation = new();     // 필수 저장, Truth 미포함
         // 쓰다듬기 반응을 '본' 횟수(TouchResult 순서). 기질(Truth)이 아니라 관찰 결과만 저장.
         public int[] touchSeen = new int[5];
+        public bool bossSeen;                             // 대장냥이가 자리 뺏는 걸 본 적 있음(도감 표시)
 
         // ── 만족도 파생값 (저장 안 함) ──
         public float LastSatisfaction => satisfactionHistory.Count > 0 ? satisfactionHistory[^1] : 0f;

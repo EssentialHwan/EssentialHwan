@@ -12,38 +12,11 @@ namespace YeogiCafe.Art
         static readonly Color32 FurS = new(206, 188, 166, 255);
 
         // ── 앞발(왼쪽). 화면 아래에서 비스듬히 올라오는 팔 + 발등(발가락 4개). 오른발은 좌우반전해서 사용 ──
-        public static PixelCanvas PawLeft()
-        {
-            var c = new PixelCanvas(40, 56);
-            // 팔: 아래(화면 밖)에서 오른쪽 위로 살짝 기울어 올라옴
-            for (int y = 0; y < 36; y++)
-            {
-                int cx = 14 + y / 6;                 // 기울기
-                int half = 9 - y / 12;               // 위로 갈수록 살짝 가늘게
-                c.HLine(cx - half, cx + half, y, FurM);
-                c.HLine(cx - half, cx - half + 2, y, FurS);          // 바깥쪽 그림자
-                c.HLine(cx + half - 3, cx + half - 1, y, FurL);      // 안쪽 하이라이트
-            }
-            // 발등(둥근 덩어리)
-            c.Disc(21, 41, 10, FurM);
-            c.Disc(22, 43, 8, FurL);
-            // 발가락 4개(위쪽 가장자리 볼록 + 사이 홈)
-            int[] toeX = { 13, 18, 24, 29 };
-            foreach (var tx in toeX) { c.Disc(tx, 49, 3, FurM); c.Disc(tx, 50, 2, FurL); }
-            for (int i = 0; i < toeX.Length - 1; i++)
-            {
-                int gx = (toeX[i] + toeX[i + 1]) / 2;
-                c.VLine(gx, 46, 50, FurS);
-            }
-            // 손목 털 뭉치
-            c.HLine(10, 30, 32, FurS); c.Set(12, 33, FurS); c.Set(27, 33, FurS);
-            // 발등 사이로 살짝 보이는 분홍 젤리(바깥쪽)
-            c.Set(10, 44, PixelPalette.PinkMid); c.Set(10, 45, PixelPalette.PinkMid);
-            c.AutoOutline(PixelPalette.Outline);
-            return c;
-        }
-
-        public static PixelCanvas PawRight() => Mirror(PawLeft());
+        // 플레이어 앞발은 PawDrawing(고해상도)로 이전. 왼발 = 바깥쪽이 왼쪽.
+        public static PixelCanvas PawLeft() => PawDrawing.Back();
+        public static PixelCanvas PawRight() => PawDrawing.Mirror(PawDrawing.Back());
+        public static PixelCanvas PawLeftPressed() => PawDrawing.Back(true);
+        public static PixelCanvas PawRightPressed() => PawDrawing.Mirror(PawDrawing.Back(true));
 
         static PixelCanvas Mirror(PixelCanvas src)
         {

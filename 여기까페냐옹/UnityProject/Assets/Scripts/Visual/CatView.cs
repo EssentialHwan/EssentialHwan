@@ -369,7 +369,7 @@ namespace YeogiCafe.Visual
 
         float SitHeight()
         {
-            if (brain.CurrentSeat is SeatBehaviour sb) return sb.SitHeight;
+            if (brain.VisualSeat is SeatBehaviour sb) return sb.SitHeight;
             return 0.2f;
         }
 

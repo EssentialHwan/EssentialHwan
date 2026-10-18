@@ -16,6 +16,11 @@ namespace YeogiCafe.AI
     {
         public const int ResultCount = 5;
 
+        // 대장냥이: 밥 먹고 쉬는 다른 고양이 자리를 가끔 뺏는다(첫 성격이 내향 = 까망냥, 동네 대장)
+        public static bool IsBoss(CatData d) =>
+            d != null && d.personalityTags != null && d.personalityTags.Length > 0 && d.personalityTags[0] == PersonalityTag.Introvert;
+        public const float BossStealChance = 0.5f;
+
         public static TouchStyle Style(CatData d)
         {
             if (d == null || d.personalityTags == null || d.personalityTags.Length == 0) return TouchStyle.Curious;

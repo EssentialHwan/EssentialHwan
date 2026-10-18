@@ -94,8 +94,57 @@ namespace YeogiCafe.AI
             if (waitOutsideTimer >= WaitOutsidePatience) state = CatState.LeaveDisappointed;
         }
 
+        // ── 대장냥이 자리 뺏기 ──
+        public System.Func<IReadOnlyList<CatBrain>> GetOthers;                // 매니저 주입
+        public static System.Action<CatBrain, CatBrain> OnSeatStolen;         // (대장, 쫓겨난 고양이) — 표현용
+        CatBrain stealFrom;
+        float fleeDelay = -1f;
+
+        // 밥을 다 먹고 자기 자리에 앉아 쉬는(그루밍 등) 고양이 중 하나를 고른다. 선호 좌석이면 우선.
+        ISeat TrySteal()
+        {
+            if (GetOthers == null || !CatTemperament.IsBoss(data) || Random.value > CatTemperament.BossStealChance) return null;
+            CatBrain pick = null; bool pickPref = false;
+            foreach (var o in GetOthers())
+            {
+                if (o == null || o == this || o.seat == null || o.state != CatState.Idle || !o.AtSeat) continue;
+                if (o.FacilityPhase != FacPhase.None || CatTemperament.IsBoss(o.data)) continue;
+                bool pref = HasTag(o.seat, data.seatPreference);
+                if (pick == null || (pref && !pickPref)) { pick = o; pickPref = pref; }
+            }
+            if (pick == null) return null;
+            var s = pick.seat;
+            pick.LoseSeat();
+            stealFrom = pick;
+            return s;
+        }
+
+        void LoseSeat()
+        {
+            if (seat == null) return;
+            SetOccupant?.Invoke(seat, null); seat.Vacate(); lostSeat = seat; seat = null;
+        }
+
+        // 대장이 도착해 하악하면 잠시 뒤 슬금슬금 다른 데로
+        public void Flee(float delay) { fleeDelay = delay; }
+
         void DoFindSeat()
         {
+            var stolen = TrySteal();
+            if (stolen != null)
+            {
+                seat = stolen; seatFallback = !HasTag(stolen, data.seatPreference);
+                seat.Occupy(this);
+                SetOccupant?.Invoke(seat, data.catId);
+                UsedPreferredSeat = !seatFallback;
+                Obs?.RecordClue(data.catId, ClueType.SeatUse, SeatKey(seat), seatFallback,
+                                Narrate(NarrationCatalog.SeatKey(seat.Tags, seatFallback)));
+                sitDuration = Mathf.Min(BaseSit() * PersonalityFactor(), cfg.maxSitDuration);
+                sitTimer = 0;
+                if (Mover != null) { Mover.MoveTo(seat.WorldPos); walkingToSeat = true; }
+                state = CatState.Sit;
+                return;
+            }
             var choice = SeatSelector.Choose(data, GetSeats(), Entrance, NearbyFriends, NearbyStrangers, cfg);
             if (choice.seat == null)
             {
@@ -126,6 +175,11 @@ namespace YeogiCafe.AI
             // 이동 중이면 도착 대기
             if (walkingToSeat && Mover != null && !Mover.HasArrived) return;
             walkingToSeat = false;
+            if (stealFrom != null)
+            {
+                if (stealFrom != null && !stealFrom.IsFinished) { OnSeatStolen?.Invoke(this, stealFrom); stealFrom.Flee(1.5f); }
+                stealFrom = null;
+            }
             state = CatState.DecideOrder;
         }
 
@@ -173,7 +227,9 @@ namespace YeogiCafe.AI
         public IFacility CurrentFacility { get; private set; }
         public float FacilityPerch => CurrentFacility is IFacilitySpot sp ? sp.PerchHeight : 0f;
         public bool FacilityWall => CurrentFacility is IFacilitySpot sp && sp.WallMounted;
-        public bool AtSeat => seat != null && (transform.position - seat.WorldPos).sqrMagnitude < 0.03f;
+        ISeat lostSeat;                                                     // 대장에게 뺏긴 자리(쫓겨날 때까지 그 위에 앉아 있는 모습 유지)
+        public ISeat VisualSeat => seat ?? lostSeat;
+        public bool AtSeat => VisualSeat != null && (transform.position - VisualSeat.WorldPos).sqrMagnitude < 0.03f;
         public bool IsMoving => Mover != null && !Mover.HasArrived;
         public System.Func<Vector3> RandomFloorPoint;                      // 매니저 주입(없으면 돌아다니지 않음)
 
@@ -187,6 +243,12 @@ namespace YeogiCafe.AI
 
             // 시설 이용 중
             if (FacilityPhase != FacPhase.None) { TickFacility(dt); return; }
+            if (fleeDelay >= 0f)
+            {
+                fleeDelay -= dt;
+                if (fleeDelay < 0f && RandomFloorPoint != null) GoTo(RandomFloorPoint());
+                return;
+            }
 
             if (sitTimer >= sitDuration) { state = CatState.Pay; return; }
             if (IsMoving) return;                                            // 걷는 중
@@ -225,6 +287,7 @@ namespace YeogiCafe.AI
 
         void GoTo(Vector3 p)
         {
+            lostSeat = null;
             if (Mover != null) Mover.MoveTo(p);
             NewRest();
         }

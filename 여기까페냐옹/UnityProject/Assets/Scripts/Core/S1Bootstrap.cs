@@ -133,6 +133,7 @@ namespace YeogiCafe.Core
                 var sb = go.AddComponent<SeatBehaviour>();
                 sb.source = seatData;
                 cafe.RegisterSeat(sb);
+                furniture.RegisterStarter(go, i);          // 배치 모드에서 옮길 수 있게
             }
 
             if (furniture.slots.Count == 0)

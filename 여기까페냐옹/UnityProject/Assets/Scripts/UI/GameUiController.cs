@@ -32,6 +32,7 @@ namespace YeogiCafe.UI
         CatalogPanel catalog;
         BubbleLayer bubbles;
         KitchenView kitchen;
+        FurnitureEditMode editMode;
         Text kitchenBtnLabel;
 
         float narrationTimer, hudTimer;
@@ -89,6 +90,7 @@ namespace YeogiCafe.UI
             shop = new ShopPanel(this, root.transform);
             settlement = new SettlementPanel(this, root.transform);
             catalog = new CatalogPanel(this, root.transform);
+            editMode = new FurnitureEditMode(this, root.transform);
         }
 
         void BuildHud(Transform parent)
@@ -141,6 +143,13 @@ namespace YeogiCafe.UI
                               new Vector2(1, 0.5f), new Vector2(-274, 0), new Vector2(120, 48));
             kitBtn.onClick.AddListener(ToggleKitchen);
 
+            // 가구 배치(끌어서 옮기기)
+            var editBtn = UiFactory.Button("EditBtn", bar.transform, L.Get("ui.edit.open"),
+                                           UiFactory.Wood, UiFactory.Cream, out _);
+            UiFactory.SetRect((RectTransform)editBtn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f),
+                              new Vector2(1, 0.5f), new Vector2(-404, 0), new Vector2(120, 48));
+            editBtn.onClick.AddListener(() => { shop.Hide(); catalog.Hide(); CloseKitchen(); editMode.Toggle(); });
+
             // (구) 하단 서술 텍스트는 고양이 머리 위 말풍선(BubbleLayer)으로 대체. 필드는 호환용으로 유지.
             narrationText = null;
         }
@@ -154,7 +163,7 @@ namespace YeogiCafe.UI
             }
             if (flow != null)
             {
-                flow.OnSettlementReady += () => { shop.Hide(); catalog.Hide(); CloseKitchen(); settlement.Show(); };
+                flow.OnSettlementReady += () => { shop.Hide(); catalog.Hide(); CloseKitchen(); editMode.Exit(); settlement.Show(); };
                 TryHookObservation();
             }
         }
@@ -176,7 +185,7 @@ namespace YeogiCafe.UI
 
         void ToggleKitchen()
         {
-            shop.Hide(); catalog.Hide();
+            shop.Hide(); catalog.Hide(); editMode.Exit();
             kitchen.Toggle();
             if (kitchenBtnLabel != null) kitchenBtnLabel.text = L.Get(kitchen.IsOpen ? "ui.kitchen.close" : "ui.kitchen.open");
         }
@@ -201,6 +210,7 @@ namespace YeogiCafe.UI
             TryHookObservation();
             TryHookOrders();
             kitchen?.Tick(Time.unscaledDeltaTime);
+            editMode?.Tick(Time.unscaledDeltaTime);
             if (day != null && timeBarFill != null && bootstrap != null && bootstrap.balance != null)
                 timeBarFill.fillAmount = HudFormatter.TimeProgress(day.DayTimer, bootstrap.balance.dayLength);
 
@@ -235,6 +245,9 @@ namespace YeogiCafe.UI
         }
 
         // 정산 화면의 [다음 날] → 영업 재개. (재방문 큐 편성은 flow가 담당하지만 S1은 단순 재시작)
+        public DayManager Day => day;
+        public CatManager Cats => bootstrap != null ? bootstrap.cats : null;
+
         public void StartNextDay()
         {
             settlement.Hide();

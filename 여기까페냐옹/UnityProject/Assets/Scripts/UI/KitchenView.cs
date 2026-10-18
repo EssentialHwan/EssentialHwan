@@ -157,7 +157,7 @@ namespace YeogiCafe.UI
             go.transform.SetParent(root, false);
             var img = go.GetComponent<Image>(); img.sprite = sprite; img.raycastTarget = false;
             var rt = (RectTransform)go.transform;
-            UiFactory.SetRect(rt, anchor, anchor, new Vector2(0.5f, 0f), new Vector2(0, -110), new Vector2(200, 280));  // 40×56px × 5배
+            UiFactory.SetRect(rt, anchor, anchor, new Vector2(0.5f, 0f), new Vector2(0, -40), new Vector2(PawDrawing.W, PawDrawing.H) * 3.4f);  // 고해상도 앞발
             return rt;
         }
 
@@ -232,6 +232,11 @@ namespace YeogiCafe.UI
                 Vector2 home = pawPunch == pawL ? pawLHome : pawRHome;
                 float k = pawPunchT < outT ? pawPunchT / outT : 1f - Mathf.Clamp01((pawPunchT - outT) / backT);
                 pawPunch.anchoredPosition = Vector2.Lerp(home, pawPunchTarget, k * 0.55f);
+                var img = pawPunch.GetComponent<Image>();
+                bool left = pawPunch == pawL;
+                img.sprite = pawPunchT < outT + 0.06f
+                    ? RuntimeSprites.Get(left ? "paw_left_press" : "paw_right_press", left ? CookingDrawing.PawLeftPressed : CookingDrawing.PawRightPressed)
+                    : RuntimeSprites.Get(left ? "paw_left" : "paw_right", left ? CookingDrawing.PawLeft : CookingDrawing.PawRight);
                 if (pawPunchT > outT + backT) { pawPunchT = -1f; pawPunch = null; }
             }
         }
