@@ -63,7 +63,7 @@ namespace YeogiCafe.Audio
 
         void Update()
         {
-            if (Input.GetKeyDown(KeyCode.M)) Muted = !Muted;     // M: 소리 끄기/켜기
+            if (Input.GetKeyDown(KeyCode.M)) { Muted = !Muted; PlayerPrefs.SetInt("opt.mute", Muted ? 1 : 0); }     // M: 소리 끄기/켜기
             AudioListener.volume = Muted ? 0f : 1f;
 
             string want = WantedBgm();

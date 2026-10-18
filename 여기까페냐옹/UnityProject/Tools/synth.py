@@ -256,23 +256,57 @@ def night():
     for (b, n, d) in mel: s.add(musicbox(midi(n), d * s.beat + 0.8, 0.4), b)
     return mix_master(s.render(), lowpass=7000)
 
-def rain_loop(sec=16):
-    n = int(sec * SR)
-    w = noise(n + SR, 5)
-    b, a = sg.butter(2, [400 / (SR / 2), 5000 / (SR / 2)], 'band')
-    y = sg.lfilter(b, a, w)[SR:] * 0.35
-    r = np.random.default_rng(6)
-    for _ in range(int(sec * 30)):                    # 빗방울 톡톡
-        i = r.integers(0, n - 2000); L = r.integers(200, 900)
-        t = np.arange(L) / SR
-        f = r.uniform(1800, 5000)
-        y[i:i + L] += np.sin(2 * np.pi * f * t) * np.exp(-t * r.uniform(150, 400)) * r.uniform(0.05, 0.25)
-    # 루프 이음새: 끝 1초를 처음과 크로스페이드
-    m = SR
-    fade = np.linspace(0, 1, m)
-    y[:m] = y[:m] * fade + y[-m:] * (1 - fade)
-    y = y[:-m]
-    return y / np.max(np.abs(y)) * 0.6
+def colored(n, seed, slope):
+    # slope 1 = 핑크, 2 = 브라운 — 주파수 영역에서 1/f^(slope/2)로 깎음
+    r = np.random.default_rng(seed)
+    X = np.fft.rfft(r.standard_normal(n))
+    f = np.arange(len(X)); f[0] = 1
+    X /= f ** (slope / 2)
+    y = np.fft.irfft(X, n)
+    return y / (np.std(y) + 1e-9)
+
+def rain_loop(sec=60):
+    # ASMR 빗소리: 창밖에 고르게 내리는 비(핑크 노이즈 층) + 처마 낙숫물 + 유리창 톡톡 + 아주 먼 천둥 한 번.
+    # 날카로운 고음 없이 둥글게, 좌우가 조금씩 달라 공간감(스테레오), 끝과 처음을 겹쳐 이음새 없는 루프.
+    n = int(sec * SR); r = np.random.default_rng(42)
+    t = np.arange(n) / SR
+    out = np.zeros((n, 2))
+    gust = 1 + 0.12 * np.sin(2 * np.pi * t / 23.0) + 0.06 * np.sin(2 * np.pi * t / 7.3 + 1.0)   # 빗발이 천천히 셌다 약했다
+    for ch in range(2):
+        bed = colored(n, 10 + ch, 1.0)
+        bed = sg.lfilter(*sg.butter(2, [250 / (SR / 2), 5200 / (SR / 2)], 'band'), bed)
+        bed = sg.lfilter(*sg.butter(1, 3200 / (SR / 2)), bed)                      # 고음을 한 번 더 눌러 부드럽게
+        low = sg.lfilter(*sg.butter(2, 380 / (SR / 2)), colored(n, 20 + ch, 2.0))  # 지붕·땅에 깔리는 낮은 쏴아
+        out[:, ch] = bed * 0.22 * gust + low * 0.10
+    # 유리창·잎에 떨어지는 작은 빗방울(짧은 필터 노이즈 톡) — 날카로운 사인 핑 대신
+    for _ in range(int(sec * 22)):
+        i = r.integers(0, n - 800); L = r.integers(120, 420)
+        tt = np.arange(L) / SR
+        f = r.uniform(1200, 3600)
+        blip = sg.lfilter(*sg.butter(2, [f * 0.7 / (SR / 2), min(0.95, f * 1.3 / (SR / 2))], 'band'), r.standard_normal(L))
+        blip *= np.exp(-tt * r.uniform(90, 220)) * r.uniform(0.02, 0.08)
+        pan = r.uniform(0.15, 0.85)
+        out[i:i + L, 0] += blip * (1 - pan); out[i:i + L, 1] += blip * pan
+    # 처마 낙숫물: 둥근 '똑'(음이 살짝 내려감), 불규칙하게 1~3초마다
+    pos = 0.5
+    while pos < sec - 1:
+        L = int(0.12 * SR); tt = np.arange(L) / SR
+        f0 = r.uniform(520, 900)
+        f = f0 * (1 - 0.35 * tt / 0.12)
+        drop = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-tt * 38) * r.uniform(0.05, 0.11)
+        i = int(pos * SR); pan = r.uniform(0.3, 0.7)
+        out[i:i + L, 0] += drop * (1 - pan); out[i:i + L, 1] += drop * pan
+        pos += r.uniform(0.9, 3.0)
+    # 아주 먼 천둥 한 번(낮고 길게 굴러가는)
+    i = int(sec * 0.55 * SR); L = int(5.5 * SR); tt = np.arange(L) / SR
+    th = sg.lfilter(*sg.butter(2, 140 / (SR / 2)), colored(L, 99, 2.0)) * np.interp(tt, [0, 0.6, 2.0, 5.5], [0, 1, 0.6, 0]) * 0.22
+    out[i:i + L, 0] += th; out[i:i + L, 1] += th * 0.9
+    # 루프 이음새: 끝 3초를 처음과 크로스페이드
+    m = 3 * SR
+    fade = np.linspace(0, 1, m)[:, None]
+    out[:m] = out[:m] * fade + out[-m:] * (1 - fade)
+    out = out[:-m]
+    return out / np.max(np.abs(out)) * 0.7
 
 def save(name, y):
     wav = os.path.join(OUT, name + ".wav")
@@ -281,7 +315,7 @@ def save(name, y):
     ogg = os.path.join(OUT, name + ".ogg")
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", wav, "-c:a", "libvorbis", "-q:a", "4", ogg], check=True)
     os.remove(wav)
-    print(name, f"{len(y)/SR:.1f}s")
+    print(name, f"{len(y)/SR:.1f}s", 'stereo' if np.ndim(y) == 2 else 'mono')
 
 if __name__ == "__main__":
     which = sys.argv[2] if len(sys.argv) > 2 else "all"
@@ -290,4 +324,5 @@ if __name__ == "__main__":
             for w in range(3):
                 save(f"bgm_{p}_{w}", build(p, w))
         save("bgm_night", night())
+    if which in ("all", "bgm", "rain"):
         save("amb_rain", rain_loop())

@@ -30,6 +30,7 @@ namespace YeogiCafe.UI
         ShopPanel shop;
         SettlementPanel settlement;
         ClosingPlayPanel closing;
+        SettingsPanel settings;
         CatalogPanel catalog;
         BubbleLayer bubbles;
         KitchenView kitchen;
@@ -96,6 +97,8 @@ namespace YeogiCafe.UI
             shop = new ShopPanel(this, root.transform);
             settlement = new SettlementPanel(this, root.transform);
             closing = new ClosingPlayPanel(this, root.transform);
+            settings = new SettingsPanel(this, root.transform);
+            SettingsPanel.ApplySaved(day);
             catalog = new CatalogPanel(this, root.transform);
             editMode = new FurnitureEditMode(this, root.transform);
 
@@ -180,6 +183,13 @@ namespace YeogiCafe.UI
             UiFactory.SetRect((RectTransform)editBtn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f),
                               new Vector2(1, 0.5f), new Vector2(-404, 0), new Vector2(120, 48));
             editBtn.onClick.AddListener(() => { shop.Hide(); catalog.Hide(); CloseKitchen(); editMode.Toggle(); });
+
+            // 설정 — 의뢰 버튼 오른쪽(가운데 시간 표시와 겹치지 않게 작게). ESC로도 열림
+            var optBtn = UiFactory.Button("OptBtn", bar.transform, L.Get("opt.btn"), UiFactory.CreamDim, UiFactory.WoodDark, out var optLbl);
+            optLbl.fontSize = 16;
+            UiFactory.SetRect((RectTransform)optBtn.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
+                              new Vector2(0, 0.5f), new Vector2(446, 0), new Vector2(58, 44));
+            optBtn.onClick.AddListener(() => settings.Toggle());
 
             // (구) 하단 서술 텍스트는 고양이 머리 위 말풍선(BubbleLayer)으로 대체. 필드는 호환용으로 유지.
             narrationText = null;
@@ -275,6 +285,8 @@ namespace YeogiCafe.UI
             TryHookOrders();
             kitchen?.Tick(Time.unscaledDeltaTime);
             closing?.Tick(Time.unscaledDeltaTime);
+            settings?.Tick();
+            if (Input.GetKeyDown(KeyCode.Escape) && settings != null && (closing == null || !closing.IsOpen)) settings.Toggle();   // ESC = 설정
             editMode?.Tick(Time.unscaledDeltaTime);
             if (day != null && timeBarFill != null && bootstrap != null && bootstrap.balance != null)
                 timeBarFill.fillAmount = HudFormatter.TimeProgress(day.DayTimer, bootstrap.balance.dayLength);

@@ -142,6 +142,30 @@ namespace YeogiCafe.UI
             return t;
         }
 
+        // 가로 슬라이더(0~1): 원목 홈 + 분홍 채움 + 동그란 손잡이
+        public static Slider Slider(string name, Transform parent, float value)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Slider));
+            go.transform.SetParent(parent, false);
+            var bg = Panel("Bg", go.transform, new Color(0.72f, 0.56f, 0.39f, 1f));
+            Frame(bg, FrameStyle.Card, new Color(0.86f, 0.76f, 0.64f, 1f), 1f);
+            Anchor(bg, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            var fillArea = new GameObject("FillArea", typeof(RectTransform)); fillArea.transform.SetParent(go.transform, false);
+            Anchor((RectTransform)fillArea.transform, Vector2.zero, Vector2.one, new Vector2(3, 3), new Vector2(-3, -3));
+            var fill = Panel("Fill", fillArea.transform, Pink);
+            Anchor(fill, Vector2.zero, new Vector2(0, 1), Vector2.zero, Vector2.zero);
+            var handleArea = new GameObject("HandleArea", typeof(RectTransform)); handleArea.transform.SetParent(go.transform, false);
+            Anchor((RectTransform)handleArea.transform, Vector2.zero, Vector2.one, new Vector2(10, 0), new Vector2(-10, 0));
+            var handle = Panel("Handle", handleArea.transform, Cream);
+            Frame(handle, FrameStyle.Bubble, Cream, 1f);
+            handle.sizeDelta = new Vector2(26, 26);
+            var s = go.GetComponent<Slider>();
+            s.fillRect = fill; s.handleRect = handle; s.targetGraphic = handle.GetComponent<Image>();
+            s.direction = UnityEngine.UI.Slider.Direction.LeftToRight;
+            s.minValue = 0f; s.maxValue = 1f; s.value = value;
+            return s;
+        }
+
         // 앵커/오프셋 지정 헬퍼(픽셀 좌표).
         public static void Anchor(RectTransform rt, Vector2 min, Vector2 max, Vector2 offMin, Vector2 offMax)
         {
