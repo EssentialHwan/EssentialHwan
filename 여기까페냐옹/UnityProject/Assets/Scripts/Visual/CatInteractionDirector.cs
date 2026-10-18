@@ -22,7 +22,12 @@ namespace YeogiCafe.Visual
 
         [Header("고양이끼리")]
         public Vector2 socialInterval = new Vector2(7f, 13f);
-        public float socialRangeX = 3.4f, socialRangeY = 1.7f;
+        public float socialRangeX = 3.4f, socialRangeY = 1.7f;   // 이 안이면 바로 그 자리에서
+        public float approachRange = 8f;                           // 이 안이면 한쪽이 걸어가서 어울림(카페 어디서든)
+
+        // 다가가는 중인 쌍
+        class Pending { public CatView from, to; public float timeout; }
+        readonly List<Pending> pending = new();
         float nextSocial = 6f;
 
         readonly List<CatView> views = new();
@@ -37,6 +42,7 @@ namespace YeogiCafe.Visual
             if (cats == null) return;
             if (save == null && relationships != null) save = relationships.save;
             if (Input.GetMouseButtonDown(0)) TryClick();
+            TickPending();
             nextSocial -= Time.deltaTime;
             if (nextSocial <= 0f)
             {
@@ -123,21 +129,68 @@ namespace YeogiCafe.Visual
         // ───────── ② 고양이끼리 ─────────
         void TrySocial()
         {
+            if (pending.Count > 0) return;
             Collect();
-            var cand = new List<(CatView a, CatView b)>();
+            var near = new List<(CatView a, CatView b)>();
+            var far = new List<(CatView a, CatView b)>();
             for (int i = 0; i < views.Count; i++)
                 for (int j = i + 1; j < views.Count; j++)
                 {
                     var a = views[i]; var b = views[j];
                     if (!a.CanSocialize || !b.CanSocialize) continue;
                     Vector3 d = b.SeatPos - a.SeatPos;
-                    if (Mathf.Abs(d.x) < 0.6f || Mathf.Abs(d.x) > socialRangeX || Mathf.Abs(d.y) > socialRangeY) continue;
-                    cand.Add((a, b));
+                    float ax = Mathf.Abs(d.x), ay = Mathf.Abs(d.y);
+                    if (ax >= 0.6f && ax <= socialRangeX && ay <= socialRangeY) near.Add((a, b));
+                    else if (d.magnitude <= approachRange) far.Add((a, b));
                 }
-            if (cand.Count == 0) return;
-            var (x, y) = cand[rng.Next(cand.Count)];
-            if (x.SeatPos.x > y.SeatPos.x) (x, y) = (y, x);           // x = 왼쪽, y = 오른쪽
 
+            if (near.Count > 0 && (far.Count == 0 || R() < 0.6f))
+            {
+                var (x, y) = near[rng.Next(near.Count)];
+                Begin(x, y);
+                return;
+            }
+            if (far.Count == 0) return;
+
+            // 멀리 있는 둘: 더 활발한 쪽이 상대 옆으로 걸어간다
+            var (p, q) = far[rng.Next(far.Count)];
+            var from = Eagerness(p) >= Eagerness(q) ? p : q;
+            var to = from == p ? q : p;
+            float side = from.SeatPos.x <= to.SeatPos.x ? -1f : 1f;
+            var spot = Core.CafeLayout.ClampFloor(to.SeatPos + new Vector3(side * 0.95f, -0.05f, 0f));
+            if (Mathf.Abs(spot.x - to.SeatPos.x) < 0.6f)                       // 벽에 막히면 반대편
+                spot = Core.CafeLayout.ClampFloor(to.SeatPos + new Vector3(-side * 0.95f, -0.05f, 0f));
+            if (from.Brain.RequestApproach(spot)) pending.Add(new Pending { from = from, to = to, timeout = 9f });
+        }
+
+        float Eagerness(CatView v)
+        {
+            var st = CatTemperament.Style(v.Data);
+            return st switch
+            {
+                TouchStyle.Playful => 3f, TouchStyle.Affectionate => 2.5f, TouchStyle.Curious => 2f,
+                TouchStyle.Fickle => 1.5f, TouchStyle.Grumpy => 1f, _ => 0.5f
+            } + R();
+        }
+
+        void TickPending()
+        {
+            for (int i = pending.Count - 1; i >= 0; i--)
+            {
+                var p = pending[i];
+                p.timeout -= Time.deltaTime;
+                bool gone = p.from == null || p.to == null || p.from.IsExiting || p.to.IsExiting;
+                if (gone || p.timeout <= 0f) { pending.RemoveAt(i); continue; }
+                if (p.from.Brain.IsMoving) continue;
+                if (!p.from.CanSocialize || !p.to.CanSocialize) continue;      // 앉는 중 등 잠깐 기다림
+                pending.RemoveAt(i);
+                Begin(p.from, p.to);
+            }
+        }
+
+        void Begin(CatView x, CatView y)
+        {
+            if (x.SeatPos.x > y.SeatPos.x) (x, y) = (y, x);           // x = 왼쪽, y = 오른쪽
             int stage = RelationStage(x.Data.catId, y.Data.catId);
             var sx = CatTemperament.Style(x.Data); var sy = CatTemperament.Style(y.Data);
             var kind = CatTemperament.Pair(sx, sy, stage, R());

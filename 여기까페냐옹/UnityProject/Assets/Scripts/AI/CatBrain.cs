@@ -165,34 +165,148 @@ namespace YeogiCafe.AI
             }
         }
 
-        void DoEat() { decisionTimer = 0; state = CatState.Idle; }
+        void DoEat() { decisionTimer = 0; NewRest(); state = CatState.Idle; }
+
+        // ── 식사 후 자유 시간: 쉬기 / 아무 데나 돌아다니기 / 시설 이용(걸어가 올라가서 한참 쉬다 내려옴) / 자리로 돌아가기 ──
+        public enum FacPhase { None, Approach, Perched, Dismount }
+        public FacPhase FacilityPhase { get; private set; }
+        public IFacility CurrentFacility { get; private set; }
+        public float FacilityPerch => CurrentFacility is IFacilitySpot sp ? sp.PerchHeight : 0f;
+        public bool FacilityWall => CurrentFacility is IFacilitySpot sp && sp.WallMounted;
+        public bool AtSeat => seat != null && (transform.position - seat.WorldPos).sqrMagnitude < 0.03f;
+        public bool IsMoving => Mover != null && !Mover.HasArrived;
+        public System.Func<Vector3> RandomFloorPoint;                      // 매니저 주입(없으면 돌아다니지 않음)
+
+        float restTimer, restDuration = 6f, facTimer, facDuration;
+        const float DismountTime = 0.55f;
 
         void DoActionLoop()
         {
-            sitTimer += Time.deltaTime; decisionTimer += Time.deltaTime;
+            float dt = Time.deltaTime;
+            sitTimer += dt;
+
+            // 시설 이용 중
+            if (FacilityPhase != FacPhase.None) { TickFacility(dt); return; }
+
             if (sitTimer >= sitDuration) { state = CatState.Pay; return; }
-            if (decisionTimer < DecisionInterval) return;
+            if (IsMoving) return;                                            // 걷는 중
+            state = CatState.Idle;
+            restTimer += dt; decisionTimer += dt;
+            if (restTimer < restDuration || decisionTimer < DecisionInterval) return;
             decisionTimer = 0;
 
+            // ① 시설: 선호·성격 기반 확률(사양 §2.5). 한 번 쓰면 오래(≈1분) 다시 안 감 → 왔다갔다 반복 방지
             var dec = FacilityDecider.Tick(data, GetFacilities(),
                         f => recentUse.TryGetValue(f.FacilityId, out var v) ? v : 0f, cfg);
-            if (!dec.isIdle && dec.facility != null)
+            DecayRecentUse();
+            if (!dec.isIdle && dec.facility != null && dec.facility.IsFree)
             {
-                recentUse[dec.facility.FacilityId] = 0.3f; // 반복 억제
-                OnFacilityUse?.Invoke(dec.facility);
-                bool pref = SharesFacilityPref(dec.facility);
-                if (pref) UsedPreferredFacility = true;
-                Obs?.RecordClue(data.catId, ClueType.FacilityUse, FacilityKey(dec.facility),
-                                isFallback: !pref,
-                                Narrate(NarrationCatalog.FacilityKey(dec.facility.Tags)));
+                StartFacility(dec.facility);
+                return;
             }
-            // recentUse 감쇠
+
+            // ② 돌아다니기 / 자리로 돌아가기 / 그대로 쉬기
+            float roam = 0.35f;
+            if (data.HasPersonality(PersonalityTag.Active) || data.HasPersonality(PersonalityTag.Playful)) roam += 0.25f;
+            if (data.HasPersonality(PersonalityTag.Curious)) roam += 0.15f;
+            if (data.HasPersonality(PersonalityTag.Relaxed) || data.HasPersonality(PersonalityTag.Introvert)) roam -= 0.2f;
+            float r = Random.value;
+            if (r < roam && RandomFloorPoint != null) GoTo(RandomFloorPoint());
+            else if (r < roam + 0.2f && seat != null && !AtSeat) GoTo(seat.WorldPos);
+            else NewRest();
+        }
+
+        void NewRest()
+        {
+            restTimer = 0f;
+            float k = data.HasPersonality(PersonalityTag.Relaxed) ? 1.6f : data.HasPersonality(PersonalityTag.Active) ? 0.7f : 1f;
+            restDuration = Random.Range(7f, 14f) * k;
+        }
+
+        void GoTo(Vector3 p)
+        {
+            if (Mover != null) Mover.MoveTo(p);
+            NewRest();
+        }
+
+        // 다른 고양이에게 다가가기(표현 레이어의 상호작용 연출이 요청). 쉬는 중일 때만.
+        public bool RequestApproach(Vector3 p)
+        {
+            if (state != CatState.Idle || FacilityPhase != FacPhase.None || IsMoving || Mover == null) return false;
+            GoTo(p);
+            restDuration = Mathf.Max(restDuration, 6f);
+            return true;
+        }
+
+        void StartFacility(IFacility f)
+        {
+            recentUse[f.FacilityId] = 1.0f;                                  // 감쇠 0.05/결정 → 약 1분간 같은 시설 회피
+            CurrentFacility = f;
+            if (f is IFacilitySpot sp) sp.Use(this);
+            state = CatState.FacilityAction;
+            FacilityPhase = FacPhase.Approach;
+            Vector3 dest = f is IFacilitySpot spot ? spot.BaseWorldPos : (f is Component c ? c.transform.position : transform.position);
+            if (Mover != null) Mover.MoveTo(dest);
+
+            OnFacilityUse?.Invoke(f);
+        }
+
+        // 시설에 도착한 순간 기록(서술 말풍선이 실제로 올라앉을 때 뜨게)
+        void RecordFacilityClue(IFacility f)
+        {
+            bool pref = SharesFacilityPref(f);
+            if (pref) UsedPreferredFacility = true;
+            Obs?.RecordClue(data.catId, ClueType.FacilityUse, FacilityKey(f),
+                            isFallback: !pref,
+                            Narrate(NarrationCatalog.FacilityKey(f.Tags)));
+        }
+
+        void TickFacility(float dt)
+        {
+            switch (FacilityPhase)
+            {
+                case FacPhase.Approach:
+                    if (IsMoving) return;
+                    FacilityPhase = FacPhase.Perched; facTimer = 0f;
+                    RecordFacilityClue(CurrentFacility);
+                    // 선호 시설이면 더 오래, 느긋한 고양이는 더 오래
+                    facDuration = Random.Range(9f, 15f) * (SharesFacilityPref(CurrentFacility) ? 1.4f : 1f)
+                                  * (data.HasPersonality(PersonalityTag.Relaxed) ? 1.3f : 1f);
+                    break;
+                case FacPhase.Perched:
+                    facTimer += dt;
+                    if (facTimer >= facDuration || sitTimer >= sitDuration) { FacilityPhase = FacPhase.Dismount; facTimer = 0f; }
+                    break;
+                case FacPhase.Dismount:
+                    facTimer += dt;
+                    if (facTimer < (FacilityPerch > 0.05f ? DismountTime : 0.1f)) return;
+                    EndFacility();
+                    state = CatState.Idle;
+                    decisionTimer = 0f;
+                    // 내려와서 바로 근처를 좀 걷다가 쉰다(또는 자리로)
+                    if (seat != null && Random.value < 0.5f) GoTo(seat.WorldPos);
+                    else if (RandomFloorPoint != null) GoTo(RandomFloorPoint());
+                    else NewRest();
+                    break;
+            }
+        }
+
+        void EndFacility()
+        {
+            if (CurrentFacility is IFacilitySpot sp) sp.Release();
+            CurrentFacility = null;
+            FacilityPhase = FacPhase.None;
+        }
+
+        void DecayRecentUse()
+        {
             var keys = new List<string>(recentUse.Keys);
             foreach (var k in keys) recentUse[k] = Mathf.Max(0, recentUse[k] - 0.05f);
         }
 
         void DoPay()
         {
+            EndFacility();
             if (seat != null) { SetOccupant?.Invoke(seat, null); seat.Vacate(); seat = null; } // 자리 반납(회전)
             state = CatState.Leave; /* 만족도·결제·세션확정은 매니저가 OnLeave에서 */
         }
@@ -201,6 +315,7 @@ namespace YeogiCafe.AI
         public void ForceLeave()
         {
             if (sessionCompleted) return;
+            EndFacility();
             if (seat != null) { SetOccupant?.Invoke(seat, null); seat.Vacate(); seat = null; }
             if (OrderSystem != null) OrderSystem.DropForCat(data.catId);
             if (state == CatState.WaitFood) ServedMenu = null;   // 못 받고 떠나면 결제 없음

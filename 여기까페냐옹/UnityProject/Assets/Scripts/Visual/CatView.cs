@@ -39,8 +39,12 @@ namespace YeogiCafe.Visual
         float animT, eatTimer, idleTimer;
 
         // 시설 방문(표현만): 자리 → 시설 → 자리
-        Vector3 hopWorld; float hopT; bool hopping;
-        const float HopMove = 0.5f, HopStay = 2.6f;
+        // 시설(캣타워 등): 걸어가서 → 점프해 올라가 쉬다 → 뛰어내림. 단계는 CatBrain.FacilityPhase가 정한다.
+        CatBrain.FacPhase lastFacPhase; float facT;
+        const float JumpUpTime = 0.6f, JumpDownTime = 0.55f;
+        bool hopping => brain != null && brain.FacilityPhase != CatBrain.FacPhase.None;
+        bool ateShown;
+        float soloTimer = 8f;
 
         // 퇴장
         bool exiting; ICatMover exitMover; float fade = 1f;
@@ -69,7 +73,7 @@ namespace YeogiCafe.Visual
 
         // 고양이끼리 어울릴 수 있는 상태: 자리에서 쉬는 중(주문 대기·먹기·시설·전환 중 제외)
         public bool CanSocialize => IsSeatedNow && !exiting && !acting && !hopping && eatTimer <= 0f && !InTransition &&
-                                    brain.State == CatState.Idle;
+                                    brain.State == CatState.Idle && !brain.IsMoving;
         // 쓰다듬을 수 있는 상태: 자리에 있으면 주문 대기 중이어도 OK
         public bool CanTouch => IsSeatedNow && !exiting && !acting && !hopping;
 
@@ -179,21 +183,12 @@ namespace YeogiCafe.Visual
 
         bool InTransition => queued != null;
 
-        void HandleFacilityUse(IFacility f)
-        {
-            if (!(f is Component c)) return;
-            var fb = c.GetComponent<FacilityBehaviour>();
-            hopWorld = c.transform.position + Vector3.up * (fb != null ? fb.PerchHeight : 0f);
-            // 벽걸이 시설(창문)은 그 아래 바닥으로 다가가 올려다본다
-            if (fb != null && fb.source != null && fb.source.wallMounted)
-                hopWorld = new Vector3(c.transform.position.x, brain.CurrentSeatPos.y, 0f);
-            hopT = 0f; hopping = true; idleTimer = 0f;
-        }
+        void HandleFacilityUse(IFacility f) { idleTimer = 0f; }
 
         // 퇴장 걸음: 로직은 이미 끝났고(정산 완료), 문까지 걸어가서 사라진다.
         public void BeginExit(Vector3 door)
         {
-            exiting = true; hopping = false;
+            exiting = true;
             brain.enabled = false;
             exitMover = GetComponent<ICatMover>();
             exitDoor = door;
@@ -207,39 +202,45 @@ namespace YeogiCafe.Visual
             Vector3 delta = pos - lastPos; lastPos = pos;
             bool walking = delta.sqrMagnitude > 1e-7f;
             if (Mathf.Abs(delta.x) > 1e-4f) sr.flipX = delta.x < 0f;
-            else if (!walking && brain.CurrentSeat is Component seatC && !hopping && delta.sqrMagnitude < 1e-9f && clip == "walk")
+            else if (!walking && brain.AtSeat && brain.CurrentSeat is Component seatC && delta.sqrMagnitude < 1e-9f && clip == "walk")
                 sr.flipX = seatC.transform.position.x > CafeCenterX;    // 자리에 앉으면 카페 가운데를 바라본다
 
             var st = brain.State;
-            if (!exiting && st == CatState.Idle && lastState != CatState.Idle && brain.ServedMenu != null)
-                eatTimer = eatShowSeconds;            // 주문 직후 몇 초간 먹는 모습
+            if (!exiting && !ateShown && st == CatState.Idle && brain.ServedMenu != null)
+            { eatTimer = eatShowSeconds; ateShown = true; }   // 서빙 직후 한 번, 몇 초간 먹는 모습
             lastState = st;
 
-            bool seated = !exiting && !walking && brain.CurrentSeat != null && IsSeatedState(st);
-            IsSeatedNow = seated;
-            // 자리를 떠나면(이동·퇴장) 동작 취소. 주문 결정처럼 잠깐 다른 상태를 거치는 건 무시.
-            if (acting && (exiting || walking || brain.CurrentSeat == null)) { acting = false; steps.Clear(); }
+            // '쉬는 중' = 자리든 바닥이든 시설 위든 멈춰 있는 상태
+            bool seated = !exiting && !walking && IsSeatedState(st);
+            IsSeatedNow = seated && !hopping;
+            // 걷기 시작하거나 퇴장하면 동작 취소. 주문 결정처럼 잠깐 다른 상태를 거치는 건 무시.
+            if (acting && (exiting || walking || hopping)) { acting = false; steps.Clear(); }
             if (acting) seated = true;
-            float sitH = seated ? SitHeight() : 0f;
+            float sitH = seated && brain.AtSeat ? SitHeight() : 0f;   // 의자 위에서만 앉은 높이
 
             // ── 위치(표현 오프셋) ──
             Vector3 local = new Vector3(0f, sitH, 0f);
             float sortY = pos.y;
-            if (hopping && seated)
+            // 시설: 점프로 올라가고(포물선) 위에서 쉬다가 뛰어내림
+            var fp = brain.FacilityPhase;
+            if (fp != lastFacPhase) { lastFacPhase = fp; facT = 0f; OnFacPhase(fp); }
+            facT += dt;
+            float perch = brain.FacilityPerch;
+            if (!exiting && perch > 0.05f && (fp == CatBrain.FacPhase.Perched || fp == CatBrain.FacPhase.Dismount))
             {
-                hopT += dt;
-                Vector3 toHop = hopWorld - pos;
-                float k;
-                if (hopT < HopMove) k = Smooth(hopT / HopMove);
-                else if (hopT < HopMove + HopStay) k = 1f;
-                else if (hopT < HopMove * 2 + HopStay) k = 1f - Smooth((hopT - HopMove - HopStay) / HopMove);
-                else { k = 0f; hopping = false; }
-                local = Vector3.Lerp(local, toHop, k);
-                if (k > 0.5f) sortY = hopWorld.y - 0.01f;   // 시설 위에서는 시설 기준 정렬
-                if (Mathf.Abs(toHop.x) > 0.01f && k > 0f && k < 1f)
-                    sr.flipX = (hopT < HopMove + HopStay) ? toHop.x < 0f : toHop.x > 0f;   // 갈 때/돌아올 때 진행 방향
+                float y;
+                if (fp == CatBrain.FacPhase.Perched)
+                {
+                    float t = Mathf.Clamp01((facT - 0.2f) / (JumpUpTime - 0.2f));      // 0.2초 웅크림 후 도약
+                    y = Mathf.Lerp(0f, perch, Smooth(t)) + Mathf.Sin(t * Mathf.PI) * 0.35f;
+                }
+                else
+                {
+                    float t = Mathf.Clamp01((facT - 0.1f) / (JumpDownTime - 0.15f));
+                    y = Mathf.Lerp(perch, 0f, t * t) + Mathf.Sin(t * Mathf.PI) * 0.2f;   // 떨어질수록 빨라짐
+                }
+                local = new Vector3(0f, y, 0f);
             }
-            else if (!seated) hopping = false;
 
             // 상호작용: 만날 지점으로 걸어가 동작 → 돌아오기
             bool actWalking = false;
@@ -280,7 +281,7 @@ namespace YeogiCafe.Visual
             visual.localPosition = local;
 
             // ── 클립 선택 ──
-            bool moving = walking || (hopping && (hopT < HopMove || hopT > HopMove + HopStay));
+            bool moving = walking;
             if (exiting && stretchLeft > 0f)
             {
                 if (clip != "stretch") Play("stretch");
@@ -289,6 +290,10 @@ namespace YeogiCafe.Visual
             }
             else if (acting) Play(actWalking ? "walk" : stepClip);
             else if (moving) { Play("walk"); idleTimer = 0f; rest = Rest.None; }
+            else if (fp == CatBrain.FacPhase.Dismount && perch > 0.05f) Play("jumpdown");
+            else if (fp == CatBrain.FacPhase.Perched && brain.FacilityWall) Play("gaze");                      // 창밖 구경
+            else if (fp == CatBrain.FacPhase.Perched && facT < JumpUpTime + 0.1f && perch > 0.05f) { }           // 점프 클립 재생 중
+            else if (fp == CatBrain.FacPhase.Perched && IsPlayFacility()) Play("pounce");                      // 장난감 놀이
             else if (!seated) { Play(exiting ? "walk" : "stand"); rest = Rest.None; }
             else if (st == CatState.WaitFood) { Play("order"); idleTimer = 0f; rest = Rest.Sit; }
             else if (eatTimer > 0f) { eatTimer -= dt; Play("eat"); idleTimer = 0f; rest = Rest.Loaf; }
@@ -298,8 +303,7 @@ namespace YeogiCafe.Visual
                 bool relaxed = Data != null && Data.HasPersonality(PersonalityTag.Relaxed);
                 float sleepAt = relaxed ? sleepAfterIdleSeconds * 0.6f : float.MaxValue;
                 float loafAt = relaxed ? loafAfterIdleSeconds * 0.6f : loafAfterIdleSeconds;
-                if (hopping) { Play("sit"); }
-                else if (rest == Rest.None) { PlayThen("sitdown", "sit"); rest = Rest.Sit; }
+                if (rest == Rest.None) { PlayThen("sitdown", "sit"); rest = Rest.Sit; }
                 else if (rest == Rest.Sit && idleTimer > loafAt) { PlayThen("liedown", "loaf"); rest = Rest.Loaf; }
                 else if (rest == Rest.Loaf && idleTimer > sleepAt) { PlayThen("curlup", "sleep"); rest = Rest.Sleep; }
                 else if (rest == Rest.Sit)
@@ -307,6 +311,7 @@ namespace YeogiCafe.Visual
                     if (groomLeft <= 0f && idleTimer > nextGroomAt) { groomLeft = 2.0f; nextGroomAt = idleTimer + Random.Range(5f, 11f); }
                     if (groomLeft > 0f) { groomLeft -= dt; Play("groom"); }
                     else Play("sit");
+                    TrySoloPlay(dt);
                 }
                 else if (rest == Rest.Loaf && clip != "loaf") Play("loaf");
             }
@@ -329,6 +334,38 @@ namespace YeogiCafe.Visual
         }
 
         const float CafeCenterX = 7.5f;
+
+        void OnFacPhase(CatBrain.FacPhase fp)
+        {
+            if (fp == CatBrain.FacPhase.Perched)
+            {
+                idleTimer = 0f;
+                if (brain.FacilityPerch > 0.05f) { PlayThen("jumpup", "loaf"); rest = Rest.Loaf; }   // 올라가서 식빵 → (느긋하면) 잠
+                if (brain.CurrentFacility is Component c) sr.flipX = c.transform.position.x > CafeCenterX;
+            }
+            else if (fp == CatBrain.FacPhase.Dismount) { clip = ""; queued = null; rest = Rest.None; }
+        }
+
+        bool IsPlayFacility()
+        {
+            var f = brain.CurrentFacility; if (f == null) return false;
+            foreach (var t in f.Tags) if (t == FacilityTag.Play) return true;
+            return false;
+        }
+
+        // 혼자 놀기: 바닥에서 쉬다가 가끔 허공 덮치기·뒹굴기(장난꾸러기일수록 자주), 아무나 가끔 기지개
+        void TrySoloPlay(float dt)
+        {
+            if (acting || !IsSeatedNow || brain.AtSeat || brain.State != CatState.Idle) return;
+            soloTimer -= dt;
+            if (soloTimer > 0f) return;
+            bool playful = Data != null && (Data.HasPersonality(PersonalityTag.Playful) || Data.HasPersonality(PersonalityTag.Active));
+            soloTimer = Random.Range(7f, 14f) * (playful ? 0.6f : 1.4f);
+            float r = Random.value;
+            if (playful && r < 0.5f) DoAction(new[] { new Step { clip = "pounce", seconds = 1.6f, hasEmote = true, emote = EmoteDrawing.Kind.Exclaim } });
+            else if (playful && r < 0.8f) DoAction(new[] { new Step { clip = "rollover", seconds = 2.2f, hasEmote = true, emote = EmoteDrawing.Kind.Note } });
+            else if (r < 0.5f) DoAction(new[] { new Step { clip = "stretch", seconds = 1.25f } });
+        }
 
         float SitHeight()
         {

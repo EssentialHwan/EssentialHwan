@@ -12,6 +12,16 @@ namespace YeogiCafe.AI
         bool IsFree { get; }
     }
 
+    // 실제 씬 시설(선택 구현): 고양이가 걸어갈 바닥 지점·올라앉는 높이·점유.
+    public interface IFacilitySpot
+    {
+        Vector3 BaseWorldPos { get; }      // 고양이가 서는 바닥 지점(벽걸이는 그 아래 바닥)
+        float PerchHeight { get; }         // 올라앉는 높이(0이면 바닥에서 이용)
+        bool WallMounted { get; }
+        void Use(object cat);
+        void Release();
+    }
+
     public struct FacilityDecision
     {
         public IFacility facility;   // null이면 Idle

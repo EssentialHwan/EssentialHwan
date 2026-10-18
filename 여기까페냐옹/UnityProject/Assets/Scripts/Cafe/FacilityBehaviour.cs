@@ -6,7 +6,7 @@ using YeogiCafe.Data;
 namespace YeogiCafe.Cafe
 {
     // IFacility의 씬 구현. FurnitureData(type==Facility)에서 태그를 읽는다.
-    public class FacilityBehaviour : MonoBehaviour, IFacility
+    public class FacilityBehaviour : MonoBehaviour, IFacility, IFacilitySpot
     {
         public FurnitureData source;
 
@@ -18,6 +18,12 @@ namespace YeogiCafe.Cafe
         object user;
         public void Use(object cat) => user = cat;
         public void Release() => user = null;
+
+        public bool WallMounted => source != null && source.wallMounted;
+        // 벽걸이(창문 등)는 그 아래 뒷줄 바닥에서 올려다본다
+        public Vector3 BaseWorldPos => WallMounted
+            ? new Vector3(transform.position.x, YeogiCafe.Core.CafeLayout.FloorTop - 0.85f, 0f)
+            : transform.position;
 
         // 고양이가 올라가는 높이(유닛) — 표현용(CatView). 캣타워는 꼭대기, 쿠션·바구니는 살짝 위.
         public float PerchHeight => source == null ? 0f : source.furnitureId switch

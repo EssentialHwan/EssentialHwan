@@ -23,6 +23,21 @@ namespace YeogiCafe.Core
         public const float CeilingY = 8.6f;
         public static readonly Vector3 BigPlant = new Vector3(0.45f, 2.5f, 0f);
 
+        // 고양이가 자유롭게 돌아다니는 바닥 영역(카운터 앞은 제외)
+        public const float RoamMinX = 1.6f, RoamMaxX = 12.6f, RoamMinY = 0.45f, RoamMaxY = 3.55f;
+        public static Vector3 RandomFloorPoint()
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                var p = new Vector3(Random.Range(RoamMinX, RoamMaxX), Random.Range(RoamMinY, RoamMaxY), 0f);
+                if (p.x > 11.6f && p.y > 2.5f) continue;          // 카운터
+                return p;
+            }
+            return new Vector3(7f, 1.2f, 0f);
+        }
+        public static Vector3 ClampFloor(Vector3 p) =>
+            new Vector3(Mathf.Clamp(p.x, RoamMinX, RoamMaxX), Mathf.Clamp(p.y, RoamMinY, RoamMaxY), 0f);
+
         // 시작 좌석 3개(가운데 줄). 창가 자리는 비워 둬서 '창가석 사볼까?'를 유도한다.
         public static readonly Vector2[] StarterSeats = { new Vector2(4.4f, 1.9f), new Vector2(6.6f, 1.9f), new Vector2(8.8f, 1.9f) };
 

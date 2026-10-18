@@ -37,6 +37,10 @@ namespace YeogiCafe.Art
             new Def { name = "flinch",   fps = 8,  loop = true,  frames = 6,  pose = Flinch },     // 움찔(낯가림)
             new Def { name = "hiss",     fps = 8,  loop = true,  frames = 6,  pose = HissIdle },   // 하악
             new Def { name = "swat",     fps = 12, loop = true,  frames = 6,  pose = Swat },       // 냥냥펀치
+            // 시설
+            new Def { name = "jumpup",   fps = 10, loop = false, frames = 6,  pose = JumpUp },     // 웅크렸다 도약 → 착지
+            new Def { name = "jumpdown", fps = 11, loop = false, frames = 6,  pose = JumpDown },   // 가장자리에서 뛰어내림 → 착지
+            new Def { name = "gaze",     fps = 5,  loop = true,  frames = 10, pose = Gaze },       // 창밖 올려다보기(꼬리 살랑, 가끔 채터링)
         };
 
         public static Def Find(string name)
@@ -177,6 +181,88 @@ namespace YeogiCafe.Art
         static CatRig.Pose SitDown(int i, int n) => CatRig.Lerp(CatRig.Stand(), CatRig.Sit(), Ease(i / (float)(n - 1)));
         static CatRig.Pose LieDown(int i, int n) => CatRig.Lerp(CatRig.Sit(), CatRig.Loaf(), Ease(i / (float)(n - 1)));
         static CatRig.Pose CurlUp(int i, int n) => CatRig.Lerp(CatRig.Loaf(), CatRig.Curl(), Ease(i / (float)(n - 1)));
+
+        // ═════════ 점프 ═════════
+        static CatRig.Pose Crouch()
+        {
+            var p = CatRig.Lerp(CatRig.Stand(), CatRig.Loaf(), 0.55f);
+            p.hipY += 2f; p.hipX += 1f; p.bodyAng = -0.12f;
+            p.headX = 46; p.headY = 21; p.headTilt = 0.05f; p.face = CatRig.Face.Wide;
+            p.tailFront = false; p.tailX = 17; p.tailY = 14; p.tailAng = 2.55f; p.tailCurl = -0.03f; p.tailLen = 14;
+            return p;
+        }
+
+        // 위로 뛰어오르는 공중 자세: 몸이 비스듬히 쭉, 앞발은 위·앞으로 뻗고 뒷발은 뒤로
+        static CatRig.Pose LeapUp()
+        {
+            var p = CatRig.Stand();
+            p.bodyX = 31; p.bodyY = 19; p.bodyRx = 13.5f; p.bodyRy = 6.5f; p.bodyAng = 0.42f;
+            p.chestX = 39; p.chestY = 24; p.chestR = 7f;
+            p.hipX = 22; p.hipY = 14; p.hipR = 7.5f;
+            p.headX = 45; p.headY = 34; p.headTilt = -0.2f; p.face = CatRig.Face.Wide; p.earFold = 0.1f;
+            p.fn = new CatRig.Leg { jx = 41, jy = 22, px = 49, py = 31, r = 2.6f, show = true };
+            p.ff = new CatRig.Leg { jx = 38, jy = 21, px = 46, py = 30, r = 2.6f, show = true, far = true };
+            p.bn = new CatRig.Leg { jx = 22, jy = 12, px = 14, py = 6, r = 2.7f, show = true };
+            p.bf = new CatRig.Leg { jx = 25, jy = 12, px = 17, py = 5, r = 2.7f, show = true, far = true };
+            p.tailX = 16; p.tailY = 13; p.tailAng = 3.6f; p.tailCurl = 0.03f; p.tailLen = 17;
+            p.shadowRx = 9;
+            return p;
+        }
+
+        // 뛰어내리는 공중 자세: 머리가 아래로, 앞발을 바닥 쪽으로 뻗음
+        static CatRig.Pose LeapDown()
+        {
+            var p = CatRig.Stand();
+            p.bodyX = 31; p.bodyY = 16; p.bodyRx = 13.5f; p.bodyRy = 6.5f; p.bodyAng = -0.4f;
+            p.chestX = 39; p.chestY = 12; p.chestR = 7f;
+            p.hipX = 22; p.hipY = 21; p.hipR = 7.5f;
+            p.headX = 47; p.headY = 18; p.headTilt = 0.25f; p.face = CatRig.Face.Wide;
+            p.fn = new CatRig.Leg { jx = 41, jy = 10, px = 47, py = CatRig.Ground, r = 2.6f, show = true };
+            p.ff = new CatRig.Leg { jx = 38, jy = 10, px = 44, py = CatRig.Ground + 1, r = 2.6f, show = true, far = true };
+            p.bn = new CatRig.Leg { jx = 21, jy = 20, px = 13, py = 25, r = 2.7f, show = true };
+            p.bf = new CatRig.Leg { jx = 24, jy = 20, px = 16, py = 26, r = 2.7f, show = true, far = true };
+            p.tailX = 16; p.tailY = 22; p.tailAng = 2.6f; p.tailCurl = -0.06f; p.tailLen = 17;
+            p.shadowRx = 9;
+            return p;
+        }
+
+        static CatRig.Pose JumpUp(int i, int n)
+        {
+            switch (i)
+            {
+                case 0: return CatRig.Lerp(CatRig.Stand(), Crouch(), 0.6f);
+                case 1: { var c = Crouch(); c.hipY += 1f; c.tailAng += 0.1f; return c; }   // 엉덩이 씰룩(조준)
+                case 2: return CatRig.Lerp(Crouch(), LeapUp(), 0.6f);
+                case 3: return LeapUp();
+                case 4: return CatRig.Lerp(LeapUp(), Crouch(), 0.7f);
+                default: return CatRig.Lerp(Crouch(), CatRig.Loaf(), 0.5f);
+            }
+        }
+
+        static CatRig.Pose JumpDown(int i, int n)
+        {
+            switch (i)
+            {
+                case 0: { var p = CatRig.Lerp(CatRig.Loaf(), CatRig.Stand(), 0.7f); p.headTilt = 0.3f; p.face = CatRig.Face.Wide; p.tailFront = false; p.tailX = 17; p.tailY = 16; p.tailAng = 2.4f; p.tailCurl = -0.06f; p.tailLen = 17; return p; }  // 아래를 내려다봄
+                case 1: return CatRig.Lerp(CatRig.Stand(), LeapDown(), 0.5f);
+                case 2: return LeapDown();
+                case 3: return LeapDown();
+                case 4: return CatRig.Lerp(LeapDown(), Crouch(), 0.75f);   // 착지 충격
+                default: return CatRig.Lerp(Crouch(), CatRig.Stand(), 0.6f);
+            }
+        }
+
+        // 창밖 보기: 앉아서 고개를 들고, 꼬리 끝 살랑, 가끔 '깍깍'(채터링)
+        static CatRig.Pose Gaze(int i, int n)
+        {
+            var p = CatRig.Sit();
+            float ph = Ph(i, n);
+            p.headTilt = -0.28f + Mathf.Sin(TAU * ph) * 0.05f; p.headY += 1f;
+            p.face = CatRig.Face.Wide;
+            p.mouthOpen = i == 6 || i == 8;
+            p.tailFront = false; p.tailX = 18; p.tailY = 6; p.tailAng = -0.4f + Mathf.Sin(TAU * ph * 2f) * 0.25f; p.tailCurl = 0.02f; p.tailLen = 20;
+            return p;
+        }
 
         // ═════════ 상호작용 ═════════
 

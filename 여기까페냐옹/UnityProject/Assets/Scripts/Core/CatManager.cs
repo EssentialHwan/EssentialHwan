@@ -51,6 +51,7 @@ namespace YeogiCafe.Core
             brain.NearbyFriends = _ => cafe.CountFriendsSeated(myId);
             brain.NearbyStrangers = cafe.NearbyStrangers;
             brain.SetOccupant = cafe.SetSeatOccupant;
+            brain.RandomFloorPoint = CafeLayout.RandomFloorPoint;   // 식사 후 카페 어디든 돌아다님
             // [프리플라이트] 단골 고정자리 주입 제거(favoriteSeat는 포스트 MVP)
 
             go.transform.position = cafe.Entrance;
