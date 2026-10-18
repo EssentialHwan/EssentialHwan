@@ -1,5 +1,6 @@
 using UnityEngine;
 using YeogiCafe.AI;
+using YeogiCafe.Art;
 using YeogiCafe.Cafe;
 using YeogiCafe.Data;
 
@@ -10,17 +11,20 @@ namespace YeogiCafe.Visual
     [RequireComponent(typeof(CatBrain))]
     public class CatView : MonoBehaviour
     {
-        // animFrames 인덱스 규약(PixelArtGenerator 시트 순서와 동일)
-        const int Idle0 = 0, Idle1 = 1, Walk0 = 2, Eat0 = 4, Sleep = 6, Groom = 7, Stretch = 8, OrderPaw = 9;
-
-        // 대기 중 가끔 그루밍(개체마다 박자가 달라 보이게 랜덤)
+        // 고해상도 리그 클립(CatClips) 재생. 자리에서는 성격에 따라 앉기 → 그루밍 → 식빵 → 둥글게 자기로 흘러간다.
         float groomLeft, nextGroomAt = 6f;
-        // 자리에서 일어날 때 기지개 후 문으로
         float stretchLeft; Vector3 exitDoor;
 
-        public float frameTime = 0.32f;
         public float eatShowSeconds = 4f;
-        public float sleepAfterIdleSeconds = 10f;
+        public float loafAfterIdleSeconds = 14f;      // 한참 머물면 식빵
+        public float sleepAfterIdleSeconds = 22f;     // 느긋한 고양이는 그 뒤 둥글게 말아 잔다
+
+        // 클립 재생 상태
+        string clip = "", queued;          // queued: 1회 클립(전환)이 끝나면 이어갈 루프 클립
+        float clipT;
+        Sprite[] clipFrames; CatClips.Def clipDef;
+        enum Rest { None, Sit, Loaf, Sleep }
+        Rest rest;
 
         public CatData Data { get; private set; }
         public bool IsExiting => exiting;
@@ -51,7 +55,7 @@ namespace YeogiCafe.Visual
         public void Init(CatData data)
         {
             Data = data;
-            sr.sprite = Frame(Idle0);
+            Play("sit");
             brain.OnFacilityUse += HandleFacilityUse;
             lastPos = transform.position;
         }
@@ -61,13 +65,35 @@ namespace YeogiCafe.Visual
             if (brain != null) brain.OnFacilityUse -= HandleFacilityUse;
         }
 
-        Sprite Frame(int i)
+        // 루프 클립 전환. 같은 클립이면 이어서 재생(끊김 방지).
+        void Play(string name)
         {
-            if (Data == null) return null;
-            var f = Data.animFrames;
-            if (f != null && i < f.Length && f[i] != null) return f[i];
-            return Data.worldSprite;
+            if (name == clip && queued == null) return;
+            clip = name; queued = null; clipT = 0f;
+            clipDef = CatClips.Find(name);
+            clipFrames = Data != null ? CatSpriteBank.Clip(Data.catId, name) : null;
         }
+
+        // 1회 전환 클립(앉기·눕기 등) 재생 후 next 루프로.
+        void PlayThen(string once, string next)
+        {
+            Play(once); queued = next;
+        }
+
+        void Tick(float dt)
+        {
+            if (clipFrames == null || clipFrames.Length == 0) return;
+            clipT += dt;
+            int i = (int)(clipT * clipDef.fps);
+            if (!clipDef.loop && i >= clipFrames.Length)
+            {
+                if (queued != null) { var n = queued; queued = null; clip = ""; Play(n); i = 0; }
+                else i = clipFrames.Length - 1;
+            }
+            sr.sprite = clipFrames[clipDef.loop ? i % clipFrames.Length : Mathf.Min(i, clipFrames.Length - 1)];
+        }
+
+        bool InTransition => queued != null;
 
         void HandleFacilityUse(IFacility f)
         {
@@ -87,7 +113,7 @@ namespace YeogiCafe.Visual
             brain.enabled = false;
             exitMover = GetComponent<ICatMover>();
             exitDoor = door;
-            stretchLeft = 0.8f;                     // 기지개 한 번 켜고 출발
+            stretchLeft = 1.3f;                     // 기지개 한 번 켜고 출발(stretch 클립 길이)
         }
 
         void LateUpdate()
@@ -97,6 +123,8 @@ namespace YeogiCafe.Visual
             Vector3 delta = pos - lastPos; lastPos = pos;
             bool walking = delta.sqrMagnitude > 1e-7f;
             if (Mathf.Abs(delta.x) > 1e-4f) sr.flipX = delta.x < 0f;
+            else if (!walking && brain.CurrentSeat is Component seatC && !hopping && delta.sqrMagnitude < 1e-9f && clip == "walk")
+                sr.flipX = seatC.transform.position.x > CafeCenterX;    // 자리에 앉으면 카페 가운데를 바라본다
 
             var st = brain.State;
             if (!exiting && st == CatState.Idle && lastState != CatState.Idle && brain.ServedMenu != null)
@@ -126,33 +154,37 @@ namespace YeogiCafe.Visual
             else if (!seated) hopping = false;
             visual.localPosition = local;
 
-            // ── 프레임 ──
-            animT += dt;
-            int phase = (int)(animT / frameTime) % 2;
-            int idx;
+            // ── 클립 선택 ──
             bool moving = walking || (hopping && (hopT < HopMove || hopT > HopMove + HopStay));
             if (exiting && stretchLeft > 0f)
             {
-                stretchLeft -= dt; idx = Stretch;
+                if (clip != "stretch") Play("stretch");
+                stretchLeft -= dt;
                 if (stretchLeft <= 0f && exitMover != null) exitMover.MoveTo(exitDoor);
             }
-            else if (moving) { idx = Walk0 + phase; idleTimer = 0f; }
-            else if (seated && st == CatState.WaitFood)
-                idx = (animT % 1.4f) < 1.0f ? OrderPaw : Idle0;              // 앞발 흔들며 주문 대기
-            else if (eatTimer > 0f) { eatTimer -= dt; idx = Eat0 + phase; idleTimer = 0f; }
-            else
+            else if (moving) { Play("walk"); idleTimer = 0f; rest = Rest.None; }
+            else if (!seated) { Play(exiting ? "walk" : "stand"); rest = Rest.None; }
+            else if (st == CatState.WaitFood) { Play("order"); idleTimer = 0f; rest = Rest.Sit; }
+            else if (eatTimer > 0f) { eatTimer -= dt; Play("eat"); idleTimer = 0f; rest = Rest.Loaf; }
+            else if (!InTransition)
             {
                 idleTimer += dt;
-                bool sleepy = seated && !hopping && Data != null &&
-                              Data.HasPersonality(PersonalityTag.Relaxed) && idleTimer > sleepAfterIdleSeconds;
-                if (!sleepy && seated && groomLeft <= 0f && idleTimer > nextGroomAt)
+                bool relaxed = Data != null && Data.HasPersonality(PersonalityTag.Relaxed);
+                float sleepAt = relaxed ? sleepAfterIdleSeconds * 0.6f : float.MaxValue;
+                float loafAt = relaxed ? loafAfterIdleSeconds * 0.6f : loafAfterIdleSeconds;
+                if (hopping) { Play("sit"); }
+                else if (rest == Rest.None) { PlayThen("sitdown", "sit"); rest = Rest.Sit; }
+                else if (rest == Rest.Sit && idleTimer > loafAt) { PlayThen("liedown", "loaf"); rest = Rest.Loaf; }
+                else if (rest == Rest.Loaf && idleTimer > sleepAt) { PlayThen("curlup", "sleep"); rest = Rest.Sleep; }
+                else if (rest == Rest.Sit)
                 {
-                    groomLeft = 1.6f; nextGroomAt = idleTimer + Random.Range(5f, 11f);
+                    if (groomLeft <= 0f && idleTimer > nextGroomAt) { groomLeft = 2.0f; nextGroomAt = idleTimer + Random.Range(5f, 11f); }
+                    if (groomLeft > 0f) { groomLeft -= dt; Play("groom"); }
+                    else Play("sit");
                 }
-                if (groomLeft > 0f) { groomLeft -= dt; idx = phase == 0 ? Groom : Idle1; }
-                else idx = sleepy ? Sleep : ((animT % 3.2f) < 0.18f ? Idle1 : Idle0);   // 가끔 눈 깜빡임
+                else if (rest == Rest.Loaf && clip != "loaf") Play("loaf");
             }
-            sr.sprite = Frame(idx);
+            Tick(dt);
 
             sr.sortingOrder = YSort.Order(sortY) + YSort.CatAboveSeat;
 
@@ -167,6 +199,8 @@ namespace YeogiCafe.Visual
                 }
             }
         }
+
+        const float CafeCenterX = 7.5f;
 
         float SitHeight()
         {

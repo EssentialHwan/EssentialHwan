@@ -339,8 +339,8 @@ namespace YeogiCafe.UI
 
         Sprite CatSprite(string catId)
         {
-            var d = owner.LookupCat(catId);
-            return d != null ? d.worldSprite : null;
+            if (string.IsNullOrEmpty(catId)) return null;
+            return CatSpriteBank.Portrait(catId);
         }
 
         string CatName(OrderTicket t) => t == null ? "" : L.Get($"cat.{t.catId}.name");
