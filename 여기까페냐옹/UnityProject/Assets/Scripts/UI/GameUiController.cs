@@ -31,6 +31,8 @@ namespace YeogiCafe.UI
         SettlementPanel settlement;
         CatalogPanel catalog;
         BubbleLayer bubbles;
+        KitchenView kitchen;
+        Text kitchenBtnLabel;
 
         float narrationTimer, hudTimer;
 
@@ -82,6 +84,7 @@ namespace YeogiCafe.UI
             bubbles = new BubbleLayer(root.transform);
             BuildHud(root.transform);
 
+            kitchen = new KitchenView(this, root.transform, bootstrap != null ? bootstrap.orderSystem : null);
             shop = new ShopPanel(this, root.transform);
             settlement = new SettlementPanel(this, root.transform);
             catalog = new CatalogPanel(this, root.transform);
@@ -130,6 +133,13 @@ namespace YeogiCafe.UI
                               new Vector2(1, 0.5f), new Vector2(-144, 0), new Vector2(120, 48));
             catBtn.onClick.AddListener(() => { shop.Hide(); catalog.Toggle(); });
 
+            // 주방(1인칭 조리) ↔ 홀 전환 — 가장 자주 누르는 버튼이라 가운데 왼쪽에 크게
+            var kitBtn = UiFactory.Button("KitchenBtn", bar.transform, L.Get("ui.kitchen.open"),
+                                          UiFactory.Green, UiFactory.Ink, out kitchenBtnLabel);
+            UiFactory.SetRect((RectTransform)kitBtn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f),
+                              new Vector2(1, 0.5f), new Vector2(-274, 0), new Vector2(120, 48));
+            kitBtn.onClick.AddListener(ToggleKitchen);
+
             // (구) 하단 서술 텍스트는 고양이 머리 위 말풍선(BubbleLayer)으로 대체. 필드는 호환용으로 유지.
             narrationText = null;
         }
@@ -143,13 +153,40 @@ namespace YeogiCafe.UI
             }
             if (flow != null)
             {
-                flow.OnSettlementReady += () => { shop.Hide(); catalog.Hide(); settlement.Show(); };
+                flow.OnSettlementReady += () => { shop.Hide(); catalog.Hide(); CloseKitchen(); settlement.Show(); };
                 TryHookObservation();
             }
         }
 
         // GameFlowController.Start(세이브 로드·관찰 매니저 생성)가 이 컴포넌트보다 늦게 돌 수 있어
         // 관찰 이벤트는 준비될 때까지 매 프레임 재시도해서 연결한다(말풍선이 안 뜨던 원인).
+        bool ordersHooked;
+        void TryHookOrders()
+        {
+            var os = bootstrap != null ? bootstrap.orderSystem : null;
+            if (ordersHooked || os == null) return;
+            os.OnTicketPlaced += t => ShowCatBubble(t.catId,
+                L.Get("ui.order.ask", ("menu", t.menu != null ? L.Get($"menu.{t.menu.menuId}") : "")));
+            os.OnTicketCancelled += t => ShowCatBubble(t.catId, L.Get("ui.order.gaveup"));
+            ordersHooked = true;
+        }
+
+        public void ShowCatBubble(string catId, string text) => bubbles?.Show(catId, text);
+
+        void ToggleKitchen()
+        {
+            shop.Hide(); catalog.Hide();
+            kitchen.Toggle();
+            if (kitchenBtnLabel != null) kitchenBtnLabel.text = L.Get(kitchen.IsOpen ? "ui.kitchen.close" : "ui.kitchen.open");
+        }
+
+        void CloseKitchen()
+        {
+            if (kitchen == null || !kitchen.IsOpen) return;
+            kitchen.Close();
+            if (kitchenBtnLabel != null) kitchenBtnLabel.text = L.Get("ui.kitchen.open");
+        }
+
         bool obsHooked;
         void TryHookObservation()
         {
@@ -161,6 +198,8 @@ namespace YeogiCafe.UI
         void Update()
         {
             TryHookObservation();
+            TryHookOrders();
+            kitchen?.Tick(Time.unscaledDeltaTime);
             if (day != null && timeBarFill != null && bootstrap != null && bootstrap.balance != null)
                 timeBarFill.fillAmount = HudFormatter.TimeProgress(day.DayTimer, bootstrap.balance.dayLength);
 

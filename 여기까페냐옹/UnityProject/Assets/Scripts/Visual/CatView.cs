@@ -11,7 +11,12 @@ namespace YeogiCafe.Visual
     public class CatView : MonoBehaviour
     {
         // animFrames 인덱스 규약(PixelArtGenerator 시트 순서와 동일)
-        const int Idle0 = 0, Idle1 = 1, Walk0 = 2, Eat0 = 4, Sleep = 6;
+        const int Idle0 = 0, Idle1 = 1, Walk0 = 2, Eat0 = 4, Sleep = 6, Groom = 7, Stretch = 8, OrderPaw = 9;
+
+        // 대기 중 가끔 그루밍(개체마다 박자가 달라 보이게 랜덤)
+        float groomLeft, nextGroomAt = 6f;
+        // 자리에서 일어날 때 기지개 후 문으로
+        float stretchLeft; Vector3 exitDoor;
 
         public float frameTime = 0.32f;
         public float eatShowSeconds = 4f;
@@ -81,7 +86,8 @@ namespace YeogiCafe.Visual
             exiting = true; hopping = false;
             brain.enabled = false;
             exitMover = GetComponent<ICatMover>();
-            if (exitMover != null) exitMover.MoveTo(door);
+            exitDoor = door;
+            stretchLeft = 0.8f;                     // 기지개 한 번 켜고 출발
         }
 
         void LateUpdate()
@@ -125,14 +131,26 @@ namespace YeogiCafe.Visual
             int phase = (int)(animT / frameTime) % 2;
             int idx;
             bool moving = walking || (hopping && (hopT < HopMove || hopT > HopMove + HopStay));
-            if (moving) { idx = Walk0 + phase; idleTimer = 0f; }
+            if (exiting && stretchLeft > 0f)
+            {
+                stretchLeft -= dt; idx = Stretch;
+                if (stretchLeft <= 0f && exitMover != null) exitMover.MoveTo(exitDoor);
+            }
+            else if (moving) { idx = Walk0 + phase; idleTimer = 0f; }
+            else if (seated && st == CatState.WaitFood)
+                idx = (animT % 1.4f) < 1.0f ? OrderPaw : Idle0;              // 앞발 흔들며 주문 대기
             else if (eatTimer > 0f) { eatTimer -= dt; idx = Eat0 + phase; idleTimer = 0f; }
             else
             {
                 idleTimer += dt;
                 bool sleepy = seated && !hopping && Data != null &&
                               Data.HasPersonality(PersonalityTag.Relaxed) && idleTimer > sleepAfterIdleSeconds;
-                idx = sleepy ? Sleep : ((animT % 3.2f) < 0.18f ? Idle1 : Idle0);   // 가끔 눈 깜빡임
+                if (!sleepy && seated && groomLeft <= 0f && idleTimer > nextGroomAt)
+                {
+                    groomLeft = 1.6f; nextGroomAt = idleTimer + Random.Range(5f, 11f);
+                }
+                if (groomLeft > 0f) { groomLeft -= dt; idx = phase == 0 ? Groom : Idle1; }
+                else idx = sleepy ? Sleep : ((animT % 3.2f) < 0.18f ? Idle1 : Idle0);   // 가끔 눈 깜빡임
             }
             sr.sprite = Frame(idx);
 
@@ -141,7 +159,7 @@ namespace YeogiCafe.Visual
             // ── 퇴장 처리 ──
             if (exiting)
             {
-                if (exitMover == null || exitMover.HasArrived)
+                if (stretchLeft <= 0f && (exitMover == null || exitMover.HasArrived))
                 {
                     fade -= dt * 3f;
                     sr.color = new Color(1f, 1f, 1f, Mathf.Clamp01(fade));

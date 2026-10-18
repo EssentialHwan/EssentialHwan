@@ -199,6 +199,8 @@ namespace YeogiCafe.AI
         {
             if (sessionCompleted) return;
             if (seat != null) { SetOccupant?.Invoke(seat, null); seat.Vacate(); seat = null; }
+            if (OrderSystem != null) OrderSystem.DropForCat(data.catId);
+            if (state == CatState.WaitFood) ServedMenu = null;   // 못 받고 떠나면 결제 없음
             state = CatState.Leave;
             sessionCompleted = true;
             OnSessionComplete?.Invoke(this);

@@ -12,6 +12,21 @@ ui.settle.cafelevel,카페 Lv.{n},Cafe Lv.{n}
 ui.settle.expanded,카페가 넓어졌어요! 새 자리가 생겼어요,The cafe got bigger! New spots opened
 ui.shop.start,영업 시작,Open Shop
 ui.shop.buy,구매,Buy
+ui.kitchen.open,주방,Kitchen
+ui.kitchen.close,홀로,To Hall
+ui.kitchen.hint,빛나는 기구를 눌러 조리하세요. 기다리는 동안 손님을 지켜보세요,Tap a glowing tool to cook. Watch your guests while it's cooking
+ui.kitchen.cooking,{menu} 만드는 중…,Making {menu}…
+ui.kitchen.served,{name}에게 {menu}를 냈어요!,Served {menu} to {name}!
+ui.kitchen.busy,아직 조리 중이에요,Still cooking
+ui.kitchen.noorder,이 기구로 만들 주문이 없어요,No orders for this tool
+ui.kitchen.thanks,냐아~ (꼬리를 흔든다),Mrrow~ (tail swish)
+ui.order.ask,{menu} 주세요!,{menu} please!
+ui.order.gaveup,기다리다 지쳐 나가버렸다…,Got tired of waiting and left…
+tool.coffee,커피머신,Coffee Machine
+tool.kettle,주전자,Kettle
+tool.oven,오븐,Oven
+tool.board,도마,Prep Board
+tool.grill,그릴,Grill
 ui.shop.title,가구 상점,Furniture Shop
 ui.shop.type.seat,좌석,Seat
 ui.shop.type.facility,놀이 시설,Facility

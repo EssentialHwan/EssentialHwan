@@ -8,7 +8,7 @@ namespace YeogiCafe.Core
     public static class CafeLayout
     {
         public const float FloorTop = 4.2f;               // 바닥/벽 경계(징두리 하단)
-        public const float RoomLeft = -1f, RoomRight = 16f;
+        public const float RoomLeft = -5f, RoomRight = 21f;   // 주방 시점(카메라 뒤로 뺌)에서도 벽·바닥이 끊기지 않게 넉넉히
 
         public static readonly Vector3 CameraPos = new Vector3(7.5f, 4.0f, -10f);
         public const float CameraSize = 4.2f;             // 세로 8.4유닛 → 16:9에서 가로 ≈ 15유닛

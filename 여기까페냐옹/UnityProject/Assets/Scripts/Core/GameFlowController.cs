@@ -26,6 +26,7 @@ namespace YeogiCafe.Core
         public RelationshipManager relationships;        // 관계 세이브 연결(선택)
         public EventManager events;                      // 에피소드/관계 이벤트(선택)
         public System.Func<string, FurnitureData> furnitureLookup;   // 세이브의 배치 가구 복원용(선택)
+        public YeogiCafe.Order.OrderSystem orderSystem;               // 영업 종료 시 남은 주문 정리
 
         ObservationManager obs;
         RegularManager regular;
@@ -140,7 +141,7 @@ namespace YeogiCafe.Core
                 usedPreferredSeat = brain.UsedPreferredSeat,
                 usedPreferredFacility = brain.UsedPreferredFacility,
                 fastService = true,                  // S1: 서빙 즉시
-                totalWaitOver = 0f,
+                totalWaitOver = 0f,     // TODO(밸런스): 주문~서빙 대기시간을 만족도에 반영할지 기획 결정 필요
                 orderFailed = brain.ServedMenu == null,
                 hasDominant = cfg.atmosphereAffectsSatisfaction && atmo.hasDominant,
                 dominantAtmosphere = atmo.dominant
@@ -174,6 +175,7 @@ namespace YeogiCafe.Core
             // 순서가 바뀌면 남은 손님의 오늘 단서가 내일로 새거나 정산에서 빠진다.
             var remaining = new List<CatBrain>(cats.Active);
             foreach (var b in remaining) if (b != null) b.ForceLeave();
+            if (orderSystem != null) orderSystem.ClearAll();
 
             obs.OnDayEnd();                                  // 승격
             foreach (var c in save.cats) regular.Evaluate(c); // 단골(→이벤트 큐잉)

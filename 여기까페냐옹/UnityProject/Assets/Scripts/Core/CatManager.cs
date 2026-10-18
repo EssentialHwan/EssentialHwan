@@ -67,15 +67,20 @@ namespace YeogiCafe.Core
             if (brain == null) return;
             // 로직은 여기서 끝. 화면에서는 문까지 걸어나간 뒤 사라진다(표현).
             var view = brain.GetComponent<YeogiCafe.Visual.CatView>();
-            if (view != null) view.BeginExit(cafe.Entrance);
+            if (view != null) { view.BeginExit(cafe.Entrance); leaving.Add(brain); }
             else Destroy(brain.gameObject);
         }
 
         public bool HasActiveCats => active.Count > 0;
 
+        // 퇴장 걸음 중인 고양이도 '아직 카페 안'으로 친다(같은 개체가 문 앞에서 엇갈려 둘로 보이던 문제)
+        readonly List<CatBrain> leaving = new();
+
         public bool IsInCafe(string catId)
         {
             foreach (var b in active) if (b != null && b.data != null && b.data.catId == catId) return true;
+            leaving.RemoveAll(b => b == null);
+            foreach (var b in leaving) if (b.data != null && b.data.catId == catId) return true;
             return false;
         }
     }

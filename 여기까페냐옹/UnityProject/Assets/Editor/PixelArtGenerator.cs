@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System.IO;
 using UnityEditor;
+using UnityEditor.U2D.Sprites;
 using UnityEngine;
 using YeogiCafe.Art;
 
@@ -94,6 +95,9 @@ namespace YeogiCafe.EditorTools
         // 스프라이트시트: Multiple 모드로 32×32 그리드 슬라이스
         static void SaveSheet(PixelCanvas canvas, string assetPath, int cell)
         {
+            // 프레임 수가 바뀌면 기존 슬라이스와 fileID가 충돌(Identifier uniqueness violation) →
+            // 시트는 매번 지우고 새로 임포트해서 프레임 ID를 깨끗하게 다시 받는다.
+            if (AssetDatabase.LoadMainAssetAtPath(assetPath) != null) AssetDatabase.DeleteAsset(assetPath);
             var tex = new Texture2D(canvas.W, canvas.H, TextureFormat.RGBA32, false);
             tex.SetPixels32(canvas.Pixels);
             tex.Apply();
@@ -111,23 +115,31 @@ namespace YeogiCafe.EditorTools
             ti.mipmapEnabled = false;
             ti.alphaIsTransparency = true;
 
-            // 프레임 슬라이스 메타 지정
+            // 프레임 슬라이스: 2D Sprite 패키지의 데이터 프로바이더로 지정(프레임마다 고유 spriteID).
+            // (구 ti.spritesheet API는 새 프레임 fileID가 모두 0이 되어 'Identifier uniqueness violation'이 났다)
+            ti.SaveAndReimport();
+            var factory = new SpriteDataProviderFactories(); factory.Init();
+            var dp = factory.GetSpriteEditorDataProviderFromObject(ti);
+            dp.InitSpriteEditorDataProvider();
             int frames = canvas.W / cell;
-            var metas = new SpriteMetaData[frames];
-            string[] names = { "idle0","idle1","walk0","walk1","eat0","eat1","sleep" };
+            string[] names = { "idle0","idle1","walk0","walk1","eat0","eat1","sleep","groom","stretch","order" };
+            var rects = new SpriteRect[frames];
             for (int i = 0; i < frames; i++)
             {
-                metas[i] = new SpriteMetaData
+                rects[i] = new SpriteRect
                 {
-                    name = (i < names.Length ? names[i] : "frame" + i),
+                    name = i < names.Length ? names[i] : "frame" + i,
                     rect = new Rect(i * cell, 0, cell, cell),
-                    pivot = new Vector2(0.5f, 4f / cell),    // 발밑 피벗(접지선 4px, 단일 스프라이트와 동일)
-                    alignment = (int)SpriteAlignment.Custom
+                    pivot = new Vector2(0.5f, 4f / cell),          // 발밑 피벗(접지선 4px, 단일 스프라이트와 동일)
+                    alignment = SpriteAlignment.Custom,
+                    spriteID = GUID.Generate()
                 };
             }
-#pragma warning disable CS0618
-            ti.spritesheet = metas;
-#pragma warning restore CS0618
+            dp.SetSpriteRects(rects);
+            var idProvider = dp.GetDataProvider<ISpriteNameFileIdDataProvider>();
+            if (idProvider != null)
+                idProvider.SetNameFileIdPairs(System.Linq.Enumerable.Select(rects, r => new SpriteNameFileIdPair(r.name, r.spriteID)));
+            dp.Apply();
             ti.SaveAndReimport();
         }
 

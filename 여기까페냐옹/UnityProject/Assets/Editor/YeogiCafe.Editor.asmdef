@@ -1,7 +1,7 @@
 {
     "name": "YeogiCafe.Editor",
     "rootNamespace": "YeogiCafe.EditorTools",
-    "references": [ "YeogiCafe.Runtime" ],
+    "references": [ "YeogiCafe.Runtime", "Unity.2D.Sprite.Editor" ],
     "includePlatforms": [ "Editor" ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

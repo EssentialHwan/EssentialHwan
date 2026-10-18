@@ -16,6 +16,7 @@ namespace YeogiCafe.UI
         public static readonly Color Ink       = new(74f / 255f, 54f / 255f, 47f / 255f, 1f);
         public static readonly Color PinkDeep  = new(196f / 255f, 92f / 255f, 110f / 255f, 1f);
         public static readonly Color Pink      = new(230f / 255f, 160f / 255f, 172f / 255f, 1f);
+        public static readonly Color YellowLight = new(248f / 255f, 224f / 255f, 156f / 255f, 1f);
         public static readonly Color Green     = new(150f / 255f, 184f / 255f, 128f / 255f, 1f);
         public static readonly Color PanelBg   = new(245f / 255f, 232f / 255f, 212f / 255f, 0.98f);
         public static readonly Color Scrim     = new(74f / 255f, 54f / 255f, 47f / 255f, 0.55f);

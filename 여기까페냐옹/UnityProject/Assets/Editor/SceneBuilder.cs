@@ -180,7 +180,7 @@ namespace YeogiCafe.EditorTools
         static Sprite LoadArt(string relPath)
             => LoadSprite($"{OverrideRoot}/{relPath}") ?? LoadSprite($"{GeneratedRoot}/{relPath}");
 
-        static readonly string[] FrameNames = { "idle0", "idle1", "walk0", "walk1", "eat0", "eat1", "sleep" };
+        static readonly string[] FrameNames = { "idle0", "idle1", "walk0", "walk1", "eat0", "eat1", "sleep", "groom", "stretch", "order" };
 
         static Sprite[] LoadSheetFrames(string catId)
         {

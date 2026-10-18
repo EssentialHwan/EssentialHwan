@@ -36,6 +36,7 @@ namespace YeogiCafe.Core
         public YeogiCafe.Progression.EventManager events;
         public List<CatEventData> allEvents = new();     // 에피소드+관계 이벤트
         public GameFlowController flow;
+        public YeogiCafe.Order.OrderSystem orderSystem;   // 주문·조리(주방 1인칭 화면)
 
         void Awake()
         {
@@ -76,6 +77,7 @@ namespace YeogiCafe.Core
             if (relationships == null) relationships = gameObject.AddComponent<YeogiCafe.Progression.RelationshipManager>();
             if (events == null) events = gameObject.AddComponent<YeogiCafe.Progression.EventManager>();
             if (flow == null) flow = gameObject.AddComponent<GameFlowController>();
+            if (orderSystem == null) orderSystem = gameObject.AddComponent<YeogiCafe.Order.OrderSystem>();
         }
 
         void WireReferences()
@@ -83,6 +85,7 @@ namespace YeogiCafe.Core
             day.cfg = balance;
             economy.cfg = balance;
             cats.cfg = balance; cats.cafe = cafe;
+            cats.orderSystem = orderSystem;          // 고양이가 주문 → 플레이어가 주방에서 조리·서빙
             spawner.cfg = balance; spawner.day = day; spawner.cats = cats; spawner.cafe = cafe;
             spawner.fixedQueue = new List<CatData>(starterCats);
             spawner.allCats = new List<CatData>(allCats);   // 해금 풀(비면 fixedQueue 사용)
@@ -94,6 +97,7 @@ namespace YeogiCafe.Core
             events.allEvents = new List<CatEventData>(allEvents);
             flow.spawner = spawner; flow.cafeManager = cafeManager; flow.relationships = relationships; flow.events = events;
             flow.furnitureLookup = LookupFurniture;
+            flow.orderSystem = orderSystem;
         }
 
         [Header("씬 배치")]
