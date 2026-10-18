@@ -53,6 +53,8 @@ namespace YeogiCafe.DevTools
                 if (GUILayout.Button("x10")) Time.timeScale = 10f;
                 GUILayout.EndHorizontal();
                 if (GUILayout.Button("영업 즉시 종료 → 정산")) day.DebugEndDayNow();
+                var flow = FindObjectOfType<GameFlowController>();
+                if (flow != null && GUILayout.Button($"날씨 바꾸기 (지금: {Weather.Current})")) Weather.DebugCycle(flow.Save);
             }
             var dir = FindObjectOfType<YeogiCafe.Visual.CatInteractionDirector>();
             if (dir != null)
@@ -72,10 +74,7 @@ namespace YeogiCafe.DevTools
                 if (GUILayout.Button("덮치기")) dir.DebugForce(YeogiCafe.AI.SocialKind.Ambush);
                 if (GUILayout.Button("우다다")) dir.DebugZoomies();
                 GUILayout.EndHorizontal();
-                GUILayout.BeginHorizontal();
-                if (GUILayout.Button("빙글냥")) dir.DebugMeme(true);
-                if (GUILayout.Button("방방냥")) dir.DebugMeme(false);
-                GUILayout.EndHorizontal();
+
             }
             if (GUILayout.Button("세이브 삭제 후 종료(새 게임)"))
             {

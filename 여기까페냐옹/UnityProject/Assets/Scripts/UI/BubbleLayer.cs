@@ -82,8 +82,6 @@ namespace YeogiCafe.UI
             foreach (var v in Object.FindObjectsOfType<CatView>())
                 if (v != null && v.Data != null && v.Data.catId == catId && !v.IsExiting)
                     return v.BubbleAnchor;
-            foreach (var m in Object.FindObjectsOfType<MemeVisitor>())
-                if (m != null && m.Id == catId) return m.Anchor;
             return null;
         }
     }

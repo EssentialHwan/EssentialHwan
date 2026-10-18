@@ -75,12 +75,6 @@ namespace YeogiCafe.Art
                 case "cat_cheese":   return Orange;
                 case "cat_mackerel": return BlueGray;
                 case "cat_gray":     return part == Part.Muzzle ? White : Gray;
-                case "cat_spin":     // 밈 손님 '빙글냥': 회색 줄무늬 + 흰 턱·양말
-                    if (part == Part.Muzzle || (part == Part.Leg && v < -0.2f) || (part == Part.Chest && v < 0.2f)) return White;
-                    return Gray;
-                case "cat_bounce":   // 밈 손님 '방방냥': 치즈 + 흰 양말
-                    if (part == Part.Muzzle || (part == Part.Leg && v < -0.2f)) return White;
-                    return Orange;
                 case "cat_moon":
                     // 은빛 흰 고양이: 귀 끝·꼬리 끝·이마에 옅은 은회색
                     if (part == Part.Ear) return Silver;
@@ -123,7 +117,7 @@ namespace YeogiCafe.Art
         static float Blob(float x, float y, float f, float seed)
             => (Mathf.Sin(x * f + seed) * Mathf.Sin(y * f * 1.3f + seed * 2.1f) + Mathf.Sin((x + y) * f * 0.55f + seed * 3.7f)) * 0.75f;
 
-        static bool Tabby(string id) => id == "cat_cheese" || id == "cat_mackerel" || id == "cat_spin" || id == "cat_bounce";
+        static bool Tabby(string id) => id == "cat_cheese" || id == "cat_mackerel";
 
         // ───────── 래스터 ─────────
         enum Part : byte { None, Body, Chest, Hip, Head, Muzzle, Ear, Leg, Tail, Paw }

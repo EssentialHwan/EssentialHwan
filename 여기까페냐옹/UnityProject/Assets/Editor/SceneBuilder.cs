@@ -212,11 +212,10 @@ namespace YeogiCafe.EditorTools
                 for (int y = 1; y < 7; y++) Tile(room, wall, x, top + y, YeogiCafe.Visual.YSort.WallTiles);
             }
             Prop(room, "Door", LoadArt("bg/door.png"), CafeLayout.Door, YeogiCafe.Visual.YSort.WallProps);
-            foreach (var wx in CafeLayout.WindowX)
-                Prop(room, "Window", LoadArt("bg/window_big.png"), new Vector3(wx, CafeLayout.WindowBottom, 0), YeogiCafe.Visual.YSort.WallProps);
+            // 창: 통유리 창은 런타임 WeatherView가 날씨·시간대에 맞춰 그린다
             Prop(room, "MenuBoard", LoadArt("bg/menu_board.png"), CafeLayout.MenuBoard, YeogiCafe.Visual.YSort.WallProps);
             foreach (var lx in CafeLayout.LampX)
-                Prop(room, "Lamp", LoadArt("bg/pendant_lamp.png"), new Vector3(lx, CafeLayout.CeilingY, 0), YeogiCafe.Visual.YSort.WallProps + 1);
+                Prop(room, "Lamp", LoadArt("bg/pendant_lamp.png"), new Vector3(lx, CafeLayout.CeilingY, 0), YeogiCafe.Visual.YSort.WallProps + 3);
             Prop(room, "Counter", LoadArt("bg/counter.png"), CafeLayout.Counter, YeogiCafe.Visual.YSort.Order(CafeLayout.Counter.y));
             Prop(room, "BigPlant", LoadArt("bg/big_plant.png"), CafeLayout.BigPlant, YeogiCafe.Visual.YSort.Order(CafeLayout.BigPlant.y));
         }

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using YeogiCafe.Core;
+using YeogiCafe.Art;
 
 namespace YeogiCafe.Visual
 {
@@ -20,19 +21,58 @@ namespace YeogiCafe.Visual
             return white;
         }
 
+        // 통유리 창
+        SpriteRenderer outside, frame;
+        int shownOutside = -1;
+        DayManager day;
+
+        void Start()
+        {
+            // 예전 씬의 작은 창 두 개는 숨긴다(통유리로 대체)
+            var room = GameObject.Find("Room");
+            if (room != null) foreach (Transform t in room.transform) if (t.name == "Window") t.gameObject.SetActive(false);
+            var o = new GameObject("GlassOutside"); o.transform.SetParent(transform, false);
+            o.transform.position = new Vector3(CafeLayout.GlassCenterX, CafeLayout.GlassBottom, 0f);
+            outside = o.AddComponent<SpriteRenderer>(); outside.sortingOrder = YSort.WallProps;
+            var f = new GameObject("GlassFrame"); f.transform.SetParent(transform, false);
+            f.transform.position = new Vector3(CafeLayout.GlassCenterX, CafeLayout.GlassBottom - (GlassWindowDrawing.Border + 3) / 32f, 0f);
+            frame = f.AddComponent<SpriteRenderer>(); frame.sortingOrder = YSort.WallProps + 2;
+            frame.sprite = RuntimeSprites.Get("glass_frame", GlassWindowDrawing.Frame);
+        }
+
+        int PhaseIndex()
+        {
+            if (day == null) day = FindObjectOfType<DayManager>();
+            if (day == null) return 1;
+            switch (day.Phase)
+            {
+                case YeogiCafe.Data.DayPhase.Lunch: return 1;
+                case YeogiCafe.Data.DayPhase.Evening:
+                case YeogiCafe.Data.DayPhase.Settlement: return 2;
+                default: return 0;
+            }
+        }
+
         void Update()
         {
             if (Weather.Current != shown) Apply(Weather.Current);
+            int key = (int)Weather.Current * 3 + PhaseIndex();
+            if (outside != null && key != shownOutside)
+            {
+                shownOutside = key;
+                int w = (int)Weather.Current, p = PhaseIndex();
+                outside.sprite = RuntimeSprites.Get($"glass_out_{w}_{p}", () => GlassWindowDrawing.Outside(w, p));
+            }
             if (Weather.Current != WeatherKind.Rain) return;
             float dt = Time.deltaTime;
+            float left = CafeLayout.GlassLeft + 0.05f, right = CafeLayout.GlassRight - 0.05f;
+            float bottom = CafeLayout.GlassBottom + 0.05f, top = CafeLayout.GlassBottom + CafeLayout.GlassHeight - 0.1f;
             for (int i = 0; i < drops.Count; i++)
             {
                 var d = drops[i];
                 var p = d.position; p.y -= dt * (3.2f + (i % 3) * 0.6f); p.x -= dt * 0.35f;
-                int w = i % CafeLayout.WindowX.Length;
-                float wx = CafeLayout.WindowX[w], bottom = CafeLayout.WindowBottom + 0.22f, top = CafeLayout.WindowBottom + 1.38f;
-                if (p.y < bottom) { p.y = top; p.x = wx + Random.Range(-0.8f, 0.8f); }
-                if (p.x < wx - 0.85f) p.x = wx + 0.8f;
+                if (p.y < bottom) { p.y = top; p.x = Random.Range(left, right); }
+                if (p.x < left) p.x = right;
                 d.position = p;
             }
         }
@@ -55,7 +95,7 @@ namespace YeogiCafe.Visual
             foreach (var d in drops) if (d != null) Destroy(d.gameObject);
             drops.Clear();
             if (k != WeatherKind.Rain) return;
-            for (int i = 0; i < 26; i++)
+            for (int i = 0; i < 70; i++)
             {
                 var go = new GameObject("Rain");
                 go.transform.SetParent(transform, false);
@@ -64,8 +104,8 @@ namespace YeogiCafe.Visual
                 sr.sortingOrder = YSort.WallProps + 1;
                 go.transform.localScale = new Vector3(1f / 32f, 5f / 32f, 1f);   // 1×5 픽셀 빗줄기
                 go.transform.localEulerAngles = new Vector3(0, 0, -12f);
-                int w = i % CafeLayout.WindowX.Length;
-                go.transform.position = new Vector3(CafeLayout.WindowX[w] + Random.Range(-0.8f, 0.8f), CafeLayout.WindowBottom + Random.Range(0.25f, 1.35f), 0f);
+                go.transform.position = new Vector3(Random.Range(CafeLayout.GlassLeft, CafeLayout.GlassRight),
+                                                    CafeLayout.GlassBottom + Random.Range(0.1f, CafeLayout.GlassHeight - 0.1f), 0f);
                 drops.Add(go.transform);
             }
         }

@@ -17,6 +17,10 @@ namespace YeogiCafe.Core
         public static readonly Vector3 Entrance = new Vector3(1.2f, 3.9f, 0f);  // 고양이 등장/퇴장 지점(문 앞)
         public static readonly float[] WindowX = { 5.0f, 9.6f };
         public const float WindowBottom = 5.6f;
+        // 통유리 창(가게 앞 쇼윈도): 유리 영역(바깥 풍경)의 아래·가운데·크기
+        public const float GlassCenterX = 7.3f, GlassBottom = 5.12f, GlassWidth = 8f, GlassHeight = 70f / 32f;
+        public static float GlassLeft => GlassCenterX - GlassWidth * 0.5f;
+        public static float GlassRight => GlassCenterX + GlassWidth * 0.5f;
         public static readonly Vector3 Counter = new Vector3(13.4f, 3.3f, 0f);
         public static readonly Vector3 MenuBoard = new Vector3(13.6f, 6.0f, 0f);
         public static readonly float[] LampX = { 3.2f, 7.3f, 11.6f };
@@ -58,12 +62,12 @@ namespace YeogiCafe.Core
             new SlotSpec(5.0f, 3.2f, F, win: true), new SlotSpec(9.6f, 3.2f, F, win: true),
             new SlotSpec(3.2f, 3.2f, F), new SlotSpec(7.3f, 3.2f, F), new SlotSpec(11.4f, 3.2f, F),
             new SlotSpec(2.2f, 1.9f, F), new SlotSpec(11.0f, 1.9f, F),
-            // 벽(시계·액자·창문·커튼)
-            new SlotSpec(3.0f, 6.6f, W), new SlotSpec(7.3f, 6.6f, W), new SlotSpec(11.9f, 6.6f, W),
+            // 벽(시계·액자·창문·커튼) — 통유리 양옆
+            new SlotSpec(2.45f, 6.5f, W), new SlotSpec(12.3f, 6.5f, W), new SlotSpec(2.45f, 7.5f, W),
             // Lv2 — 앞줄
             new SlotSpec(3.3f, 0.6f, F, lv: 2), new SlotSpec(5.5f, 0.6f, F, lv: 2), new SlotSpec(7.7f, 0.6f, F, lv: 2),
             new SlotSpec(9.9f, 0.6f, F, lv: 2), new SlotSpec(12.1f, 0.6f, F, lv: 2),
-            new SlotSpec(1.2f, 7.0f, W, lv: 2),
+            new SlotSpec(12.3f, 7.5f, W, lv: 2),
             // Lv3 — 가장자리
             new SlotSpec(13.1f, 1.9f, F, lv: 3), new SlotSpec(1.3f, 0.6f, F, lv: 3),
         };

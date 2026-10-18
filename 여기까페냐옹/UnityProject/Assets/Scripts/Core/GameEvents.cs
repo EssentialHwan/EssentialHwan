@@ -20,8 +20,6 @@ namespace YeogiCafe.Core
         public const string Gift = "gift";                 // 선물 줍기
         public const string GuessCorrect = "guess_ok";     // 추리 정답
         public const string Graduate = "graduate";         // 졸업
-        public const string MemeSpin = "meme_spin";        // 빙글냥 방문
-        public const string MemeBounce = "meme_bounce";    // 방방냥 방문
 
         public static event Action<string, string> OnEvent;   // (eventId, catId)
         public static void Raise(string id, string catId = null) => OnEvent?.Invoke(id, catId);

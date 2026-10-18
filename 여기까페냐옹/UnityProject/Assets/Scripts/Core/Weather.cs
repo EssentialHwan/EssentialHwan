@@ -23,6 +23,13 @@ namespace YeogiCafe.Core
             Current = (WeatherKind)s.weather;
         }
 
+        // 개발용: 오늘 날씨를 다음 것으로(맑음→흐림→비)
+        public static void DebugCycle(SaveGame s)
+        {
+            if (s == null) return;
+            s.weatherDay = s.currentDay; s.weather = (s.weather + 1) % 3; Current = (WeatherKind)s.weather;
+        }
+
         public static float RoamBonus => Current == WeatherKind.Sunny ? 0.1f : Current == WeatherKind.Rain ? -0.2f : 0f;
         public static float ZoomiesMult => Current == WeatherKind.Sunny ? 1.5f : Current == WeatherKind.Rain ? 0.4f : 1f;
         public static float RestMult => Current == WeatherKind.Rain ? 1.35f : 1f;

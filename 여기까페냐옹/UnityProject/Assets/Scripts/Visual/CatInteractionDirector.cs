@@ -72,7 +72,6 @@ namespace YeogiCafe.Visual
             if (Input.GetMouseButtonDown(0)) TryClick();
             TickPending();
             TickZoomStartle();
-            TickMeme();
             TickHungry();
             nextSocial -= Time.deltaTime;
             if (nextSocial <= 0f)
@@ -158,51 +157,6 @@ namespace YeogiCafe.Visual
                     text = L.Get(after.Replace("touch.", "touch.learn."), ("name", L.Get($"cat.{v.Data.catId}.name")));
             }
             say?.Invoke(v.Data.catId, text);
-        }
-
-        // ───────── 밈 손님(빙글냥·방방냥) ─────────
-        float nextMeme = -1f;
-        DayManager dayMgr;
-        MemeVisitor currentMeme;
-
-        void TickMeme()
-        {
-            if (dayMgr == null) dayMgr = FindObjectOfType<DayManager>();
-            if (nextMeme < 0f) nextMeme = UnityEngine.Random.Range(150f, 320f);
-            if (currentMeme != null) return;
-            bool open = dayMgr != null && (dayMgr.Phase == DayPhase.Morning || dayMgr.Phase == DayPhase.Lunch || dayMgr.Phase == DayPhase.Evening);
-            if (!open || cats.Active.Count == 0) return;
-            nextMeme -= Time.deltaTime;
-            if (nextMeme > 0f) return;
-            nextMeme = UnityEngine.Random.Range(300f, 520f);
-            SpawnMeme(R() < 0.6f ? MemeVisitor.Kind.Spin : MemeVisitor.Kind.Bounce);
-        }
-
-        public void DebugMeme(bool spin) { if (currentMeme == null) SpawnMeme(spin ? MemeVisitor.Kind.Spin : MemeVisitor.Kind.Bounce); }
-
-        void SpawnMeme(MemeVisitor.Kind kind)
-        {
-            var go = new GameObject("Meme_" + kind);
-            var m = go.AddComponent<MemeVisitor>();
-            m.Init(kind, CafeLayout.Entrance, new Vector3(7.2f, 1.25f, 0f));
-            currentMeme = m;
-            toast?.Invoke(L.Get(kind == MemeVisitor.Kind.Spin ? "meme.spin.arrive" : "meme.bounce.arrive"));
-            m.onShowtime = () =>
-            {
-                bool spin = kind == MemeVisitor.Kind.Spin;
-                say?.Invoke(m.Id, L.Get(spin ? "meme.spin.say" : "meme.bounce.say"));
-                // 카페 고양이들이 하나둘 따라 한다(조금씩 늦게 합류)
-                Collect();
-                int k = 0;
-                foreach (var v in views)
-                {
-                    if (v.IsExiting || !v.IsSeatedNow) continue;
-                    float delay = 0.4f + k * 0.35f; k++;
-                    v.DoAction(new[] { S("stand", delay), new CatView.Step { clip = spin ? "spin" : "hop", seconds = 4.5f, hasEmote = true, emote = EmoteDrawing.Kind.Note } }, null, 0);
-                    if (k <= 3) say?.Invoke(v.Data.catId, L.Get(spin ? "meme.spin.join" : "meme.bounce.join"));
-                }
-                GameEvents.Raise(spin ? GameEvents.MemeSpin : GameEvents.MemeBounce, m.Id);
-            };
         }
 
         // ───────── 밥 달라고 야옹 ─────────

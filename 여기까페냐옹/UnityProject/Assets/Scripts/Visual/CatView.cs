@@ -66,8 +66,14 @@ namespace YeogiCafe.Visual
 
         public bool IsActing => acting;
         float memeT;
-        // 밈 동작은 기본 클립 위에 변형을 얹는다: spin(빙글) · hop(방방)
-        static string ClipFor(string step) => step == "spin" || step == "hop" ? "stand" : step;
+        // 방방(hop)은 서기 클립 위에 위아래 튕김·찌그러짐을 얹는다
+        static string ClipFor(string step) => step == "hop" ? "stand" : step;
+        static float Bounce(float t) => Mathf.Abs(Mathf.Sin(t * 7f)) * 0.42f;
+        static Vector3 Squash(float t)
+        {
+            float k = Mathf.Abs(Mathf.Sin(t * 7f));
+            return k < 0.18f ? new Vector3(1.15f, 0.85f, 1f) : new Vector3(0.95f, 1.06f, 1f);   // 착지 순간 납작
+        }
         public bool IsSeatedNow { get; private set; }
         public bool IsSleeping => rest == Rest.Sleep;
         public CatBrain Brain => brain;
@@ -282,14 +288,9 @@ namespace YeogiCafe.Visual
                     }
                 }
             }
-            // 밈 동작 변형
-            bool meme = acting && !actWalking && (stepClip == "spin" || stepClip == "hop");
-            if (meme)
-            {
-                memeT += dt;
-                if (stepClip == "spin") MemeVisitor.Spin(visual, sr, memeT);
-                else { local.y += MemeVisitor.Bounce(memeT); visual.localScale = MemeVisitor.Squash(memeT); }
-            }
+            // 방방 뛰기 변형
+            bool hop = acting && !actWalking && stepClip == "hop";
+            if (hop) { memeT += dt; local.y += Bounce(memeT); visual.localScale = Squash(memeT); }
             else if (visual.localScale != Vector3.one) visual.localScale = Vector3.one;
             visual.localPosition = local;
 
