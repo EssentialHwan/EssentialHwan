@@ -25,8 +25,9 @@ namespace YeogiCafe.UI
             this.owner = owner;
             var bar = UiFactory.Panel("EditBanner", parent, new Color(0.29f, 0.21f, 0.18f, 0.88f));
             bannerGo = bar.gameObject;
+            UiFactory.Frame(bar, UiFactory.FrameStyle.Window);
             UiFactory.SetRect(bar, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 16), new Vector2(820, 64));
-            var t = UiFactory.Label("Hint", bar.transform, L.Get("ui.edit.hint"), 20, TextAnchor.MiddleLeft, UiFactory.Cream);
+            var t = UiFactory.Label("Hint", bar.transform, L.Get("ui.edit.hint"), 20, TextAnchor.MiddleLeft, UiFactory.Ink);
             UiFactory.SetRect((RectTransform)t.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 0.5f), new Vector2(20, 0), new Vector2(-170, 0));
             var done = UiFactory.Button("Done", bar.transform, L.Get("ui.edit.done"), UiFactory.Green, UiFactory.Ink, out _);
             UiFactory.SetRect((RectTransform)done.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-12, 0), new Vector2(140, 48));

@@ -64,6 +64,7 @@ namespace YeogiCafe.AI
 
         void Update()
         {
+            if (IsChasing) { TickChase(Time.deltaTime); return; }   // 쥐 쫓는 중엔 주문·식사·결제가 멈춘다
             switch (state)
             {
                 case CatState.Enter:      state = CatState.FindSeat; break;
@@ -271,6 +272,47 @@ namespace YeogiCafe.AI
             Mover.MoveTo(zoomPath.Dequeue());
         }
 
+        // ── 쥐 소동: 쥐를 쫓아 뛰어다님. 이미 밥을 받은 고양이는 계산을 잊고 떠난다 ──
+        public bool IsChasing { get; private set; }
+        public bool ChaseSkippedPay { get; private set; }
+        System.Func<Vector3> chaseTarget; float chaseLeft, chaseRetarget;
+
+        public bool StartChase(System.Func<Vector3> target, float seconds)
+        {
+            if (Mover == null || IsChasing || IsFinished) return false;
+            if (state == CatState.Enter || state == CatState.FindSeat || state == CatState.WaitOutside || state == CatState.Pay) return false;
+            if (state == CatState.Sit && walkingToSeat) return false;
+            if (FacilityPhase != FacPhase.None) EndFacility();
+            if (state == CatState.WaitFood || state == CatState.Eat || state == CatState.Idle || state == CatState.FacilityAction)
+                ChaseSkippedPay = true;
+            fleeDelay = -1f; zoomPath.Clear(); lostSeat = null;
+            IsChasing = true; IsZooming = true;
+            if (Mover is SimpleLerpMover m) { if (baseSpeed < 0f) baseSpeed = m.speed; m.speed = baseSpeed * Random.Range(2.6f, 3.3f); }
+            chaseTarget = target; chaseLeft = seconds; chaseRetarget = Random.Range(0f, 0.3f);
+            return true;
+        }
+
+        void TickChase(float dt)
+        {
+            chaseLeft -= dt; chaseRetarget -= dt;
+            if (chaseRetarget <= 0f && chaseTarget != null)
+            {
+                chaseRetarget = Random.Range(0.3f, 0.5f);
+                var p = chaseTarget() + new Vector3(Random.Range(-0.7f, 0.7f), Random.Range(-0.4f, 0.4f), 0f);
+                Mover.MoveTo(YeogiCafe.Core.CafeLayout.ClampFloor(p));
+            }
+            if (chaseLeft <= 0f) EndChase();
+        }
+
+        public void EndChase()
+        {
+            if (!IsChasing) return;
+            IsChasing = false; IsZooming = false; chaseTarget = null;
+            if (Mover is SimpleLerpMover m && baseSpeed > 0f) m.speed = baseSpeed;
+            if (seat != null) Mover.MoveTo(seat.WorldPos); else Mover.Stop();
+            NewRest();
+        }
+
         void TickZoomies()
         {
             if (IsMoving) return;
@@ -350,6 +392,14 @@ namespace YeogiCafe.AI
             return true;
         }
 
+        // 개발용: 지금 바로 이 시설을 쓰러 가게
+        public void DebugUseFacility(IFacility f)
+        {
+            if (f == null || !f.IsFree || IsFinished || IsChasing) return;
+            if (FacilityPhase != FacPhase.None) EndFacility();
+            StartFacility(f);
+        }
+
         void StartFacility(IFacility f)
         {
             recentUse[f.FacilityId] = 1.0f;                                  // 감쇠 0.05/결정 → 약 1분간 같은 시설 회피
@@ -366,6 +416,13 @@ namespace YeogiCafe.AI
         // 시설에 도착한 순간 기록(서술 말풍선이 실제로 올라앉을 때 뜨게)
         void RecordFacilityClue(IFacility f)
         {
+            // 과일 박스·햇볕 자리: 누구나(또는 따뜻한 걸 좋아하는 아무나) 하는 행동이라 추리 단서가 아니다 → 말풍선만
+            foreach (var t in f.Tags)
+                if (t == FacilityTag.Box || t == FacilityTag.Warm)
+                {
+                    Obs?.NarrateOnly(data.catId, Narrate(t == FacilityTag.Box ? "narr.facility.box" : "narr.facility.warm"));
+                    return;
+                }
             bool pref = SharesFacilityPref(f);
             if (pref) UsedPreferredFacility = true;
             Obs?.RecordClue(data.catId, ClueType.FacilityUse, FacilityKey(f),
@@ -428,6 +485,7 @@ namespace YeogiCafe.AI
         public void ForceLeave()
         {
             if (sessionCompleted) return;
+            if (IsChasing) EndChase();
             EndFacility();
             if (IsZooming) { IsZooming = false; zoomPath.Clear(); if (Mover is SimpleLerpMover m && baseSpeed > 0f) m.speed = baseSpeed; }
             if (seat != null) { SetOccupant?.Invoke(seat, null); seat.Vacate(); seat = null; }

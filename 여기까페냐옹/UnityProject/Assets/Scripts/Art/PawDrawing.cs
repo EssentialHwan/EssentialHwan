@@ -116,6 +116,104 @@ namespace YeogiCafe.Art
             return c;
         }
 
+        // 1인칭 그루밍용 혀(아래 화면 밖 입에서 쭉 올라옴): 둥근 끝 + 가운데 홈 + 까끌한 돌기
+        public const int TW = 46, TH = 54;
+        public static PixelCanvas Tongue()
+        {
+            var c = new PixelCanvas(TW, TH);
+            var T0 = new Color32(250, 176, 186, 255); var T1 = new Color32(240, 146, 160, 255); var T2 = new Color32(222, 118, 136, 255);
+            var T3 = new Color32(196, 92, 112, 255); var Hi = new Color32(255, 214, 220, 255);
+            float cx = 22.5f;
+            for (int y = 0; y < TH; y++)
+                for (int x = 0; x < TW; x++)
+                {
+                    // 아래(입 쪽)는 좁고 위(끝)로 갈수록 넓적, 끝은 둥글게
+                    float tipY = TH - 20;
+                    float half = y > tipY ? Mathf.Sqrt(Mathf.Max(0f, 1f - Mathf.Pow((y - tipY) / 19.5f, 2))) * 21f : Mathf.Lerp(13f, 21f, y / tipY);
+                    float dx = x + 0.5f - cx;
+                    if (Mathf.Abs(dx) > half) continue;
+                    float n = dx / Mathf.Max(1f, half);
+                    float l = 0.75f - n * 0.35f - Mathf.Abs(n) * 0.35f;
+                    Color32 col = l > 0.7f ? T0 : l > 0.45f ? T1 : l > 0.2f ? T2 : T3;
+                    c.Set(x, y, col);
+                }
+            // 가운데 홈
+            for (int y = 8; y < TH - 10; y++) c.Set(Mathf.RoundToInt(cx - 0.5f), y, T2);
+            // 까끌한 돌기(밝은 점)
+            for (int y = 6; y < TH - 6; y += 4)
+                for (int x = 6 + (y / 4) % 2 * 2; x < TW - 6; x += 5)
+                    if (c.Get(x, y).a == 255 && Mathf.Abs(x - cx) > 2) c.Set(x, y, Hi);
+            // 반짝(침)
+            var W8 = new Color32(255, 255, 255, 255); c.Set(13, TH - 9, W8); c.Set(14, TH - 9, W8); c.Set(13, TH - 10, W8); c.Set(15, TH - 8, W8);
+            Outline(c);
+            return c;
+        }
+
+        // 마우스 커서용 작은 앞발(뒤에서 본 털 쪽, 위가 손끝). frame 0=보통, 1=발가락 쫙(꼼지락), 2=꾹 누름(클릭)
+        public const int CW = 26, CH = 30;
+        public static PixelCanvas Cursor(int frame)
+        {
+            var c = new PixelCanvas(CW, CH);
+            var z = new float[CW * CH];
+            for (int i = 0; i < z.Length; i++) z[i] = -1f;
+            void Put(int x, int y, float depth, Color32 col)
+            {
+                if (x < 0 || y < 0 || x >= CW || y >= CH) return;
+                if (z[y * CW + x] > depth) return;
+                z[y * CW + x] = depth; c.Set(x, y, col);
+            }
+            bool press = frame == 2, spreadOut = frame == 1;
+            // 팔(아래 → 위)
+            for (int y = 0; y <= 12; y++)
+            {
+                float cx = 13f, r = 6.2f + (y > 9 ? (y - 9) * 0.4f : 0f);
+                for (int x = (int)(cx - r) - 1; x <= (int)(cx + r) + 1; x++)
+                {
+                    float nx = (x + 0.5f - cx) / r;
+                    if (Mathf.Abs(nx) > 1f) continue;
+                    Put(x, y, 0.2f * (1f - nx * nx), Tone(Shade(nx, 0.15f)));
+                }
+            }
+            // 발
+            float pcx = 13f, pcy = press ? 15.5f : 16.5f, prx = press ? 9.6f : 8.6f, pry = press ? 6.2f : 7f;
+            for (int y = 0; y < CH; y++)
+                for (int x = 0; x < CW; x++)
+                {
+                    float nx = (x + 0.5f - pcx) / prx, ny = (y + 0.5f - pcy) / pry;
+                    if (nx * nx + ny * ny > 1f) continue;
+                    Put(x, y, 0.5f + (1f - nx * nx - ny * ny) * 0.3f, Tone(Shade(nx, ny)));
+                }
+            // 발가락 4개
+            float sp = spreadOut ? 5.0f : press ? 4.7f : 4.1f;
+            for (int i = 0; i < 4; i++)
+            {
+                float tx = pcx - sp * 1.5f + sp * i;
+                float lift = (i == 1 || i == 2) ? 1.2f : -0.4f;
+                if (spreadOut) lift += (i == 0 || i == 3) ? 0.9f : 1.4f;
+                float ty = pcy + pry - 1.8f + lift;
+                float tr = (i == 1 || i == 2) ? 2.9f : 2.6f;
+                for (int y = (int)(ty - tr) - 1; y <= (int)(ty + tr) + 1; y++)
+                    for (int x = (int)(tx - tr) - 1; x <= (int)(tx + tr) + 1; x++)
+                    {
+                        float nx = (x + 0.5f - tx) / tr, ny = (y + 0.5f - ty) / (tr * 0.92f);
+                        if (nx * nx + ny * ny > 1f) continue;
+                        Put(x, y, 0.85f + (1f - nx * nx - ny * ny) * 0.2f + i * 0.001f, Tone(Shade(nx * 0.8f, ny) + 0.05f));
+                    }
+            }
+            // 발가락 사이 홈
+            for (int i = 0; i < 3; i++)
+            {
+                int gx = Mathf.RoundToInt(pcx - sp + sp * i);
+                int gy = Mathf.RoundToInt(pcy + pry - 1f);
+                for (int d = 0; d < 3; d++) { var p = c.Get(gx, gy - d); if (p.a == 255) c.Set(gx, gy - d, F4); }
+            }
+            // 벌린 발가락 사이로 살짝 보이는 젤리
+            if (spreadOut) { c.Set(10, 22, BeanL); c.Set(16, 22, BeanL); }
+            c.Set(9, 19, F0); c.Set(10, 19, F0);
+            Outline(c);
+            return c;
+        }
+
         // 발바닥(젤리) 쪽 — 도장 찍기 직전에 살짝 보이는 프레임
         public static PixelCanvas Pads()
         {

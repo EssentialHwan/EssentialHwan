@@ -36,7 +36,7 @@ namespace YeogiCafe.DevTools
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (!show) return;
-            GUILayout.BeginArea(new Rect(10, 80, 260, 500), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(10, 80, 260, 640), GUI.skin.box);
             GUILayout.Label("== DevConsole (F1) ==");
             if (economy != null)
             {
@@ -55,6 +55,13 @@ namespace YeogiCafe.DevTools
                 if (GUILayout.Button("영업 즉시 종료 → 정산")) day.DebugEndDayNow();
                 var flow = FindObjectOfType<GameFlowController>();
                 if (flow != null && GUILayout.Button($"날씨 바꾸기 (지금: {Weather.Current})")) Weather.DebugCycle(flow.Save);
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("→과일박스")) DebugSendTo(YeogiCafe.Data.FacilityTag.Box);
+                if (GUILayout.Button("→따뜻한곳")) DebugSendTo(YeogiCafe.Data.FacilityTag.Warm);
+                if (GUILayout.Button("→놀이")) DebugSendTo(YeogiCafe.Data.FacilityTag.Play);
+                GUILayout.EndHorizontal();
+                var raid = YeogiCafe.Visual.MouseRaid.Instance;
+                if (raid != null && GUILayout.Button("쥐 출몰")) raid.Spawn();
             }
             var dir = FindObjectOfType<YeogiCafe.Visual.CatInteractionDirector>();
             if (dir != null)
@@ -89,6 +96,17 @@ namespace YeogiCafe.DevTools
             GUILayout.Label("(치트는 빌드에서 자동 제외)");
             GUILayout.EndArea();
 #endif
+        }
+
+        // 개발용: 아무 고양이나 해당 태그 시설로 보낸다
+        void DebugSendTo(YeogiCafe.Data.FacilityTag tag)
+        {
+            var cafe = FindObjectOfType<CafeContext>(); var cm = FindObjectOfType<CatManager>();
+            if (cafe == null || cm == null) return;
+            YeogiCafe.AI.IFacility target = null;
+            foreach (var f in cafe.GetFacilities()) { if (!f.IsFree) continue; foreach (var t in f.Tags) if (t == tag) target = f; }
+            if (target == null) return;
+            foreach (var b in cm.Active) if (b != null && !b.IsFinished && b.FacilityPhase == YeogiCafe.AI.CatBrain.FacPhase.None) { b.DebugUseFacility(target); return; }
         }
     }
 }

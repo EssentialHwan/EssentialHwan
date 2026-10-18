@@ -66,7 +66,8 @@ namespace YeogiCafe.UI
             t.fontSize = size;
             t.alignment = anchor;
             t.color = color;
-            t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            // 기본은 줄바꿈(Wrap): 긴 문장이 칸 밖으로 새어 나가지 않게. 한 줄 고정이 필요한 곳만 Overflow로 바꾼다.
+            t.horizontalOverflow = HorizontalWrapMode.Wrap;
             t.verticalOverflow = VerticalWrapMode.Overflow;
             return t;
         }
@@ -78,18 +79,67 @@ namespace YeogiCafe.UI
             go.transform.SetParent(parent, false);
             var img = go.GetComponent<Image>();
             img.color = bg;
+            img.sprite = ButtonSprite(false); img.type = Image.Type.Sliced; img.pixelsPerUnitMultiplier = 0.5f;   // 도트 2배
             var btn = go.GetComponent<Button>();
+            // 틴트는 Image.color(bg)에 곱해진다 → 흰색 기준 배율로
             var colors = btn.colors;
-            colors.highlightedColor = new Color(bg.r * 1.08f, bg.g * 1.08f, bg.b * 1.08f, bg.a);
-            colors.pressedColor = new Color(bg.r * 0.9f, bg.g * 0.9f, bg.b * 0.9f, bg.a);
-            colors.disabledColor = new Color(bg.r, bg.g, bg.b, 0.4f);
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1.1f, 1.1f, 1.1f, 1f);
+            colors.pressedColor = new Color(0.86f, 0.86f, 0.86f, 1f);
+            colors.selectedColor = Color.white;
+            colors.disabledColor = new Color(1f, 1f, 1f, 0.45f);
             btn.colors = colors;
+            var st = btn.spriteState; st.pressedSprite = ButtonSprite(true); btn.spriteState = st;
+            btn.transition = Selectable.Transition.ColorTint;
+            btn.onClick.AddListener(() => YeogiCafe.Audio.SoundManager.Sfx("sfx_click", 0.5f, 0.05f));
 
             labelText = Label("Label", go.transform, label, 22, TextAnchor.MiddleCenter, fg);
             var lrt = (RectTransform)labelText.transform;
             lrt.anchorMin = Vector2.zero; lrt.anchorMax = Vector2.one;
             lrt.offsetMin = Vector2.zero; lrt.offsetMax = Vector2.zero;
             return btn;
+        }
+
+        // ── 테두리(9-slice) ──
+        public enum FrameStyle { Window, Paper, Card, Bubble, Plank }
+
+        public static Sprite ButtonSprite(bool pressed) => YeogiCafe.Art.RuntimeSprites.GetSliced(pressed ? "ui_btn_p" : "ui_btn",
+            () => YeogiCafe.Art.UiFrameDrawing.Button(pressed), YeogiCafe.Art.UiFrameDrawing.ButtonBorder);
+
+        public static Sprite FrameSprite(FrameStyle s)
+        {
+            switch (s)
+            {
+                case FrameStyle.Paper:  return YeogiCafe.Art.RuntimeSprites.GetSliced("ui_paper", YeogiCafe.Art.UiFrameDrawing.Paper, YeogiCafe.Art.UiFrameDrawing.PaperBorder);
+                case FrameStyle.Card:   return YeogiCafe.Art.RuntimeSprites.GetSliced("ui_card", YeogiCafe.Art.UiFrameDrawing.Card, YeogiCafe.Art.UiFrameDrawing.CardBorder);
+                case FrameStyle.Bubble: return YeogiCafe.Art.RuntimeSprites.GetSliced("ui_bubble", YeogiCafe.Art.UiFrameDrawing.Bubble, YeogiCafe.Art.UiFrameDrawing.BubbleBorder);
+                case FrameStyle.Plank:  return YeogiCafe.Art.RuntimeSprites.GetSliced("ui_plank", YeogiCafe.Art.UiFrameDrawing.Plank, YeogiCafe.Art.UiFrameDrawing.PlankBorder);
+                default:                return YeogiCafe.Art.RuntimeSprites.GetSliced("ui_window", YeogiCafe.Art.UiFrameDrawing.Window, YeogiCafe.Art.UiFrameDrawing.WindowBorder);
+            }
+        }
+
+        // 이미 만든 패널에 테두리 입히기. tint: Card처럼 흰 바탕 스타일은 색으로 물들임(그 외는 흰색 권장).
+        public static void Frame(RectTransform panel, FrameStyle style, Color? tint = null, float pixelScale = 2f)
+        {
+            var img = panel.GetComponent<Image>();
+            if (img == null) return;
+            float a = img.color.a;
+            img.sprite = FrameSprite(style); img.type = Image.Type.Sliced;
+            img.pixelsPerUnitMultiplier = 1f / pixelScale;
+            var c = tint ?? Color.white; c.a = tint.HasValue ? tint.Value.a : Mathf.Max(a, 0.98f);
+            img.color = c;
+        }
+
+        // 테두리 창 + 위쪽 가운데 원목 이름표
+        public static Text TitleTab(RectTransform panel, string text, float width = 220f)
+        {
+            var tab = Panel("TitleTab", panel, Wood);
+            Frame(tab, FrameStyle.Plank, new Color(0.82f, 0.62f, 0.44f, 1f));
+            SetRect(tab, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 0.5f), new Vector2(0, 2), new Vector2(width, 38));
+            var t = Label("T", tab, text, 20, TextAnchor.MiddleCenter, Cream);
+            Anchor((RectTransform)t.transform, Vector2.zero, Vector2.one, new Vector2(8, 2), new Vector2(-8, 0));
+            var sh = t.gameObject.AddComponent<Shadow>(); sh.effectColor = new Color(0.29f, 0.21f, 0.18f, 0.8f); sh.effectDistance = new Vector2(1, -2);
+            return t;
         }
 
         // 앵커/오프셋 지정 헬퍼(픽셀 좌표).

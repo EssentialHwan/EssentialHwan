@@ -29,6 +29,7 @@ namespace YeogiCafe.UI
         // ── 패널 컨트롤러 ──
         ShopPanel shop;
         SettlementPanel settlement;
+        ClosingPlayPanel closing;
         CatalogPanel catalog;
         BubbleLayer bubbles;
         KitchenView kitchen;
@@ -87,11 +88,14 @@ namespace YeogiCafe.UI
             bubbles = new BubbleLayer(root.transform);
             if (bootstrap != null && bootstrap.interactions != null)
             { bootstrap.interactions.say = ShowCatBubble; bootstrap.interactions.toast = ShowToast; }
+            YeogiCafe.Visual.MouseRaid.Toast = ShowToast;
+            PawCursor.Ensure();
             BuildHud(root.transform);
 
             kitchen = new KitchenView(this, root.transform, bootstrap != null ? bootstrap.orderSystem : null);
             shop = new ShopPanel(this, root.transform);
             settlement = new SettlementPanel(this, root.transform);
+            closing = new ClosingPlayPanel(this, root.transform);
             catalog = new CatalogPanel(this, root.transform);
             editMode = new FurnitureEditMode(this, root.transform);
 
@@ -101,12 +105,15 @@ namespace YeogiCafe.UI
             quests.toast = ShowToast;
             quests.OnChanged += RefreshQuests;
             var qp = UiFactory.Panel("QuestPanel", root.transform, new Color(1f, 0.97f, 0.88f, 0.97f));
-            UiFactory.SetRect(qp, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(300, -70), new Vector2(380, 150));
+            UiFactory.SetRect(qp, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(300, -74), new Vector2(480, 170));
+            UiFactory.Frame(qp, UiFactory.FrameStyle.Paper);
             questPanel = qp.gameObject;
             var qt = UiFactory.Label("T", qp.transform, L.Get("ui.quest.title"), 18, TextAnchor.UpperLeft, UiFactory.WoodDark);
-            UiFactory.SetRect((RectTransform)qt.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(14, -8), new Vector2(-20, 24));
+            UiFactory.SetRect((RectTransform)qt.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(18, -12), new Vector2(-36, 24));
+            // 의뢰 문장이 길어도 칸 안에서 줄바꿈 → 패널 높이를 글 길이에 맞춘다(RefreshQuests)
             questList = UiFactory.Label("L", qp.transform, "", 16, TextAnchor.UpperLeft, UiFactory.Ink);
-            UiFactory.SetRect((RectTransform)questList.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 1), new Vector2(14, -36), new Vector2(-24, -44));
+            questList.lineSpacing = 1.15f;
+            UiFactory.SetRect((RectTransform)questList.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(18, -42), new Vector2(-36, 100));
             questPanel.SetActive(false);
         }
 
@@ -116,6 +123,7 @@ namespace YeogiCafe.UI
             var bar = UiFactory.Panel("HUD_Top", parent, UiFactory.CreamDim);
             UiFactory.SetRect(bar, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1),
                               Vector2.zero, new Vector2(0, 64));
+            UiFactory.Frame(bar, UiFactory.FrameStyle.Plank);
 
             goldText = UiFactory.Label("Gold", bar.transform, "0G", 26, TextAnchor.MiddleLeft, UiFactory.Ink);
             UiFactory.SetRect((RectTransform)goldText.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
@@ -186,7 +194,14 @@ namespace YeogiCafe.UI
             }
             if (flow != null)
             {
-                flow.OnSettlementReady += () => { shop.Hide(); catalog.Hide(); CloseKitchen(); editMode.Exit(); settlement.Show(); };
+                flow.OnSettlementReady += () =>
+                {
+                    shop.Hide(); catalog.Hide(); CloseKitchen(); editMode.Exit(); questPanel.SetActive(false);
+                    // 마감 직전: 마지막 손님과 놀아주기 → 끝나면 밤 정산(도감)
+                    var guest = flow.ClosingGuestId != null ? LookupCat(flow.ClosingGuestId) : null;
+                    if (guest != null && Save != null) closing.Show(guest, Save.GetOrCreateCat(guest.catId), () => { settlement.Show(); RefreshHud(); });
+                    else settlement.Show();
+                };
                 TryHookObservation();
             }
         }
@@ -202,6 +217,7 @@ namespace YeogiCafe.UI
                 ? L.Get("ui.order.askhint", ("hint", L.Get(t.hintKey)))
                 : L.Get("ui.order.ask", ("menu", t.menu != null ? L.Get($"menu.{t.menu.menuId}") : "")));
             os.OnTicketCancelled += t => ShowCatBubble(t.catId, L.Get("ui.order.gaveup"));
+            os.OnTicketReady += _ => YeogiCafe.Audio.SoundManager.Sfx("sfx_bell", 0.45f, 0.02f);
             ordersHooked = true;
         }
 
@@ -217,11 +233,15 @@ namespace YeogiCafe.UI
             {
                 var bg = UiFactory.Panel("Toast", root.transform, new Color(1f, 0.98f, 0.93f, 0.97f));
                 UiFactory.SetRect(bg, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -76), new Vector2(720, 64));
+                UiFactory.Frame(bg, UiFactory.FrameStyle.Paper);
                 toastCg = bg.gameObject.AddComponent<CanvasGroup>(); toastCg.blocksRaycasts = false;
                 toastText = UiFactory.Label("T", bg.transform, "", 18, TextAnchor.MiddleCenter, UiFactory.Ink);
-                UiFactory.Anchor((RectTransform)toastText.transform, Vector2.zero, Vector2.one, new Vector2(12, 4), new Vector2(-12, -4));
+                UiFactory.Anchor((RectTransform)toastText.transform, Vector2.zero, Vector2.one, new Vector2(20, 8), new Vector2(-20, -8));
             }
             toastText.text = text; toastT = 3.5f; toastCg.alpha = 1f;
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_boop", 0.35f, 0.04f, "toast", 0.4f);
+            var trt = (RectTransform)toastText.transform.parent;          // 긴 알림은 두 줄로 → 높이 맞춤
+            trt.sizeDelta = new Vector2(720, Mathf.Max(64f, toastText.preferredHeight + 20f));
             toastText.transform.parent.SetAsLastSibling();
         }
 
@@ -254,6 +274,7 @@ namespace YeogiCafe.UI
             if (quests != null && Save != null && Save.questDay != Save.currentDay && flow != null) { quests.EnsureToday(); RefreshQuests(); }
             TryHookOrders();
             kitchen?.Tick(Time.unscaledDeltaTime);
+            closing?.Tick(Time.unscaledDeltaTime);
             editMode?.Tick(Time.unscaledDeltaTime);
             if (day != null && timeBarFill != null && bootstrap != null && bootstrap.balance != null)
                 timeBarFill.fillAmount = HudFormatter.TimeProgress(day.DayTimer, bootstrap.balance.dayLength);
@@ -307,9 +328,13 @@ namespace YeogiCafe.UI
             foreach (var q in s.quests)
             {
                 if (q.done) done++;
-                sb.Append(q.done ? "[완료] " : $"[{q.progress}/{q.goal}] ").Append(L.Get(q.id)).Append($"  +{q.reward}G\n");
+                sb.Append(q.done ? "<color=#6F9A55>[완료]</color> " : $"[{q.progress}/{q.goal}] ").Append(L.Get(q.id))
+                  .Append($"  <color=#B8864E>+{q.reward}G</color>\n");
             }
-            questList.text = sb.ToString();
+            questList.text = sb.ToString().TrimEnd('\n');
+            float h = questList.preferredHeight;
+            var lrt = (RectTransform)questList.transform; lrt.sizeDelta = new Vector2(lrt.sizeDelta.x, h + 4);
+            var prt = (RectTransform)questPanel.transform; prt.sizeDelta = new Vector2(prt.sizeDelta.x, 42 + h + 22);
             if (questBtnLabel != null) questBtnLabel.text = $"{L.Get("ui.quest.btn")} {done}/{s.quests.Count}";
         }
 
@@ -329,6 +354,7 @@ namespace YeogiCafe.UI
         public SaveGame Save => flow != null ? flow.Save : null;
         public ObservationManager Obs => flow != null ? flow.Observation : null;
         public EconomyManager Economy => economy;
+        public int LostToMice => flow != null ? flow.LostToMice : 0;
 
         public bool TryBuy(FurnitureData data)
         {

@@ -167,9 +167,51 @@ namespace YeogiCafe.Visual
         void Play(string name)
         {
             if (name == clip && queued == null) return;
-            clip = name; queued = null; clipT = 0f;
+            clip = name; queued = null; clipT = 0f; lastFrame = -1;
             clipDef = CatClips.Find(name);
             clipFrames = Data != null ? CatSpriteBank.Clip(Data.catId, name) : null;
+            StartSound(name);
+        }
+
+        // ── 행동 소리 ── (같은 고양이·같은 소리는 쿨다운으로 도배 방지)
+        int lastFrame = -1;
+        string SndKey(string id) => (Data != null ? Data.catId : "") + ":" + id;
+        void S(string id, float vol, float cd, int variants = 1) => YeogiCafe.Audio.SoundManager.Sfx(id, vol, 0.08f, SndKey(id), cd, variants);
+
+        void StartSound(string name)
+        {
+            switch (name)
+            {
+                case "meow": S("sfx_meow_demand", 0.7f, 4f); break;
+                case "order": S("sfx_meow", 0.55f, 6f, 3); break;
+                case "hiss": S("sfx_hiss", 0.7f, 2f); break;
+                case "swat": S("sfx_swat", 0.6f, 0.6f); break;
+                case "flinch": S("sfx_meow_small", 0.45f, 3f); break;
+                case "jumpup": S("sfx_jump", 0.5f, 0.4f); break;
+                case "jumpdown": S("sfx_jump", 0.45f, 0.4f); break;
+                case "pounce": S("sfx_pounce", 0.5f, 1.4f); break;
+                case "rub": case "rollover": S("sfx_trill", 0.55f, 3f); break;
+                case "purr": S("sfx_purr", 0.5f, 1.4f); break;
+                case "stretch": S("sfx_yawn", 0.4f, 10f); break;
+                case "sniff": S("sfx_meow_small", 0.3f, 8f); break;
+            }
+        }
+
+        // 반복 클립의 프레임마다 나는 소리(먹기 와삭, 핥기 할짝, 꾹꾹이 꾹, 쭙쭙이 쭙)
+        void FrameSound(int i)
+        {
+            switch (clip)
+            {
+                case "eat": if (i % 3 == 0) S("sfx_eat", 0.4f, 0.5f, 2); break;
+                case "groom": case "lick": if (i % 2 == 0) S("sfx_lick", 0.3f, 0.3f); break;
+                case "knead": if (i % 2 == 0) S("sfx_knead", 0.35f, 0.25f); break;
+                case "suckle": if (i % 2 == 0) S("sfx_suck", 0.4f, 0.3f); break;
+                case "purr": if (i == 0) S("sfx_purr", 0.45f, 1.4f); break;
+                case "jumpdown": if (i == clipFrames.Length - 2) S("sfx_land", 0.45f, 0.4f); break;
+                case "pounce":
+                    if (i == 0 && brain.CurrentFacility != null && brain.CurrentFacility.FacilityId.StartsWith("furn_fac_scratch")) S("sfx_scratch", 0.45f, 0.5f);
+                    break;
+            }
         }
 
         // 1회 전환 클립(앉기·눕기 등) 재생 후 next 루프로.
@@ -188,7 +230,9 @@ namespace YeogiCafe.Visual
                 if (queued != null) { var n = queued; queued = null; clip = ""; Play(n); i = 0; }
                 else i = clipFrames.Length - 1;
             }
-            sr.sprite = clipFrames[clipDef.loop ? i % clipFrames.Length : Mathf.Min(i, clipFrames.Length - 1)];
+            int fi = clipDef.loop ? i % clipFrames.Length : Mathf.Min(i, clipFrames.Length - 1);
+            if (fi != lastFrame) { lastFrame = fi; FrameSound(fi); }
+            sr.sprite = clipFrames[fi];
         }
 
         bool InTransition => queued != null;
@@ -306,12 +350,14 @@ namespace YeogiCafe.Visual
             else if (moving)
             {
                 bool zoom = brain.IsZooming;
-                if (zoom && clip != "run") { ShowEmote(EmoteDrawing.Kind.Exclaim); YeogiCafe.Core.GameEvents.Raise(YeogiCafe.Core.GameEvents.Zoomies, Data != null ? Data.catId : null); }
+                if (zoom && clip != "run" && !brain.IsChasing) { ShowEmote(EmoteDrawing.Kind.Exclaim); YeogiCafe.Core.GameEvents.Raise(YeogiCafe.Core.GameEvents.Zoomies, Data != null ? Data.catId : null); }
                 Play(zoom ? "run" : "walk"); idleTimer = 0f; rest = Rest.None;
             }
             else if (fp == CatBrain.FacPhase.Dismount && perch > 0.05f) Play("jumpdown");
             else if (fp == CatBrain.FacPhase.Perched && brain.FacilityWall) Play("gaze");                      // 창밖 구경
             else if (fp == CatBrain.FacPhase.Perched && facT < JumpUpTime + 0.1f && perch > 0.05f) { }           // 점프 클립 재생 중
+            else if (fp == CatBrain.FacPhase.Perched && FacHas(FacilityTag.Box) && facT >= JumpUpTime) Play("loaf");   // 상자 속 식빵
+            else if (fp == CatBrain.FacPhase.Perched && FacHas(FacilityTag.Warm) && facT >= JumpUpTime) Play("sleep");  // 따끈해서 녹아내림
             else if (fp == CatBrain.FacPhase.Perched && IsPlayFacility()) Play("pounce");                      // 장난감 놀이
             else if (!seated) { Play(exiting ? "walk" : "stand"); rest = Rest.None; }
             else if (st == CatState.WaitFood) { Play(brain.OrderPatienceRatio < 0.5f ? "meow" : "order"); idleTimer = 0f; rest = Rest.Sit; }   // 배고프면 밥 달라고 야옹
@@ -332,12 +378,16 @@ namespace YeogiCafe.Visual
                     if (groomLeft > 0f) { groomLeft -= dt; Play("groom"); }
                     else Play("sit");
                     TrySoloPlay(dt);
+                    TryKnead(dt);
                 }
-                else if (rest == Rest.Loaf && clip != "loaf") Play("loaf");
+                else if (rest == Rest.Loaf) { if (clip != "loaf") Play("loaf"); TryKnead(dt); }
             }
             Tick(dt);
 
             sr.sortingOrder = YSort.Order(sortY) + YSort.CatAboveSeat;
+            // 과일 박스 안: 상자 앞면 뒤로(머리·귀만 빼꼼)
+            if (!exiting && fp == CatBrain.FacPhase.Perched && FacHas(FacilityTag.Box) && facT > JumpUpTime * 0.6f)
+                sr.sortingOrder = YSort.Order(pos.y) - 2;
             if (clip == "sleep" && !acting) { zzzTimer -= dt; if (zzzTimer <= 0f) { zzzTimer = 3.5f; ShowEmote(EmoteDrawing.Kind.Zzz); } }
             TickEmote(dt);
 
@@ -362,8 +412,16 @@ namespace YeogiCafe.Visual
                 idleTimer = 0f;
                 if (brain.FacilityPerch > 0.05f) { PlayThen("jumpup", "loaf"); rest = Rest.Loaf; }   // 올라가서 식빵 → (느긋하면) 잠
                 if (brain.CurrentFacility is Component c) sr.flipX = c.transform.position.x > CafeCenterX;
+                if (FacHas(FacilityTag.Box)) S("sfx_box", 0.55f, 1f);                 // 바스락(상자 속으로)
             }
             else if (fp == CatBrain.FacPhase.Dismount) { clip = ""; queued = null; rest = Rest.None; }
+        }
+
+        bool FacHas(FacilityTag tag)
+        {
+            var f = brain.CurrentFacility; if (f == null) return false;
+            foreach (var t in f.Tags) if (t == tag) return true;
+            return false;
         }
 
         bool IsPlayFacility()
@@ -374,6 +432,26 @@ namespace YeogiCafe.Visual
         }
 
         // 혼자 놀기: 바닥에서 쉬다가 가끔 허공 덮치기·뒹굴기(장난꾸러기일수록 자주), 아무나 가끔 기지개
+        // 자리에서 쉬다가 꾹꾹이(푹신한 소파·창가석일수록 자주). 쭙쭙이 버릇이 있는 고양이는 방석을 물고 쭙쭙.
+        public static System.Action<CatView> OnSuckle;
+        float kneadTimer = -1f;
+        void TryKnead(float dt)
+        {
+            if (acting || brain == null || !brain.AtSeat || brain.State != CatState.Idle) return;
+            if (kneadTimer < 0f) kneadTimer = Random.Range(6f, 14f);
+            kneadTimer -= dt;
+            if (kneadTimer > 0f) return;
+            bool soft = false;
+            if (brain.VisualSeat is SeatBehaviour sb)
+                foreach (var tg in sb.Tags) if (tg == SeatTag.Sofa || tg == SeatTag.Window) soft = true;
+            kneadTimer = Random.Range(14f, 26f) * (soft ? 0.6f : 1f);
+            if (Random.value > (soft ? 0.75f : 0.4f)) return;
+            bool suck = YeogiCafe.AI.CatTemperament.IsSuckler(Data) && Random.value < 0.65f;
+            DoAction(new[] { new Step { clip = suck ? "suckle" : "knead", seconds = suck ? 3.4f : 2.6f, hasEmote = true,
+                                        emote = suck ? EmoteDrawing.Kind.Heart : EmoteDrawing.Kind.Note } });
+            if (suck) OnSuckle?.Invoke(this);
+        }
+
         void TrySoloPlay(float dt)
         {
             if (acting || !IsSeatedNow || brain.AtSeat || brain.State != CatState.Idle) return;

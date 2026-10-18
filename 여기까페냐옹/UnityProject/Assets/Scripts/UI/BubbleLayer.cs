@@ -61,13 +61,18 @@ namespace YeogiCafe.UI
             var bg = UiFactory.Panel("Bubble", root, new Color(1f, 0.99f, 0.96f, 0.96f));
             bg.anchorMin = bg.anchorMax = new Vector2(0.5f, 0.5f);
             bg.pivot = new Vector2(0.5f, 0f);
-            var outline = bg.gameObject.AddComponent<Outline>();
-            outline.effectColor = UiFactory.Ink; outline.effectDistance = new Vector2(2, -2);
+            UiFactory.Frame(bg, UiFactory.FrameStyle.Bubble);
+            var tail = new GameObject("Tail", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(LayoutElement));
+            tail.transform.SetParent(bg, false);
+            tail.GetComponent<LayoutElement>().ignoreLayout = true;
+            var timg = tail.GetComponent<Image>(); timg.raycastTarget = false;
+            timg.sprite = YeogiCafe.Art.RuntimeSprites.Get("ui_bubble_tail", YeogiCafe.Art.UiFrameDrawing.BubbleTail);
+            UiFactory.SetRect((RectTransform)tail.transform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 1), new Vector2(0, 2), new Vector2(20, 14));
             var fitter = bg.gameObject.AddComponent<ContentSizeFitter>();
             fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             var layout = bg.gameObject.AddComponent<HorizontalLayoutGroup>();
-            layout.padding = new RectOffset(10, 10, 6, 6);
+            layout.padding = new RectOffset(14, 14, 9, 9);
             layout.childControlWidth = layout.childControlHeight = true;
 
             var t = UiFactory.Label("Text", bg.transform, "", 16, TextAnchor.MiddleCenter, UiFactory.Ink);

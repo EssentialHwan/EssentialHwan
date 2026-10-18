@@ -51,7 +51,7 @@ furn.furn_deco_curtain.name,커튼,Curtain
 furn.furn_deco_vase.name,화병,Flower Vase
 ui.shop.insufficient,골드가 부족해요,Not enough gold
 ui.shop.hint,새로운 행동을 볼 수도 있어요,You might see new behavior
-ui.settle.title,오늘의 정산,Today's Report
+ui.settle.title,오늘 밤의 관찰 일지,Tonight's Cat Journal
 ui.settle.revenue,매출,Revenue
 ui.settle.cost,재료비,Cost
 ui.settle.net,순익,Net
@@ -155,3 +155,274 @@ rel_gray_cow.01,회색냥과 젖소냥이 나란히 앉아 조용히 골골거�
 rel_gray_cow.02,"둘은 이제 늘 함께 온다. 어쩐지 닮은 구석이 있다.",The two always come together now. They seem alike somehow.
 rel_calico_tuxedo.01,삼색냥과 턱시도냥이 캣타워에서 신나게 논다.,Patches and Tux play energetically on the cat tower.
 rel_calico_tuxedo.02,활발한 둘이 친구가 되어 카페가 더 시끌벅적해졌다.,The lively pair became friends and the cafe got livelier.
+touch.say.love,골골골…,Purrr…
+touch.say.rollover,냐앙~,Mrrow~
+touch.say.play,냥!,Mew!
+touch.say.sniff,킁킁?,Sniff sniff?
+touch.say.flinch,…!,…!
+touch.say.hiss,하악!,Hiss!
+touch.say.swat,냥냥펀치!,Cat punch!
+touch.learn.loves,{name}는 쓰다듬어 주는 걸 좋아한다.,{name} loves being petted.
+touch.learn.playful,{name}는 손을 장난감인 줄 안다.,{name} thinks your hand is a toy.
+touch.learn.curious,{name}는 손 냄새부터 맡는다.,{name} sniffs your hand first.
+touch.learn.shy,{name}는 아직 손길이 낯설다.,{name} is still shy of your touch.
+touch.learn.warmed,{name}가 이제 손길을 허락한다!,{name} finally lets you pet them!
+touch.learn.hates,{name}는 만지는 걸 싫어한다.,{name} hates being touched.
+touch.learn.fickle,{name}는 그날 기분 따라 다르다. 변덕쟁이!,{name} is moody. What a fickle cat!
+ui.axis.touch,손길,Touch
+touch.loves,좋아함,Loves it
+touch.playful,장난,Playful
+touch.curious,킁킁,Curious
+touch.shy,낯가림,Shy
+touch.warmed,친해짐,Warmed up
+touch.hates,싫어함,Hates it
+touch.fickle,변덕,Fickle
+social.rub,부비부비,Nuzzle
+social.groom,핥핥,Lick lick
+social.play,냥냥!,Play!
+social.hiss,하악!,Hiss!
+social.fight,냥냥펀치!,Cat fight!
+ui.settle.stamp,오늘의 도장,Today's Stamp
+ui.settle.stampday,{n}일차,Day {n}
+ui.catalog.stamps,손도장 {n}개,{n} paw stamps
+ui.edit.open,배치,Arrange
+ui.edit.hint,가구를 끌어서 옮겨 보세요. 겹치면 원래 자리로 돌아가요.,Drag furniture to move it. Overlaps snap back.
+ui.edit.done,완료,Done
+social.steal,{boss}가 {name}의 자리를 차지했다!,{boss} took {name}'s seat!
+ui.catalog.boss,대장,Boss
+social.ambush,덮쳐랏!,Pounce!
+obs.suspected,짐작 중,Hunch
+obs.confirmable,거의 확실,Almost sure
+tag.seat.Normal,일반석,Regular seat
+tag.seat.Window,창가,Window
+tag.seat.Corner,구석,Corner
+tag.seat.TwoSeat,2인석,Two-seater
+tag.seat.Sofa,소파,Sofa
+tag.seat.BarTable,바 테이블,Bar table
+tag.seat.Quiet,조용한 자리,Quiet spot
+tag.seat.OutsideView,바깥 구경,Outside view
+tag.fac.Play,놀이,Play
+tag.fac.Height,높은 곳,High places
+tag.fac.Active,뛰어놀기,Running around
+tag.fac.Soft,푹신한 곳,Soft spots
+tag.fac.Relax,늘어지기,Lounging
+tag.fac.Quiet,조용한 곳,Quiet spots
+tag.fac.Social,어울리기,Socializing
+tag.fac.Natural,자연,Nature
+ui.guess.btn,추리,Guess
+ui.guess.title,{name}가 좋아하는 {axis}은?,What {axis} does {name} like?
+ui.guess.correct,정답! {name}는 {item}를 좋아해요,Correct! {name} likes {item}
+ui.guess.early,짐작만으로 맞혔어요! 보너스 +{g}G,Sharp guess! Bonus +{g}G
+ui.guess.wrong,음… 아닌 것 같아. 내일 다시 생각해 보자,Hmm… not quite. Let's think again tomorrow
+ui.guess.tried,오늘은 이미 추리했어요,Already guessed today
+ui.guess.none,고를 수 있는 게 아직 없어요,Nothing to choose from yet
+ui.guess.cancel,닫기,Close
+ui.order.askhint,{hint}… 주세요!,"{hint}… please!"
+ui.order.pick,{name}의 주문: '{hint}' 어떤 메뉴일까?,"{name}'s order: '{hint}' — which menu?"
+ui.order.picked,{menu}로 정했어요. 맞는 기구를 눌러 조리하세요,"Going with {menu}. Press its tool to cook."
+ui.order.mindread,딱 이거야! 어떻게 알았어?,Exactly this! How did you know?
+ui.order.wrongdish,이게 아닌데…,This isn't it…
+order.hint.menu_americano.1,잠이 깨는 쓴 거,something bitter that wakes me up
+order.hint.menu_americano.2,까만 물,black water
+order.hint.menu_milk.1,하얗고 따뜻한 거,something white and warm
+order.hint.menu_milk.2,엄마 생각나는 거,something that reminds me of mom
+order.hint.menu_fishcake.1,달콤한데 비린 거,sweet but fishy
+order.hint.menu_fishcake.2,생선이 들어간 디저트,a dessert with fish
+order.hint.menu_parfait.1,새콤달콤 빨간 거,something sweet-sour and red
+order.hint.menu_parfait.2,높이 쌓인 달달한 거,a tall sweet tower
+order.hint.menu_tuna_sand.1,든든하고 비린 거,filling and fishy
+order.hint.menu_tuna_sand.2,빵 사이에 생선,fish between bread
+order.hint.menu_catnip_tea.1,기분 좋아지는 풀 냄새,a grass smell that makes me happy
+order.hint.menu_catnip_tea.2,따뜻한 풀 물,warm grass water
+order.hint.menu_pudding.1,말랑말랑 노란 거,something squishy and yellow
+order.hint.menu_pudding.2,흔들흔들 달달한 거,something wobbly and sweet
+order.hint.menu_grilled_fish.1,불맛 나는 생선,fish with a smoky taste
+order.hint.menu_grilled_fish.2,따끈하고 배부른 생선,warm filling fish
+gift.found,{name}가 문 앞에 {gift}를 두고 갔다!,{name} left a {gift} at the door!
+gift.coffee_bean.name,커피콩,coffee bean
+gift.coffee_bean.desc,쌉싸름한 냄새가 밴 커피콩… 쓴 음료를 좋아하나?,A bitter-smelling bean… likes something bitter?
+gift.milk_cap.name,우유 뚜껑,milk cap
+gift.milk_cap.desc,우유 냄새가 나는 뚜껑. 하얀 음료를 좋아하는 걸까?,Smells of milk. Likes white drinks?
+gift.fish_bone.name,생선뼈,fish bone
+gift.fish_bone.desc,달콤한 냄새가 살짝 묻은 생선뼈… 생선 디저트?,A fish bone with a sweet scent… a fishy dessert?
+gift.berry_top.name,딸기 꼭지,strawberry top
+gift.berry_top.desc,딸기 꼭지만 남았다. 새콤달콤한 걸 좋아하나?,Only the top is left. Likes sweet-sour things?
+gift.tuna_lid.name,참치 캔 뚜껑,tuna can lid
+gift.tuna_lid.desc,반짝이는 참치 캔 뚜껑. 든든한 생선 요리?,A shiny tuna lid. Something hearty with fish?
+gift.catnip_leaf.name,캣닢 잎,catnip leaf
+gift.catnip_leaf.desc,기분 좋아지는 풀잎. 풀 냄새 나는 따뜻한 차?,A happy little leaf. A warm herbal tea?
+gift.caramel.name,캐러멜 조각,caramel bit
+gift.caramel.desc,끈적한 캐러멜. 말랑하고 달달한 걸 좋아하나?,Sticky caramel. Likes soft sweet things?
+gift.fish_tail.name,구운 생선 꼬리,grilled fish tail
+gift.fish_tail.desc,불맛이 남은 꼬리. 따끈한 생선 요리?,A smoky tail. Warm grilled fish?
+gift.window_leaf.name,창밖 나뭇잎,leaf from outside
+gift.window_leaf.desc,창틈으로 들어온 잎. 창가 자리를 좋아하나?,Blew in through the window. Likes window seats?
+gift.dust_bunny.name,먼지 뭉치,dust bunny
+gift.dust_bunny.desc,구석에서 굴려 온 먼지 뭉치. 구석 자리를 좋아하나?,Rolled out of a corner. Likes corner seats?
+gift.two_hairs.name,두 가지 색 털,two-colored hairs
+gift.two_hairs.desc,누군가와 나란히 앉았던 흔적. 둘이 앉는 자리?,Signs of sitting side by side. Likes a two-seater?
+gift.sofa_fluff.name,소파 솜털,sofa fluff
+gift.sofa_fluff.desc,푹신한 소파에서 뜯어 온 솜털. 소파를 좋아하나?,Pulled from a soft sofa. Likes the sofa?
+gift.bottle_cap.name,병뚜껑,bottle cap
+gift.bottle_cap.desc,높은 바 테이블 위에 있던 병뚜껑. 높은 의자?,From the high bar table. Likes bar stools?
+gift.pebble.name,조약돌,pebble
+gift.pebble.desc,조용히 굴러온 조약돌. 조용한 자리를 좋아하나?,A quiet little pebble. Likes quiet spots?
+gift.sparrow_feather.name,참새 깃털,sparrow feather
+gift.sparrow_feather.desc,바깥을 구경하다 주운 깃털. 바깥이 보이는 자리?,Picked up while watching outside. Likes a view?
+gift.wood_chip.name,나무 조각,wood chip
+gift.wood_chip.desc,평범한 의자 다리 조각. 평범한 자리가 편한가?,A bit of an ordinary chair. Likes plain seats?
+gift.yarn_ball.name,털실 공,yarn ball
+gift.yarn_ball.desc,실컷 굴린 털실 공. 장난감 놀이를 좋아하나?,Well-rolled yarn. Likes toys?
+gift.feather.name,깃털,feather
+gift.feather.desc,높은 곳에서 떨어진 깃털. 높은 데를 좋아하나?,Fell from somewhere high. Likes heights?
+gift.bouncy_ball.name,탱탱볼,bouncy ball
+gift.bouncy_ball.desc,여기저기 튀던 공. 뛰어노는 걸 좋아하나?,Bounced all over. Likes running around?
+gift.cotton.name,솜 뭉치,cotton puff
+gift.cotton.desc,푹신한 솜. 푹신한 곳을 좋아하나?,Fluffy cotton. Likes soft spots?
+gift.marble.name,유리구슬,marble
+gift.marble.desc,햇볕에 데워진 구슬. 늘어져 쉬는 걸 좋아하나?,Warmed by the sun. Likes lounging?
+gift.pinecone.name,솔방울,pinecone
+gift.pinecone.desc,조용한 구석에서 찾은 솔방울. 조용한 곳?,Found in a quiet nook. Likes quiet places?
+gift.ribbon.name,리본,ribbon
+gift.ribbon.desc,다 같이 갖고 놀던 리본. 어울리는 걸 좋아하나?,Everyone played with it. Likes company?
+gift.grass_blade.name,풀잎,grass blade
+gift.grass_blade.desc,화분에서 뜯은 풀잎. 자연을 좋아하나?,Plucked from a plant. Likes nature?
+ui.catalog.gifts,선물 {n}/{t},Gifts {n}/{t}
+ui.guess.confirm,확인,Check
+ui.guess.change,바꾸기,Change
+ui.guess.allok,모두 정답! {name}의 취향을 알아냈어요 (+{g}G),All correct! You figured out {name} (+{g}G)
+ui.guess.partial,"{name}: {t}개 중 {n}개 맞았어요. 어느 게 틀렸는지는 비밀, 내일 다시!","{name}: {n} of {t} correct. Which ones? That's for tomorrow!"
+ui.catalog.reltab,관계도,Relations
+ui.catalog.listtab,목록,List
+ui.rel.friend,단짝,Besties
+ui.rel.rival,앙숙,Rivals
+ui.quest.btn,의뢰,Requests
+ui.quest.title,오늘의 의뢰,Today's Requests
+quest.done,의뢰 완료! {q} (+{g}G),Request done! {q} (+{g}G)
+q_petlove,쓰다듬어서 애교 3번 보기,See 3 cats get affectionate from petting
+q_serve,음식 5번 내기,Serve 5 dishes
+q_zoomies,우다다 목격하기,Witness the zoomies
+q_rub,고양이끼리 부비부비 보기,See two cats nuzzle
+q_groom,서로 핥아주는 모습 보기,See cats groom each other
+q_mindread,단골의 힌트 주문 맞히기,Guess a regular's hint order right
+q_gift,문 앞 선물 줍기,Pick up a gift at the door
+q_fight,냥냥펀치 싸움 목격하기,Witness a cat fight
+q_ambush,캣초딩의 기습 목격하기,Witness a kitten ambush
+q_steal,대장냥이 텃세 목격하기,See the boss steal a seat
+q_guess,고양이 하나 완벽히 알아맞히기(밤 일지),Fully figure out a cat (night journal)
+weather.0,맑음,Sunny
+weather.1,흐림,Cloudy
+weather.2,비,Rain
+cat.cat_moon.name,달냥,Luna
+ep.cat_moon.regular3.01,…역시 여기 창가는 달이 잘 보여.,...The moon looks so clear from this window.
+ep.cat_moon.regular3.02,구운 생선 냄새로 길을 찾아왔어. 너 덕분이야.,I followed the smell of grilled fish here. Thanks to you.
+ui.catalog.rumor,소문: 창가 자리에서 높은 곳을 올려다보며 불맛 나는 생선 냄새를 기다리는 고양이가 있다던데…,"Rumor: a cat who gazes up at high places from a window seat, waiting for the smell of smoky fish…"
+ui.catalog.grad,졸업,Graduated
+story.title.r2,{name}가 단골이 되었어요,{name} became a regular
+story.title.r3,{name}의 이야기,{name}'s story
+story.title.grad,졸업 편지 — {name},Graduation letter — {name}
+story.next,다음,Next
+ep.cat_cheese.regular2.01,(햇볕 드는 자리에서 하품을 길게 한다),(Yawns long in a sunny spot)
+ep.cat_cheese.regular2.02,여기 생선케이크… 꿈에도 나왔어.,"That fish cake here… I dreamed about it."
+ep.cat_cheese.grad.01,"집사에게. 나 이제 좋은 집으로 가. 창가에 햇볕 잘 드는 집이래.","Dear barista. I'm going to a good home. One with a sunny window."
+ep.cat_cheese.grad.02,"폭신한 쿠션에서 낮잠 잔 날들, 생선케이크 냄새… 다 기억할게.","Naps on the soft cushion, the smell of fish cake… I'll remember it all."
+ep.cat_cheese.grad.03,"가끔 놀러 올게. 그때도 내 자리 남겨 둬야 해. — 치즈냥","I'll visit sometimes. Save my seat. — Cheddar"
+ep.cat_calico.regular2.01,오늘은 뭐가 바뀌었나 보러 왔지!,I came to see what changed today!
+ep.cat_calico.regular2.02,"딸기 냄새 나는 거, 그거 또 있어?","That strawberry-smelling thing, do you have it again?"
+ep.cat_calico.grad.01,"집사! 나 새 집 생겼다? 구석구석 탐험할 데가 엄청 많대.","Barista! I got a new home. Lots of corners to explore."
+ep.cat_calico.grad.02,"근데 여기만큼 매일 새로운 데는 없을 거야.",But nowhere will be as new every day as here.
+ep.cat_calico.grad.03,"구석 자리, 딸기파르페, 장난감… 다 고마웠어! — 삼색냥","The corner seat, parfait, toys… thank you! — Patches"
+ep.cat_cow.regular2.01,"여기 오면 아는 얼굴이 있어서 좋아.",I like that there are familiar faces here.
+ep.cat_cow.regular2.02,2인석… 누구랑 같이 앉으면 좋겠다.,The two-seater… I wish someone would sit with me.
+ep.cat_cow.grad.01,"나를 데려간 집엔 고양이가 둘이나 있대. 이제 혼자 아니야.","My new home has two other cats. I won't be alone."
+ep.cat_cow.grad.02,"같이 앉는 게 좋다는 거, 네가 제일 먼저 알아봐 줬지.",You were the first to notice I like sitting together.
+ep.cat_cow.grad.03,"참치샌드위치는 거기서도 찾을 거야. — 젖소냥","I'll look for tuna sandwiches there too. — Moo"
+ep.cat_black.regular2.01,…(조용히 고개만 까딱한다),...(nods quietly)
+ep.cat_black.regular2.02,"우유. 따뜻하게. …고마워.","Milk. Warm. …Thanks."
+ep.cat_black.grad.01,"…편지 같은 거 처음 써 봐.","…First time writing a letter."
+ep.cat_black.grad.02,"시끄러운 데 싫어하는 거, 화분 옆이 좋은 거. 다 알아줘서… 편했어.","That I hate noise, that I like the spot by the plant. You knew. …It was comfortable."
+ep.cat_black.grad.03,"대장 자리는 비워 둘게. 가끔 확인하러 올 거니까. — 까망냥","I'll leave the boss seat open. I'll check on it. — Shadow"
+ep.cat_tuxedo.regular2.01,우다다 하기 제일 좋은 카페 발견!,Found the best cafe for zoomies!
+ep.cat_tuxedo.regular2.02,"쓴 커피? 그게 어른의 맛이라던데!",Bitter coffee? They say it's the grown-up taste!
+ep.cat_tuxedo.grad.01,"새 집은 마당이 엄청 넓어! 하루 종일 뛸 수 있어!","My new home has a huge yard! I can run all day!"
+ep.cat_tuxedo.grad.02,"근데 소파에서 덮치기 놀이는 여기가 최고였어. 다들 미안!",But pouncing from the sofa was best here. Sorry everyone!
+ep.cat_tuxedo.grad.03,"어른 되면 커피 마시러 올게. — 턱시도냥","I'll come back for coffee when I'm grown up. — Tux"
+ep.cat_mackerel.regular2.01,"…또 왔어. 배고파서는 아니고.","…Back again. Not because I'm hungry."
+ep.cat_mackerel.regular2.02,소파가 딱 내 몸에 맞아.,The sofa fits me just right.
+ep.cat_mackerel.grad.01,"나 데려간 집, 생선을 잘 굽는대. 근데 생선케이크는 없겠지.","My new home grills fish well. But no fish cake, probably."
+ep.cat_mackerel.grad.02,"푹신한 데서 늘어지는 게 행복이라는 거, 여기서 배웠어.",Here I learned that lounging somewhere soft is happiness.
+ep.cat_mackerel.grad.03,"치즈랑 내 자리 다툼은 네가 정리해 줘. — 고등어냥","Settle the seat fights between me and Cheddar for me. — Tabby"
+ep.cat_siamese.regular2.01,"흠, 오늘은 기분이 나쁘지 않아.","Hmm, I'm not in a bad mood today."
+ep.cat_siamese.regular2.02,"창가 자리, 내 거로 해 줄 수 있어?",Can the window seat be mine?
+ep.cat_siamese.grad.01,"새 집은 고급스럽대. 당연하지, 나니까.","My new home is elegant. Naturally, it's me."
+ep.cat_siamese.grad.02,"…그래도 변덕 다 받아준 집사는 너뿐이었어.",…Still you were the only one who put up with all my moods.
+ep.cat_siamese.grad.03,"냥냥펀치는 애정 표현이었어. 진짜야. — 샴냥","The cat punches were affection. Really. — Siam"
+ep.cat_gray.regular2.01,"…혼자 와도 여긴 괜찮더라.",…Even coming alone is okay here.
+ep.cat_gray.regular2.02,"단골이 되면… 말 걸어도 돼?",Now that I'm a regular… can I talk to you?
+ep.cat_gray.grad.01,"처음엔 손만 봐도 무서웠는데.","At first even your hand scared me."
+ep.cat_gray.grad.02,"이제 쓰다듬어 주는 게 좋아. 새 집에서도 그럴 수 있을 것 같아.",Now I like being petted. I think I can at my new home too.
+ep.cat_gray.grad.03,"젖소 걔랑 같이 놀러 올게. — 회색냥","I'll visit with Moo. — Misty"
+ep.cat_moon.regular2.01,(창밖 높은 곳을 오래 올려다본다),(Gazes up at high places outside for a long time)
+ep.cat_moon.regular2.02,"구운 생선 냄새가 나면, 또 올게.","When I smell grilled fish, I'll come again."
+ep.cat_moon.grad.01,"나는 원래 지붕 위에서 달을 보던 고양이야.",I used to be a cat who watched the moon from rooftops.
+ep.cat_moon.grad.02,"네가 창가와 캣타워를 만들어 줘서, 처음으로 아래로 내려왔어.",You made a window seat and a tower — so for the first time I came down.
+ep.cat_moon.grad.03,"보름달 뜨는 밤엔 창밖을 봐. 내가 있을 거야. — 달냥","On full-moon nights, look out the window. I'll be there. — Luna"
+meme.hungry.1,밥! 밥 줘! 냐아앙!,Food! Feed me! Mrraaow!
+meme.hungry.2,냐앙… 냐아앙… 냐아아앙!!,Mew… mrrow… MRRAAOW!!
+meme.hungry.3,(밥그릇을 앞발로 탕탕),(Bangs the bowl with a paw)
+ui.kitchen.knead,앗… 앞발이 저절로 허공 꾹꾹이를 한다,Oops… a paw started kneading the air
+ui.kitchen.groom,잠깐만… 앞발 그루밍 타임,Hold on… paw-grooming time
+ui.kitchen.busyknead,그쪽 앞발은 꾹꾹이 하느라 바빠요! (반대쪽 기구는 돼요),That paw is busy kneading! (Use the other side)
+ui.kitchen.busygroom,그쪽 앞발은 그루밍 중이에요! (반대쪽 기구는 돼요),That paw is busy grooming! (Use the other side)
+mouse.appear,찍찍! 쥐가 나타났다! 5초 안에 클릭해서 잡아요!,Squeak! A mouse! Click it within 5 seconds!
+mouse.chase,놓쳤다! 고양이들이 사냥 본능 폭발… 주문은 뒷전!,Missed it! The cats' hunting instinct kicks in… orders forgotten!
+mouse.chase.pay,놓쳤다! 손님 {n}마리가 계산도 잊고 쥐를 쫓아간다…,Missed it! {n} guests ran after the mouse without paying…
+mouse.caught,탁! 잡았다. 살살 밖에 놓아줬어요 (손님들이 감탄한다),Gotcha! Gently let it outside (the guests are impressed)
+mouse.caught.late,탁! 겨우 잡았다… 소동이 가라앉는다,Gotcha! Finally… the commotion settles
+ui.settle.mice,쥐 소동으로 못 받은 음식값: {g}G,Lost to the mouse commotion: {g}G
+closing.title,마감 직전… {name}이 아직 안 갔어요,Closing time… {name} is still here
+closing.sub,드래그 = 쓰다듬기 · 등·머리를 톡톡 = 꾹꾹이 · 좋아하는 곳을 찾아봐요,Drag = stroke · Tap back/head = knead · Find the sweet spots
+closing.mood,기분,Mood
+closing.bye,잘 가 또 와!,Bye see you!
+closing.bye.ok,{name}이 기분 좋게 돌아갔다.,{name} went home happy.
+closing.love.1,골골…,Purr…
+closing.love.2,거기 더…,More there…
+closing.love.3,(눈을 가늘게 뜬다),(Eyes go soft)
+closing.play.1,앙! (앞발을 덥석),Chomp! (Grabs your paw)
+closing.play.2,깨물깨물,Nibble nibble
+closing.ok.1,킁킁…,Sniff sniff…
+closing.ok.2,냥?,Mew?
+closing.annoyed.1,(움찔),(Flinch)
+closing.annoyed.2,…거긴 좀,…Not there
+closing.hate.1,하악!,Hiss!
+closing.hate.2,냥펀치!,Paw swat!
+closing.knead,꾹·꾹,knead·knead
+closing.purr,골골골,purrrr
+closing.suck,쭙쭙,suck suck
+closing.finale,골골골골… 완전히 녹아내렸다,Purrrrr… completely melted
+closing.suckle,쭙쭙… {name}이 내 앞발을 물고 쭙쭙이를 한다,Suck suck… {name} is suckling on your paw
+closing.leave,흥! {name}이 휙 가버렸다…,Hmph! {name} stormed off…
+closing.done,{name}과 놀아줬다! 팁 +{g}G,Played with {name}! Tip +{g}G
+closing.likes,좋아하는 곳: {z},Likes: {z}
+closing.zone.0,머리,head
+closing.zone.1,볼,cheeks
+closing.zone.2,턱,chin
+closing.zone.3,등,back
+closing.zone.4,앞발,paws
+ui.catalog.likes,좋:{z},+{z}
+ui.catalog.hates,싫:{z},-{z}
+ui.catalog.suckle,[쭙쭙이],[suckler]
+narr.suckle,쭙쭙… (방석을 물고 꾹꾹),Suck suck… (kneading the cushion)
+toast.suckle,{name}의 버릇 발견: 쭙쭙이! 마음이 편할 때 방석을 물고 꾹꾹 빤다,New habit: {name} suckles the cushion when feeling safe!
+ui.kitchen.suckle,앗… 나도 모르게 앞발을 펼쳐 말랑 젤리를 쭙쭙…,Oops… caught myself suckling my own squishy paw…
+ui.kitchen.busysuckle,그쪽 앞발은 쭙쭙이 중이에요! (반대쪽 기구는 돼요),That paw is busy being suckled! (Use the other side)
+ui.kitchen.lick,할짝,lick
+ui.kitchen.suck,쭙,suck
+furn.furn_fac_fruitbox.name,과일 박스,Fruit Box
+furn.furn_fac_fruitbox,과일 박스,Fruit Box
+furn.furn_fac_heatpad.name,온열 방석,Heated Cushion
+furn.furn_fac_heatpad,온열 방석,Heated Cushion
+furn.furn_fac_wand.name,자동 낚싯대,Auto Wand Toy
+furn.furn_fac_wand,자동 낚싯대,Auto Wand Toy
+narr.facility.box,{name}가 과일 박스에 쏙 들어갔다. 상자는 못 참지!,{name} squeezed into the fruit box. Can't resist a box!
+narr.facility.warm,{name}가 따끈한 자리에서 녹아내렸다…,{name} melted into the warm spot…

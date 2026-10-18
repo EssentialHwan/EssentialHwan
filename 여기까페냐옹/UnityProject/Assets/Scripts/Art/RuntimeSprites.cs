@@ -31,5 +31,20 @@ namespace YeogiCafe.Art
             cache[key] = s;
             return s;
         }
+
+        // 9-slice UI 스프라이트(가장자리 border px는 늘어나지 않음). PPU 100 = 캔버스 1단위.
+        public static Sprite GetSliced(string key, Func<PixelCanvas> draw, int border)
+        {
+            if (cache.TryGetValue(key, out var s) && s != null) return s;
+            var c = draw();
+            var tex = new Texture2D(c.W, c.H, TextureFormat.RGBA32, false)
+            { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp, name = key };
+            tex.SetPixels32(c.Pixels); tex.Apply();
+            s = Sprite.Create(tex, new Rect(0, 0, c.W, c.H), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect,
+                              new Vector4(border, border, border, border));
+            s.name = key;
+            cache[key] = s;
+            return s;
+        }
     }
 }

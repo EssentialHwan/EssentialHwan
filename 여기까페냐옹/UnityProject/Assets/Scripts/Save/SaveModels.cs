@@ -73,7 +73,11 @@ namespace YeogiCafe.Save
         // 쓰다듬기 반응을 '본' 횟수(TouchResult 순서). 기질(Truth)이 아니라 관찰 결과만 저장.
         public int[] touchSeen = new int[5];
         public bool bossSeen;
-        public bool graduated;                            // 3축을 다 알아내고 단골 3단계 → 졸업(가끔 놀러 옴)                             // 대장냥이가 자리 뺏는 걸 본 적 있음(도감 표시)
+        public bool graduated;
+        // 마감 놀아주기에서 알아낸 것(관찰 결과만): 좋아한/싫어한 부위 비트(PetZone), 쭙쭙이 버릇을 봤는지
+        public int likeZones, hateZones;
+        public bool suckleSeen;
+        public int closingPlays;                            // 3축을 다 알아내고 단골 3단계 → 졸업(가끔 놀러 옴)                             // 대장냥이가 자리 뺏는 걸 본 적 있음(도감 표시)
 
         // ── 만족도 파생값 (저장 안 함) ──
         public float LastSatisfaction => satisfactionHistory.Count > 0 ? satisfactionHistory[^1] : 0f;

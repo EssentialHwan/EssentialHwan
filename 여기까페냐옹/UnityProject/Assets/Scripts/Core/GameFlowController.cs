@@ -134,6 +134,7 @@ namespace YeogiCafe.Core
         {
             var data = brain.data;
             var catSave = save.GetOrCreateCat(data.catId);
+            if (brain.State == CatState.Leave && brain.ServedMenu != null) lastLeftToday = data.catId;
 
             // 만족도 계산 (§3.3). 분위기 승수는 cfg.atmosphereAffectsSatisfaction=true(정식)일 때만 반영.
             var atmo = furniture != null ? furniture.CurrentAtmosphere : default;
@@ -155,7 +156,9 @@ namespace YeogiCafe.Core
             float satisfaction = SatisfactionCalculator.Compute(data, sr, cfg);
 
             // 결제 (§3.4)
-            int price = brain.ServedMenu != null ? brain.ServedMenu.price : 0;
+            // 쥐 소동 때 쥐를 쫓아 뛰쳐나간 고양이는 계산을 잊는다(재료비는 그대로 나감)
+            int price = brain.ServedMenu != null && !brain.ChaseSkippedPay ? brain.ServedMenu.price : 0;
+            if (brain.ServedMenu != null && brain.ChaseSkippedPay) LostToMice += brain.ServedMenu.price;
             int pay = Mathf.RoundToInt(price * EconomyManager.TipMultiplier(satisfaction));
             economy.AddGold(pay);
             if (brain.ServedMenu != null) economy.AddIngredientCost(brain.ServedMenu.cost);
@@ -188,6 +191,14 @@ namespace YeogiCafe.Core
             // 영업 종료: 아직 카페에 남은 손님을 먼저 정리(결제·만족 확정) → 그 다음 승격.
             // 순서가 바뀌면 남은 손님의 오늘 단서가 내일로 새거나 정산에서 빠진다.
             var remaining = new List<CatBrain>(cats.Active);
+            // 마감 놀아주기 상대: 아직 남아 쉬던 손님 중 하나(없으면 오늘 마지막으로 기분 좋게 나간 손님)
+            ClosingGuestId = null;
+            var cands = new List<CatBrain>();
+            foreach (var b in remaining)
+                if (b != null && (b.State == CatState.Idle || b.State == CatState.FacilityAction || b.State == CatState.Eat || b.State == CatState.WaitFood))
+                    cands.Add(b);
+            if (cands.Count > 0) ClosingGuestId = cands[Random.Range(0, cands.Count)].data.catId;
+            else ClosingGuestId = lastLeftToday;
             foreach (var b in remaining) if (b != null) b.ForceLeave();
             if (orderSystem != null) orderSystem.ClearAll();
 
@@ -233,7 +244,8 @@ namespace YeogiCafe.Core
 
         public void BeginNextDay()
         {
-            economy.ResetDaily();                            // 정산 화면에서 오늘 매출을 다 보여준 뒤 초기화
+            economy.ResetDaily();
+            LostToMice = 0; lastLeftToday = null;                            // 정산 화면에서 오늘 매출을 다 보여준 뒤 초기화
             day.AdvanceToNextDay();
             save.currentDay = day.CurrentDay;
             if (saveManager != null) saveManager.Save(save);
@@ -241,6 +253,9 @@ namespace YeogiCafe.Core
             day.StartDay();
         }
 
+        public int LostToMice { get; set; }
+        public string ClosingGuestId { get; private set; }   // 마감 직전 놀아줄 마지막 손님
+        string lastLeftToday;                  // 오늘 쥐 소동으로 못 받은 음식값(정산 표시용)
         public ObservationManager Observation => obs;
         public SaveGame Save => save;
     }

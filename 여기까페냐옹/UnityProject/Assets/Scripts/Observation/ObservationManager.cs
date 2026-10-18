@@ -43,6 +43,14 @@ namespace YeogiCafe.Observation
             }
         }
 
+        // 단서 없이 말풍선만(누구나 하는 행동 — 추리 재료가 아님)
+        public void NarrateOnly(string catId, string narration)
+        {
+            if (string.IsNullOrEmpty(narration)) return;
+            OnBehaviorNarration?.Invoke(narration);
+            OnCatNarration?.Invoke(catId, narration);
+        }
+
         // §3.5 영업 종료 — 승격 (fallback cap → …/★, 강한 반증 강등)
         public void OnDayEnd()
         {

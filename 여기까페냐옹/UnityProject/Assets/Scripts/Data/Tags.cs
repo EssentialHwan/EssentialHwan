@@ -4,7 +4,7 @@ namespace YeogiCafe.Data
 {
     public enum PersonalityTag { Relaxed, Curious, Social, Lonely, Active, Introvert, Glutton, Playful, Fickle }
     public enum SeatTag        { Normal, Window, Corner, TwoSeat, Sofa, BarTable, Quiet, OutsideView }
-    public enum FacilityTag    { Play, Height, Active, Soft, Relax, Quiet, Social, Natural }
+    public enum FacilityTag    { Play, Height, Active, Soft, Relax, Quiet, Social, Natural, Box, Warm }   // Box: 누구나 좋아함(추리 제외) · Warm: 따뜻한 자리
     public enum FoodTag        { Fish, Sweet, Fruit, Meal, Warm }
     public enum AtmosphereAxis { Quiet, Lively, Warm, Natural, Luxury }
 

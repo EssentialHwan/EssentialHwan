@@ -58,6 +58,9 @@ namespace YeogiCafe.EditorTools
             SaveFurn("furn_fac_cushion", FurnitureDrawing.FacCushion());
             SaveFurn("furn_fac_toybox",  FurnitureDrawing.FacToybox());
             SaveFurn("furn_fac_scratch", FurnitureDrawing.FacScratcher());
+            SaveFurn("furn_fac_fruitbox", FurnitureDrawing.FacFruitBox());
+            SaveFurn("furn_fac_heatpad", FurnitureDrawing.FacHeatPad());
+            SaveFurn("furn_fac_wand", FurnitureDrawing.FacWandToy());
             SaveFurn("furn_fac_plant",   FurnitureDrawing.FacPlant());
             SaveFurn("furn_fac_window",  FurnitureDrawing.FacWindow());
             SaveFurn("furn_deco_clock",  FurnitureDrawing.DecoClock());

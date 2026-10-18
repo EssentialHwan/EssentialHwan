@@ -38,6 +38,8 @@ namespace YeogiCafe.Art
             new Def { name = "flinch",   fps = 8,  loop = true,  frames = 6,  pose = Flinch },     // 움찔(낯가림)
             new Def { name = "hiss",     fps = 8,  loop = true,  frames = 6,  pose = HissIdle },   // 하악
             new Def { name = "swat",     fps = 12, loop = true,  frames = 6,  pose = Swat },       // 냥냥펀치
+            new Def { name = "knead",    fps = 6,  loop = true,  frames = 8,  pose = Knead },      // 꾹꾹이(앞발 번갈아 꾹·꾹)
+            new Def { name = "suckle",   fps = 6,  loop = true,  frames = 8,  pose = Suckle },     // 쭙쭙이(방석을 물고 꾹꾹)
             // 시설
             new Def { name = "jumpup",   fps = 10, loop = false, frames = 6,  pose = JumpUp },     // 웅크렸다 도약 → 착지
             new Def { name = "jumpdown", fps = 11, loop = false, frames = 6,  pose = JumpDown },   // 가장자리에서 뛰어내림 → 착지
@@ -320,6 +322,32 @@ namespace YeogiCafe.Art
             p.face = CatRig.Face.Happy; p.earFold = 0.12f;
             p.tailAng = 1.65f; p.tailCurl = -0.06f + w * 0.03f;        // 꼬리 세우고 끝만 갈고리
             p.bodyAng = -0.04f;
+            return p;
+        }
+
+        // 꾹꾹이: 앉아서 앞발을 번갈아 들었다 눌렀다, 눈은 행복하게 가늘게
+        static CatRig.Pose Knead(int i, int n)
+        {
+            var p = CatRig.Sit();
+            bool a = (i / 2) % 2 == 0;
+            float up = 2.6f;
+            p.fn.py = CatRig.Ground + (a ? up : 0f); p.fn.px += a ? 0.8f : 0f; p.fn.jy += a ? 1f : 0f;
+            p.ff.py = CatRig.Ground + (a ? 0f : up); p.ff.px += a ? 0f : 0.8f; p.ff.jy += a ? 0f : 1f;
+            float br = (i % 2 == 0) ? 0.3f : -0.2f;
+            p.bodyRy += br * 0.4f; p.headY += br; p.headTilt = 0.12f;
+            p.face = CatRig.Face.Happy; p.earFold = 0.1f;
+            p.tailCurl = 0.06f + Mathf.Sin(TAU * Ph(i, n)) * 0.02f;
+            return p;
+        }
+
+        // 쭙쭙이: 꾹꾹이 + 고개를 푹 숙여 방석 끝을 물고 빠는 중(눈 꼭 감음)
+        static CatRig.Pose Suckle(int i, int n)
+        {
+            var p = Knead(i, n);
+            float s = (i % 2 == 0) ? 0.5f : 0f;
+            p.headX += 2.5f; p.headY -= 6f + s; p.headTilt = 0.55f;
+            p.chestX += 1f; p.chestY -= 1f;
+            p.eyeOpen = 0f; p.earFold = 0.2f;
             return p;
         }
 

@@ -81,6 +81,9 @@ namespace YeogiCafe.Core
             if (orderSystem == null) orderSystem = gameObject.AddComponent<YeogiCafe.Order.OrderSystem>();
             if (interactions == null) interactions = gameObject.AddComponent<YeogiCafe.Visual.CatInteractionDirector>();
             if (GetComponent<YeogiCafe.Visual.WeatherView>() == null) gameObject.AddComponent<YeogiCafe.Visual.WeatherView>();
+            if (GetComponent<YeogiCafe.Visual.MouseRaid>() == null) gameObject.AddComponent<YeogiCafe.Visual.MouseRaid>();
+            if (GetComponent<YeogiCafe.Visual.SunbeamSpot>() == null) gameObject.AddComponent<YeogiCafe.Visual.SunbeamSpot>();
+            if (GetComponent<YeogiCafe.Audio.SoundManager>() == null) gameObject.AddComponent<YeogiCafe.Audio.SoundManager>();
         }
 
         void WireReferences()

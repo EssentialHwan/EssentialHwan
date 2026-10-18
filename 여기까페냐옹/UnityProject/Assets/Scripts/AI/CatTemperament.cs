@@ -12,8 +12,68 @@ namespace YeogiCafe.AI
 
     public enum SocialKind { None, Rub, Groom, Sniff, Play, Hiss, Fight, Ambush }
 
+    // 마감 놀아주기(클로즈업): 만지는 부위·방식과 그 반응
+    public enum PetZone { Head = 0, Cheek = 1, Chin = 2, Back = 3, Paw = 4 }
+    public enum PetAct { Stroke, Knead }
+    public enum PetFeel { Love, Play, Ok, Annoyed, Hate }
+
     public static class CatTemperament
     {
+        // ── 따뜻한 걸 좋아하는 고양이: 따뜻한 분위기 선호 · 최애가 따끈한 메뉴(우유·캣닢차·구운생선) ──
+        //    햇볕 자리·온열 방석을 찾아가 녹아내리고, 비 오는 날엔 더 간절하다(행동 표현, 추리 단서 아님)
+        public static bool LovesWarm(CatData d) =>
+            d != null && (d.atmospherePreference == AtmosphereAxis.Warm ||
+                          d.foodFavoriteMenuId == "menu_milk" || d.foodFavoriteMenuId == "menu_catnip_tea" || d.foodFavoriteMenuId == "menu_grilled_fish");
+
+        // ── 쭙쭙이(담요·방석을 물고 빠는 버릇): 샴(품종 경향)·외로움 타는(일찍 어미와 떨어진) 고양이 ──
+        public static bool IsSuckler(CatData d) =>
+            d != null && (d.catId == "cat_siamese" || (d.personalityTags != null && d.personalityTags.Length > 0 && d.personalityTags[0] == PersonalityTag.Lonely));
+
+        // 부위별 반응. 턱·볼(냄새샘)은 거의 다 좋아하고, 등·앞발은 기질 차이가 크다. count: 이번 놀아주기에서 그 부위를 만진 횟수(1부터).
+        public static PetFeel ReactClose(TouchStyle s, PetZone z, PetAct a, int count, int regularStage, float rnd)
+        {
+            bool knead = a == PetAct.Knead;
+            switch (s)
+            {
+                case TouchStyle.Affectionate:
+                    return z == PetZone.Paw && !knead ? PetFeel.Ok : PetFeel.Love;
+                case TouchStyle.Playful:
+                    if (knead || z == PetZone.Paw) return PetFeel.Play;                    // 앞발을 덥석 잡고 깨물깨물
+                    if (z == PetZone.Back && count >= 4) return PetFeel.Play;
+                    return PetFeel.Love;
+                case TouchStyle.Curious:
+                    if (z == PetZone.Chin || z == PetZone.Cheek) return PetFeel.Love;
+                    return PetFeel.Ok;                                                     // 킁킁 냄새부터
+                case TouchStyle.Fickle:
+                    if (knead || z == PetZone.Paw) return PetFeel.Annoyed;
+                    if (count <= 3) return PetFeel.Love;
+                    return rnd < 0.5f ? PetFeel.Hate : PetFeel.Love;                      // 계속 만지면 갑자기 냥펀치
+                case TouchStyle.Shy:
+                    if (regularStage >= 2) return knead ? PetFeel.Ok : z == PetZone.Paw ? PetFeel.Ok : PetFeel.Love;
+                    if (z == PetZone.Chin) return PetFeel.Love;
+                    if (z == PetZone.Cheek || z == PetZone.Head) return PetFeel.Ok;
+                    return PetFeel.Annoyed;
+                case TouchStyle.Grumpy:
+                    if (z == PetZone.Chin && !knead) return PetFeel.Love;
+                    if (z == PetZone.Cheek && !knead) return regularStage >= 2 ? PetFeel.Love : PetFeel.Ok;
+                    if (z == PetZone.Head && !knead) return regularStage >= 3 ? PetFeel.Ok : PetFeel.Annoyed;
+                    return PetFeel.Hate;
+            }
+            return PetFeel.Ok;
+        }
+
+        public static int CloseMood(PetFeel f) => f switch
+        {
+            PetFeel.Love => 10, PetFeel.Play => 7, PetFeel.Ok => 4, PetFeel.Annoyed => -8, _ => -18
+        };
+
+        // 도감 '손길' 기록과 같은 저장소에 쌓는다(쓰다듬기 반응 종류)
+        public static TouchResult ToTouch(PetFeel f) => f switch
+        {
+            PetFeel.Love => TouchResult.Love, PetFeel.Play => TouchResult.Play, PetFeel.Ok => TouchResult.Sniff,
+            PetFeel.Annoyed => TouchResult.Flinch, _ => TouchResult.Hiss
+        };
+
         public const int ResultCount = 5;
 
         // 대장냥이: 밥 먹고 쉬는 다른 고양이 자리를 가끔 뺏는다(첫 성격이 내향 = 까망냥, 동네 대장)

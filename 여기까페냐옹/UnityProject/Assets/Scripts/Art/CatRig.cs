@@ -119,6 +119,17 @@ namespace YeogiCafe.Art
 
         static bool Tabby(string id) => id == "cat_cheese" || id == "cat_mackerel";
 
+        // ── 다른 그림(마감 클로즈업 등)이 같은 털색·무늬를 쓰도록 여는 창구 ──
+        public enum CoatPart : byte { Body = 1, Chest, Hip, Head, Muzzle, Ear, Leg, Tail }
+        // light: 0~1 밝기 → 5톤 중 하나. x,y는 리그 좌표계(72×60) 기준 무늬 좌표.
+        public static Color32 CoatTone(string id, CoatPart part, float x, float y, float u, float v, float light)
+        {
+            var fur = Coat(id, (Part)(byte)part, x, y, u, v);
+            return light > 0.86f ? fur.hi : light > 0.62f ? fur.light : light > 0.38f ? fur.mid : light > 0.16f ? fur.shade : fur.deep;
+        }
+        public static Color32 EyeOf(string id) => EyeColor(id);
+        public static bool IsTabby(string id) => Tabby(id);
+
         // ───────── 래스터 ─────────
         enum Part : byte { None, Body, Chest, Hip, Head, Muzzle, Ear, Leg, Tail, Paw }
 

@@ -36,11 +36,12 @@ namespace YeogiCafe.UI
             var panel = UiFactory.Panel("SettlePanel", scrim.transform, UiFactory.PanelBg);
             UiFactory.SetRect(panel, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                               Vector2.zero, new Vector2(840, 640));
+            UiFactory.Frame(panel, UiFactory.FrameStyle.Window);
 
             var title = UiFactory.Label("Title", panel.transform, L.Get("ui.settle.title"), 26,
                                         TextAnchor.MiddleCenter, UiFactory.Ink);
             UiFactory.SetRect((RectTransform)title.transform, new Vector2(0, 1), new Vector2(1, 1),
-                              new Vector2(0.5f, 1), new Vector2(0, -10), new Vector2(0, 40));
+                              new Vector2(0.5f, 1), new Vector2(0, -18), new Vector2(0, 40));
 
             revenueText = UiFactory.Label("Revenue", panel.transform, "", 22, TextAnchor.UpperLeft, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)revenueText.transform, new Vector2(0, 1), new Vector2(1, 1),
@@ -88,6 +89,7 @@ namespace YeogiCafe.UI
             // 오늘의 도장 칸(오른쪽 아래, 다음 날 버튼 위)
             var box = UiFactory.Panel("StampBox", panel.transform, new Color(1f, 0.98f, 0.94f, 1f));
             stampBox = (RectTransform)box.transform;
+            UiFactory.Frame(stampBox, UiFactory.FrameStyle.Paper);
             UiFactory.SetRect(stampBox, new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0), new Vector2(-24, 84), new Vector2(120, 120));
             var boxTitle = UiFactory.Label("StampTitle", box.transform, L.Get("ui.settle.stamp"), 15, TextAnchor.UpperCenter, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)boxTitle.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -4), new Vector2(0, 20));
@@ -128,6 +130,7 @@ namespace YeogiCafe.UI
             bool grad = st.kind == 9;
             var paper = UiFactory.Panel("Letter", scrim.transform, grad ? new Color(1f, 0.96f, 0.86f, 1f) : new Color(1f, 0.99f, 0.95f, 1f));
             UiFactory.SetRect(paper, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(620, 400));
+            UiFactory.Frame(paper, UiFactory.FrameStyle.Paper, null, 3f);
 
             string name = L.Get($"cat.{st.catId}.name");
             string titleKey = grad ? "story.title.grad" : st.kind == 3 ? "story.title.r3" : "story.title.r2";
@@ -192,6 +195,7 @@ namespace YeogiCafe.UI
             yield return MovePaw(home, target + new Vector3(0, 24f, 0), 0.28f);
             yield return MovePaw(paw.position, target, 0.07f);
             pawImg.sprite = pawPress;
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_knead", 0.5f);
             onPress?.Invoke();
             yield return new WaitForSecondsRealtime(0.14f);
             pawImg.sprite = pawBack;
@@ -227,6 +231,7 @@ namespace YeogiCafe.UI
             pawImg.sprite = pawBack;
             yield return MovePaw(paw.position, target + new Vector3(0, 30f, 0), 0.08f);   // 쾅
             pawImg.sprite = pawPress;
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_stamp", 0.7f, 0.02f);
             var save = owner.Save;
             int n = save != null ? save.pawStamps + 1 : 1;
             stampImg.sprite = stampSprite; stampImg.color = Color.white;
@@ -274,6 +279,8 @@ namespace YeogiCafe.UI
                 $"{L.Get("ui.settle.revenue")}: {eco.TodayRevenue}G   " +
                 $"{L.Get("ui.settle.cost")}: {eco.TodayCost}G   " +
                 $"{L.Get("ui.settle.net")}: {eco.TodayNet}G";
+            int lost = owner.LostToMice;
+            if (lost > 0) revenueText.text += "\n<color=#C45C6E>" + L.Get("ui.settle.mice", ("g", lost.ToString())) + "</color>";
         }
 
         void ClearCards()
@@ -306,6 +313,7 @@ namespace YeogiCafe.UI
         void BuildCatRow(CatData data, CatSaveData cs)
         {
             var row = UiFactory.Panel("Card_" + data.catId, cardsContent, UiFactory.Cream);
+            UiFactory.Frame(row, UiFactory.FrameStyle.Card, UiFactory.Cream);
             ((RectTransform)row.transform).sizeDelta = new Vector2(0, 40);
 
             string catName = L.Get($"cat.{data.catId}.name");
@@ -464,10 +472,18 @@ namespace YeogiCafe.UI
                 {
                     var f = (x as YeogiCafe.Cafe.FacilityBehaviour) != null ? ((YeogiCafe.Cafe.FacilityBehaviour)x).source : null;
                     if (f == null || !seen.Add(f.furnitureId)) continue;
+                    if (IsUniversal(f)) continue;                  // 과일 박스(누구나 좋아함)는 추리 보기에서 제외
                     list.Add(new Option { id = f.furnitureId, name = L.Get($"furn.{f.furnitureId}.name"), icon = f.worldSprite, correct = CatTruth.IsFacility(cat, f) });
                 }
             }
             return list;
+        }
+
+        static bool IsUniversal(YeogiCafe.Data.FurnitureData f)
+        {
+            if (f.facilityTags == null) return false;
+            foreach (var t in f.facilityTags) if (t == YeogiCafe.Data.FacilityTag.Box || t == YeogiCafe.Data.FacilityTag.Warm) return true;
+            return false;
         }
 
         void OpenGuess(CatData cat, PrefAxis axis, RectTransform from)
@@ -484,6 +500,7 @@ namespace YeogiCafe.UI
             int rows = Mathf.Max(1, (options.Count + 3) / 4);
             UiFactory.SetRect(box, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                               new Vector2(0, 10), new Vector2(640, 180 + rows * 112));
+            UiFactory.Frame(box, UiFactory.FrameStyle.Window);
 
             string catName = L.Get($"cat.{cat.catId}.name");
             var title = UiFactory.Label("Title", box.transform, L.Get("ui.guess.title", ("name", catName), ("axis", AxisLabel(axis))),

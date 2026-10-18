@@ -40,6 +40,16 @@ namespace YeogiCafe.UI
         float pawPunchT = -1f; RectTransform pawPunch; Vector2 pawPunchTarget;
         float railTimer;
 
+        // 고양이 본능: 가끔 한쪽 앞발이 허공 꾹꾹이·그루밍을 시작한다. 그동안 그쪽 앞발로는 기구를 못 누른다(반대 발은 가능).
+        enum Distract { None, Knead, Groom, Suckle }
+        RectTransform tongue;                        // 1인칭 그루밍: 화면 아래(입)에서 올라오는 혀
+        class Fx { public RectTransform rt; public Text t; public float life; }
+        readonly List<Fx> fx = new();
+        Distract distract; RectTransform distractPaw; float distractT, nextDistract = 20f;
+        const float DistractSeconds = 2.4f;
+        float DistractLen => distract == Distract.Groom ? 3.0f : distract == Distract.Suckle ? 3.2f : DistractSeconds;
+        public bool PawBusy(bool left) => distract != Distract.None && distractPaw == (left ? pawL : pawR);
+
         public bool IsOpen => open;
 
         public KitchenView(GameUiController owner, Transform canvas, OrderSystem orders)
@@ -85,6 +95,16 @@ namespace YeogiCafe.UI
             pawL = BuildPaw("PawL", RuntimeSprites.Get("paw_left", CookingDrawing.PawLeft), new Vector2(0.08f, 0f));
             pawR = BuildPaw("PawR", RuntimeSprites.Get("paw_right", CookingDrawing.PawRight), new Vector2(0.92f, 0f));
             pawLHome = pawL.anchoredPosition; pawRHome = pawR.anchoredPosition;
+            {
+                var tg = new GameObject("Tongue", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                tg.transform.SetParent(root, false);
+                var timg = tg.GetComponent<Image>(); timg.raycastTarget = false;
+                timg.sprite = RuntimeSprites.Get("my_tongue", PawDrawing.Tongue);
+                tongue = (RectTransform)tg.transform;
+                UiFactory.SetRect(tongue, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, -10), new Vector2(PawDrawing.TW, PawDrawing.TH) * 3.4f);
+                tongue.localScale = new Vector3(1f, 0f, 1f);
+                tongue.SetSiblingIndex(pawL.GetSiblingIndex());     // 앞발보다 뒤
+            }
 
             hint = UiFactory.Label("Hint", root, "", 16, TextAnchor.LowerCenter, UiFactory.Cream);
             UiFactory.SetRect((RectTransform)hint.transform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0),
@@ -220,11 +240,111 @@ namespace YeogiCafe.UI
             if (railTimer <= 0f) { railTimer = 0.25f; RefreshRail(false); }
         }
 
+        void TickDistract(float dt)
+        {
+            if (distract == Distract.None)
+            {
+                if (pawPunch != null) return;
+                nextDistract -= dt;
+                if (nextDistract > 0f) return;
+                float r = Random.value;
+                distract = r < 0.4f ? Distract.Knead : r < 0.75f ? Distract.Groom : Distract.Suckle;
+                distractPaw = Random.value < 0.5f ? pawL : pawR;
+                distractT = 0f;
+                hint.text = L.Get(distract == Distract.Knead ? "ui.kitchen.knead" : distract == Distract.Groom ? "ui.kitchen.groom" : "ui.kitchen.suckle");
+                return;
+            }
+            distractT += dt;
+            if (distractT < DistractLen) return;
+            tongue.localScale = new Vector3(1f, 0f, 1f);
+            distract = Distract.None; nextDistract = Random.Range(18f, 34f);
+            distractPaw.localEulerAngles = Vector3.zero; distractPaw.localScale = Vector3.one;
+            bool left = distractPaw == pawL;
+            distractPaw.GetComponent<Image>().sprite = RuntimeSprites.Get(left ? "paw_left" : "paw_right", left ? CookingDrawing.PawLeft : CookingDrawing.PawRight);
+            distractPaw = null;
+        }
+
+        void AnimateDistract()
+        {
+            if (distract == Distract.None || distractPaw == null) return;
+            bool left = distractPaw == pawL;
+            var home = left ? pawLHome : pawRHome;
+            float rise = Mathf.Clamp01(distractT / 0.25f) * Mathf.Clamp01((DistractLen - distractT) / 0.25f);   // 들어올렸다 내려놓기
+            var img = distractPaw.GetComponent<Image>();
+            if (distract == Distract.Knead)
+            {
+                // 허공에서 발가락 쫙 폈다 오므렸다(꾹·꾹)
+                int kb = (int)(distractT / 0.2f);
+                bool press = kb % 2 == 0;
+                if (press && kb != lastLick && rise > 0.5f) { lastLick = kb; YeogiCafe.Audio.SoundManager.Sfx("sfx_knead", 0.35f); }
+                distractPaw.anchoredPosition = home + new Vector2(0, rise * (110f + (press ? -14f : 0f)));
+                img.sprite = press
+                    ? RuntimeSprites.Get(left ? "paw_left_press" : "paw_right_press", left ? CookingDrawing.PawLeftPressed : CookingDrawing.PawRightPressed)
+                    : RuntimeSprites.Get(left ? "paw_left" : "paw_right", left ? CookingDrawing.PawLeft : CookingDrawing.PawRight);
+                distractPaw.localEulerAngles = Vector3.zero;
+            }
+            else if (distract == Distract.Groom)
+            {
+                // 1인칭 그루밍: 앞발을 입(화면 아래 가운데) 앞으로 가져오면 혀가 쭉 올라와 발등을 할짝 — 혀가 지나갈 때 발이 살짝 밀려 올라감
+                float toward = (left ? 1f : -1f) * root.rect.width * 0.30f;
+                float cyc = (distractT * 2.6f) % 1f;                                 // 한 번 핥는 주기
+                float lickUp = cyc < 0.45f ? cyc / 0.45f : 1f - (cyc - 0.45f) / 0.55f;
+                float push = Mathf.Clamp01((lickUp - 0.6f) / 0.4f);
+                distractPaw.anchoredPosition = home + new Vector2(toward * rise, rise * (150f + push * 22f));
+                distractPaw.localEulerAngles = new Vector3(0, 0, rise * ((left ? -28f : 28f) + push * (left ? 6f : -6f)));
+                float k = rise > 0.95f ? Mathf.SmoothStep(0f, 1f, lickUp) : 0f;
+                tongue.anchoredPosition = new Vector2(AbsPos(distractPaw).x - root.rect.width * 0.5f, -10f);   // 혀는 핥는 앞발 바로 아래에서
+                tongue.localScale = new Vector3(1f - k * 0.08f, k * 0.95f, 1f);
+                tongue.localEulerAngles = new Vector3(0, 0, left ? 8f : -8f);
+                if (k > 0.85f && ((int)(distractT * 2.6f)) != lastLick) { lastLick = (int)(distractT * 2.6f); Float(AbsPos(distractPaw) + new Vector2(0, 120), L.Get("ui.kitchen.lick")); YeogiCafe.Audio.SoundManager.Sfx("sfx_lick", 0.5f); }
+            }
+            else
+            {
+                // 내 쭙쭙이: 앞발을 뒤집어 말랑한 젤리를 펼치고, 입가에 대고 쭙·쭙(리듬 맞춰 살짝 빨려 들어감)
+                float toward = (left ? 1f : -1f) * root.rect.width * 0.30f;
+                float suck = Mathf.Pow(Mathf.Abs(Mathf.Sin(distractT * 6.5f)), 3f);
+                img.sprite = RuntimeSprites.Get(left ? "paw_pads_l" : "paw_pads_r", left ? (System.Func<PixelCanvas>)PawDrawing.Pads : () => PawDrawing.Mirror(PawDrawing.Pads()));
+                distractPaw.anchoredPosition = home + new Vector2(toward * rise, rise * (120f - suck * 18f));
+                distractPaw.localEulerAngles = new Vector3(0, 0, rise * (left ? -16f : 16f));
+                distractPaw.localScale = new Vector3(1f + suck * 0.04f, 1f - suck * 0.05f, 1f);
+                int beat = (int)(distractT * 6.5f / Mathf.PI);
+                if (rise > 0.9f && beat != lastLick) { lastLick = beat; Float(AbsPos(distractPaw) + new Vector2(0, 150), L.Get("ui.kitchen.suck")); YeogiCafe.Audio.SoundManager.Sfx("sfx_suck", 0.5f); }
+            }
+        }
+
+        int lastLick = -1;
+        Vector2 AbsPos(RectTransform p) => new Vector2(p.anchorMin.x * root.rect.width + p.anchoredPosition.x, p.anchoredPosition.y);
+
+        void Float(Vector2 at, string text)
+        {
+            var lbl = UiFactory.Label("Fx", root, text, 20, TextAnchor.MiddleCenter, UiFactory.Cream);
+            lbl.horizontalOverflow = HorizontalWrapMode.Overflow; lbl.raycastTarget = false;
+            var o = lbl.gameObject.AddComponent<Outline>(); o.effectColor = new Color(0.29f, 0.21f, 0.18f, 0.9f); o.effectDistance = new Vector2(2, -2);
+            var rt = (RectTransform)lbl.transform;
+            rt.anchorMin = rt.anchorMax = Vector2.zero; rt.sizeDelta = new Vector2(200, 30);
+            rt.anchoredPosition = at;
+            fx.Add(new Fx { rt = rt, t = lbl, life = 0.9f });
+        }
+
+        void TickFx(float dt)
+        {
+            for (int i = fx.Count - 1; i >= 0; i--)
+            {
+                var f = fx[i]; f.life -= dt;
+                if (f.rt == null || f.life <= 0f) { if (f.rt != null) Object.Destroy(f.rt.gameObject); fx.RemoveAt(i); continue; }
+                f.rt.anchoredPosition += new Vector2(0, 50f * dt);
+                var c = f.t.color; c.a = Mathf.Clamp01(f.life / 0.45f); f.t.color = c;
+            }
+        }
+
         void AnimatePaws(float dt)
         {
+            TickFx(dt);
             float bob = Mathf.Sin(Time.unscaledTime * 2.2f) * 6f;
             pawL.anchoredPosition = pawLHome + new Vector2(0, bob);
             pawR.anchoredPosition = pawRHome + new Vector2(0, -bob);
+            TickDistract(dt);
+            AnimateDistract();
             if (pawPunch != null && pawPunchT >= 0f)
             {
                 pawPunchT += dt;
@@ -255,14 +375,22 @@ namespace YeogiCafe.UI
         void OnToolPressed(string id, ToolWidget w)
         {
             if (orders == null) return;
+            if (PawBusy(w.rt.anchorMin.x < 0.5f))
+            {
+                hint.text = L.Get(distract == Distract.Knead ? "ui.kitchen.busyknead" : distract == Distract.Groom ? "ui.kitchen.busygroom" : "ui.kitchen.busysuckle");
+                return;
+            }
             Punch(w);
             var r = orders.PressTool(id, out var ticket);
             switch (r)
             {
                 case OrderSystem.ToolResult.Started:
+                    YeogiCafe.Audio.SoundManager.Sfx(id.Contains("coffee") || id.Contains("kettle") ? "sfx_pour" : "sfx_sizzle", 0.5f);
                     hint.text = L.Get("ui.kitchen.cooking", ("menu", MenuName(ticket)));
                     break;
                 case OrderSystem.ToolResult.Served:
+                    YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
+                    YeogiCafe.Audio.SoundManager.Sfx("sfx_coin", 0.35f, 0.02f);
                     hint.text = L.Get("ui.kitchen.served", ("name", CatName(ticket)), ("menu", MenuName(ticket)));
                     GameEvents.Raise(GameEvents.Serve, ticket.catId);
                     if (ticket.vague && ticket.IsCorrectDish)
@@ -272,6 +400,7 @@ namespace YeogiCafe.UI
                     else owner.ShowCatBubble(ticket.catId, L.Get("ui.kitchen.thanks"));
                     break;
                 case OrderSystem.ToolResult.Busy:
+                    YeogiCafe.Audio.SoundManager.Sfx("sfx_boop", 0.4f);
                     hint.text = L.Get("ui.kitchen.busy");
                     break;
                 default:
@@ -314,28 +443,30 @@ namespace YeogiCafe.UI
             {
                 if (tk.state == TicketState.Served || tk.state == TicketState.Cancelled) continue;
                 var card = UiFactory.Panel("Ticket_" + tk.catId, ticketRail, UiFactory.Cream);
-                card.sizeDelta = new Vector2(150, 60);
+                card.sizeDelta = new Vector2(212, 64);
+                UiFactory.Frame(card, UiFactory.FrameStyle.Paper, tk.unresolved ? (Color?)UiFactory.YellowLight : null);
                 ticketCards.Add(card.gameObject);
 
-                var catIcon = Icon(card, CatSprite(tk.catId), new Vector2(4, 4), 44);
+                var catIcon = Icon(card, CatSprite(tk.catId), new Vector2(6, 10), 46);
                 var dish = Icon(card, tk.unresolved ? RuntimeSprites.Get("emote_Question", () => EmoteDrawing.Draw(EmoteDrawing.Kind.Question))
-                                                    : DishSprite(tk.menu != null ? tk.menu.menuId : ""), new Vector2(48, 10), 36);
-                var nameT = UiFactory.Label("Menu", card, tk.unresolved ? L.Get(tk.hintKey) : MenuName(tk), tk.unresolved ? 12 : 14, TextAnchor.UpperLeft, UiFactory.Ink);
+                                                    : DishSprite(tk.menu != null ? tk.menu.menuId : ""), new Vector2(52, 14), 38);
+                var nameT = UiFactory.Label("Menu", card, tk.unresolved ? L.Get(tk.hintKey) : MenuName(tk), tk.unresolved ? 13 : 15, TextAnchor.MiddleLeft, UiFactory.Ink);
                 if (tk.unresolved)
                 {
                     // 힌트 주문: 카드를 눌러 메뉴를 고른다
-                    card.GetComponent<Image>().color = UiFactory.YellowLight;
                     var btn = card.gameObject.AddComponent<Button>();
                     var captured = tk;
                     btn.onClick.AddListener(() => OpenPicker(captured));
                 }
                 UiFactory.SetRect((RectTransform)nameT.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1),
-                                  new Vector2(88, -6), new Vector2(60, 34));
+                                  new Vector2(94, -6), new Vector2(110, 42));
                 nameT.horizontalOverflow = HorizontalWrapMode.Wrap;
+                nameT.resizeTextForBestFit = true; nameT.resizeTextMinSize = 11; nameT.resizeTextMaxSize = nameT.fontSize;
+                nameT.verticalOverflow = VerticalWrapMode.Truncate;
 
                 // 상태: 대기(인내심 바) / 조리 중 / 완성
                 var bar = UiFactory.Panel("Patience", card, UiFactory.WoodDark);
-                UiFactory.SetRect(bar, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, 0), new Vector2(4, 4), new Vector2(-8, 6));
+                UiFactory.SetRect(bar, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, 0), new Vector2(8, 6), new Vector2(-16, 6));
                 var fill = UiFactory.Panel("Fill", bar, tk.state == TicketState.Queued
                                             ? (tk.PatienceRatio > 0.35f ? UiFactory.Green : UiFactory.PinkDeep)
                                             : UiFactory.YellowLight).GetComponent<Image>();
@@ -366,6 +497,7 @@ namespace YeogiCafe.UI
             int cols = Mathf.Min(4, menus.Count), rows = (menus.Count + 3) / 4;
             UiFactory.SetRect(box, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1),
                               new Vector2(0, -140), new Vector2(40 + cols * 112, 84 + rows * 100));
+            UiFactory.Frame(box, UiFactory.FrameStyle.Window);
             var title = UiFactory.Label("T", box.transform, L.Get("ui.order.pick", ("name", CatName(tk)), ("hint", L.Get(tk.hintKey))),
                                         17, TextAnchor.MiddleCenter, UiFactory.Ink);
             UiFactory.SetRect((RectTransform)title.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -8), new Vector2(-20, 30));

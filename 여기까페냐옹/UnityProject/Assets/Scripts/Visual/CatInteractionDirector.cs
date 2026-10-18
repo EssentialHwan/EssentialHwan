@@ -42,8 +42,21 @@ namespace YeogiCafe.Visual
 
         public static bool Suspended;                 // 가구 배치 모드 등에서 일시 정지
 
-        void OnEnable() => CatBrain.OnSeatStolen += PlaySteal;
-        void OnDisable() => CatBrain.OnSeatStolen -= PlaySteal;
+        void OnEnable() { CatBrain.OnSeatStolen += PlaySteal; CatView.OnSuckle += PlaySuckle; }
+        void OnDisable() { CatBrain.OnSeatStolen -= PlaySteal; CatView.OnSuckle -= PlaySuckle; }
+
+        // 쭙쭙이 목격: 말풍선 + 도감 '버릇' 기록
+        void PlaySuckle(CatView v)
+        {
+            if (v == null || v.Data == null) return;
+            say?.Invoke(v.Data.catId, L.Get("narr.suckle"));
+            if (save != null)
+            {
+                var cs = save.GetOrCreateCat(v.Data.catId);
+                if (!cs.suckleSeen) { cs.suckleSeen = true; toast?.Invoke(L.Get("toast.suckle", ("name", L.Get($"cat.{v.Data.catId}.name")))); }
+            }
+            GameEvents.Raise(GameEvents.Suckle, v.Data.catId);
+        }
 
         // 대장냥이: 쉬고 있던 고양이 자리에 와서 하악 → 상대는 움찔하고 비켜남
         void PlaySteal(CatBrain boss, CatBrain victim)
@@ -100,6 +113,7 @@ namespace YeogiCafe.Visual
             var cam = Camera.main; if (cam == null) return;
             Vector3 w = cam.ScreenToWorldPoint(Input.mousePosition); w.z = 0f;
 
+            if (MouseRaid.TryCatch(w)) return;                          // 쥐 잡기가 쓰다듬기보다 먼저
             if (TryPickGift(w)) return;
             Collect();
             CatView hit = null; int best = int.MinValue;

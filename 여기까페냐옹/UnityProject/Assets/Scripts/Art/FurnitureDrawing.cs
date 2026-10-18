@@ -156,13 +156,92 @@ namespace YeogiCafe.Art
             return Finish(c);
         }
 
+        // 스크래처(32×46): 고양이가 쭉 늘어나 긁을 만큼 높은 사이잘 기둥 + 넓은 받침 + 꼭대기 발판 + 털공
         public static PixelCanvas FacScratcher()
         {
-            var c = New(); c.GroundShadow(16, 4, 7);
-            c.FillRect(12, 4, 19, 24, PixelPalette.CreamMid);    // 기둥
-            for (int y = 5; y <= 23; y += 2) c.HLine(12, 19, y, PixelPalette.CreamLight); // 결
-            c.FillRect(9, 3, 22, 6, PixelPalette.WoodMid);       // 상단
+            var c = new PixelCanvas(32, 46); c.GroundShadow(16, 4, 12);
+            c.FillRoundRect(3, 4, 28, 8, 2, PixelPalette.WoodMid); c.HLine(4, 27, 8, PixelPalette.WoodLight);   // 받침
+            c.HLine(4, 27, 4, PixelPalette.WoodDark);
+            // 사이잘 줄(감긴 결 + 긁힌 보풀)
+            for (int y = 9; y <= 38; y++)
+            {
+                var col = (y % 2 == 0) ? PixelPalette.CreamMid : PixelPalette.CreamLight;
+                c.HLine(11, 20, y, col);
+                c.Set(11, y, PixelPalette.CreamDark); c.Set(20, y, PixelPalette.CreamDark);
+            }
+            foreach (var (x, y) in new[] { (12, 15), (18, 18), (13, 22), (19, 26), (14, 29) }) { c.Set(x, y, PixelPalette.CreamDark); c.Set(x + 1, y + 1, PixelPalette.CreamDark); }
+            c.FillRoundRect(6, 38, 25, 42, 2, PixelPalette.PinkMid); c.HLine(7, 24, 42, PixelPalette.PinkLight);  // 꼭대기 발판(카펫)
+            c.VLine(23, 33, 37, PixelPalette.Outline); c.Disc(23, 31, 2, PixelPalette.YellowMid); c.Set(22, 32, PixelPalette.YellowLight);   // 털공
             return Finish(c);
+        }
+
+        // 과일 박스(40×30): 뚜껑이 열린 골판지 상자 + 과일 라벨. 고양이는 누구나 상자를 좋아한다.
+        public static PixelCanvas FacFruitBox()
+        {
+            var c = new PixelCanvas(40, 30); c.GroundShadow(20, 4, 15);
+            var K1 = new Color32(222, 176, 120, 255); var K2 = new Color32(198, 150, 98, 255); var K3 = new Color32(166, 120, 76, 255);
+            c.FillRect(6, 4, 33, 18, K1);                                     // 앞면
+            c.FillRect(6, 4, 7, 18, K2); c.HLine(6, 33, 4, K3);
+            c.FillRect(8, 18, 31, 20, K3);                                    // 안쪽(어두운 입구)
+            // 열린 뚜껑(양옆으로 젖혀짐)
+            for (int i = 0; i < 6; i++) { c.HLine(1 + i / 2, 6, 19 + i, K2); c.HLine(33, 38 - i / 2, 19 + i, K2); }
+            c.HLine(2, 6, 24, K1); c.HLine(33, 37, 24, K1);
+            // 라벨: 빨간 딸기·주황 귤·초록 잎
+            c.FillRoundRect(11, 8, 28, 15, 2, new Color32(252, 244, 226, 255));
+            c.Disc(15, 11, 2, new Color32(222, 72, 84, 255)); c.Set(15, 13, PixelPalette.GreenMid); c.Set(14, 11, new Color32(255, 220, 120, 255));
+            c.Disc(20, 11, 2, new Color32(244, 150, 52, 255)); c.Set(20, 13, PixelPalette.GreenMid);
+            c.Disc(25, 11, 2, new Color32(170, 210, 90, 255)); c.Set(25, 13, PixelPalette.GreenDark);
+            c.HLine(12, 27, 9, new Color32(210, 190, 160, 255));
+            // 테이프·접힌 선
+            c.VLine(20, 4, 7, new Color32(236, 214, 160, 255)); c.VLine(20, 16, 17, new Color32(236, 214, 160, 255));
+            return Finish(c);
+        }
+
+        // 온열 방석(32×20): 주황 체크무늬 방석 + 전선 + 아지랑이(따뜻한 걸 좋아하는 고양이가 모인다)
+        public static PixelCanvas FacHeatPad()
+        {
+            var c = new PixelCanvas(32, 22); c.GroundShadow(16, 4, 13);
+            var A = new Color32(246, 168, 108, 255); var B = new Color32(232, 132, 86, 255); var Cc = new Color32(252, 204, 150, 255);
+            c.FillRoundRect(3, 4, 28, 10, 3, A);
+            for (int x = 4; x <= 27; x++) for (int y = 5; y <= 9; y++) if (((x / 3) + (y / 2)) % 2 == 0) c.Set(x, y, B);
+            c.HLine(5, 26, 10, Cc);
+            c.HLine(28, 31, 6, PixelPalette.Outline); c.Set(31, 5, PixelPalette.MetalDark);       // 전선·플러그
+            // 아지랑이
+            foreach (var x in new[] { 9, 16, 23 })
+                for (int k = 0; k < 7; k++) c.Blend(x + ((k / 2) % 2 == 0 ? 0 : 1), 12 + k, new Color32(255, 170, 120, 120));
+            return Finish(c);
+        }
+
+        // 자동 낚싯대 장난감(받침만 — 낚싯대·깃털은 런타임에 흔들어 그린다)
+        public static PixelCanvas FacWandToy()
+        {
+            var c = new PixelCanvas(24, 16); c.GroundShadow(12, 4, 8);
+            c.FillRoundRect(5, 4, 18, 11, 2, PixelPalette.BlueMid); c.HLine(6, 17, 11, PixelPalette.BlueLight);
+            c.Disc(12, 8, 2, PixelPalette.YellowMid); c.Set(12, 8, PixelPalette.White);          // 모터 버튼
+            c.FillRect(11, 11, 13, 13, PixelPalette.MetalDark);                                   // 낚싯대 꽂는 곳
+            return Finish(c);
+        }
+
+        public static PixelCanvas WandRod()
+        {
+            var c = new PixelCanvas(3, 34);
+            for (int y = 0; y < 34; y++) { c.Set(1, y, y < 4 ? PixelPalette.MetalDark : (y % 6 == 0 ? PixelPalette.PinkMid : PixelPalette.WoodLight)); }
+            c.Set(0, 0, PixelPalette.MetalDark); c.Set(2, 0, PixelPalette.MetalDark);
+            return c;
+        }
+
+        public static PixelCanvas WandFeather()
+        {
+            var c = new PixelCanvas(14, 22);
+            var P = PixelPalette.PinkMid; var L = PixelPalette.PinkLight; var Y = PixelPalette.YellowMid; var B = PixelPalette.BlueMid;
+            for (int y = 3; y < 21; y++)
+            {
+                int w = y < 10 ? (y - 2) * 2 / 3 : (21 - y) / 2;
+                for (int x = 7 - w; x <= 6 + w; x++) c.Set(x, y, x == 6 || x == 7 ? Y : ((x + y) % 3 == 0 ? B : (y % 2 == 0 ? P : L)));
+            }
+            c.Set(6, 21, Y); c.Set(7, 21, Y); c.VLine(6, 0, 2, PixelPalette.Outline);
+            c.AutoOutline(PixelPalette.Outline);
+            return c;
         }
 
         public static PixelCanvas FacPlant()

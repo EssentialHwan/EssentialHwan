@@ -28,11 +28,12 @@ namespace YeogiCafe.UI
             var panel = UiFactory.Panel("CatalogPanel", scrim.transform, UiFactory.PanelBg);
             UiFactory.SetRect(panel, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                               Vector2.zero, new Vector2(720, 560));
+            UiFactory.Frame(panel, UiFactory.FrameStyle.Window);
 
             var title = UiFactory.Label("Title", panel.transform, L.Get("ui.catalog.title"), 26,
                                         TextAnchor.MiddleCenter, UiFactory.Ink);
             UiFactory.SetRect((RectTransform)title.transform, new Vector2(0, 1), new Vector2(1, 1),
-                              new Vector2(0.5f, 1), new Vector2(0, -10), new Vector2(0, 40));
+                              new Vector2(0.5f, 1), new Vector2(0, -18), new Vector2(0, 40));
 
             header = UiFactory.Label("Header", panel.transform, "", 22, TextAnchor.UpperCenter, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)header.transform, new Vector2(0, 1), new Vector2(1, 1),
@@ -91,6 +92,7 @@ namespace YeogiCafe.UI
                 if (cs != null && cs.observation.RecordedAxisCount() > 0) discovered++;
 
                 var row = UiFactory.Panel("Cat_" + data.catId, listContent, UiFactory.Cream);
+                UiFactory.Frame(row, UiFactory.FrameStyle.Card, UiFactory.Cream);
                 ((RectTransform)row.transform).sizeDelta = new Vector2(0, 38);
 
                 string catName = visited ? L.Get($"cat.{data.catId}.name") : "???";
@@ -103,11 +105,16 @@ namespace YeogiCafe.UI
 
                 string touchKey = cs != null ? YeogiCafe.AI.CatTemperament.ObservedKey(cs.touchSeen) : null;
                 string touch = $"{L.Get("ui.axis.touch")} {(touchKey != null ? L.Get(touchKey) : "?")}";
+                if (cs != null && cs.likeZones != 0) touch += " " + L.Get("ui.catalog.likes", ("z", ClosingPlayPanel.Zones(cs.likeZones)));
+                if (cs != null && cs.hateZones != 0) touch += " " + L.Get("ui.catalog.hates", ("z", ClosingPlayPanel.Zones(cs.hateZones)));
+                if (cs != null && cs.suckleSeen) touch += " " + L.Get("ui.catalog.suckle");
                 string rowText = $"{catName}    {axes}    {touch}";
                 if (!visited && data.unlockCondition != null && data.unlockCondition.type == UnlockType.FurnitureSet)
                     rowText = "???    " + L.Get("ui.catalog.rumor");               // 숨은 고양이: 소문만
                 var lbl = UiFactory.Label("Row", row.transform, rowText, 16,
                                           TextAnchor.MiddleLeft, UiFactory.Ink);
+                lbl.resizeTextForBestFit = true; lbl.resizeTextMinSize = 10; lbl.resizeTextMaxSize = 16;   // 길어지면 글자를 줄여 한 칸 안에
+                lbl.verticalOverflow = VerticalWrapMode.Truncate;
                 UiFactory.SetRect((RectTransform)lbl.transform, Vector2.zero, Vector2.one,
                                   new Vector2(0, 0.5f), new Vector2(20, 0), new Vector2(-20, 0));
             }
