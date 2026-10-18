@@ -21,7 +21,13 @@ namespace YeogiCafe.Save
         public List<string> completedEventIds = new();
         public List<RelationSaveData> relations = new();   // 정식: 고양이 관계
         public int pawStamps;
-        public List<PlacedFurnitureDTO> starterSeatPos = new();   // 시작 좌석을 옮긴 위치(furnitureId="starter#i")                              // 하루를 마칠 때 도감에 찍은 손도장 수
+        public List<PlacedFurnitureDTO> starterSeatPos = new();
+        public List<GiftDTO> pendingGifts = new();         // 다음 날 아침 문 앞에 놓일 선물
+        public List<string> giftsCollected = new();        // 주운 선물 종류(수집)
+        public List<QuestDTO> quests = new();              // 오늘의 의뢰(게시판)
+        public int questDay = -1;                          // 의뢰를 뽑은 날
+        public int weather, weatherDay = -1;               // 오늘의 날씨(WeatherKind)
+        public List<StoryDTO> storyQueue = new();          // 밤 일지에서 보여줄 이야기(단골·졸업)   // 시작 좌석을 옮긴 위치(furnitureId="starter#i")                              // 하루를 마칠 때 도감에 찍은 손도장 수
 
         public RelationSaveData GetOrCreateRelation(string a, string b)
         {
@@ -66,7 +72,8 @@ namespace YeogiCafe.Save
         public ObservationRecord observation = new();     // 필수 저장, Truth 미포함
         // 쓰다듬기 반응을 '본' 횟수(TouchResult 순서). 기질(Truth)이 아니라 관찰 결과만 저장.
         public int[] touchSeen = new int[5];
-        public bool bossSeen;                             // 대장냥이가 자리 뺏는 걸 본 적 있음(도감 표시)
+        public bool bossSeen;
+        public bool graduated;                            // 3축을 다 알아내고 단골 3단계 → 졸업(가끔 놀러 옴)                             // 대장냥이가 자리 뺏는 걸 본 적 있음(도감 표시)
 
         // ── 만족도 파생값 (저장 안 함) ──
         public float LastSatisfaction => satisfactionHistory.Count > 0 ? satisfactionHistory[^1] : 0f;
@@ -80,11 +87,36 @@ namespace YeogiCafe.Save
     }
 
     [Serializable]
+    public class StoryDTO
+    {
+        public string catId;
+        public int kind;           // 2=단골 2단계, 3=단골 3단계, 9=졸업
+    }
+
+    [Serializable]
+    public class QuestDTO
+    {
+        public string id;          // 템플릿 id
+        public string eventId;     // 세는 이벤트(GameEvents)
+        public int goal, progress, reward;
+        public bool done;
+    }
+
+    [Serializable]
+    public class GiftDTO
+    {
+        public string catId, giftId;
+        public int day;            // 받은 날(이 날 다음부터 문 앞에 나타남)
+    }
+
+    [Serializable]
     public class RelationSaveData
     {
         public string catA, catB;
         public int score;        // 누적 관계 점수
         public int stage;        // 0=모름, 1=지인, 2=친구
+        public int bond;         // 상호작용으로 쌓는 친밀도(부비·핥기·놀이 +1, 싸움·하악 -1) — 관계도 표시용
+        public int fights;       // 싸운 횟수
     }
 
     [Serializable]
@@ -120,6 +152,7 @@ namespace YeogiCafe.Save
         public string recordedValue;                // Recorded 시 확정된 태그/메뉴 id (추리 기록이면 플레이어가 고른 메뉴/가구 id)
         public List<string> wrongGuesses = new();   // 틀린 추리(다시 고를 때 × 표시)
         public int lastGuessDay = -1;               // 하루 한 번만 추리 가능(찍기 방지)
+        public string pendingGuess;                 // 묶음 채점 전 플레이어가 골라 둔 답
 
         public ClueTally GetOrCreate(string target)
         {

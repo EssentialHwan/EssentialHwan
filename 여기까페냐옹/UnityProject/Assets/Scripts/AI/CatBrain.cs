@@ -40,6 +40,10 @@ namespace YeogiCafe.AI
         public bool ForcedSecond { get; private set; }
         public bool UsedPreferredSeat { get; private set; }
         public bool UsedPreferredFacility { get; private set; }
+        public bool WrongDish { get; private set; }        // 모호 주문을 잘못 해석해 다른 메뉴가 나옴
+        public bool MindRead { get; private set; }         // 모호 주문을 정확히 맞힘
+        public System.Func<int> GetRegularStage;           // 매니저 주입(단골 단계)
+        public float OrderPatienceRatio => currentTicket != null && state == CatState.WaitFood ? currentTicket.PatienceRatio : 1f;
         public CatState State => state;
         // 이번 방문 중 쓰다듬기 기분(표현 레이어가 기록, 만족도에 반영). ±SessionMoodClamp
         public int TouchMood { get; private set; }
@@ -198,7 +202,11 @@ namespace YeogiCafe.AI
             // [S2] OrderSystem 있으면 티켓 등록 후 서빙 대기, 없으면 S1 직행
             if (OrderSystem != null && order.primary != null)
             {
-                currentTicket = OrderSystem.Place(data.catId, order.primary);
+                // 단골(2단계↑)은 가끔 메뉴 이름 대신 힌트로 주문한다 → 주방에서 해석
+                int stage = GetRegularStage != null ? GetRegularStage() : 1;
+                bool vague = stage >= 2 && Random.value < 0.6f;
+                string hint = vague ? $"order.hint.{order.primary.menuId}.{Random.Range(1, 3)}" : null;
+                currentTicket = OrderSystem.Place(data.catId, order.primary, vague, hint);
                 state = CatState.WaitFood;
             }
             else state = CatState.Eat;
@@ -209,7 +217,18 @@ namespace YeogiCafe.AI
         void DoWaitFood()
         {
             if (currentTicket == null) { state = CatState.Eat; return; }
-            if (currentTicket.state == YeogiCafe.Order.TicketState.Served) { state = CatState.Eat; return; }
+            if (currentTicket.state == YeogiCafe.Order.TicketState.Served)
+            {
+                // 다른 메뉴가 나왔으면 그걸 먹는다(결제는 나온 메뉴 기준, 최애 판정도 나온 메뉴)
+                if (currentTicket.menu != currentTicket.requested)
+                {
+                    WrongDish = true;
+                    ServedMenu = currentTicket.menu;
+                    ServedFavorite = currentTicket.menu != null && currentTicket.menu.menuId == data.foodFavoriteMenuId;
+                }
+                else if (currentTicket.vague) MindRead = true;
+                state = CatState.Eat; return;
+            }
             if (currentTicket.state == YeogiCafe.Order.TicketState.Cancelled)
             {
                 // 인내심 소진 → 불만 퇴장 (만족도·매출 페널티는 세션결과 orderFailed로)
@@ -299,7 +318,8 @@ namespace YeogiCafe.AI
             if (data.HasPersonality(PersonalityTag.Active) || data.HasPersonality(PersonalityTag.Playful)) roam += 0.25f;
             if (data.HasPersonality(PersonalityTag.Curious)) roam += 0.15f;
             if (data.HasPersonality(PersonalityTag.Relaxed) || data.HasPersonality(PersonalityTag.Introvert)) roam -= 0.2f;
-            if (Random.value < CatTemperament.ZoomiesChance(data)) { StartZoomies(); return; }   // 우다다!
+            if (Random.value < CatTemperament.ZoomiesChance(data) * YeogiCafe.Core.Weather.ZoomiesMult) { StartZoomies(); return; }   // 우다다!
+            roam += YeogiCafe.Core.Weather.RoamBonus;
             float r = Random.value;
             if (r < roam && RandomFloorPoint != null) GoTo(RandomFloorPoint());
             else if (r < roam + 0.2f && seat != null && !AtSeat) GoTo(seat.WorldPos);
@@ -310,7 +330,7 @@ namespace YeogiCafe.AI
         {
             restTimer = 0f;
             float k = data.HasPersonality(PersonalityTag.Relaxed) ? 1.6f : data.HasPersonality(PersonalityTag.Active) ? 0.7f : 1f;
-            restDuration = Random.Range(7f, 14f) * k;
+            restDuration = Random.Range(7f, 14f) * k * YeogiCafe.Core.Weather.RestMult;
         }
 
         void GoTo(Vector3 p)

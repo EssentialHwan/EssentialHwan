@@ -264,7 +264,12 @@ namespace YeogiCafe.UI
                     break;
                 case OrderSystem.ToolResult.Served:
                     hint.text = L.Get("ui.kitchen.served", ("name", CatName(ticket)), ("menu", MenuName(ticket)));
-                    owner.ShowCatBubble(ticket.catId, L.Get("ui.kitchen.thanks"));
+                    GameEvents.Raise(GameEvents.Serve, ticket.catId);
+                    if (ticket.vague && ticket.IsCorrectDish)
+                    { owner.ShowCatBubble(ticket.catId, L.Get("ui.order.mindread")); GameEvents.Raise(GameEvents.MindRead, ticket.catId); }
+                    else if (!ticket.IsCorrectDish)
+                    { owner.ShowCatBubble(ticket.catId, L.Get("ui.order.wrongdish")); GameEvents.Raise(GameEvents.WrongDish, ticket.catId); }
+                    else owner.ShowCatBubble(ticket.catId, L.Get("ui.kitchen.thanks"));
                     break;
                 case OrderSystem.ToolResult.Busy:
                     hint.text = L.Get("ui.kitchen.busy");
@@ -313,8 +318,17 @@ namespace YeogiCafe.UI
                 ticketCards.Add(card.gameObject);
 
                 var catIcon = Icon(card, CatSprite(tk.catId), new Vector2(4, 4), 44);
-                var dish = Icon(card, DishSprite(tk.menu != null ? tk.menu.menuId : ""), new Vector2(48, 10), 36);
-                var nameT = UiFactory.Label("Menu", card, MenuName(tk), 14, TextAnchor.UpperLeft, UiFactory.Ink);
+                var dish = Icon(card, tk.unresolved ? RuntimeSprites.Get("emote_Question", () => EmoteDrawing.Draw(EmoteDrawing.Kind.Question))
+                                                    : DishSprite(tk.menu != null ? tk.menu.menuId : ""), new Vector2(48, 10), 36);
+                var nameT = UiFactory.Label("Menu", card, tk.unresolved ? L.Get(tk.hintKey) : MenuName(tk), tk.unresolved ? 12 : 14, TextAnchor.UpperLeft, UiFactory.Ink);
+                if (tk.unresolved)
+                {
+                    // 힌트 주문: 카드를 눌러 메뉴를 고른다
+                    card.GetComponent<Image>().color = UiFactory.YellowLight;
+                    var btn = card.gameObject.AddComponent<Button>();
+                    var captured = tk;
+                    btn.onClick.AddListener(() => OpenPicker(captured));
+                }
                 UiFactory.SetRect((RectTransform)nameT.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1),
                                   new Vector2(88, -6), new Vector2(60, 34));
                 nameT.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -339,6 +353,45 @@ namespace YeogiCafe.UI
             UiFactory.SetRect((RectTransform)go.transform, Vector2.zero, Vector2.zero, Vector2.zero, pos, new Vector2(size, size));
             return img;
         }
+
+        // ── 힌트 주문 메뉴 고르기 ──
+        GameObject pickerGo;
+        void OpenPicker(OrderTicket tk)
+        {
+            ClosePicker();
+            var menus = owner.Cafe != null ? owner.Cafe.GetAvailableMenus() : null;
+            if (menus == null || menus.Count == 0) return;
+            var box = UiFactory.Panel("Picker", root, UiFactory.PanelBg);
+            pickerGo = box.gameObject;
+            int cols = Mathf.Min(4, menus.Count), rows = (menus.Count + 3) / 4;
+            UiFactory.SetRect(box, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1),
+                              new Vector2(0, -140), new Vector2(40 + cols * 112, 84 + rows * 100));
+            var title = UiFactory.Label("T", box.transform, L.Get("ui.order.pick", ("name", CatName(tk)), ("hint", L.Get(tk.hintKey))),
+                                        17, TextAnchor.MiddleCenter, UiFactory.Ink);
+            UiFactory.SetRect((RectTransform)title.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -8), new Vector2(-20, 30));
+            for (int i = 0; i < menus.Count; i++)
+            {
+                var m = menus[i];
+                var b = UiFactory.Button("M_" + m.menuId, box.transform, L.Get("menu." + m.menuId), UiFactory.Cream, UiFactory.Ink, out var bl);
+                bl.fontSize = 13; bl.alignment = TextAnchor.LowerCenter;
+                UiFactory.SetRect((RectTransform)b.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1),
+                                  new Vector2(20 + (i % 4) * 112, -44 - (i / 4) * 100), new Vector2(104, 92));
+                Icon((RectTransform)b.transform, DishSprite(m.menuId), new Vector2(28, 30), 48);
+                var mm = m;
+                b.onClick.AddListener(() =>
+                {
+                    orders.Resolve(tk, mm);
+                    hint.text = L.Get("ui.order.picked", ("menu", L.Get("menu." + mm.menuId)));
+                    ClosePicker();
+                    RefreshRail(true);
+                });
+            }
+            var close = UiFactory.Button("X", box.transform, "×", UiFactory.Pink, UiFactory.Cream, out _);
+            UiFactory.SetRect((RectTransform)close.transform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1), new Vector2(-6, -6), new Vector2(32, 32));
+            close.onClick.AddListener(ClosePicker);
+        }
+
+        void ClosePicker() { if (pickerGo != null) Object.Destroy(pickerGo); pickerGo = null; }
 
         public static Sprite DishSprite(string menuId) => RuntimeSprites.Get("dish_" + menuId, () => CookingDrawing.Dish(menuId));
 

@@ -136,6 +136,39 @@ namespace YeogiCafe.Observation
             return GuessResult.Correct;
         }
 
+        // ── 묶음 채점(오브라 딘식): 골라 둔 답을 한꺼번에 확인. 전부 맞아야 기록, 아니면 몇 개 맞았는지만 알려준다.
+        public struct BatchItem { public PrefAxis axis; public string guessId; public bool correct; }
+
+        public bool SubmitBatch(string catId, List<BatchItem> items, int day, out int correctCount, out int bonusGold)
+        {
+            correctCount = 0; bonusGold = 0;
+            if (items == null || items.Count == 0) return false;
+            foreach (var it in items)
+                if (CanGuess(catId, it.axis, day) != GuessResult.Correct) return false;
+            foreach (var it in items) if (it.correct) correctCount++;
+            bool all = correctCount == items.Count;
+            var obsRec = save.GetOrCreateCat(catId).observation;
+            if (all)
+            {
+                foreach (var it in items)
+                {
+                    TryGuess(catId, it.axis, it.guessId, true, day, out int b);
+                    bonusGold += b;
+                    obsRec.Get(it.axis).pendingGuess = null;
+                }
+                if (items.Count >= 2) bonusGold += cfg.discoveryBonusGold * (items.Count - 1);   // 한꺼번에 맞힌 보너스
+                return true;
+            }
+            foreach (var it in items)
+            {
+                var r = obsRec.Get(it.axis);
+                r.lastGuessDay = day;
+                // 한 칸만 냈을 때만 무엇이 틀렸는지 알 수 있다
+                if (items.Count == 1 && !r.wrongGuesses.Contains(it.guessId)) r.wrongGuesses.Add(it.guessId);
+            }
+            return false;
+        }
+
         public IReadOnlyDictionary<string, List<Clue>> StagedToday => stagedToday;
     }
 }

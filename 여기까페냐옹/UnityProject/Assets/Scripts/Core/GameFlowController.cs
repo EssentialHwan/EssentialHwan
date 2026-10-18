@@ -74,6 +74,8 @@ namespace YeogiCafe.Core
             {
                 events.save = save;
                 regular.OnRegularStageUp += events.OnRegularStageUp;
+                // 단골 단계가 오르면 그날 밤 일지에 그 고양이 이야기 한 장
+                regular.OnRegularStageUp += (id, st) => { if (st >= 2) save.storyQueue.Add(new StoryDTO { catId = id, kind = st >= 3 ? 3 : 2 }); };
                 if (relationships != null) relationships.OnRelationStageUp += events.OnRelationStageUp;
                 events.OnGrantReward += (gold, _) => { if (gold > 0) economy.AddGold(gold); };
             }
@@ -125,6 +127,8 @@ namespace YeogiCafe.Core
                 }
         }
 
+        readonly System.Random giftRng = new();
+
         // §3.2 OnLeave 파이프라인
         void HandleSessionComplete(CatBrain brain)
         {
@@ -145,7 +149,8 @@ namespace YeogiCafe.Core
                 orderFailed = brain.ServedMenu == null,
                 hasDominant = cfg.atmosphereAffectsSatisfaction && atmo.hasDominant,
                 dominantAtmosphere = atmo.dominant,
-                touchMood = brain.TouchMood
+                touchMood = brain.TouchMood,
+                wrongDish = brain.WrongDish, mindRead = brain.MindRead
             };
             float satisfaction = SatisfactionCalculator.Compute(data, sr, cfg);
 
@@ -154,6 +159,14 @@ namespace YeogiCafe.Core
             int pay = Mathf.RoundToInt(price * EconomyManager.TipMultiplier(satisfaction));
             economy.AddGold(pay);
             if (brain.ServedMenu != null) economy.AddIngredientCost(brain.ServedMenu.cost);
+
+            // 만족한 고양이는 다음 날 아침 문 앞에 선물(아직 모르는 취향의 힌트)
+            if (satisfaction >= cfg.giftThreshold && giftRng.NextDouble() < cfg.giftChance && !save.pendingGifts.Exists(g => g.catId == data.catId))
+            {
+                var obsRec = catSave.observation;
+                string gid = YeogiCafe.Data.GiftCatalog.Pick(data, a => obsRec.Get(a).state == ObsState.Recorded, giftRng);
+                if (gid != null) save.pendingGifts.Add(new GiftDTO { catId = data.catId, giftId = gid, day = day.CurrentDay });
+            }
 
             // 방문·만족 이력
             catSave.PushSatisfaction(satisfaction);
@@ -180,6 +193,14 @@ namespace YeogiCafe.Core
 
             obs.OnDayEnd();                                  // 승격
             foreach (var c in save.cats) regular.Evaluate(c); // 단골(→이벤트 큐잉)
+            // 졸업: 세 가지 취향을 다 알아낸 단골 3단계 고양이 → 졸업 편지(이후 가끔만 놀러 옴)
+            foreach (var c in save.cats)
+            {
+                if (c.graduated || c.regularStage < 3 || c.observation.RecordedAxisCount() < 3) continue;
+                c.graduated = true;
+                save.storyQueue.Add(new StoryDTO { catId = c.catId, kind = 9 });
+                YeogiCafe.Core.GameEvents.Raise(YeogiCafe.Core.GameEvents.Graduate, c.catId);
+            }
             // 대기 이벤트(단골·관계 에피소드) 재생·보상 (정산 화면에서 순차 표시)
             if (events != null) { while (events.TryPlayNext()) { } }
             if (saveManager != null) saveManager.Save(save); // 오토세이브

@@ -6,6 +6,7 @@ using YeogiCafe.Art;
 using YeogiCafe.Core;
 using YeogiCafe.Loc;
 using YeogiCafe.Save;
+using YeogiCafe.Data;
 
 namespace YeogiCafe.Visual
 {
@@ -19,6 +20,8 @@ namespace YeogiCafe.Visual
         public SaveGame save;                        // 비어 있으면 relationships.save를 사용
         public YeogiCafe.Progression.RelationshipManager relationships;
         public Action<string, string> say;           // (catId, text) 말풍선
+        public Action<string> toast;                 // 화면 위 알림
+        public GameFlowController flow;              // 관찰 단서 기록(선물)
 
         [Header("고양이끼리")]
         public Vector2 socialInterval = new Vector2(7f, 13f);
@@ -58,15 +61,19 @@ namespace YeogiCafe.Visual
             }
             say?.Invoke(victim.data.catId, L.Get("social.steal", ("boss", bossName), ("name", victimName)));
             if (save != null) save.GetOrCreateCat(boss.data.catId).bossSeen = true;
+            GameEvents.Raise(GameEvents.Steal, boss.data.catId);
         }
 
         void Update()
         {
             if (cats == null || Suspended) return;
             if (save == null && relationships != null) save = relationships.save;
+            TickGifts();
             if (Input.GetMouseButtonDown(0)) TryClick();
             TickPending();
             TickZoomStartle();
+            TickMeme();
+            TickHungry();
             nextSocial -= Time.deltaTime;
             if (nextSocial <= 0f)
             {
@@ -94,6 +101,7 @@ namespace YeogiCafe.Visual
             var cam = Camera.main; if (cam == null) return;
             Vector3 w = cam.ScreenToWorldPoint(Input.mousePosition); w.z = 0f;
 
+            if (TryPickGift(w)) return;
             Collect();
             CatView hit = null; int best = int.MinValue;
             foreach (var v in views)
@@ -135,6 +143,8 @@ namespace YeogiCafe.Visual
             }
             v.DoAction(seq, null, 0);
             v.Brain.AddTouchMood(CatTemperament.MoodDelta(res));
+            GameEvents.Raise(GameEvents.Pet, v.Data.catId);
+            if (res == TouchResult.Love) GameEvents.Raise(GameEvents.PetLove, v.Data.catId);
 
             // 관찰 기록 → 새로 알아낸 성향이면 그 문장을, 아니면 반응 대사를 말풍선으로
             string text = L.Get(line);
@@ -148,6 +158,122 @@ namespace YeogiCafe.Visual
                     text = L.Get(after.Replace("touch.", "touch.learn."), ("name", L.Get($"cat.{v.Data.catId}.name")));
             }
             say?.Invoke(v.Data.catId, text);
+        }
+
+        // ───────── 밈 손님(빙글냥·방방냥) ─────────
+        float nextMeme = -1f;
+        DayManager dayMgr;
+        MemeVisitor currentMeme;
+
+        void TickMeme()
+        {
+            if (dayMgr == null) dayMgr = FindObjectOfType<DayManager>();
+            if (nextMeme < 0f) nextMeme = UnityEngine.Random.Range(150f, 320f);
+            if (currentMeme != null) return;
+            bool open = dayMgr != null && (dayMgr.Phase == DayPhase.Morning || dayMgr.Phase == DayPhase.Lunch || dayMgr.Phase == DayPhase.Evening);
+            if (!open || cats.Active.Count == 0) return;
+            nextMeme -= Time.deltaTime;
+            if (nextMeme > 0f) return;
+            nextMeme = UnityEngine.Random.Range(300f, 520f);
+            SpawnMeme(R() < 0.6f ? MemeVisitor.Kind.Spin : MemeVisitor.Kind.Bounce);
+        }
+
+        public void DebugMeme(bool spin) { if (currentMeme == null) SpawnMeme(spin ? MemeVisitor.Kind.Spin : MemeVisitor.Kind.Bounce); }
+
+        void SpawnMeme(MemeVisitor.Kind kind)
+        {
+            var go = new GameObject("Meme_" + kind);
+            var m = go.AddComponent<MemeVisitor>();
+            m.Init(kind, CafeLayout.Entrance, new Vector3(7.2f, 1.25f, 0f));
+            currentMeme = m;
+            toast?.Invoke(L.Get(kind == MemeVisitor.Kind.Spin ? "meme.spin.arrive" : "meme.bounce.arrive"));
+            m.onShowtime = () =>
+            {
+                bool spin = kind == MemeVisitor.Kind.Spin;
+                say?.Invoke(m.Id, L.Get(spin ? "meme.spin.say" : "meme.bounce.say"));
+                // 카페 고양이들이 하나둘 따라 한다(조금씩 늦게 합류)
+                Collect();
+                int k = 0;
+                foreach (var v in views)
+                {
+                    if (v.IsExiting || !v.IsSeatedNow) continue;
+                    float delay = 0.4f + k * 0.35f; k++;
+                    v.DoAction(new[] { S("stand", delay), new CatView.Step { clip = spin ? "spin" : "hop", seconds = 4.5f, hasEmote = true, emote = EmoteDrawing.Kind.Note } }, null, 0);
+                    if (k <= 3) say?.Invoke(v.Data.catId, L.Get(spin ? "meme.spin.join" : "meme.bounce.join"));
+                }
+                GameEvents.Raise(spin ? GameEvents.MemeSpin : GameEvents.MemeBounce, m.Id);
+            };
+        }
+
+        // ───────── 밥 달라고 야옹 ─────────
+        float hungryTimer;
+        void TickHungry()
+        {
+            hungryTimer -= Time.deltaTime;
+            if (hungryTimer > 0f) return;
+            hungryTimer = 3.5f;
+            Collect();
+            foreach (var v in views)
+            {
+                if (v.Brain.State != CatState.WaitFood || v.Brain.OrderPatienceRatio >= 0.5f) continue;
+                if (R() < 0.6f) say?.Invoke(v.Data.catId, L.Get("meme.hungry." + (rng.Next(3) + 1)));
+            }
+        }
+
+        // ───────── 선물(문 앞) ─────────
+        readonly List<(GameObject go, GiftDTO dto)> giftObjs = new();
+        float giftCheck;
+
+        void TickGifts()
+        {
+            giftCheck -= Time.deltaTime;
+            for (int i = 0; i < giftObjs.Count; i++)   // 반짝반짝 살짝 통통
+            {
+                var g = giftObjs[i].go; if (g == null) continue;
+                float t = Time.time * 3f + i;
+                g.transform.localScale = Vector3.one * (1f + Mathf.Abs(Mathf.Sin(t)) * 0.08f);
+            }
+            if (giftCheck > 0f || save == null) return;
+            giftCheck = 1f;
+            int slot = giftObjs.Count;
+            foreach (var dto in save.pendingGifts)
+            {
+                if (dto.day >= save.currentDay) continue;                       // 받은 다음 날 아침부터
+                bool shown = false;
+                foreach (var p in giftObjs) if (p.dto == dto) shown = true;
+                if (shown) continue;
+                var go = new GameObject("Gift_" + dto.giftId);
+                go.transform.position = new Vector3(CafeLayout.Door.x - 0.5f + slot * 0.45f, CafeLayout.FloorTop - 0.55f - (slot % 2) * 0.25f, 0f);
+                var srd = go.AddComponent<SpriteRenderer>();
+                srd.sprite = RuntimeSprites.Get("gift_" + dto.giftId, () => GiftDrawing.Draw(dto.giftId));
+                srd.sortingOrder = YSort.Order(go.transform.position.y) + 2;
+                giftObjs.Add((go, dto));
+                slot++;
+            }
+        }
+
+        bool TryPickGift(Vector3 w)
+        {
+            for (int i = 0; i < giftObjs.Count; i++)
+            {
+                var (go, dto) = giftObjs[i];
+                if (go == null) continue;
+                if ((go.transform.position + new Vector3(0, 0.25f, 0) - w).sqrMagnitude > 0.16f) continue;
+                Destroy(go); giftObjs.RemoveAt(i);
+                save.pendingGifts.Remove(dto);
+                if (!save.giftsCollected.Contains(dto.giftId)) save.giftsCollected.Add(dto.giftId);
+                if (GiftCatalog.TryGet(dto.giftId, out var g) && flow != null && flow.Observation != null)
+                {
+                    var type = g.axis == PrefAxis.Food ? ClueType.FoodEat : g.axis == PrefAxis.Seat ? ClueType.SeatUse : ClueType.FacilityUse;
+                    flow.Observation.RecordClue(dto.catId, type, g.target, false, null);      // 선물은 진짜 취향을 가리키는 단서
+                }
+                string catName = L.Get($"cat.{dto.catId}.name");
+                toast?.Invoke(L.Get("gift.found", ("name", catName), ("gift", L.Get($"gift.{dto.giftId}.name")))
+                              + "\n" + L.Get($"gift.{dto.giftId}.desc"));
+                GameEvents.Raise(GameEvents.Gift, dto.catId);
+                return true;
+            }
+            return false;
         }
 
         // ───────── ② 고양이끼리 ─────────
@@ -278,6 +404,21 @@ namespace YeogiCafe.Visual
 
         void Play(SocialKind kind, CatView left, CatView right, TouchStyle sl, TouchStyle sr)
         {
+            // 관계도용 기록 + 의뢰 이벤트
+            if (save != null)
+            {
+                var rel = save.GetOrCreateRelation(left.Data.catId, right.Data.catId);
+                if (kind == SocialKind.Rub || kind == SocialKind.Groom || kind == SocialKind.Play) rel.bond++;
+                else if (kind == SocialKind.Fight) { rel.bond--; rel.fights++; }
+                else if (kind == SocialKind.Hiss) rel.bond--;
+            }
+            string ev = kind switch
+            {
+                SocialKind.Rub => GameEvents.Rub, SocialKind.Groom => GameEvents.Groom,
+                SocialKind.Fight => GameEvents.Fight, SocialKind.Ambush => GameEvents.Ambush, _ => null
+            };
+            if (ev != null) GameEvents.Raise(ev, left.Data.catId);
+
             // 둘 사이 바닥에서 마주 본다
             Vector3 mid = (left.SeatPos + right.SeatPos) * 0.5f;
             float gap = kind == SocialKind.Hiss || kind == SocialKind.Fight ? 0.62f : 0.42f;

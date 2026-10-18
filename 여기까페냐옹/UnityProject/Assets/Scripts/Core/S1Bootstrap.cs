@@ -80,6 +80,7 @@ namespace YeogiCafe.Core
             if (flow == null) flow = gameObject.AddComponent<GameFlowController>();
             if (orderSystem == null) orderSystem = gameObject.AddComponent<YeogiCafe.Order.OrderSystem>();
             if (interactions == null) interactions = gameObject.AddComponent<YeogiCafe.Visual.CatInteractionDirector>();
+            if (GetComponent<YeogiCafe.Visual.WeatherView>() == null) gameObject.AddComponent<YeogiCafe.Visual.WeatherView>();
         }
 
         void WireReferences()
@@ -100,7 +101,7 @@ namespace YeogiCafe.Core
             flow.spawner = spawner; flow.cafeManager = cafeManager; flow.relationships = relationships; flow.events = events;
             flow.furnitureLookup = LookupFurniture;
             flow.orderSystem = orderSystem;
-            interactions.cats = cats; interactions.relationships = relationships;
+            interactions.cats = cats; interactions.relationships = relationships; interactions.flow = flow;
         }
 
         [Header("씬 배치")]

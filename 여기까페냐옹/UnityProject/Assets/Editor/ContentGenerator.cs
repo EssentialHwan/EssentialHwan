@@ -104,6 +104,10 @@ namespace YeogiCafe.EditorTools
                       "menu_parfait", SeatTag.Window, FacilityTag.Play, AtmosphereAxis.Luxury, U(UnlockType.CafeLevel, 3));
             CreateCat("cat_gray", "회색냥", PersonalityTag.Lonely, PersonalityTag.Social,
                       "menu_tuna_sand", SeatTag.TwoSeat, FacilityTag.Social, AtmosphereAxis.Warm, U(UnlockType.RecordedAxesTotal, 6));
+            // 숨은 9번째 고양이(네코아츠메 희귀 고양이 참고): 창가석 + 캣타워 + 카페 Lv3(구운생선 메뉴) 갖추면 찾아온다
+            CreateCat("cat_moon", "달냥", PersonalityTag.Curious, PersonalityTag.Relaxed,
+                      "menu_grilled_fish", SeatTag.Window, FacilityTag.Height, AtmosphereAxis.Quiet,
+                      new UnlockCondition { type = UnlockType.FurnitureSet, value = 3, requireFurniture = new[] { "furn_seat_window", "furn_fac_tower" } });
         }
 
         static UnlockCondition U(UnlockType t, int v) => new UnlockCondition { type = t, value = v };
@@ -144,6 +148,7 @@ namespace YeogiCafe.EditorTools
             CreateEpisode("ep_mackerel", "cat_mackerel", 60);
             CreateEpisode("ep_siamese", "cat_siamese", 70);
             CreateEpisode("ep_gray", "cat_gray", 70);
+            CreateEpisode("ep_moon", "cat_moon", 100);
         }
 
         static void CreateEpisode(string epId, string catId, int gold)

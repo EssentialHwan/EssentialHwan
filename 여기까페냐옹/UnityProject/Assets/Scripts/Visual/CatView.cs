@@ -65,6 +65,9 @@ namespace YeogiCafe.Visual
         float lastPetAt = -99f; int petStreak;
 
         public bool IsActing => acting;
+        float memeT;
+        // 밈 동작은 기본 클립 위에 변형을 얹는다: spin(빙글) · hop(방방)
+        static string ClipFor(string step) => step == "spin" || step == "hop" ? "stand" : step;
         public bool IsSeatedNow { get; private set; }
         public bool IsSleeping => rest == Rest.Sleep;
         public CatBrain Brain => brain;
@@ -101,7 +104,8 @@ namespace YeogiCafe.Visual
             var st = steps.Dequeue();
             stepLeft = st.seconds;
             stepClip = st.clip;
-            clip = ""; Play(st.clip);
+            memeT = 0f;
+            clip = ""; Play(ClipFor(st.clip));
             if (st.hasEmote) ShowEmote(st.emote);
         }
 
@@ -278,6 +282,15 @@ namespace YeogiCafe.Visual
                     }
                 }
             }
+            // 밈 동작 변형
+            bool meme = acting && !actWalking && (stepClip == "spin" || stepClip == "hop");
+            if (meme)
+            {
+                memeT += dt;
+                if (stepClip == "spin") MemeVisitor.Spin(visual, sr, memeT);
+                else { local.y += MemeVisitor.Bounce(memeT); visual.localScale = MemeVisitor.Squash(memeT); }
+            }
+            else if (visual.localScale != Vector3.one) visual.localScale = Vector3.one;
             visual.localPosition = local;
 
             // ── 클립 선택 ──
@@ -288,11 +301,11 @@ namespace YeogiCafe.Visual
                 stretchLeft -= dt;
                 if (stretchLeft <= 0f && exitMover != null) exitMover.MoveTo(exitDoor);
             }
-            else if (acting) Play(actWalking ? "walk" : stepClip);
+            else if (acting) Play(actWalking ? "walk" : ClipFor(stepClip));
             else if (moving)
             {
                 bool zoom = brain.IsZooming;
-                if (zoom && clip != "run") ShowEmote(EmoteDrawing.Kind.Exclaim);
+                if (zoom && clip != "run") { ShowEmote(EmoteDrawing.Kind.Exclaim); YeogiCafe.Core.GameEvents.Raise(YeogiCafe.Core.GameEvents.Zoomies, Data != null ? Data.catId : null); }
                 Play(zoom ? "run" : "walk"); idleTimer = 0f; rest = Rest.None;
             }
             else if (fp == CatBrain.FacPhase.Dismount && perch > 0.05f) Play("jumpdown");
@@ -300,13 +313,14 @@ namespace YeogiCafe.Visual
             else if (fp == CatBrain.FacPhase.Perched && facT < JumpUpTime + 0.1f && perch > 0.05f) { }           // 점프 클립 재생 중
             else if (fp == CatBrain.FacPhase.Perched && IsPlayFacility()) Play("pounce");                      // 장난감 놀이
             else if (!seated) { Play(exiting ? "walk" : "stand"); rest = Rest.None; }
-            else if (st == CatState.WaitFood) { Play("order"); idleTimer = 0f; rest = Rest.Sit; }
+            else if (st == CatState.WaitFood) { Play(brain.OrderPatienceRatio < 0.5f ? "meow" : "order"); idleTimer = 0f; rest = Rest.Sit; }   // 배고프면 밥 달라고 야옹
             else if (eatTimer > 0f) { eatTimer -= dt; Play("eat"); idleTimer = 0f; rest = Rest.Loaf; }
             else if (!InTransition)
             {
                 idleTimer += dt;
                 bool relaxed = Data != null && Data.HasPersonality(PersonalityTag.Relaxed);
-                float sleepAt = relaxed ? sleepAfterIdleSeconds * 0.6f : float.MaxValue;
+                float sleepAt = relaxed ? sleepAfterIdleSeconds * 0.6f
+                              : YeogiCafe.Core.Weather.SleepyDay ? sleepAfterIdleSeconds * 1.2f : float.MaxValue;   // 비 오는 날은 다들 졸림
                 float loafAt = relaxed ? loafAfterIdleSeconds * 0.6f : loafAfterIdleSeconds;
                 if (rest == Rest.None) { PlayThen("sitdown", "sit"); rest = Rest.Sit; }
                 else if (rest == Rest.Sit && idleTimer > loafAt) { PlayThen("liedown", "loaf"); rest = Rest.Loaf; }
@@ -368,7 +382,8 @@ namespace YeogiCafe.Visual
             soloTimer = Random.Range(7f, 14f) * (playful ? 0.6f : 1.4f);
             float r = Random.value;
             if (playful && r < 0.5f) DoAction(new[] { new Step { clip = "pounce", seconds = 1.6f, hasEmote = true, emote = EmoteDrawing.Kind.Exclaim } });
-            else if (playful && r < 0.8f) DoAction(new[] { new Step { clip = "rollover", seconds = 2.2f, hasEmote = true, emote = EmoteDrawing.Kind.Note } });
+            else if (playful && r < 0.75f) DoAction(new[] { new Step { clip = "rollover", seconds = 2.2f, hasEmote = true, emote = EmoteDrawing.Kind.Note } });
+            else if (playful && r < 0.92f) DoAction(new[] { new Step { clip = "hop", seconds = 2.0f, hasEmote = true, emote = EmoteDrawing.Kind.Sparkle } });   // 방방
             else if (r < 0.5f) DoAction(new[] { new Step { clip = "stretch", seconds = 1.25f } });
         }
 

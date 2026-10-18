@@ -52,7 +52,7 @@ namespace YeogiCafe.UI
             UiFactory.SetRect(cardsContent, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f),
                               new Vector2(0, -14), new Vector2(-40, -230));
             var vlg = cardsGo.GetComponent<VerticalLayoutGroup>();
-            vlg.spacing = 6; vlg.childControlHeight = false; vlg.childForceExpandHeight = false;
+            vlg.spacing = 4; vlg.childControlHeight = false; vlg.childForceExpandHeight = false;
             vlg.childControlWidth = true; vlg.childForceExpandWidth = true;
 
             cardsInfo = UiFactory.Label("CardsInfo", panel.transform, "", 20, TextAnchor.LowerLeft, UiFactory.WoodDark);
@@ -115,6 +115,55 @@ namespace YeogiCafe.UI
             pg.SetActive(false);
 
             rootGo.SetActive(false);
+        }
+
+        // ── 이야기 카드(단골·졸업 편지) — 커피토크/스피릿페어러 참고 ──
+        GameObject storyGo;
+
+        void OpenStory(StoryDTO st)
+        {
+            var scrim = UiFactory.Panel("StoryScrim", rootGo.transform, new Color(0.08f, 0.07f, 0.12f, 0.55f));
+            storyGo = scrim.gameObject;
+            UiFactory.Anchor(scrim, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            bool grad = st.kind == 9;
+            var paper = UiFactory.Panel("Letter", scrim.transform, grad ? new Color(1f, 0.96f, 0.86f, 1f) : new Color(1f, 0.99f, 0.95f, 1f));
+            UiFactory.SetRect(paper, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(620, 400));
+
+            string name = L.Get($"cat.{st.catId}.name");
+            string titleKey = grad ? "story.title.grad" : st.kind == 3 ? "story.title.r3" : "story.title.r2";
+            var title = UiFactory.Label("Title", paper.transform, L.Get(titleKey, ("name", name)), 24, TextAnchor.MiddleCenter, grad ? UiFactory.PinkDeep : UiFactory.Ink);
+            UiFactory.SetRect((RectTransform)title.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -14), new Vector2(0, 36));
+
+            var pg = new GameObject("Portrait", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            pg.transform.SetParent(paper.transform, false);
+            var pimg = pg.GetComponent<Image>(); pimg.sprite = CatSpriteBank.Portrait(st.catId); pimg.preserveAspect = true; pimg.raycastTarget = false;
+            UiFactory.SetRect((RectTransform)pg.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(24, 10), new Vector2(170, 140));
+
+            string prefix = grad ? "grad" : st.kind == 3 ? "regular3" : "regular2";
+            int lines = grad ? 3 : 2;
+            var sb = new System.Text.StringBuilder();
+            for (int i = 1; i <= lines; i++) sb.Append(L.Get($"ep.{st.catId}.{prefix}.0{i}")).Append("\n\n");
+            var body = UiFactory.Label("Body", paper.transform, sb.ToString(), 19, TextAnchor.MiddleLeft, UiFactory.Ink);
+            UiFactory.SetRect((RectTransform)body.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f), new Vector2(80, 10), new Vector2(-300, -130));
+
+            if (grad)
+            {
+                // 졸업 도장(금빛 손도장)
+                var sg = new GameObject("GradStamp", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                sg.transform.SetParent(paper.transform, false);
+                var simg = sg.GetComponent<Image>(); simg.sprite = stampSprite; simg.color = new Color(0.95f, 0.75f, 0.3f, 1f); simg.raycastTarget = false;
+                UiFactory.SetRect((RectTransform)sg.transform, new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0), new Vector2(-20, 70), new Vector2(72, 72));
+                sg.transform.localEulerAngles = new Vector3(0, 0, -12f);
+            }
+
+            var next = UiFactory.Button("Next", paper.transform, L.Get("story.next"), UiFactory.Green, UiFactory.Ink, out _);
+            UiFactory.SetRect((RectTransform)next.transform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 16), new Vector2(160, 46));
+            next.onClick.AddListener(() =>
+            {
+                if (owner.Save != null && owner.Save.storyQueue.Count > 0) owner.Save.storyQueue.RemoveAt(0);
+                Object.Destroy(storyGo); storyGo = null;
+                if (owner.Save != null && owner.Save.storyQueue.Count > 0) OpenStory(owner.Save.storyQueue[0]);
+            });
         }
 
         // ── 앞발 연출 ──
@@ -208,6 +257,7 @@ namespace YeogiCafe.UI
             RenderEconomy();
             RenderCards();
             RenderLevel();
+            if (storyGo == null && owner.Save != null && owner.Save.storyQueue.Count > 0) OpenStory(owner.Save.storyQueue[0]);
         }
 
         void RenderLevel()
@@ -242,6 +292,9 @@ namespace YeogiCafe.UI
             foreach (var cs in save.cats)
             {
                 if (cs.lastVisitDay < 0) continue;
+                // 오늘 온 고양이만(일지는 '오늘 밤' 기록). 전체는 도감에서.
+                int today = owner.Day != null ? owner.Day.CurrentDay : cs.lastVisitDay;
+                if (cs.lastVisitDay != today) continue;
                 var data = owner.LookupCat(cs.catId);
                 if (data == null) continue;
                 BuildCatRow(data, cs);
@@ -253,7 +306,7 @@ namespace YeogiCafe.UI
         void BuildCatRow(CatData data, CatSaveData cs)
         {
             var row = UiFactory.Panel("Card_" + data.catId, cardsContent, UiFactory.Cream);
-            ((RectTransform)row.transform).sizeDelta = new Vector2(0, 44);
+            ((RectTransform)row.transform).sizeDelta = new Vector2(0, 40);
 
             string catName = L.Get($"cat.{data.catId}.name");
             var label = UiFactory.Label("Name", row.transform, catName, 20, TextAnchor.MiddleLeft, UiFactory.Ink);
@@ -264,6 +317,68 @@ namespace YeogiCafe.UI
             BuildAxisCell(row.transform, data, cs, PrefAxis.Food, 0);
             BuildAxisCell(row.transform, data, cs, PrefAxis.Seat, 1);
             BuildAxisCell(row.transform, data, cs, PrefAxis.Facility, 2);
+
+            // [확인] — 고른 답을 한꺼번에 채점(오브라 딘식). 도전 가능한 칸을 모두 골라야 활성.
+            var eligible = EligibleAxes(data.catId);
+            if (eligible.Count == 0) return;
+            bool allPicked = true;
+            foreach (var a in eligible) if (string.IsNullOrEmpty(cs.observation.Get(a).pendingGuess)) allPicked = false;
+            var cbtn = UiFactory.Button("Confirm", row.transform, L.Get("ui.guess.confirm"),
+                                        allPicked ? UiFactory.PinkDeep : UiFactory.Wood, UiFactory.Cream, out var clbl);
+            clbl.fontSize = 15;
+            UiFactory.SetRect((RectTransform)cbtn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(1, 0.5f),
+                              new Vector2(-6, 0), new Vector2(70, 34));
+            cbtn.interactable = allPicked;
+            cbtn.onClick.AddListener(() => { if (!busy) owner.StartCoroutine(ConfirmWithPaw(data, (RectTransform)cbtn.transform)); });
+        }
+
+        List<PrefAxis> EligibleAxes(string catId)
+        {
+            var list = new List<PrefAxis>();
+            var obs = owner.Obs; if (obs == null) return list;
+            int day = owner.Day != null ? owner.Day.CurrentDay : 0;
+            foreach (var a in new[] { PrefAxis.Food, PrefAxis.Seat, PrefAxis.Facility })
+                if (obs.CanGuess(catId, a, day) == ObservationManager.GuessResult.Correct) list.Add(a);
+            return list;
+        }
+
+        bool IsCorrect(CatData cat, PrefAxis axis, string id)
+        {
+            foreach (var o in BuildOptions(cat, axis)) if (o.id == id) return o.correct;
+            return false;
+        }
+
+        IEnumerator ConfirmWithPaw(CatData cat, RectTransform btnRt)
+        {
+            busy = true;
+            var cs = owner.Save.GetOrCreateCat(cat.catId);
+            var items = new List<ObservationManager.BatchItem>();
+            foreach (var a in EligibleAxes(cat.catId))
+            {
+                string id = cs.observation.Get(a).pendingGuess;
+                items.Add(new ObservationManager.BatchItem { axis = a, guessId = id, correct = IsCorrect(cat, a, id) });
+            }
+            bool all = false; int n = 0, bonus = 0;
+            int day = owner.Day != null ? owner.Day.CurrentDay : 0;
+            yield return PawTap(btnRt.position, () =>
+            {
+                all = owner.Obs.SubmitBatch(cat.catId, items, day, out n, out bonus);
+                if (all) owner.StartCoroutine(PopCheck(btnRt));
+            });
+            string catName = L.Get($"cat.{cat.catId}.name");
+            if (all)
+            {
+                if (bonus > 0 && owner.Economy != null) owner.Economy.AddGold(bonus);
+                owner.RefreshHud();
+                cardsInfo.text = L.Get("ui.guess.allok", ("name", catName), ("g", bonus.ToString()));
+                YeogiCafe.Core.GameEvents.Raise(YeogiCafe.Core.GameEvents.GuessCorrect, cat.catId);
+            }
+            else cardsInfo.text = L.Get("ui.guess.partial", ("name", catName), ("n", n.ToString()), ("t", items.Count.ToString()));
+            yield return new WaitForSecondsRealtime(0.3f);
+            busy = false;
+            string keep = cardsInfo.text;
+            Show();
+            cardsInfo.text = keep;
         }
 
         static string AxisLabel(PrefAxis axis) =>
@@ -271,7 +386,7 @@ namespace YeogiCafe.UI
 
         void BuildAxisCell(Transform parent, CatData data, CatSaveData cs, PrefAxis axis, int index)
         {
-            const float cellW = 220f, startX = 130f;
+            const float cellW = 190f, startX = 120f;
             var rec = cs.observation.Get(axis);
             var cell = new GameObject($"Cell_{axis}", typeof(RectTransform));
             cell.transform.SetParent(parent, false);
@@ -293,20 +408,23 @@ namespace YeogiCafe.UI
                 return;
             }
 
-            var stateLbl = UiFactory.Label("State", cell.transform, $"{AxisLabel(axis)} {ObservationCardBuilder.AxisText(rec)}",
-                                           15, TextAnchor.MiddleLeft, UiFactory.WoodDark);
+            bool picked = !string.IsNullOrEmpty(rec.pendingGuess);
+            string stateText = picked
+                ? $"{AxisLabel(axis)} {ObservationCardBuilder.ValueName(axis, rec.pendingGuess)}?"
+                : $"{AxisLabel(axis)} {ObservationCardBuilder.AxisText(rec)}";
+            var stateLbl = UiFactory.Label("State", cell.transform, stateText, 15, TextAnchor.MiddleLeft, picked ? UiFactory.Ink : UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)stateLbl.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 0.5f),
-                              new Vector2(0, 0), new Vector2(-84, 0));
+                              new Vector2(0, 0), new Vector2(-66, 0));
 
             var obs = owner.Obs;
             int day = owner.Day != null ? owner.Day.CurrentDay : 0;
             var can = obs != null ? obs.CanGuess(data.catId, axis, day) : ObservationManager.GuessResult.NotReady;
             bool ok = can == ObservationManager.GuessResult.Correct;
-            var btn = UiFactory.Button($"Guess_{axis}", cell.transform, L.Get("ui.guess.btn"),
+            var btn = UiFactory.Button($"Guess_{axis}", cell.transform, L.Get(picked ? "ui.guess.change" : "ui.guess.btn"),
                                        ok ? UiFactory.Pink : UiFactory.Wood, UiFactory.Cream, out var lbl);
-            lbl.fontSize = 15;
+            lbl.fontSize = 14;
             UiFactory.SetRect((RectTransform)btn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f),
-                              new Vector2(1, 0.5f), new Vector2(0, 0), new Vector2(76, 34));
+                              new Vector2(1, 0.5f), new Vector2(0, 0), new Vector2(60, 34));
             btn.interactable = ok;
             btn.onClick.AddListener(() => { if (!busy) OpenGuess(data, axis, (RectTransform)btn.transform); });
         }
@@ -397,7 +515,7 @@ namespace YeogiCafe.UI
                     b.interactable = false;
                 }
                 var captured = opt;
-                b.onClick.AddListener(() => { if (!busy) owner.StartCoroutine(GuessWithPaw(cat, axis, captured, brt)); });
+                b.onClick.AddListener(() => { if (!busy) owner.StartCoroutine(PickWithPaw(cat, axis, captured, brt)); });
             }
 
             var close = UiFactory.Button("Close", box.transform, L.Get("ui.guess.cancel"), UiFactory.Wood, UiFactory.Cream, out _);
@@ -412,30 +530,14 @@ namespace YeogiCafe.UI
             guessGo = null;
         }
 
-        IEnumerator GuessWithPaw(CatData cat, PrefAxis axis, Option opt, RectTransform btnRt)
+        // 답을 '골라 두기'만 한다(채점은 [확인]에서 한꺼번에)
+        IEnumerator PickWithPaw(CatData cat, PrefAxis axis, Option opt, RectTransform btnRt)
         {
             busy = true;
-            var obs = owner.Obs;
-            int day = owner.Day != null ? owner.Day.CurrentDay : 0;
-            var result = ObservationManager.GuessResult.NotReady; int bonus = 0;
-            bool early = false;
-            if (owner.Save != null) early = owner.Save.GetOrCreateCat(cat.catId).observation.Get(axis).state == ObsState.Suspected;
             yield return PawTap(btnRt.position, () =>
             {
-                if (obs != null) result = obs.TryGuess(cat.catId, axis, opt.id, opt.correct, day, out bonus);
-                if (result == ObservationManager.GuessResult.Correct) owner.StartCoroutine(PopCheck(btnRt));
+                if (owner.Save != null) owner.Save.GetOrCreateCat(cat.catId).observation.Get(axis).pendingGuess = opt.id;
             });
-            string catName = L.Get($"cat.{cat.catId}.name");
-            if (result == ObservationManager.GuessResult.Correct)
-            {
-                if (bonus > 0 && owner.Economy != null) owner.Economy.AddGold(bonus);
-                owner.RefreshHud();
-                guessMsg.text = L.Get("ui.guess.correct", ("name", catName), ("item", opt.name))
-                              + (early ? "\n" + L.Get("ui.guess.early", ("g", bonus.ToString())) : "");
-            }
-            else if (result == ObservationManager.GuessResult.Wrong) guessMsg.text = L.Get("ui.guess.wrong");
-            else guessMsg.text = L.Get("ui.guess.tried");
-            yield return new WaitForSecondsRealtime(1.4f);
             CloseGuess();
             busy = false;
             Show();

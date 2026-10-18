@@ -32,6 +32,8 @@ namespace YeogiCafe.UI
         CatalogPanel catalog;
         BubbleLayer bubbles;
         KitchenView kitchen;
+        YeogiCafe.Progression.QuestBoard quests;
+        GameObject questPanel; Text questList, questBtnLabel;
         FurnitureEditMode editMode;
         Text kitchenBtnLabel;
 
@@ -83,7 +85,8 @@ namespace YeogiCafe.UI
             }
 
             bubbles = new BubbleLayer(root.transform);
-            if (bootstrap != null && bootstrap.interactions != null) bootstrap.interactions.say = ShowCatBubble;
+            if (bootstrap != null && bootstrap.interactions != null)
+            { bootstrap.interactions.say = ShowCatBubble; bootstrap.interactions.toast = ShowToast; }
             BuildHud(root.transform);
 
             kitchen = new KitchenView(this, root.transform, bootstrap != null ? bootstrap.orderSystem : null);
@@ -91,6 +94,20 @@ namespace YeogiCafe.UI
             settlement = new SettlementPanel(this, root.transform);
             catalog = new CatalogPanel(this, root.transform);
             editMode = new FurnitureEditMode(this, root.transform);
+
+            quests = new YeogiCafe.Progression.QuestBoard(() => Save,
+                () => Save != null ? (IReadOnlyList<CatData>)UnlockService.UnlockedCats(AllCats, Save) : AllCats);
+            quests.addGold = g => { if (economy != null) economy.AddGold(g); RefreshHud(); };
+            quests.toast = ShowToast;
+            quests.OnChanged += RefreshQuests;
+            var qp = UiFactory.Panel("QuestPanel", root.transform, new Color(1f, 0.97f, 0.88f, 0.97f));
+            UiFactory.SetRect(qp, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(300, -70), new Vector2(380, 150));
+            questPanel = qp.gameObject;
+            var qt = UiFactory.Label("T", qp.transform, L.Get("ui.quest.title"), 18, TextAnchor.UpperLeft, UiFactory.WoodDark);
+            UiFactory.SetRect((RectTransform)qt.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(14, -8), new Vector2(-20, 24));
+            questList = UiFactory.Label("L", qp.transform, "", 16, TextAnchor.UpperLeft, UiFactory.Ink);
+            UiFactory.SetRect((RectTransform)questList.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 1), new Vector2(14, -36), new Vector2(-24, -44));
+            questPanel.SetActive(false);
         }
 
         void BuildHud(Transform parent)
@@ -143,6 +160,12 @@ namespace YeogiCafe.UI
                               new Vector2(1, 0.5f), new Vector2(-274, 0), new Vector2(120, 48));
             kitBtn.onClick.AddListener(ToggleKitchen);
 
+            // 오늘의 의뢰(왼쪽, 손님 수 옆)
+            var qBtn = UiFactory.Button("QuestBtn", bar.transform, L.Get("ui.quest.btn"), UiFactory.YellowLight, UiFactory.Ink, out questBtnLabel);
+            UiFactory.SetRect((RectTransform)qBtn.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
+                              new Vector2(0, 0.5f), new Vector2(330, 0), new Vector2(110, 44));
+            qBtn.onClick.AddListener(ToggleQuests);
+
             // 가구 배치(끌어서 옮기기)
             var editBtn = UiFactory.Button("EditBtn", bar.transform, L.Get("ui.edit.open"),
                                            UiFactory.Wood, UiFactory.Cream, out _);
@@ -175,13 +198,32 @@ namespace YeogiCafe.UI
         {
             var os = bootstrap != null ? bootstrap.orderSystem : null;
             if (ordersHooked || os == null) return;
-            os.OnTicketPlaced += t => ShowCatBubble(t.catId,
-                L.Get("ui.order.ask", ("menu", t.menu != null ? L.Get($"menu.{t.menu.menuId}") : "")));
+            os.OnTicketPlaced += t => ShowCatBubble(t.catId, t.vague
+                ? L.Get("ui.order.askhint", ("hint", L.Get(t.hintKey)))
+                : L.Get("ui.order.ask", ("menu", t.menu != null ? L.Get($"menu.{t.menu.menuId}") : "")));
             os.OnTicketCancelled += t => ShowCatBubble(t.catId, L.Get("ui.order.gaveup"));
             ordersHooked = true;
         }
 
         public void ShowCatBubble(string catId, string text) => bubbles?.Show(catId, text);
+
+        // 화면 위쪽 알림(선물·의뢰 완료 등) — 3.5초 뒤 사라짐
+        Text toastText; CanvasGroup toastCg; float toastT;
+        readonly Queue<string> toastQueue = new();
+        public void ShowToast(string text)
+        {
+            if (toastCg != null && toastT > 0.6f) { toastQueue.Enqueue(text); return; }   // 앞 알림이 끝나면 차례로
+            if (toastText == null)
+            {
+                var bg = UiFactory.Panel("Toast", root.transform, new Color(1f, 0.98f, 0.93f, 0.97f));
+                UiFactory.SetRect(bg, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -76), new Vector2(720, 64));
+                toastCg = bg.gameObject.AddComponent<CanvasGroup>(); toastCg.blocksRaycasts = false;
+                toastText = UiFactory.Label("T", bg.transform, "", 18, TextAnchor.MiddleCenter, UiFactory.Ink);
+                UiFactory.Anchor((RectTransform)toastText.transform, Vector2.zero, Vector2.one, new Vector2(12, 4), new Vector2(-12, -4));
+            }
+            toastText.text = text; toastT = 3.5f; toastCg.alpha = 1f;
+            toastText.transform.parent.SetAsLastSibling();
+        }
 
         void ToggleKitchen()
         {
@@ -208,6 +250,8 @@ namespace YeogiCafe.UI
         void Update()
         {
             TryHookObservation();
+            if (Save != null) Weather.EnsureToday(Save);
+            if (quests != null && Save != null && Save.questDay != Save.currentDay && flow != null) { quests.EnsureToday(); RefreshQuests(); }
             TryHookOrders();
             kitchen?.Tick(Time.unscaledDeltaTime);
             editMode?.Tick(Time.unscaledDeltaTime);
@@ -215,6 +259,8 @@ namespace YeogiCafe.UI
                 timeBarFill.fillAmount = HudFormatter.TimeProgress(day.DayTimer, bootstrap.balance.dayLength);
 
             bubbles?.Tick(Time.unscaledDeltaTime);
+            if (toastCg != null && toastT > 0f) { toastT -= Time.unscaledDeltaTime; toastCg.alpha = Mathf.Clamp01(toastT / 0.5f); }
+            if (toastCg != null && toastT <= 0.6f && toastQueue.Count > 0) { toastT = 0f; ShowToast(toastQueue.Dequeue()); }
             hudTimer -= Time.unscaledDeltaTime;
             if (hudTimer <= 0f) { hudTimer = 0.5f; RefreshHud(); }   // 손님 수 등 이벤트 없는 값 주기 갱신
 
@@ -236,7 +282,8 @@ namespace YeogiCafe.UI
         {
             if (goldText != null && economy != null) goldText.text = HudFormatter.Gold(economy.Gold);
             if (phaseText != null && day != null)
-                phaseText.text = L.Get("ui.cafe.day", ("n", day.CurrentDay.ToString())) + "  " + HudFormatter.Phase(day.Phase);
+                phaseText.text = L.Get("ui.cafe.day", ("n", day.CurrentDay.ToString())) + "  " + HudFormatter.Phase(day.Phase)
+                                 + "  " + L.Get("weather." + (int)Weather.Current);
             if (guestText != null && cafe != null)
             {
                 int seated = cafe.SeatCount - cafe.FreeSeatCount;
@@ -245,6 +292,27 @@ namespace YeogiCafe.UI
         }
 
         // 정산 화면의 [다음 날] → 영업 재개. (재방문 큐 편성은 flow가 담당하지만 S1은 단순 재시작)
+        void ToggleQuests()
+        {
+            quests.EnsureToday();
+            questPanel.SetActive(!questPanel.activeSelf);
+            if (questPanel.activeSelf) { questPanel.transform.SetAsLastSibling(); RefreshQuests(); }
+        }
+
+        void RefreshQuests()
+        {
+            var s = Save; if (s == null || questList == null) return;
+            var sb = new System.Text.StringBuilder();
+            int done = 0;
+            foreach (var q in s.quests)
+            {
+                if (q.done) done++;
+                sb.Append(q.done ? "[완료] " : $"[{q.progress}/{q.goal}] ").Append(L.Get(q.id)).Append($"  +{q.reward}G\n");
+            }
+            questList.text = sb.ToString();
+            if (questBtnLabel != null) questBtnLabel.text = $"{L.Get("ui.quest.btn")} {done}/{s.quests.Count}";
+        }
+
         public DayManager Day => day;
         public CafeContext Cafe => cafe;
         public CatManager Cats => bootstrap != null ? bootstrap.cats : null;

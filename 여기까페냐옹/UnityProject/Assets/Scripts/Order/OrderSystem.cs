@@ -19,6 +19,12 @@ namespace YeogiCafe.Order
         public float patience = 45f;  // 인내심(초) — 주문 대기 중에만 줄어든다
         public float maxPatience = 45f;
         public string toolId;         // 조리 중인 기구
+        // 모호 주문(단골): 메뉴 이름 대신 힌트로 말한다. 플레이어가 메뉴를 골라야(Resolve) 조리 가능.
+        public MenuData requested;    // 고양이가 실제로 원한 메뉴
+        public bool vague;            // 힌트 주문이었나
+        public bool unresolved;       // 아직 플레이어가 메뉴를 정하지 않음
+        public string hintKey;        // order.hint.{menuId}.{n}
+        public bool IsCorrectDish => menu == requested;
 
         public float CookRatio => menu == null || menu.cookTime <= 0 ? 1f : Mathf.Clamp01(cookProgress / menu.cookTime);
         public float PatienceRatio => maxPatience <= 0 ? 0f : Mathf.Clamp01(patience / maxPatience);
@@ -36,9 +42,11 @@ namespace YeogiCafe.Order
         public event Action<OrderTicket> OnTicketServed;
         public event Action<OrderTicket> OnTicketCancelled;
 
-        public OrderTicket Place(string catId, MenuData menu)
+        public OrderTicket Place(string catId, MenuData menu, bool vague = false, string hintKey = null)
         {
-            var t = new OrderTicket { catId = catId, menu = menu, patience = defaultPatience, maxPatience = defaultPatience };
+            var t = new OrderTicket { catId = catId, menu = menu, requested = menu, patience = defaultPatience, maxPatience = defaultPatience,
+                                      vague = vague, unresolved = vague, hintKey = hintKey };
+            if (vague) { t.patience += 15f; t.maxPatience += 15f; }    // 해석할 시간을 조금 더
             tickets.Add(t);
             OnTicketPlaced?.Invoke(t);
             return t;
@@ -58,10 +66,17 @@ namespace YeogiCafe.Order
             return null;
         }
 
+        // 모호 주문 해석: 플레이어가 고른 메뉴로 확정(틀려도 그대로 조리·서빙됨)
+        public void Resolve(OrderTicket t, MenuData chosen)
+        {
+            if (t == null || chosen == null || !t.unresolved) return;
+            t.menu = chosen; t.unresolved = false;
+        }
+
         public OrderTicket OldestQueuedFor(string toolId)
         {
             foreach (var t in tickets)
-                if (t.state == TicketState.Queued && CookingStations.ToolFor(t.menu?.menuId) == toolId) return t;
+                if (t.state == TicketState.Queued && !t.unresolved && CookingStations.ToolFor(t.menu?.menuId) == toolId) return t;
             return null;
         }
 

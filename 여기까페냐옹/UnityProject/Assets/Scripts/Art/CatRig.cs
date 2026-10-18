@@ -54,6 +54,8 @@ namespace YeogiCafe.Art
         static readonly Fur BlueGray = F(140, 158, 176);
         static readonly Fur Cream  = F(240, 222, 190);
         static readonly Fur Seal   = F(122, 96, 80);
+        static readonly Fur Moon   = F(248, 246, 252);
+        static readonly Fur Silver = F(196, 204, 222);
 
         static Color32 EyeColor(string id) => id switch
         {
@@ -61,6 +63,7 @@ namespace YeogiCafe.Art
             "cat_black"   => new Color32(232, 196, 84, 255),
             "cat_tuxedo"  => new Color32(150, 196, 110, 255),
             "cat_gray"    => new Color32(232, 176, 80, 255),
+            "cat_moon"    => new Color32(236, 196, 90, 255),     // 달냥: 오드아이(앞 눈 금색, 뒤 눈 파랑)
             _             => new Color32(120, 170, 110, 255),
         };
 
@@ -72,6 +75,18 @@ namespace YeogiCafe.Art
                 case "cat_cheese":   return Orange;
                 case "cat_mackerel": return BlueGray;
                 case "cat_gray":     return part == Part.Muzzle ? White : Gray;
+                case "cat_spin":     // 밈 손님 '빙글냥': 회색 줄무늬 + 흰 턱·양말
+                    if (part == Part.Muzzle || (part == Part.Leg && v < -0.2f) || (part == Part.Chest && v < 0.2f)) return White;
+                    return Gray;
+                case "cat_bounce":   // 밈 손님 '방방냥': 치즈 + 흰 양말
+                    if (part == Part.Muzzle || (part == Part.Leg && v < -0.2f)) return White;
+                    return Orange;
+                case "cat_moon":
+                    // 은빛 흰 고양이: 귀 끝·꼬리 끝·이마에 옅은 은회색
+                    if (part == Part.Ear) return Silver;
+                    if (part == Part.Tail && v < 0.35f) return Silver;
+                    if (part == Part.Head && v > 0.55f && Mathf.Abs(u - 0.1f) < 0.35f) return Silver;
+                    return Moon;
                 case "cat_black":    return Black;
                 case "cat_siamese":
                     if (part == Part.Ear || part == Part.Tail || part == Part.Muzzle) return Seal;
@@ -108,7 +123,7 @@ namespace YeogiCafe.Art
         static float Blob(float x, float y, float f, float seed)
             => (Mathf.Sin(x * f + seed) * Mathf.Sin(y * f * 1.3f + seed * 2.1f) + Mathf.Sin((x + y) * f * 0.55f + seed * 3.7f)) * 0.75f;
 
-        static bool Tabby(string id) => id == "cat_cheese" || id == "cat_mackerel";
+        static bool Tabby(string id) => id == "cat_cheese" || id == "cat_mackerel" || id == "cat_spin" || id == "cat_bounce";
 
         // ───────── 래스터 ─────────
         enum Part : byte { None, Body, Chest, Hip, Head, Muzzle, Ear, Leg, Tail, Paw }
@@ -396,7 +411,7 @@ namespace YeogiCafe.Art
             // 두 눈(3/4): 뒤 눈은 얼굴 중앙, 앞 눈은 주둥이 위 앞쪽
             var e1 = Rot(-R * 0.08f, R * 0.08f);
             var e2 = Rot(R * 0.62f, R * 0.08f);
-            Eye(c, I(e1.x), I(e1.y), face, EyeColor(id), false);
+            Eye(c, I(e1.x), I(e1.y), face, id == "cat_moon" ? new Color32(120, 176, 232, 255) : EyeColor(id), false);
             Eye(c, I(e2.x), I(e2.y), face, EyeColor(id), true);
 
             // 볼 홍조(눈 아래 양쪽)

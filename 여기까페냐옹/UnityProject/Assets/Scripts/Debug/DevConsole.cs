@@ -36,7 +36,7 @@ namespace YeogiCafe.DevTools
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (!show) return;
-            GUILayout.BeginArea(new Rect(10, 80, 260, 460), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(10, 80, 260, 500), GUI.skin.box);
             GUILayout.Label("== DevConsole (F1) ==");
             if (economy != null)
             {
@@ -71,6 +71,10 @@ namespace YeogiCafe.DevTools
                 GUILayout.BeginHorizontal();
                 if (GUILayout.Button("덮치기")) dir.DebugForce(YeogiCafe.AI.SocialKind.Ambush);
                 if (GUILayout.Button("우다다")) dir.DebugZoomies();
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("빙글냥")) dir.DebugMeme(true);
+                if (GUILayout.Button("방방냥")) dir.DebugMeme(false);
                 GUILayout.EndHorizontal();
             }
             if (GUILayout.Button("세이브 삭제 후 종료(새 게임)"))

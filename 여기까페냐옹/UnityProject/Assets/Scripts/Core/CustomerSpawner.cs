@@ -105,7 +105,10 @@ namespace YeogiCafe.Core
             {
                 var d = pool[queueIndex % pool.Count];
                 queueIndex++;
-                if (d != null && !cats.IsInCafe(d.catId)) return d;
+                if (d == null || cats.IsInCafe(d.catId)) continue;
+                // 졸업한 고양이는 가끔만 놀러 온다
+                if (save != null && save.GetOrCreateCat(d.catId).graduated && Random.value < 0.67f) continue;
+                return d;
             }
             return null;
         }
