@@ -17,7 +17,7 @@ SEAT_ITEM = {'Window': ('seat_window', 200), 'Corner': ('seat_corner', 150), 'Tw
 FAC_ITEM = {'Soft': ('fac_cushion', 200), 'Play': ('fac_scratch', 250), 'Social': ('fac_toybox', 350), 'Natural': ('fac_plant', 180), 'Height': ('fac_tower', 400)}
 FAC_TAGS = {'fac_cushion': {'Soft'}, 'fac_scratch': {'Play'}, 'fac_toybox': {'Play', 'Social'}, 'fac_plant': {'Natural'}, 'fac_tower': {'Play', 'Height'}}
 
-def run(seed, cost_deducted=False, guess_skill=0.75, buy_all_needed=True, speed=2.0, menu_mode='fav', once_per_day=False, lv_cost=(800,2000), food_easy=True, cap=1):
+def run(seed, cost_deducted=False, guess_skill=0.75, buy_all_needed=True, speed=2.0, menu_mode='fav', once_per_day=False, lv_cost=(800,2000), food_easy=True, cap=1, disc_rec=False, food_roll=False):
     R = random.Random(seed)
     gold = 300; lv = 1; day = 0
     seats = ['normal'] * 3; facs = []
@@ -26,7 +26,7 @@ def run(seed, cost_deducted=False, guess_skill=0.75, buy_all_needed=True, speed=
     def unlocked(c):
         u = CATS[c][3]
         if u[0] == 'always': return True
-        if u[0] == 'disc': return sum(1 for k in cats.values() if k['v'] > 0) >= u[1]
+        if u[0] == 'disc': return sum(1 for k in cats.values() if (len(k['rec']) > 0 if disc_rec else k['v'] > 0)) >= u[1]
         if u[0] == 'lv': return lv >= u[1]
         if u[0] == 'axes': return sum(len(k['rec']) for k in cats.values()) >= u[1]
         if u[0] == 'moon': return lv >= 3 and 'seat_window' in seats and 'fac_tower' in facs
@@ -38,7 +38,7 @@ def run(seed, cost_deducted=False, guess_skill=0.75, buy_all_needed=True, speed=
         disc = sum(1 for k in cats.values() if len(k['rec']) > 0)
         mult = 1.6 + (1.0 - 1.6) * min(1, (lv - 1) * 0.34 + disc * 0.08)
         t = 0; active = []  # (leave_time, cat)
-        visited_today = set(); visit_n = {}
+        visited_today = set(); visit_n = {}; newbies = {c for c in CATS if cats[c]['v'] == 0}
         comers = {c for c in CATS if (not once_per_day) or c not in cats or R.random() < min(0.95, 0.2 + (st.mean(cats[c]['sat'][-3:]) if cats[c]['sat'] else 60)/100*0.5 + [0,0,0.15,0.3][cats[c]['stage']])}
         timer = 0; first = True
         while t < 720:
@@ -47,7 +47,7 @@ def run(seed, cost_deducted=False, guess_skill=0.75, buy_all_needed=True, speed=
             timer += 1
             pool = [c for c in CATS if unlocked(c) and c not in [a[1] for a in active]]
             pool = [c for c in pool if not (cats[c]['grad'] and R.random() < 0.67)]
-            if once_per_day: pool = [c for c in pool if c in comers and visit_n.get(c,0) < cap]
+            if once_per_day: pool = [c for c in pool if (c in comers or c in newbies) and visit_n.get(c,0) < cap + (1 if c in newbies else 0)]
             if (first or timer >= interval) and pool and len(active) < len(seats):
                 first = False; timer = 0
                 c = R.choice(pool); visited_today.add(c); visit_n[c] = visit_n.get(c,0)+1
@@ -56,7 +56,9 @@ def run(seed, cost_deducted=False, guess_skill=0.75, buy_all_needed=True, speed=
                 k = cats[c]; price, sp, fp, _ = CATS[c]
                 # 음식: 최애 메뉴가 열려 있으면 항상 최애(점수 100)
                 fav_open = not (c == 'moon' and lv < 3)
-                if fav_open: k['obs']['food'] += 3
+                ate_fav = fav_open and (not food_roll or R.random() < 0.6)
+                if ate_fav: k['obs']['food'] += 3
+                else: k.setdefault('food_other', {}); o = R.choice(['a','b','c','d']); k['food_other'][o] = k['food_other'].get(o, 0) + 3
                 # 좌석: 선호 좌석이 있고 비어 있으면 거기
                 used_seat = sp if SEAT_ITEM[sp][0] in seats and R.random() < 0.8 else 'Normal'
                 w = 1.5 if used_seat == sp else 0.5
@@ -73,9 +75,9 @@ def run(seed, cost_deducted=False, guess_skill=0.75, buy_all_needed=True, speed=
                         tag = fp if fp in FAC_TAGS[best] else sorted(FAC_TAGS[best])[0]
                         k['obs']['fac'][tag] = k['obs']['fac'].get(tag, 0) + 1.5
                         used_pref |= tag == fp
-                sat = 50 + (25 if fav_open else -5) + (15 if used_seat == sp else 0) + (15 if used_pref else 0)
+                sat = 50 + (25 if ate_fav else 0) + (15 if used_seat == sp else 0) + (15 if used_pref else 0)
                 tip = 0.8 if sat < 40 else 1.0 if sat < 70 else 1.15 if sat < 90 else 1.3
-                pay = round((price if fav_open else 50) * tip)
+                pay = round((price if ate_fav else 50) * tip)
                 income += pay; cost += 20
                 k['v'] += 1; k['sat'].append(sat)
             t += 1
@@ -84,7 +86,10 @@ def run(seed, cost_deducted=False, guess_skill=0.75, buy_all_needed=True, speed=
         for c, k in cats.items():
             for ax in ('food', 'seat', 'fac'):
                 if ax in k['rec']: continue
-                if ax == 'food': top = k['obs']['food']; ok = top >= 3; correct_p = 1.0 if food_easy else guess_skill
+                if ax == 'food':
+                    fo = max(k.get('food_other', {'x': 0}).values()); top = max(k['obs']['food'], fo); ok = top >= 3
+                    correct_p = (1.0 if food_easy else guess_skill) if k['obs']['food'] >= fo else 0.1
+                    if k['obs']['food'] >= 7 and k['obs']['food'] - fo >= 3: correct_p = 1.0
                 else:
                     d = k['obs'][ax]
                     if not d: continue
@@ -131,9 +136,6 @@ def summary(**kw):
     return runs, med
 
 if __name__ == '__main__':
-    for label, kw in [('E. 고양이당 하루 최대 2회 + 재료비 차감', dict(once_per_day=True, cost_deducted=True, cap=2)),
-                      ('F. E + 성장비 1200/3000', dict(once_per_day=True, cost_deducted=True, cap=2, lv_cost=(1200,3000)))]:
-        runs, med = summary(**kw)
-        print('==', label)
-        for k in ['income_d1', 'income_d5', 'income_d10', 'lv2', 'lv3', 'unlock_gray', 'unlock_moon', 'grad_cheese', 'done']:
-            print(f'  {k:12s}', med(k))
+    runs, med = summary(once_per_day=True, cost_deducted=True, cap=2, disc_rec=True, food_roll=True)
+    for k in ['income_d1', 'income_d3', 'income_d5', 'income_d10', 'lv2', 'lv3', 'unlock_calico', 'unlock_black', 'unlock_gray', 'unlock_moon', 'grad_cheese', 'done']:
+        print(f'  {k:13s}', med(k))

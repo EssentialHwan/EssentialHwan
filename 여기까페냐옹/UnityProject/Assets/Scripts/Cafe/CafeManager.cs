@@ -45,7 +45,7 @@ namespace YeogiCafe.Cafe
             var state = new GrowthState
             {
                 gold = economy.Gold,
-                discoveredCats = save.cats.FindAll(c => c.visitCount > 0).Count,
+                discoveredCats = save.cats.FindAll(c => c.observation.RecordedAxisCount() > 0).Count,   // 발견 = 취향 기록(해금 조건과 같은 기준)
                 recordedAxesTotal = TotalRecordedAxes(),
                 regulars = save.cats.FindAll(c => c.regularStage >= 2).Count,
                 furnitureCount = save.placedFurniture.Count

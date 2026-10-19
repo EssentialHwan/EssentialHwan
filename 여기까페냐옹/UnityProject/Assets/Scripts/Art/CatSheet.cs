@@ -6,6 +6,7 @@ namespace YeogiCafe.Art
     // 도트 시트 고양이(4×4 = 16포즈, 칸 56×56). Resources/CatSheets/{catId}.bytes 가 있으면 리그 대신 이것을 쓴다.
     // 포즈 번호: 0 앉기 · 1 윙크 · 2 눈웃음 · 3 야옹 / 4~7 걷기 / 8 식빵 · 9 잠 · 10 그루밍 · 11 먹기 / 12 엉덩이 들기 · 13 기지개 · 14 웅크림 · 15 꾹꾹이
     //           16 하악 · 17 뒹굴(옆으로 누움) · 18 점프 · 19 냥펀치(앞발 번쩍)
+    //           20~24 식빵 표정(마감 놀아주기 확대용): 20 눈웃음 · 21 감은 눈 · 22 화남 · 23 입 벌림 · 24 반쯤 감음
     // 클립(CatClips 이름)마다 포즈 번호와 살짝 흔들기(dx,dy)·눕히기(rot)를 조합해 프레임을 만든다.
     public static class CatSheet
     {
@@ -71,6 +72,17 @@ namespace YeogiCafe.Art
             if (px == null) Debug.LogWarning($"[CatSheet] {catId} 시트 없음 → 리그 그림 사용");
             sheets[catId] = px;
             return px;
+        }
+
+        // 시트 한 칸의 픽셀(x: 0~55 왼→오, yImg: 0~55 위→아래). 없거나 범위 밖이면 투명.
+        public static Color32 Px(string catId, int frame, int x, int yImg)
+        {
+            var src = Load(catId);
+            if (src == null || x < 0 || yImg < 0 || x >= Cell || yImg >= Cell) return default;
+            int sw = sheetW[catId], sh = src.Length / sw;
+            int cx = (frame % 4) * Cell, cy = (frame / 4) * Cell;
+            if (cy + Cell > sh) return default;
+            return src[(sh - 1 - (cy + yImg)) * sw + cx + x];
         }
 
         public static int FrameCount(string clip) => Map.TryGetValue(clip, out var k) ? k.Length : 1;

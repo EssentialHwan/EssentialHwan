@@ -443,14 +443,14 @@ namespace YeogiCafe.UI
             {
                 if (tk.state == TicketState.Served || tk.state == TicketState.Cancelled) continue;
                 var card = UiFactory.Panel("Ticket_" + tk.catId, ticketRail, UiFactory.Cream);
-                card.sizeDelta = new Vector2(212, 64);
+                card.sizeDelta = new Vector2(236, 66);
                 UiFactory.Frame(card, UiFactory.FrameStyle.Paper, tk.unresolved ? (Color?)UiFactory.YellowLight : null);
                 ticketCards.Add(card.gameObject);
 
                 var catIcon = Icon(card, CatSprite(tk.catId), new Vector2(6, 10), 46);
                 var dish = Icon(card, tk.unresolved ? RuntimeSprites.Get("emote_Question", () => EmoteDrawing.Draw(EmoteDrawing.Kind.Question))
                                                     : DishSprite(tk.menu != null ? tk.menu.menuId : ""), new Vector2(52, 14), 38);
-                var nameT = UiFactory.Label("Menu", card, tk.unresolved ? L.Get(tk.hintKey) : MenuName(tk), tk.unresolved ? 13 : 15, TextAnchor.MiddleLeft, UiFactory.Ink);
+                var nameT = UiFactory.Label("Menu", card, tk.unresolved ? L.Get(tk.hintKey) : MenuName(tk), tk.unresolved ? 15 : 17, TextAnchor.MiddleLeft, UiFactory.Ink);
                 if (tk.unresolved)
                 {
                     // 힌트 주문: 카드를 눌러 메뉴를 고른다
@@ -459,9 +459,9 @@ namespace YeogiCafe.UI
                     btn.onClick.AddListener(() => OpenPicker(captured));
                 }
                 UiFactory.SetRect((RectTransform)nameT.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1),
-                                  new Vector2(94, -6), new Vector2(110, 42));
+                                  new Vector2(94, -6), new Vector2(134, 52));
                 nameT.horizontalOverflow = HorizontalWrapMode.Wrap;
-                nameT.resizeTextForBestFit = true; nameT.resizeTextMinSize = 11; nameT.resizeTextMaxSize = nameT.fontSize;
+                nameT.resizeTextForBestFit = true; nameT.resizeTextMinSize = 13; nameT.resizeTextMaxSize = nameT.fontSize;
                 nameT.verticalOverflow = VerticalWrapMode.Truncate;
 
                 // 상태: 대기(인내심 바) / 조리 중 / 완성

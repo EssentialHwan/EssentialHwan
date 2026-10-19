@@ -99,13 +99,41 @@ g = reoutline(g)
 stamp(g, 31, 37, ["#PP#", ".##."], KM)
 frames.append(bottom_align(g))
 
+
+# ── 20~24: 마감 놀아주기 확대용 식빵(8) 표정 변형 ── 20 눈웃음 · 21 감은 눈 · 22 화남 · 23 입 벌림 · 24 반쯤 감음
+def clear_eyes(g):
+    g = g.copy()
+    m = np.zeros(g.shape, bool); m[35:42, 22:31] = True; m[35:42, 35:45] = True
+    m &= g >= 0
+    fur = (g >= 0) & ~m & (g != OUT)
+    idx = ndimage.distance_transform_edt(~fur, return_distances=False, return_indices=True)
+    for y, x in zip(*np.where(m)): g[y, x] = g[idx[0][y, x], idx[1][y, x]]
+    return g
+L8 = clear_eyes(frames[8])
+EYEC = ((26, 39), (40, 39))
+g = L8.copy()                                    # 20 눈웃음 ^^
+for cx, cy in EYEC:
+    for x in range(cx - 1, cx + 2): g[cy - 1, x] = OUT
+    g[cy, cx - 2] = OUT; g[cy, cx + 2] = OUT; g[cy + 1, cx - 3] = OUT; g[cy + 1, cx + 3] = OUT
+frames.append(g)
+g = L8.copy()                                    # 21 감은 눈 ‿‿
+for cx, cy in EYEC:
+    for x in range(cx - 2, cx + 3): g[cy + 1, x] = OUT
+    g[cy, cx - 3] = OUT; g[cy, cx + 3] = OUT
+frames.append(g)
+frames.append(frames[8].copy())                  # 22 화남(눈꺼풀은 색칠 단계에서)
+g = frames[8].copy()                             # 23 입 벌림
+stamp(g, 30, 42, ["#PPP#", "#PpP#", "#PPP#", ".###."], KM)
+frames.append(g)
+frames.append(frames[8].copy())                  # 24 반쯤 감음(눈꺼풀은 색칠 단계에서)
+
 pickle.dump((cent, frames), open('frames20.pkl', 'wb'))
 
 # 미리보기
 from PIL import Image
 S = 8
 img = Image.new('RGB', (F * S * 4, F * S), (40, 40, 48))
-for n, g in enumerate(frames[16:]):
+for n, g in enumerate(frames[16:20]):
     for y in range(F):
         for x in range(F):
             k = g[y, x]

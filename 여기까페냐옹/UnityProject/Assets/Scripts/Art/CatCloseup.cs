@@ -20,6 +20,7 @@ namespace YeogiCafe.Art
         public enum Zone { None, Head, Cheek, Chin, Back, Paw }
         public static Zone ZoneAt(float x, float y, int lean = 0)
         {
+            if (sheetMode) return SheetZoneAt(x, y, lean);
             float hx = 84 + lean * 4, hy = 74;
             float dx = (x - hx) / 38f, dy = (y - hy) / 32f;
             if (dx * dx + dy * dy <= 1f || (y > 90 && Mathf.Abs(x - hx) < 44 && y < 124))
@@ -100,8 +101,57 @@ namespace YeogiCafe.Art
             return !(neg && pos);
         }
 
+        // ── 도트 시트 고양이(홀의 그 고양이 그림을 3배로) ── 시트가 있으면 이쪽으로 그린다.
+        static bool sheetMode;
+        const int SheetScale = 3;
+
+        static int SheetFrame(State s) => s.mouthOpen || s.eyes == Eyes.Wide ? 23
+            : s.eyes == Eyes.Angry ? 22 : s.eyes == Eyes.Happy ? 20 : s.eyes == Eyes.Closed ? 21 : s.eyes == Eyes.Half ? 24 : 8;
+
+        static PixelCanvas DrawSheet(string id, State s)
+        {
+            var c = new PixelCanvas(W, H);
+            for (int y = 0; y < 10; y++)                                     // 카운터 위 그림자
+                for (int x = 0; x < W; x++)
+                {
+                    float u = (x - 85f) / 70f, v = (y - Ground) / 5f;
+                    if (u * u + v * v <= 1f) c.Set(x, y, C(60, 40, 40, 60));
+                }
+            int f = SheetFrame(s), ox = s.lean * 3;
+            for (int yi = 0; yi < CatSheet.Cell; yi++)
+                for (int xi = 0; xi < CatSheet.Cell; xi++)
+                {
+                    var p = CatSheet.Px(id, f, xi, yi);
+                    if (p.a == 0) continue;
+                    int bx = xi * SheetScale + ox, by = Ground + (CatSheet.Cell - 2 - yi) * SheetScale;
+                    for (int dy = 0; dy < SheetScale; dy++)
+                        for (int dx = 0; dx < SheetScale; dx++) c.Set(bx + dx, by + dy, p);
+                }
+            return c;
+        }
+
+        // 식빵 자세 3배 기준 부위: 머리(눈 위)·볼(얼굴 양옆)·턱(코 아래)·앞발·몸
+        static Zone SheetZoneAt(float x, float y, int lean)
+        {
+            float hx = 85 + lean * 3, hy = 70;
+            float dx = (x - hx) / 50f, dy = (y - hy) / 42f;
+            if (dx * dx + dy * dy <= 1f)
+            {
+                if (y >= 82) return Zone.Head;
+                if (y < 47 && Mathf.Abs(x - hx) < 18) return Zone.Chin;
+                if (Mathf.Abs(x - hx) >= 26) return Zone.Cheek;
+                return y < 56 ? Zone.Chin : Zone.Head;
+            }
+            if (y >= Ground && y < 30 && ((x >= 38 && x <= 70) || (x >= 98 && x <= 132))) return Zone.Paw;
+            float bx = (x - 85f) / 68f, by = (y - 26f) / 22f;
+            if (bx * bx + by * by <= 1f && y >= Ground) return Zone.Back;
+            return Zone.None;
+        }
+
         public static PixelCanvas Draw(string id, State s)
         {
+            sheetMode = CatSheet.Has(id);
+            if (sheetMode) return DrawSheet(id, s);
             var buf = new Px[W * H];
             var c = new PixelCanvas(W, H);
             float hx = 84 + s.lean * 4f, hy = 74f, tilt = -s.lean * 0.07f;

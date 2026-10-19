@@ -163,7 +163,13 @@ namespace YeogiCafe.UI
             UiFactory.SetRect((RectTransform)next.transform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 16), new Vector2(160, 46));
             next.onClick.AddListener(() =>
             {
-                if (owner.Save != null && owner.Save.storyQueue.Count > 0) owner.Save.storyQueue.RemoveAt(0);
+                if (owner.Save != null && owner.Save.storyQueue.Count > 0)
+                {
+                    owner.Save.storyQueue.RemoveAt(0);
+                    // 본 이야기는 바로 저장 — 정산 중에 게임을 끄면 다음에 같은 이야기가 또 뜨던 문제
+                    var sm = Object.FindObjectOfType<YeogiCafe.Save.SaveManager>();
+                    if (sm != null) sm.Save(owner.Save);
+                }
                 Object.Destroy(storyGo); storyGo = null;
                 if (owner.Save != null && owner.Save.storyQueue.Count > 0) OpenStory(owner.Save.storyQueue[0]);
             });

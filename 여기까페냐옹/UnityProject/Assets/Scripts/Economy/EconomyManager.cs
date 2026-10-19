@@ -35,7 +35,13 @@ namespace YeogiCafe.Economy
             return true;
         }
 
-        public void AddIngredientCost(int cost) => TodayCost += cost;
+        // 재료비: 정산 표시만 하던 것을 실제 골드에서도 뺀다(0 미만으로는 안 내려감)
+        public void AddIngredientCost(int cost)
+        {
+            TodayCost += cost;
+            Gold = Mathf.Max(0, Gold - cost);
+            OnGoldChanged?.Invoke(Gold);
+        }
 
         public void ResetDaily() { TodayRevenue = 0; TodayCost = 0; }
         public int TodayNet => TodayRevenue - TodayCost;

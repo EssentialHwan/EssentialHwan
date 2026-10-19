@@ -36,7 +36,8 @@ namespace YeogiCafe.Data
             }
         }
 
-        static int CountDiscovered(SaveGame s) { int n = 0; foreach (var c in s.cats) if (c.visitCount > 0) n++; return n; }
+        // 발견 = 취향을 하나라도 기록한 고양이(방문만으론 X) — 도감 '발견 n/9'·카페 성장 조건과 같은 기준
+        static int CountDiscovered(SaveGame s) { int n = 0; foreach (var c in s.cats) if (c.observation.RecordedAxisCount() > 0) n++; return n; }
         static int CountRecorded(SaveGame s) { int n = 0; foreach (var c in s.cats) n += c.observation.RecordedAxisCount(); return n; }
         static int CountRegulars(SaveGame s) { int n = 0; foreach (var c in s.cats) if (c.regularStage >= 2) n++; return n; }
     }
