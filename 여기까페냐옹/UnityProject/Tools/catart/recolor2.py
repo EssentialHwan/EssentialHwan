@@ -42,14 +42,14 @@ WHITE = [(252, 244, 236), (238, 222, 212), (214, 196, 190), (176, 160, 166)]
 
 CATS = {
     'calico':  None,
-    'cheese':  dict(name='치즈냥', fur=ramp((240, 150, 70)), white=WHITE, X=(60, 26, 16), iris=(104, 170, 70), stripes=True),
+    'cheese':  dict(name='치즈냥', fur=ramp((240, 150, 70)), white=WHITE, X=(60, 26, 16), line=(120, 62, 40), iris=(104, 170, 70), stripes=True),
     'cow':     dict(name='젖소냥', fur=ramp((64, 58, 72)), white=WHITE, keepPatch=True, X=(22, 12, 20), iris=(110, 160, 90)),
-    'black':   dict(name='까망냥', fur=[(88, 82, 106), (62, 56, 78), (48, 42, 62), (36, 30, 46)], X=(14, 8, 16), iris=(244, 180, 56), acc='bandana'),
+    'black':   dict(name='까망냥', fur=[(88, 82, 106), (62, 56, 78), (48, 42, 62), (36, 30, 46)], X=(14, 8, 16), iris=(244, 180, 56), acc='bandana', line=(26, 18, 30)),
     'tuxedo':  dict(name='턱시도냥', fur=[(84, 78, 98), (60, 54, 74), (46, 40, 58), (34, 28, 44)], white=WHITE, X=(16, 8, 16), iris=(236, 180, 70), acc='bowtie'),
     'mackerel':dict(name='고등어냥', fur=ramp((150, 152, 164)), white=WHITE, X=(32, 26, 34), iris=(214, 172, 70), stripes=True),
-    'siamese': dict(name='샴냥', fur=ramp((240, 226, 202), dark=0.8, light=1.04), point=ramp((104, 74, 60)), X=(48, 30, 26), iris=(70, 140, 232)),
+    'siamese': dict(name='샴냥', fur=ramp((240, 226, 202), dark=0.8, light=1.04), point=ramp((104, 74, 60)), X=(48, 30, 26), iris=(70, 140, 232), line=(60, 36, 30)),
     'gray':    dict(name='회색냥', fur=ramp((148, 148, 162)), white=WHITE, whiteFaceOnly=True, X=(32, 28, 36), iris=(126, 170, 96), acc='collar'),
-    'moon':    dict(name='달냥', fur=[(255, 255, 255), (240, 240, 250), (220, 222, 238), (188, 192, 214)], X=(84, 86, 112), iris=(80, 150, 236), iris2=(236, 186, 64)),
+    'moon':    dict(name='달냥', fur=[(255, 255, 255), (240, 240, 250), (220, 222, 238), (188, 192, 214)], X=(84, 86, 112), line=(150, 128, 150), iris=(80, 150, 236), iris2=(236, 186, 64)),
 }
 
 def point_mask(g, eyes, face=None):
@@ -163,6 +163,11 @@ def render(key, i):
     eyes = EYES[i] if i in EYES else eye_boxes(g)
     em = np.zeros(g.shape, bool)
     for x0, y0, x1, y1 in eyes: em[y0:y1 + 2, x0:x1 + 1] = True
+    # 흰 털 속 선(입·발가락 사이·감은 눈): 갈색 얼룩 군집이라 색 바꾸면 털색에 묻힌다 → 선 색으로
+    wm = np.isin(g, W + PINK).astype(int)
+    line = np.isin(g, B) & (ndimage.convolve(wm, np.ones((3, 3), int), mode='constant') >= 5)
+    if spec is not None and i in OPEN:
+        for tpl, x0, y0 in OPEN[i]: line[y0 - 1:y0 + len(tpl) + 1, x0 - 1:x0 + len(tpl[0]) + 1] = False
     pm = point_mask(g, eyes, FACE.get(i)) if spec and 'point' in spec else None
     rightEyeX = eyes[-1][0] if len(eyes) >= 2 else 999
     if spec is not None and i in OPEN:
@@ -185,6 +190,7 @@ def render(key, i):
                         ic = spec['iris2'] if 'iris2' in spec and x >= rightEyeX else spec['iris']
                         col = ic if k in (10, 0) else tuple(int(v * 0.75) for v in ic)
                 elif k == OUT: col = spec['X']
+                elif r == 'B' and line[y, x]: col = spec.get('line', (88, 50, 58))
                 elif r is not None:
                     lv = LVL[k]
                     if r == 'W' and 'white' in spec and not spec.get('whiteFaceOnly'): col = spec['white'][lv]
