@@ -41,17 +41,17 @@ namespace YeogiCafe.UI
             var title = UiFactory.Label("Title", panel.transform, L.Get("ui.settle.title"), 26,
                                         TextAnchor.MiddleCenter, UiFactory.Ink);
             UiFactory.SetRect((RectTransform)title.transform, new Vector2(0, 1), new Vector2(1, 1),
-                              new Vector2(0.5f, 1), new Vector2(0, -18), new Vector2(0, 40));
+                              new Vector2(0.5f, 1), new Vector2(0, -28), new Vector2(0, 40));     // 창 테두리(≈24px) 아래로
 
-            revenueText = UiFactory.Label("Revenue", panel.transform, "", 22, TextAnchor.UpperLeft, UiFactory.WoodDark);
+            revenueText = UiFactory.Label("Revenue", panel.transform, "", 21, TextAnchor.UpperCenter, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)revenueText.transform, new Vector2(0, 1), new Vector2(1, 1),
-                              new Vector2(0.5f, 1), new Vector2(0, -60), new Vector2(-40, 80));
+                              new Vector2(0.5f, 1), new Vector2(0, -68), new Vector2(-96, 60));
 
             var cardsGo = new GameObject("Cards", typeof(RectTransform), typeof(VerticalLayoutGroup));
             cardsGo.transform.SetParent(panel.transform, false);
             cardsContent = (RectTransform)cardsGo.transform;
             UiFactory.SetRect(cardsContent, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f),
-                              new Vector2(0, -14), new Vector2(-40, -230));
+                              new Vector2(0, -28), new Vector2(-48, -250));
             var vlg = cardsGo.GetComponent<VerticalLayoutGroup>();
             vlg.spacing = 4; vlg.childControlHeight = false; vlg.childForceExpandHeight = false;
             vlg.childControlWidth = true; vlg.childForceExpandWidth = true;
@@ -411,6 +411,7 @@ namespace YeogiCafe.UI
                                   new Vector2(0, 0.5f), new Vector2(0, 0), new Vector2(30, 30));
                 var t = UiFactory.Label("Val", cell.transform, $"{AxisLabel(axis)} {ObservationCardBuilder.ValueName(axis, rec.recordedValue)}",
                                         15, TextAnchor.MiddleLeft, UiFactory.PinkDeep);
+                UiFactory.FitOneLine(t, cellW - 8 - 36, 11);
                 UiFactory.SetRect((RectTransform)t.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 0.5f),
                                   new Vector2(34, 0), new Vector2(-34, 0));
                 return;
@@ -421,6 +422,7 @@ namespace YeogiCafe.UI
                 ? $"{AxisLabel(axis)} {ObservationCardBuilder.ValueName(axis, rec.pendingGuess)}?"
                 : $"{AxisLabel(axis)} {ObservationCardBuilder.AxisText(rec)}";
             var stateLbl = UiFactory.Label("State", cell.transform, stateText, 15, TextAnchor.MiddleLeft, picked ? UiFactory.Ink : UiFactory.WoodDark);
+            UiFactory.FitOneLine(stateLbl, cellW - 8 - 66 - 4, 11);                 // 버튼과 겹치지 않게 한 줄로
             UiFactory.SetRect((RectTransform)stateLbl.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 0.5f),
                               new Vector2(0, 0), new Vector2(-66, 0));
 

@@ -138,9 +138,12 @@ namespace YeogiCafe.UI
             UiFactory.SetRect((RectTransform)goldText.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
                               new Vector2(0, 0.5f), new Vector2(20, 0), new Vector2(170, 56));
 
-            guestText = UiFactory.Label("Guests", bar.transform, "", 20, TextAnchor.MiddleLeft, UiFactory.WoodDark);
-            UiFactory.SetRect((RectTransform)guestText.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-                              new Vector2(0, 0.5f), new Vector2(190, 0), new Vector2(160, 56));
+            // 손님 수: 판자 나뭇결 선 위에 글자가 겹치지 않게 작은 종이 배지 위에
+            var guestPill = UiFactory.Panel("GuestPill", bar.transform, UiFactory.Cream);
+            UiFactory.Frame(guestPill, UiFactory.FrameStyle.Card, UiFactory.Cream);
+            UiFactory.SetRect(guestPill, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(186, 0), new Vector2(124, 40));
+            guestText = UiFactory.Label("Guests", guestPill.transform, "", 19, TextAnchor.MiddleCenter, UiFactory.Ink);
+            UiFactory.Anchor((RectTransform)guestText.transform, Vector2.zero, Vector2.one, new Vector2(6, 0), new Vector2(-6, 0));
 
             phaseText = UiFactory.Label("Phase", bar.transform, "", 24, TextAnchor.MiddleCenter, UiFactory.Ink);
             UiFactory.SetRect((RectTransform)phaseText.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
@@ -192,9 +195,9 @@ namespace YeogiCafe.UI
 
             // 설정 — 의뢰 버튼 오른쪽(가운데 시간 표시와 겹치지 않게 작게). ESC로도 열림
             var optBtn = UiFactory.Button("OptBtn", bar.transform, L.Get("opt.btn"), UiFactory.CreamDim, UiFactory.WoodDark, out var optLbl);
-            optLbl.fontSize = 16;
+            optLbl.fontSize = 18;
             UiFactory.SetRect((RectTransform)optBtn.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-                              new Vector2(0, 0.5f), new Vector2(446, 0), new Vector2(58, 44));
+                              new Vector2(0, 0.5f), new Vector2(446, 0), new Vector2(68, 44));
             optBtn.onClick.AddListener(() => settings.Toggle());
 
             // (구) 하단 서술 텍스트는 고양이 머리 위 말풍선(BubbleLayer)으로 대체. 필드는 호환용으로 유지.

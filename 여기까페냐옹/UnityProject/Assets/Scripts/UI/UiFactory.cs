@@ -100,6 +100,13 @@ namespace YeogiCafe.UI
             return btn;
         }
 
+        // 한 줄에 다 들어가도록 글자 크기를 줄인다(줄바꿈 없이). 버튼 옆 라벨처럼 폭이 고정된 곳용.
+        public static void FitOneLine(Text t, float maxWidth, int minSize = 10)
+        {
+            t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            while (t.fontSize > minSize && t.preferredWidth > maxWidth) t.fontSize--;
+        }
+
         // ── 테두리(9-slice) ──
         public enum FrameStyle { Window, Paper, Card, Bubble, Plank }
 

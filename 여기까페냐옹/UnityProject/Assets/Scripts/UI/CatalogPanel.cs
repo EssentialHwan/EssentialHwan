@@ -33,17 +33,17 @@ namespace YeogiCafe.UI
             var title = UiFactory.Label("Title", panel.transform, L.Get("ui.catalog.title"), 26,
                                         TextAnchor.MiddleCenter, UiFactory.Ink);
             UiFactory.SetRect((RectTransform)title.transform, new Vector2(0, 1), new Vector2(1, 1),
-                              new Vector2(0.5f, 1), new Vector2(0, -18), new Vector2(0, 40));
+                              new Vector2(0.5f, 1), new Vector2(0, -28), new Vector2(0, 40));     // 창 테두리(≈24px) 아래로
 
             header = UiFactory.Label("Header", panel.transform, "", 22, TextAnchor.UpperCenter, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)header.transform, new Vector2(0, 1), new Vector2(1, 1),
-                              new Vector2(0.5f, 1), new Vector2(0, -56), new Vector2(-40, 40));
+                              new Vector2(0.5f, 1), new Vector2(0, -66), new Vector2(-60, 40));
 
             var listGo = new GameObject("List", typeof(RectTransform), typeof(VerticalLayoutGroup));
             listGo.transform.SetParent(panel.transform, false);
             listContent = (RectTransform)listGo.transform;
             UiFactory.SetRect(listContent, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f),
-                              new Vector2(0, -14), new Vector2(-40, -170));
+                              new Vector2(0, -22), new Vector2(-48, -178));
             var vlg = listGo.GetComponent<VerticalLayoutGroup>();
             vlg.spacing = 4; vlg.childControlHeight = false; vlg.childForceExpandHeight = false;
             vlg.childControlWidth = true; vlg.childForceExpandWidth = true;
@@ -111,6 +111,8 @@ namespace YeogiCafe.UI
                 string rowText = $"{catName}    {axes}    {touch}";
                 if (!visited && data.unlockCondition != null && data.unlockCondition.type == UnlockType.FurnitureSet)
                     rowText = "???    " + L.Get("ui.catalog.rumor");               // 숨은 고양이: 소문만
+                bool rumor = rowText.StartsWith("???    ") && rowText.Length > 40;
+                if (rumor) ((RectTransform)row.transform).sizeDelta = new Vector2(0, 54);   // 소문은 두 줄
                 var lbl = UiFactory.Label("Row", row.transform, rowText, 16,
                                           TextAnchor.MiddleLeft, UiFactory.Ink);
                 lbl.resizeTextForBestFit = true; lbl.resizeTextMinSize = 10; lbl.resizeTextMaxSize = 16;   // 길어지면 글자를 줄여 한 칸 안에

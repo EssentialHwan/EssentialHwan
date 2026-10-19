@@ -28,7 +28,7 @@ namespace YeogiCafe.UI
             var title = UiFactory.Label("Title", panel.transform, L.Get("ui.shop.title"), 26,
                                         TextAnchor.MiddleCenter, UiFactory.Ink);
             UiFactory.SetRect((RectTransform)title.transform, new Vector2(0, 1), new Vector2(1, 1),
-                              new Vector2(0.5f, 1), new Vector2(0, -18), new Vector2(0, 40));
+                              new Vector2(0.5f, 1), new Vector2(0, -28), new Vector2(0, 40));     // 창 테두리(≈24px) 아래로
 
             feedback = UiFactory.Label("Feedback", panel.transform, L.Get("ui.shop.hint"), 18,
                                        TextAnchor.MiddleCenter, UiFactory.WoodDark);
@@ -39,7 +39,7 @@ namespace YeogiCafe.UI
             gridGo.transform.SetParent(panel.transform, false);
             grid = (RectTransform)gridGo.transform;
             UiFactory.SetRect(grid, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1),
-                              new Vector2(0, -58), new Vector2(760, 490));
+                              new Vector2(0, -66), new Vector2(760, 480));
             var g = gridGo.GetComponent<GridLayoutGroup>();
             // 가구가 21종이라 4열(6줄)로 — 창 밖으로 넘치지 않게
             g.cellSize = new Vector2(184, 74);
