@@ -31,6 +31,8 @@ namespace YeogiCafe.UI
         {
             public string id; public RectTransform rt; public Image glow;
             public Image barBg, barFill; public Image dish; public Text label;
+            public Text stars;            // 완성 접시 위 별(★★☆), 식어 가면 깜빡임
+            public CanvasGroup cg;        // 레시피가 없으면 흐리게
         }
 
         // 카메라 전환
@@ -168,6 +170,12 @@ namespace YeogiCafe.UI
             w.dish = dishGo.GetComponent<Image>(); w.dish.preserveAspect = true; w.dish.raycastTarget = false;
             UiFactory.SetRect((RectTransform)dishGo.transform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 0),
                               new Vector2(0, 22), new Vector2(72, 72));
+            w.stars = UiFactory.Label("Stars", w.rt, "", 22, TextAnchor.LowerCenter, new Color(1f, 0.84f, 0.3f));
+            UiFactory.SetRect((RectTransform)w.stars.transform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 0),
+                              new Vector2(0, 96), new Vector2(120, 28));
+            var sh = w.stars.gameObject.AddComponent<Outline>(); sh.effectColor = new Color(0.29f, 0.21f, 0.18f, 0.9f); sh.effectDistance = new Vector2(1.5f, -1.5f);
+            w.stars.raycastTarget = false;
+            w.cg = w.rt.gameObject.AddComponent<CanvasGroup>();
             return w;
         }
 
@@ -391,7 +399,9 @@ namespace YeogiCafe.UI
                 case OrderSystem.ToolResult.Served:
                     YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
                     YeogiCafe.Audio.SoundManager.Sfx("sfx_coin", 0.35f, 0.02f);
-                    hint.text = L.Get("ui.kitchen.served", ("name", CatName(ticket)), ("menu", MenuName(ticket)));
+                    hint.text = L.Get("ui.kitchen.served", ("name", CatName(ticket)), ("menu", MenuName(ticket)))
+                              + "  " + YeogiCafe.Food.RecipeBook.StarText(ticket.stars) + (ticket.stale ? " " + L.Get("ui.kitchen.stale") : "");
+                    Float(AbsPos(w.rt) + new Vector2(0, 150), YeogiCafe.Food.RecipeBook.StarText(ticket.stars));
                     GameEvents.Raise(GameEvents.Serve, ticket.catId);
                     if (ticket.vague && ticket.IsCorrectDish)
                     { owner.ShowCatBubble(ticket.catId, L.Get("ui.order.mindread")); GameEvents.Raise(GameEvents.MindRead, ticket.catId); }
@@ -422,8 +432,17 @@ namespace YeogiCafe.UI
 
                 bool ready = active != null && active.state == TicketState.Ready;
                 w.dish.gameObject.SetActive(ready);
+                w.stars.gameObject.SetActive(ready);
+                // 레시피가 하나도 없는 기구는 흐리게(상점 [레시피]에서 사면 켜진다)
+                bool usable = false;
+                foreach (var m in CookingStations.MenusFor(w.id)) if (YeogiCafe.Food.RecipeBook.Owned(owner.Save, m)) usable = true;
+                w.cg.alpha = usable ? 1f : 0.35f;
                 if (ready)
                 {
+                    float age = Time.time - active.readyAt;
+                    bool cooling = age > YeogiCafe.Food.RecipeBook.FreshSeconds - 3f;
+                    w.stars.text = YeogiCafe.Food.RecipeBook.StarText(age > YeogiCafe.Food.RecipeBook.FreshSeconds && active.stars > 1 ? active.stars - 1 : active.stars);
+                    w.stars.color = cooling && Mathf.Repeat(Time.unscaledTime * 4f, 1f) < 0.5f ? new Color(0.75f, 0.75f, 0.8f) : new Color(1f, 0.84f, 0.3f);
                     w.dish.sprite = DishSprite(active.menu != null ? active.menu.menuId : "");
                     var drt = (RectTransform)w.dish.transform;
                     drt.anchoredPosition = new Vector2(0, 22 + Mathf.Abs(Mathf.Sin(Time.unscaledTime * 5f)) * 10f);

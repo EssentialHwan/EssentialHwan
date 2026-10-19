@@ -122,6 +122,44 @@ namespace YeogiCafe.UI
         // ── 이야기 카드(단골·졸업 편지) — 커피토크/스피릿페어러 참고 ──
         GameObject storyGo;
 
+        // ── 냥슐랭 심사 결과 카드(그날 심사원이 왔으면, 이야기 다음에 한 번) ──
+        void TryOpenReport()
+        {
+            var s = owner.Save; if (s == null || storyGo != null) return;
+            var r = s.lastReport; int today = owner.Day != null ? owner.Day.CurrentDay : -1;
+            if (r == null || r.day != today || r.seen) return;
+            var scrim = UiFactory.Panel("ReportScrim", rootGo.transform, new Color(0.08f, 0.07f, 0.12f, 0.55f));
+            storyGo = scrim.gameObject;
+            UiFactory.Anchor(scrim, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            var paper = UiFactory.Panel("Report", scrim.transform, new Color(1f, 0.98f, 0.92f, 1f));
+            UiFactory.SetRect(paper, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(560, 420));
+            UiFactory.Frame(paper, UiFactory.FrameStyle.Paper, null, 3f);
+            var t = UiFactory.Label("T", paper, L.Get("nyan.report.title"), 24, TextAnchor.MiddleCenter, UiFactory.Ink);
+            UiFactory.SetRect((RectTransform)t.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -26), new Vector2(-60, 34));
+            bool pass = r.starsAfter > r.starsBefore;
+            string body =
+                L.Get("nyan.report.dish", ("n", r.dish.ToString())) + "\n" +
+                L.Get("nyan.report.speed", ("n", r.speed.ToString())) + "\n" +
+                L.Get("nyan.report.furn", ("n", r.furniture.ToString())) + "\n" +
+                L.Get("nyan.report.clean", ("n", r.clean.ToString())) + "\n\n" +
+                L.Get("nyan.report.total", ("n", r.total.ToString()), ("need", YeogiCafe.Food.NyanGuide.NextPassScore(r.starsBefore).ToString()));
+            var b = UiFactory.Label("B", paper, body, 19, TextAnchor.UpperCenter, UiFactory.WoodDark);
+            b.lineSpacing = 1.15f;
+            UiFactory.SetRect((RectTransform)b.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -72), new Vector2(-80, 200));
+            var res = UiFactory.Label("R", paper, (pass ? L.Get("nyan.report.pass") : L.Get("nyan.report.fail")) + "\n" + YeogiCafe.Food.NyanGuide.Stars(r.starsAfter),
+                                      22, TextAnchor.MiddleCenter, pass ? UiFactory.PinkDeep : UiFactory.Ink);
+            UiFactory.SetRect((RectTransform)res.transform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 74), new Vector2(-60, 64));
+            var next = UiFactory.Button("Next", paper, L.Get("story.next"), UiFactory.Green, UiFactory.Ink, out _);
+            UiFactory.SetRect((RectTransform)next.transform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 18), new Vector2(160, 46));
+            next.onClick.AddListener(() =>
+            {
+                r.seen = true;
+                var sm = Object.FindObjectOfType<YeogiCafe.Save.SaveManager>(); if (sm != null) sm.Save(s);
+                Object.Destroy(storyGo); storyGo = null;
+            });
+            if (pass) YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.6f, 0.02f);
+        }
+
         void OpenStory(StoryDTO st)
         {
             var scrim = UiFactory.Panel("StoryScrim", rootGo.transform, new Color(0.08f, 0.07f, 0.12f, 0.55f));
@@ -172,6 +210,7 @@ namespace YeogiCafe.UI
                 }
                 Object.Destroy(storyGo); storyGo = null;
                 if (owner.Save != null && owner.Save.storyQueue.Count > 0) OpenStory(owner.Save.storyQueue[0]);
+                else TryOpenReport();
             });
         }
 
@@ -269,6 +308,7 @@ namespace YeogiCafe.UI
             RenderCards();
             RenderLevel();
             if (storyGo == null && owner.Save != null && owner.Save.storyQueue.Count > 0) OpenStory(owner.Save.storyQueue[0]);
+            else TryOpenReport();
         }
 
         void RenderLevel()

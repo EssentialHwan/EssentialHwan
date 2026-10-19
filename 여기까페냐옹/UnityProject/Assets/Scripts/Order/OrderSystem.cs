@@ -25,6 +25,11 @@ namespace YeogiCafe.Order
         public bool unresolved;       // 아직 플레이어가 메뉴를 정하지 않음
         public string hintKey;        // order.hint.{menuId}.{n}
         public bool IsCorrectDish => menu == requested;
+        // 별점: 완성 순간 업그레이드 단계 확률로 굴림 → 다 되고 오래 두면 서빙 때 하나 깎임(신선도)
+        public int stars;
+        public bool stale;            // 신선도 감점 받음
+        public float placedAt, readyAt, servedAt;   // Time.time
+        public float ServeWait => servedAt - placedAt;
 
         public float CookRatio => menu == null || menu.cookTime <= 0 ? 1f : Mathf.Clamp01(cookProgress / menu.cookTime);
         public float PatienceRatio => maxPatience <= 0 ? 0f : Mathf.Clamp01(patience / maxPatience);
@@ -33,6 +38,7 @@ namespace YeogiCafe.Order
     public class OrderSystem : MonoBehaviour
     {
         public float defaultPatience = 45f;
+        public static System.Func<string, int> MenuLevel = _ => 0;     // 메뉴 업그레이드 단계(GameFlowController가 세이브로 연결)
 
         readonly List<OrderTicket> tickets = new();
         public IReadOnlyList<OrderTicket> Tickets => tickets;
@@ -45,7 +51,7 @@ namespace YeogiCafe.Order
         public OrderTicket Place(string catId, MenuData menu, bool vague = false, string hintKey = null)
         {
             var t = new OrderTicket { catId = catId, menu = menu, requested = menu, patience = defaultPatience, maxPatience = defaultPatience,
-                                      vague = vague, unresolved = vague, hintKey = hintKey };
+                                      vague = vague, unresolved = vague, hintKey = hintKey, placedAt = Time.time };
             if (vague) { t.patience += 15f; t.maxPatience += 15f; }    // 해석할 시간을 조금 더
             tickets.Add(t);
             OnTicketPlaced?.Invoke(t);
@@ -112,7 +118,12 @@ namespace YeogiCafe.Order
                         break;
                     case TicketState.Cooking:
                         t.cookProgress += dt;
-                        if (t.menu == null || t.cookProgress >= t.menu.cookTime) { t.state = TicketState.Ready; OnTicketReady?.Invoke(t); }
+                        if (t.menu == null || t.cookProgress >= t.menu.cookTime)
+                        {
+                            t.state = TicketState.Ready; t.readyAt = Time.time;
+                            t.stars = YeogiCafe.Food.RecipeBook.RollStars(t.menu != null ? MenuLevel(t.menu.menuId) : 0);
+                            OnTicketReady?.Invoke(t);
+                        }
                         break;
                 }
             }
@@ -122,6 +133,8 @@ namespace YeogiCafe.Order
         {
             if (t.state != TicketState.Ready) return;
             t.state = TicketState.Served;
+            t.servedAt = Time.time;
+            if (t.stars > 1 && t.servedAt - t.readyAt > YeogiCafe.Food.RecipeBook.FreshSeconds) { t.stars--; t.stale = true; }
             tickets.Remove(t);
             OnTicketServed?.Invoke(t);
         }

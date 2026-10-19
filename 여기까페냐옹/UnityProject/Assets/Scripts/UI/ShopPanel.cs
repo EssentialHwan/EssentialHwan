@@ -15,6 +15,10 @@ namespace YeogiCafe.UI
         readonly Text feedback;
         readonly RectTransform grid;
         readonly List<(FurnitureData data, Text price, Button btn)> cards = new();
+        // 탭: 0 가구 · 1 레시피(구매·음식 강화) · 2 가구 강화
+        int mode;
+        RectTransform listRoot;
+        readonly List<Button> tabs = new();
 
         public ShopPanel(GameUiController owner, Transform parent)
         {
@@ -53,6 +57,26 @@ namespace YeogiCafe.UI
             closeBtn.onClick.AddListener(Hide);
 
             BuildCards();
+
+            // 레시피·강화 목록(2열 카드)
+            var listGo = new GameObject("List", typeof(RectTransform), typeof(GridLayoutGroup));
+            listGo.transform.SetParent(panel.transform, false);
+            listRoot = (RectTransform)listGo.transform;
+            UiFactory.SetRect(listRoot, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -66), new Vector2(760, 480));
+            var lg = listGo.GetComponent<GridLayoutGroup>();
+            lg.cellSize = new Vector2(374, 76); lg.spacing = new Vector2(10, 6);
+            lg.constraint = GridLayoutGroup.Constraint.FixedColumnCount; lg.constraintCount = 2;
+
+            string[] tabKeys = { "ui.shop.tab.furn", "ui.shop.tab.recipe", "ui.shop.tab.furnup" };
+            for (int i = 0; i < tabKeys.Length; i++)
+            {
+                int idx = i;
+                var t = UiFactory.Button("Tab" + i, panel.transform, L.Get(tabKeys[i]), UiFactory.Wood, UiFactory.Cream, out var tl);
+                tl.fontSize = 15;
+                UiFactory.SetRect((RectTransform)t.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(14 + i * 96, -12), new Vector2(92, 36));
+                t.onClick.AddListener(() => { mode = idx; Render(); });
+                tabs.Add(t);
+            }
             rootGo.SetActive(false);
         }
 
@@ -100,6 +124,108 @@ namespace YeogiCafe.UI
             }
         }
 
+        void Render()
+        {
+            grid.gameObject.SetActive(mode == 0);
+            listRoot.gameObject.SetActive(mode != 0);
+            for (int i = 0; i < tabs.Count; i++)
+                tabs[i].GetComponent<Image>().color = i == mode ? UiFactory.PinkDeep : UiFactory.Wood;
+            for (int i = listRoot.childCount - 1; i >= 0; i--) Object.Destroy(listRoot.GetChild(i).gameObject);
+            if (mode == 1) BuildRecipes();
+            else if (mode == 2) BuildFurnUpgrades();
+            RefreshAffordability();
+        }
+
+        // 카드 한 장: 아이콘 · 이름 · 설명 두 줄 · 오른쪽 아래 버튼
+        Button Card(Sprite icon, string name, string line1, string line2, string btnText, bool btnOn, Color btnColor)
+        {
+            var card = UiFactory.Panel("Card", listRoot, UiFactory.Cream);
+            UiFactory.Frame(card, UiFactory.FrameStyle.Card, UiFactory.Cream);
+            var ig = new GameObject("Icon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            ig.transform.SetParent(card, false);
+            var im = ig.GetComponent<Image>(); im.sprite = icon; im.preserveAspect = true; im.raycastTarget = false;
+            UiFactory.SetRect((RectTransform)ig.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(8, 0), new Vector2(54, 54));
+            var n = UiFactory.Label("Name", card, name, 17, TextAnchor.UpperLeft, UiFactory.Ink);
+            UiFactory.SetRect((RectTransform)n.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(68, -7), new Vector2(-76, 22));
+            var a = UiFactory.Label("L1", card, line1, 13, TextAnchor.UpperLeft, UiFactory.WoodDark);
+            UiFactory.SetRect((RectTransform)a.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(68, -29), new Vector2(-76, 18));
+            UiFactory.FitOneLine(a, 374 - 76, 10);
+            var b = UiFactory.Label("L2", card, line2, 13, TextAnchor.UpperLeft, UiFactory.WoodDark);
+            UiFactory.SetRect((RectTransform)b.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(68, -49), new Vector2(160, 18));
+            UiFactory.FitOneLine(b, 160, 10);
+            n.raycastTarget = a.raycastTarget = b.raycastTarget = false;
+            var btn = UiFactory.Button("Btn", card, btnText, btnOn ? btnColor : UiFactory.CreamDim, btnOn ? UiFactory.Cream : UiFactory.WoodDark, out var bl);
+            bl.fontSize = 14; UiFactory.FitOneLine(bl, 136, 10);
+            UiFactory.SetRect((RectTransform)btn.transform, new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0), new Vector2(-8, 7), new Vector2(146, 30));
+            btn.interactable = btnOn;
+            return btn;
+        }
+
+        void BuildRecipes()
+        {
+            var s = owner.Save; var flow = owner.Flow;
+            if (s == null || flow == null || flow.AllMenus == null) return;
+            int gold = owner.Economy != null ? owner.Economy.Gold : 0;
+            foreach (var m in flow.AllMenus)
+            {
+                if (m == null) continue;
+                var menu = m;
+                string name = L.Get("menu." + m.menuId);
+                var icon = KitchenView.DishSprite(m.menuId);
+                if (YeogiCafe.Food.RecipeBook.Owned(s, m.menuId))
+                {
+                    var st = s.GetMenuStat(m.menuId);
+                    var o = YeogiCafe.Food.RecipeBook.Odds(st.level);
+                    string l1 = L.Get("ui.recipe.odds", ("a", Mathf.RoundToInt(o.x * 100).ToString()), ("b", Mathf.RoundToInt(o.y * 100).ToString()), ("c", Mathf.RoundToInt(o.z * 100).ToString()));
+                    string l2 = L.Get("ui.recipe.level", ("n", (st.level + 1).ToString()), ("sold", st.sold.ToString()));
+                    if (st.level >= YeogiCafe.Food.RecipeBook.MaxLevel) { Card(icon, name, l1, l2, L.Get("ui.recipe.max"), false, UiFactory.Wood); continue; }
+                    int need = YeogiCafe.Food.RecipeBook.NeedSold(st.level), cost = YeogiCafe.Food.RecipeBook.UpgradeCost(m, st.level);
+                    bool ok = st.sold >= need;
+                    var btn = Card(icon, name, l1, l2,
+                                   ok ? L.Get("ui.recipe.upgrade", ("g", cost.ToString())) : L.Get("ui.recipe.needsoldbtn", ("n", st.sold.ToString()), ("t", need.ToString())),
+                                   ok && gold >= cost, UiFactory.Green);
+                    btn.onClick.AddListener(() => { owner.TryUpgradeMenu(menu, out var msg); Render(); if (msg != null) feedback.text = msg; });
+                }
+                else
+                {
+                    var r = System.Array.Find(YeogiCafe.Food.RecipeBook.Recipes, x => x.id == m.menuId);
+                    if (r.id == null) continue;
+                    bool unlocked = YeogiCafe.Food.RecipeBook.Unlocked(s, r);
+                    var btn = Card(icon, name, L.Get("ui.recipe.notowned"), unlocked ? L.Get("ui.recipe.hint") : L.Get("ui.recipe.locked", ("n", r.cafeLevel.ToString())),
+                                   unlocked ? L.Get("ui.recipe.buy", ("g", r.price.ToString())) : L.Get("ui.recipe.lockedbtn", ("n", r.cafeLevel.ToString())),
+                                   unlocked && gold >= r.price, UiFactory.PinkDeep);
+                    btn.onClick.AddListener(() => { owner.TryBuyRecipe(menu, out var msg); Render(); if (msg != null) feedback.text = msg; });
+                }
+            }
+            feedback.text = L.Get("ui.recipe.tabhint");
+        }
+
+        void BuildFurnUpgrades()
+        {
+            var s = owner.Save; if (s == null) return;
+            int gold = owner.Economy != null ? owner.Economy.Gold : 0;
+            var ids = new List<string>();
+            foreach (var p in s.placedFurniture) if (!ids.Contains(p.furnitureId)) ids.Add(p.furnitureId);
+            foreach (var f in s.furnStats) if (f.uses > 0 && !ids.Contains(f.furnitureId)) ids.Add(f.furnitureId);   // 시작 좌석 등
+            int shown = 0;
+            foreach (var id in ids)
+            {
+                var d = owner.LookupFurniture(id); if (d == null || d.type == FurnitureType.Decoration) continue;
+                var st = s.GetFurnStat(id);
+                string l1 = L.Get("ui.furnup.stars", ("s", YeogiCafe.Food.FurnitureStars.StarText(st.stars)), ("b", YeogiCafe.Food.FurnitureStars.Satisfaction(st.stars).ToString("0")));
+                if (st.stars >= YeogiCafe.Food.FurnitureStars.Max) { Card(d.worldSprite, FurnitureName(d), l1, L.Get("ui.furnup.uses", ("n", st.uses.ToString())), L.Get("ui.recipe.max"), false, UiFactory.Wood); shown++; continue; }
+                int need = YeogiCafe.Food.FurnitureStars.NeedUses(st.stars), cost = YeogiCafe.Food.FurnitureStars.Cost(d, st.stars);
+                bool ok = st.uses >= need;
+                var fd = d;
+                var btn = Card(d.worldSprite, FurnitureName(d), l1, L.Get("ui.furnup.uses", ("n", st.uses.ToString())),
+                               ok ? L.Get("ui.furnup.btn", ("g", cost.ToString())) : L.Get("ui.furnup.needbtn", ("n", st.uses.ToString()), ("t", need.ToString())),
+                               ok && gold >= cost, UiFactory.Green);
+                btn.onClick.AddListener(() => { owner.TryUpgradeFurniture(fd, out var msg); Render(); if (msg != null) feedback.text = msg; });
+                if (++shown >= 12) break;
+            }
+            feedback.text = shown == 0 ? L.Get("ui.furnup.none") : L.Get("ui.furnup.tabhint");
+        }
+
         void OnBuy(FurnitureData data)
         {
             bool ok = owner.TryBuy(data);
@@ -123,15 +249,20 @@ namespace YeogiCafe.UI
             // 같은 클릭이 두 번 들어와 열렸다 바로 닫히는 경우 방지(0.25초 안 재토글 무시)
             if (Time.unscaledTime - lastToggle < 0.25f) return;
             lastToggle = Time.unscaledTime;
-            if (rootGo.activeSelf) Hide(); else { Show(); rootGo.transform.SetAsLastSibling(); }   // 주방 화면 위로
+            if (rootGo.activeSelf) Hide();
+            else
+            {
+                try { Show(); } catch (System.Exception e) { Debug.LogException(e); rootGo.SetActive(true); }
+                rootGo.transform.SetAsLastSibling();   // 주방 화면 위로
+            }
         }
 
         void Show()
         {
             rootGo.SetActive(true);
             rootGo.transform.SetAsLastSibling();
-            feedback.text = L.Get("ui.shop.hint");
-            RefreshAffordability();
+            Render();
+            if (mode == 0) feedback.text = L.Get("ui.shop.hint");
         }
 
         public void Hide() => rootGo.SetActive(false);

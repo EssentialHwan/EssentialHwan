@@ -64,6 +64,11 @@ namespace YeogiCafe.DevTools
                 GUILayout.EndHorizontal();
                 var raid = YeogiCafe.Visual.MouseRaid.Instance;
                 if (raid != null && GUILayout.Button("쥐 출몰")) raid.Spawn();
+                if (cats != null && flow != null && flow.Save != null && GUILayout.Button($"냥슐랭 심사원 호출 (★{flow.Save.nyanStars})"))
+                {
+                    cats.Spawn(YeogiCafe.Food.NyanGuide.Data);
+                    YeogiCafe.Core.CustomerSpawner.Toast?.Invoke(YeogiCafe.Loc.L.Get("nyan.arrive"));
+                }
             }
             var dir = FindObjectOfType<YeogiCafe.Visual.CatInteractionDirector>();
             if (dir != null)

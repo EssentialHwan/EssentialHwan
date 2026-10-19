@@ -23,7 +23,7 @@ namespace YeogiCafe.UI
         public CafeContext cafe;
 
         // ── HUD 위젯 ──
-        Text goldText, phaseText, guestText, narrationText;
+        Text goldText, phaseText, guestText, narrationText, nyanText;
         Image timeBarFill;
 
         // ── 패널 컨트롤러 ──
@@ -92,6 +92,13 @@ namespace YeogiCafe.UI
             if (bootstrap != null && bootstrap.interactions != null)
             { bootstrap.interactions.say = ShowCatBubble; bootstrap.interactions.toast = ShowToast; }
             YeogiCafe.Visual.MouseRaid.Toast = ShowToast;
+            CustomerSpawner.Toast = ShowToast;
+            if (flow != null) flow.OnReview += r =>
+            {
+                var c = LookupCat(r.catId);
+                if (c != null && (r.paws >= 5 || r.paws <= 1))      // 아주 좋거나 아주 나쁜 리뷰만 알림
+                    ShowToast(L.Get("ui.review.toast", ("name", L.Get($"cat.{r.catId}.name")), ("paws", YeogiCafe.Food.ReviewBook.Paws(r.paws)), ("text", r.text)));
+            };
             PawCursor.Ensure();
             BuildHud(root.transform);
 
@@ -134,9 +141,14 @@ namespace YeogiCafe.UI
                               Vector2.zero, new Vector2(0, 64));
             UiFactory.Frame(bar, UiFactory.FrameStyle.Plank);
 
-            goldText = UiFactory.Label("Gold", bar.transform, "0G", 26, TextAnchor.MiddleLeft, UiFactory.Ink);
+            goldText = UiFactory.Label("Gold", bar.transform, "0G", 24, TextAnchor.MiddleLeft, UiFactory.Ink);
             UiFactory.SetRect((RectTransform)goldText.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-                              new Vector2(0, 0.5f), new Vector2(20, 0), new Vector2(170, 56));
+                              new Vector2(0, 0.5f), new Vector2(20, 7), new Vector2(160, 34));
+
+            // 냥슐랭 스타(골드 오른쪽, 작게)
+            nyanText = UiFactory.Label("Nyan", bar.transform, "", 15, TextAnchor.MiddleLeft, new Color(0.85f, 0.55f, 0.15f));
+            UiFactory.SetRect((RectTransform)nyanText.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(22, -19), new Vector2(160, 18));
+            nyanText.raycastTarget = false;
 
             // 손님 수: 판자 나뭇결 선 위에 글자가 겹치지 않게 작은 종이 배지 위에
             var guestPill = UiFactory.Panel("GuestPill", bar.transform, UiFactory.Cream);
@@ -327,6 +339,8 @@ namespace YeogiCafe.UI
             if (phaseText != null && day != null)
                 phaseText.text = L.Get("ui.cafe.day", ("n", day.CurrentDay.ToString())) + "  " + HudFormatter.Phase(day.Phase)
                                  + "  " + L.Get("weather." + (int)Weather.Current);
+            if (nyanText != null && Save != null)
+                nyanText.text = L.Get("ui.nyan.hud") + " " + YeogiCafe.Food.NyanGuide.Stars(Save.nyanStars);
             if (guestText != null && cafe != null)
             {
                 int seated = cafe.SeatCount - cafe.FreeSeatCount;
@@ -387,6 +401,60 @@ namespace YeogiCafe.UI
             return ok;
         }
         public bool LastBuyFailedForSpace { get; private set; }
+
+        public GameFlowController Flow => flow;
+        public FurnitureData LookupFurniture(string id)
+        {
+            if (bootstrap == null) return null;
+            foreach (var f in bootstrap.allFurniture) if (f != null && f.furnitureId == id) return f;
+            return null;
+        }
+
+        // ── 레시피·음식 강화·가구 강화 ──
+        public bool TryBuyRecipe(MenuData m, out string msg)
+        {
+            msg = null; var s = Save; if (s == null || m == null || economy == null) return false;
+            var r = System.Array.Find(YeogiCafe.Food.RecipeBook.Recipes, x => x.id == m.menuId);
+            if (r.id == null || YeogiCafe.Food.RecipeBook.Owned(s, m.menuId)) return false;
+            if (!YeogiCafe.Food.RecipeBook.Unlocked(s, r)) { msg = L.Get("ui.recipe.locked", ("n", r.cafeLevel.ToString())); return false; }
+            if (!economy.TrySpend(r.price)) { msg = L.Get("ui.shop.insufficient"); return false; }
+            s.ownedRecipes.Add(m.menuId);
+            flow.SyncMenus();
+            msg = L.Get("ui.recipe.bought", ("menu", L.Get("menu." + m.menuId)));
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
+            RefreshHud();
+            return true;
+        }
+
+        public bool TryUpgradeMenu(MenuData m, out string msg)
+        {
+            msg = null; var s = Save; if (s == null || m == null || economy == null) return false;
+            var st = s.GetMenuStat(m.menuId);
+            if (st.level >= YeogiCafe.Food.RecipeBook.MaxLevel) return false;
+            int need = YeogiCafe.Food.RecipeBook.NeedSold(st.level), cost = YeogiCafe.Food.RecipeBook.UpgradeCost(m, st.level);
+            if (st.sold < need) { msg = L.Get("ui.recipe.needsold", ("n", (need - st.sold).ToString())); return false; }
+            if (!economy.TrySpend(cost)) { msg = L.Get("ui.shop.insufficient"); return false; }
+            st.level++;
+            msg = L.Get("ui.recipe.upgraded", ("menu", L.Get("menu." + m.menuId)), ("n", (st.level + 1).ToString()));
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
+            RefreshHud();
+            return true;
+        }
+
+        public bool TryUpgradeFurniture(FurnitureData d, out string msg)
+        {
+            msg = null; var s = Save; if (s == null || d == null || economy == null) return false;
+            var st = s.GetFurnStat(d.furnitureId);
+            if (st.stars >= YeogiCafe.Food.FurnitureStars.Max) return false;
+            int need = YeogiCafe.Food.FurnitureStars.NeedUses(st.stars), cost = YeogiCafe.Food.FurnitureStars.Cost(d, st.stars);
+            if (st.uses < need) { msg = L.Get("ui.furnup.needuses", ("n", (need - st.uses).ToString())); return false; }
+            if (!economy.TrySpend(cost)) { msg = L.Get("ui.shop.insufficient"); return false; }
+            st.stars++;
+            msg = L.Get("ui.furnup.done", ("name", ShopPanel.FurnitureName(d)), ("s", YeogiCafe.Food.FurnitureStars.StarText(st.stars)));
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
+            RefreshHud();
+            return true;
+        }
 
         // 정산 화면 [카페 넓히기] — 같은 방 확장(앞줄·가장자리 자리 개방). 실패 시 이유 문구 반환.
         public bool TryExpandCafe(out string message)

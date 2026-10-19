@@ -30,6 +30,11 @@ namespace YeogiCafe.Order
             { "menu_grilled_fish", "tool_grill" },
         };
 
+        public static IEnumerable<string> MenusFor(string toolId)
+        {
+            foreach (var kv in menuToTool) if (kv.Value == toolId) yield return kv.Key;
+        }
+
         public static string ToolFor(string menuId)
             => menuId != null && menuToTool.TryGetValue(menuId, out var t) ? t : "tool_board";
     }

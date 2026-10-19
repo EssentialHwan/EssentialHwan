@@ -31,6 +31,7 @@ namespace YeogiCafe.Observation
         // §3.1 실시간 — 행동마다 호출
         public void RecordClue(string catId, ClueType type, string target, bool isFallback, string narration)
         {
+            if (YeogiCafe.Food.NyanGuide.IsInspector(catId)) return;     // 심사원은 도감 대상이 아님
             float weight = isFallback ? cfg.clueFallback
                          : (type == ClueType.FoodEat) ? cfg.clueStrong
                          : cfg.clueMedium;

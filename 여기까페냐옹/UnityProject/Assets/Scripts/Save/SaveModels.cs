@@ -27,6 +27,32 @@ namespace YeogiCafe.Save
         public List<QuestDTO> quests = new();              // 오늘의 의뢰(게시판)
         public int questDay = -1;                          // 의뢰를 뽑은 날
         public int weather, weatherDay = -1;               // 오늘의 날씨(WeatherKind)
+        // ── 요리·평판 ──
+        public List<string> ownedRecipes = new();          // 산 레시피(기본 3종 제외)
+        public List<MenuStatDTO> menuStats = new();        // 메뉴별 판매 수·업그레이드 단계
+        public int nyanStars;                              // 냥슐랭 스타 0~5
+        public int inspectorLastDay = -1;                  // 심사원이 마지막으로 온 날
+        public int inspectorPlanDay = -1;                  // 심사원이 오기로 정해진 날
+        public InspectorReportDTO lastReport = new();      // 가장 최근 심사 결과(정산에서 보여줌)
+        public List<ReviewDTO> reviews = new();            // 고양이 손님 한 줄 리뷰(최근 40개)
+        public int mouseStateDay = -1, mouseState;         // 오늘 쥐 소동: 0 없음 · 1 잡음 · 2 놓침
+
+        public List<FurnStatDTO> furnStats = new();        // 가구 종류별 별(강화)·사용 수
+
+        public FurnStatDTO GetFurnStat(string furnitureId)
+        {
+            var f = furnStats.FirstOrDefault(x => x.furnitureId == furnitureId);
+            if (f == null) { f = new FurnStatDTO { furnitureId = furnitureId }; furnStats.Add(f); }
+            return f;
+        }
+
+        public MenuStatDTO GetMenuStat(string menuId)
+        {
+            var m = menuStats.FirstOrDefault(x => x.menuId == menuId);
+            if (m == null) { m = new MenuStatDTO { menuId = menuId }; menuStats.Add(m); }
+            return m;
+        }
+
         public List<StoryDTO> storyQueue = new();          // 밤 일지에서 보여줄 이야기(단골·졸업)   // 시작 좌석을 옮긴 위치(furnitureId="starter#i")                              // 하루를 마칠 때 도감에 찍은 손도장 수
 
         public RelationSaveData GetOrCreateRelation(string a, string b)
@@ -104,6 +130,39 @@ namespace YeogiCafe.Save
         public string eventId;     // 세는 이벤트(GameEvents)
         public int goal, progress, reward;
         public bool done;
+    }
+
+    [Serializable]
+    public class MenuStatDTO
+    {
+        public string menuId;
+        public int sold;           // 지금까지 판 수
+        public int level;          // 업그레이드 단계 0~3
+    }
+
+    [Serializable]
+    public class FurnStatDTO
+    {
+        public string furnitureId;
+        public int uses;           // 고양이가 앉거나 이용한 횟수
+        public int stars = 1;      // 1~3
+    }
+
+    [Serializable]
+    public class ReviewDTO
+    {
+        public int day;
+        public string catId;
+        public int paws;           // 1~5
+        public string text;        // 작성 시점 언어로 완성된 문장
+    }
+
+    [Serializable]
+    public class InspectorReportDTO
+    {
+        public int day = -1;
+        public int dish, speed, furniture, clean, total, starsBefore, starsAfter;
+        public bool seen;          // 정산에서 결과 카드를 봤나
     }
 
     [Serializable]

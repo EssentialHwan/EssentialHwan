@@ -33,6 +33,8 @@ namespace YeogiCafe.Core
         readonly HashSet<string> comersToday = new();
         readonly HashSet<string> firstMetToday = new();   // 오늘 처음 만난 고양이는 호기심에 한 번 더(최대 3회) — 1일차가 너무 비지 않게
         int rolledDay = -1;
+        bool inspectorSpawned;
+        public static System.Action<string> Toast;          // UI 토스트(심사원 등장 알림)
 
         // 아침마다: 지난 방문 만족·단골 단계로 오늘 올 고양이를 굴린다(RevisitSystem). 처음 보는 고양이는 늘 올 수 있다.
         void RollToday()
@@ -41,12 +43,18 @@ namespace YeogiCafe.Core
             visitsToday.Clear(); comersToday.Clear(); firstMetToday.Clear();
             if (save == null || cfg == null) return;
             var pool = ResolvePool();
+            float rep = YeogiCafe.Food.ReviewBook.Reputation(save);
+            float bonus = YeogiCafe.Food.ReviewBook.RevisitBonus(rep) + YeogiCafe.Food.NyanGuide.RevisitBonus(save.nyanStars);   // 좋은 리뷰·냥슐랭 스타 → 더 자주 온다
             foreach (var d in pool)
             {
                 var cs = save.GetOrCreateCat(d.catId);
-                if (cs.visitCount == 0 || Random.value < YeogiCafe.Progression.RevisitSystem.RevisitChance(cs, day.CurrentDay, cfg))
+                if (cs.visitCount == 0 || Random.value < YeogiCafe.Progression.RevisitSystem.RevisitChance(cs, day.CurrentDay, cfg) + bonus)
                     comersToday.Add(d.catId);
             }
+            // 냥슐랭 심사원: 오늘 올지 굴린다(평판이 좋을수록 잘 옴)
+            inspectorSpawned = false;
+            if (save.inspectorPlanDay != day.CurrentDay && YeogiCafe.Food.NyanGuide.RollVisit(save, day.CurrentDay, YeogiCafe.Food.ReviewBook.InspectorBonus(rep)))
+                save.inspectorPlanDay = day.CurrentDay;
             // 너무 썰렁한 날 방지: 최소 2마리(또는 해금된 전부)
             for (int guard = 0; comersToday.Count < Mathf.Min(2, pool.Count) && guard < 20; guard++)
                 comersToday.Add(pool[Random.Range(0, pool.Count)].catId);
@@ -77,7 +85,10 @@ namespace YeogiCafe.Core
         float IntervalMultiplier()
         {
             float progress = Mathf.Clamp01((cafeLevel - 1) * 0.34f + discoveredCats * 0.08f);
-            return Mathf.Lerp(1.6f, 1.0f, progress);   // 초반 넓게 → 후반 촘촘
+            float m = Mathf.Lerp(1.6f, 1.0f, progress);   // 초반 넓게 → 후반 촘촘
+            if (save != null) m *= YeogiCafe.Food.ReviewBook.SpawnIntervalMult(YeogiCafe.Food.ReviewBook.Reputation(save))
+                                 * YeogiCafe.Food.NyanGuide.SpawnIntervalMult(save.nyanStars);
+            return m;
         }
 
         List<CatData> ResolvePool()
@@ -120,6 +131,16 @@ namespace YeogiCafe.Core
             if (day == null || cats == null || cafe == null) return;
             if (day.Phase != DayPhase.Morning && day.Phase != DayPhase.Lunch && day.Phase != DayPhase.Evening) return;
             if (rolledDay != day.CurrentDay) RollToday();
+
+            // 심사원: 점심 시간에 빈자리가 있으면 한 번 들어온다
+            if (save != null && save.inspectorPlanDay == day.CurrentDay && !inspectorSpawned && day.Phase == DayPhase.Lunch
+                && cafe.FreeSeatCount > 0 && !cats.IsInCafe(YeogiCafe.Food.NyanGuide.InspectorId))
+            {
+                inspectorSpawned = true;
+                cats.Spawn(YeogiCafe.Food.NyanGuide.Data);
+                Toast?.Invoke(YeogiCafe.Loc.L.Get("nyan.arrive"));
+                return;
+            }
 
             // [버그수정] 아침 시작 즉시 첫 손님 1마리 스폰(대기시간 없이 바로 움직임이 보이도록)
             if (TrySpawnFirst()) { timer = 0; return; }

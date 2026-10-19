@@ -16,7 +16,8 @@ namespace YeogiCafe.UI
         readonly GameObject rootGo;
         Text header;
         RectTransform listContent;
-        RectTransform relRoot; Text tabLabel; bool showRel;
+        RectTransform relRoot; Text tabLabel; bool showRel, showReview;
+        Text reviewTabLabel;
 
         public CatalogPanel(GameUiController owner, Transform parent)
         {
@@ -57,13 +58,51 @@ namespace YeogiCafe.UI
             var tab = UiFactory.Button("RelTab", panel.transform, L.Get("ui.catalog.reltab"), UiFactory.Wood, UiFactory.Cream, out tabLabel);
             tabLabel.fontSize = 16;
             UiFactory.SetRect((RectTransform)tab.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(12, -10), new Vector2(110, 40));
-            tab.onClick.AddListener(() => { showRel = !showRel; Render(); });
+            tab.onClick.AddListener(() => { showRel = !showRel; showReview = false; Render(); });
+            // 탭: 리뷰(고양이 손님 한 줄 평 · 평판 · 냥슐랭)
+            var rtab = UiFactory.Button("ReviewTab", panel.transform, L.Get("ui.catalog.reviewtab"), UiFactory.Wood, UiFactory.Cream, out reviewTabLabel);
+            reviewTabLabel.fontSize = 16;
+            UiFactory.SetRect((RectTransform)rtab.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(128, -10), new Vector2(96, 40));
+            rtab.onClick.AddListener(() => { showReview = !showReview; showRel = false; Render(); });
             var relGo = new GameObject("Relations", typeof(RectTransform));
             relGo.transform.SetParent(panel.transform, false);
             relRoot = (RectTransform)relGo.transform;
             UiFactory.SetRect(relRoot, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -20), new Vector2(660, 400));
 
             rootGo.SetActive(false);
+        }
+
+        void RenderReviews()
+        {
+            listContent.gameObject.SetActive(true);
+            relRoot.gameObject.SetActive(false);
+            tabLabel.text = L.Get("ui.catalog.reltab");
+            var s = owner.Save;
+            float rep = YeogiCafe.Food.ReviewBook.Reputation(s);
+            int stars = s != null ? s.nyanStars : 0;
+            header.text = L.Get("ui.review.header", ("rep", rep.ToString("0.0")), ("stars", YeogiCafe.Food.NyanGuide.Stars(stars)),
+                                ("need", YeogiCafe.Food.NyanGuide.NextPassScore(stars).ToString()));
+            if (s == null || s.reviews.Count == 0)
+            {
+                var e = UiFactory.Label("Empty", listContent, L.Get("ui.review.empty"), 17, TextAnchor.MiddleCenter, UiFactory.WoodDark);
+                ((RectTransform)e.transform).sizeDelta = new Vector2(0, 60);
+                return;
+            }
+            int shown = 0;
+            for (int i = s.reviews.Count - 1; i >= 0 && shown < 9; i--, shown++)
+            {
+                var r = s.reviews[i];
+                var row = UiFactory.Panel("Review", listContent, UiFactory.Cream);
+                UiFactory.Frame(row, UiFactory.FrameStyle.Card, UiFactory.Cream);
+                ((RectTransform)row.transform).sizeDelta = new Vector2(0, 38);
+                string who = L.Get($"cat.{r.catId}.name");
+                var paws = UiFactory.Label("Paws", row.transform, YeogiCafe.Food.ReviewBook.Paws(r.paws), 15, TextAnchor.MiddleLeft, UiFactory.PinkDeep);
+                UiFactory.SetRect((RectTransform)paws.transform, new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0.5f), new Vector2(16, 0), new Vector2(84, 0));
+                var lbl = UiFactory.Label("Text", row.transform, $"{who} · {L.Get("ui.cafe.day", ("n", r.day.ToString()))}   {r.text}", 15, TextAnchor.MiddleLeft, UiFactory.Ink);
+                lbl.resizeTextForBestFit = true; lbl.resizeTextMinSize = 10; lbl.resizeTextMaxSize = 15;
+                lbl.verticalOverflow = VerticalWrapMode.Truncate;
+                UiFactory.SetRect((RectTransform)lbl.transform, Vector2.zero, Vector2.one, new Vector2(0, 0.5f), new Vector2(104, 0), new Vector2(-120, 0));
+            }
         }
 
         void ClearRows()
@@ -75,6 +114,8 @@ namespace YeogiCafe.UI
         void Render()
         {
             ClearRows();
+            reviewTabLabel.text = L.Get(showReview ? "ui.catalog.listtab" : "ui.catalog.reviewtab");
+            if (showReview) { RenderReviews(); return; }
             listContent.gameObject.SetActive(!showRel);
             relRoot.gameObject.SetActive(showRel);
             tabLabel.text = L.Get(showRel ? "ui.catalog.listtab" : "ui.catalog.reltab");

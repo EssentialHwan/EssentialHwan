@@ -36,6 +36,11 @@ namespace YeogiCafe.AI
 
         // ── 세션 추적 (OnLeave 파이프라인 §3.2/3.3 입력) ──
         public MenuData ServedMenu { get; private set; }
+        public int ServedStars { get; private set; }          // 받은 음식 별(0=못 받음)
+        public float ServeWait { get; private set; }           // 주문→서빙(초)
+        public string SeatFurnitureId => seat != null ? seat.SeatId.Split('#')[0] : null;
+        public readonly HashSet<string> UsedFacilityIds = new(); // 이용한 시설 가구 id(강화 사용 수)
+        public bool IsInspector => YeogiCafe.Food.NyanGuide.IsInspector(data.catId);
         public bool ServedFavorite { get; private set; }
         public bool ForcedSecond { get; private set; }
         public bool UsedPreferredSeat { get; private set; }
@@ -194,11 +199,12 @@ namespace YeogiCafe.AI
             ServedMenu = order.primary;
             ServedFavorite = order.wasFavorite;
             ForcedSecond = order.wasForcedSecond;
-            if (order.primary != null)
+            if (IsInspector) Obs?.NarrateOnly(data.catId, Narrate("narr.inspector.order"));   // 심사원: 단서 없음, 수첩만
+            else if (order.primary != null)
                 Obs?.RecordClue(data.catId, ClueType.FoodEat, order.primary.menuId,
                                 isFallback: order.wasForcedSecond,
-                                // 최애면 '순식간에 비움', 아니면 '천천히' — 플레이어가 차이를 읽을 수 있는 서술(수치 노출 없음)
-                                Narrate(order.wasFavorite ? "narr.food.fast" : "narr.food.slow"));
+                                // 최애면 '순식간에 비움', 최애가 메뉴판에 없으면 '한참 보다 한숨', 그 외 '천천히'
+                                Narrate(order.wasFavorite ? "narr.food.fast" : order.wasForcedSecond ? "narr.food.nofav" : "narr.food.slow"));
 
             // [S2] OrderSystem 있으면 티켓 등록 후 서빙 대기, 없으면 S1 직행
             if (OrderSystem != null && order.primary != null)
@@ -220,6 +226,7 @@ namespace YeogiCafe.AI
             if (currentTicket == null) { state = CatState.Eat; return; }
             if (currentTicket.state == YeogiCafe.Order.TicketState.Served)
             {
+                ServedStars = currentTicket.stars; ServeWait = currentTicket.ServeWait;
                 // 다른 메뉴가 나왔으면 그걸 먹는다(결제는 나온 메뉴 기준, 최애 판정도 나온 메뉴)
                 if (currentTicket.menu != currentTicket.requested)
                 {
@@ -416,6 +423,7 @@ namespace YeogiCafe.AI
         // 시설에 도착한 순간 기록(서술 말풍선이 실제로 올라앉을 때 뜨게)
         void RecordFacilityClue(IFacility f)
         {
+            UsedFacilityIds.Add(f.FacilityId.Split('#')[0]);
             // 과일 박스·햇볕 자리: 누구나(또는 따뜻한 걸 좋아하는 아무나) 하는 행동이라 추리 단서가 아니다 → 말풍선만
             foreach (var t in f.Tags)
                 if (t == FacilityTag.Box || t == FacilityTag.Warm)
@@ -425,6 +433,7 @@ namespace YeogiCafe.AI
                 }
             bool pref = SharesFacilityPref(f);
             if (pref) UsedPreferredFacility = true;
+            if (IsInspector) return;
             Obs?.RecordClue(data.catId, ClueType.FacilityUse, FacilityKey(f),
                             isFallback: !pref,
                             Narrate(NarrationCatalog.FacilityKey(f.Tags)));
