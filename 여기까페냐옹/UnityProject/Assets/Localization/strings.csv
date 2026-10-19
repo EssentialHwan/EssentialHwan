@@ -14,13 +14,13 @@ ui.shop.start,영업 시작,Open Shop
 ui.shop.buy,구매,Buy
 ui.kitchen.open,주방,Kitchen
 ui.kitchen.close,홀로,To Hall
-ui.kitchen.hint,빛나는 기구를 눌러 조리하세요. 기다리는 동안 손님을 지켜보세요,Tap a glowing tool to cook. Watch your guests while it's cooking
+ui.kitchen.hint,기구를 눌러 만들 메뉴를 고르세요. 다 되면 한 번 더 눌러 서빙!,"Tap a tool, pick a menu. Tap again to serve!"
 ui.kitchen.cooking,{menu} 만드는 중…,Making {menu}…
 ui.kitchen.served,{name}에게 {menu}를 냈어요!,Served {menu} to {name}!
 ui.kitchen.busy,아직 조리 중이에요,Still cooking
 ui.kitchen.noorder,이 기구로 만들 주문이 없어요,No orders for this tool
 ui.kitchen.thanks,냐아~ (꼬리를 흔든다),Mrrow~ (tail swish)
-ui.order.ask,{menu} 주세요!,{menu} please!
+ui.order.ask,{menu} 주세냥!,{menu} please!
 ui.order.gaveup,기다리다 지쳐 나가버렸다…,Got tired of waiting and left…
 tool.coffee,커피머신,Coffee Machine
 tool.kettle,주전자,Kettle
@@ -217,11 +217,11 @@ ui.guess.wrong,음… 아닌 것 같아. 내일 다시 생각해 보자,Hmm… n
 ui.guess.tried,오늘은 이미 추리했어요,Already guessed today
 ui.guess.none,고를 수 있는 게 아직 없어요,Nothing to choose from yet
 ui.guess.cancel,닫기,Close
-ui.order.askhint,{hint}… 주세요!,{hint}… please!
-ui.order.pick,{name}의 주문: '{hint}' 어떤 메뉴일까?,{name}'s order: '{hint}' — which menu?
+ui.order.askhint,{hint}… 부탁해냥!,{hint}… please!
+ui.order.pick,{name}의 주문 — 어떤 메뉴일까?,{name}'s order — which menu?
 ui.order.picked,{menu}로 정했어요. 맞는 기구를 눌러 조리하세요,Going with {menu}. Press its tool to cook.
-ui.order.mindread,딱 이거야! 어떻게 알았어?,Exactly this! How did you know?
-ui.order.wrongdish,이게 아닌데…,This isn't it…
+ui.order.mindread,딱 이거다냥! 어떻게 알았냥?,Exactly this! How did you know?
+ui.order.wrongdish,이게 아니다냥…,This isn't it…
 order.hint.menu_americano.1,잠이 깨는 쓴 거냥,something bitter that wakes me up
 order.hint.menu_americano.2,까만 물이냥,black water
 order.hint.menu_milk.1,하얗고 따뜻한 거냥,something white and warm
@@ -386,14 +386,14 @@ closing.mood,기분,Mood
 closing.bye,잘 가 또 와!,Bye see you!
 closing.bye.ok,{name}이 기분 좋게 돌아갔다.,{name} went home happy.
 closing.love.1,골골…,Purr…
-closing.love.2,거기 더…,More there…
+closing.love.2,거기 더냥…,More there…
 closing.love.3,(눈을 가늘게 뜬다),(Eyes go soft)
 closing.play.1,앙! (앞발을 덥석),Chomp! (Grabs your paw)
 closing.play.2,깨물깨물,Nibble nibble
 closing.ok.1,킁킁…,Sniff sniff…
 closing.ok.2,냥?,Mew?
 closing.annoyed.1,(움찔),(Flinch)
-closing.annoyed.2,…거긴 좀,…Not there
+closing.annoyed.2,…거긴 싫다냥,…not there
 closing.hate.1,하악!,Hiss!
 closing.hate.2,냥펀치!,Paw swat!
 closing.knead,꾹·꾹,knead·knead
@@ -453,7 +453,7 @@ title.hint,ESC 설정  ·  M 소리 끄기/켜기,ESC Settings  ·  M Mute
 furn.furn_fac_wheel.name,캣휠,Cat Wheel
 furn.furn_fac_wheel,캣휠,Cat Wheel
 ui.shop.tab.furn,가구,Furniture
-ui.shop.tab.recipe,레시피,Recipes
+ui.shop.tab.recipe,레시피 강화,Recipes
 ui.shop.tab.furnup,가구 강화,Upgrade
 ui.recipe.odds,별 확률  ★{a}%  ★★{b}%  ★★★{c}%,Stars  ★{a}%  ★★{b}%  ★★★{c}%
 ui.recipe.level,Lv.{n} · 판매 {sold}개,Lv.{n} · {sold} sold
@@ -465,7 +465,7 @@ ui.recipe.hint,이걸 좋아하는 손님이 있을지도…,Someone might love 
 ui.recipe.locked,카페 Lv.{n}에 해금,Unlocks at cafe Lv.{n}
 ui.recipe.lockedbtn,Lv.{n} 필요,Need Lv.{n}
 ui.recipe.buy,구매 {g}G,Buy {g}G
-ui.recipe.tabhint,레시피가 늘수록 손님 취향을 알아내기 쉬워요. 잘 팔린 메뉴는 강화!,More recipes reveal tastes. Upgrade best-sellers!
+ui.recipe.tabhint,잘 팔린 메뉴를 강화하면 ★★★가 더 자주 나와요.,Upgrade best-sellers for more ★★★.
 ui.recipe.bought,새 레시피: {menu}!,New recipe: {menu}!
 ui.recipe.upgraded,{menu} Lv.{n} 강화 완료!,{menu} upgraded to Lv.{n}!
 ui.recipe.needsold,{n}개 더 팔아야 해요,Sell {n} more first
@@ -517,8 +517,30 @@ review.seat.1,{seat} 자리가 딱 좋았다냥.,The {seat} spot was perfect.
 review.seat.2,{seat}에 앉으니 마음이 편하다냥.,Sitting at the {seat} felt right.
 review.seat.3,{seat} 자리 최고다냥!,Best {seat} seat!
 review.fac.1,{fac} 가구가 있어서 신났다냥.,Loved the {fac} furniture.
-review.fac.2,"{fac}, 이 카페 취향 저격이다냥.","{fac} here hits the spot."
+review.fac.2,"{fac}, 이 카페 취향 저격이다냥.",{fac} here hits the spot.
 review.fac.3,{fac} 공간 덕분에 오래 있었다냥.,Stayed long thanks to the {fac} spot.
 review.mouse.caught,쥐가 나왔지만 금방 잡아줬다냥.,A mouse showed up but got caught fast.
 review.mouse.escaped,쥐가 돌아다녔다냥… 찜찜하다냥.,A mouse ran loose... yuck.
 review.nyan,역시 냥슐랭 카페답다냥.,Truly a Nyanchelin cafe.
+menu.menu_latte,카페라떼,Cafe Latte
+menu.menu_skewer,새우꼬치,Shrimp Skewer
+order.hint.menu_latte.1,부드럽고 달콤한 커피냥,"soft, sweet coffee"
+order.hint.menu_latte.2,우유 거품 얹은 거냥,something with milk foam
+order.hint.menu_skewer.1,꼬치에 꽂힌 바다 맛이냥,sea flavor on a stick
+order.hint.menu_skewer.2,통통한 게 줄줄이 꽂힌 거냥,plump things lined up on a stick
+ui.shop.tab.tool,주방 기구,Kitchen
+ui.tool.owned,보유 중,Owned
+ui.tool.ownedbtn,보유,Owned
+ui.tool.hint,사면 메뉴 2개가 메뉴판에 올라가요,Adds 2 menus
+ui.tool.tabhint,기구 하나에 메뉴 2개. 기구가 늘면 손님 입맛을 알아내기 쉬워요.,Each tool adds 2 menus.
+ui.tool.bought,새 기구: {tool}! 메뉴 2개 추가,New tool: {tool}! +2 menus
+ui.tool.notowned,{tool}는 아직 없어요. 상점 [주방 기구]에서 살 수 있어요,No {tool} yet. Buy it in the shop.
+ui.tool.pick.title,{tool} — 무엇을 만들까?,{tool} — what to make?
+ui.tool.pick.sub,기다리는 주문이 있는 메뉴를 고르세요,Pick a menu someone ordered
+ui.tool.pick.vague,힌트 주문 {n}개 — 고른 메뉴로 맞혀 봐요,{n} hint orders — your pick answers one
+ui.tool.pick.waiting,주문 {n},{n} waiting
+ui.tool.pick.guess,힌트 주문으로,for a hint order
+ui.tool.pick.none,주문 없음,no orders
+ui.tool.pick.nobody,{menu}를 기다리는 손님이 없어요,Nobody is waiting for {menu}
+nyan.plaque.info,냥슐랭 {stars} · 다음 별: 심사 {need}점 이상,Nyanchelin {stars} · next star at {need}
+nyan.plaque.max,냥슐랭 ★★★★★ — 최고의 카페!,Nyanchelin ★★★★★ — the best cafe!

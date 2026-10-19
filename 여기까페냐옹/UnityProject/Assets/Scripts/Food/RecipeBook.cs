@@ -6,31 +6,42 @@ using YeogiCafe.Save;
 
 namespace YeogiCafe.Food
 {
-    // 레시피·음식 업그레이드·완성 별점.
-    // · 시작 메뉴는 3개. 나머지는 카페 레벨이 되면 상점 [레시피] 탭에서 산다.
-    //   최애 메뉴가 메뉴판에 없으면 그 고양이는 음식 취향 단서를 못 남긴다(아쉬운 한숨만) → 레시피를 사면 추리 채널이 열린다.
-    // · 업그레이드: 그 메뉴를 일정 수 이상 팔았고 골드를 내면 단계↑ → 높은 별이 나올 확률↑.
+    // 주방 기구·메뉴 업그레이드·완성 별점.
+    // · 기구 하나 = 메뉴 2개. 1일차는 커피머신·오븐(메뉴 4개)만. 나머지 기구는 카페 레벨이 되면 상점 [주방 기구]에서 산다.
+    //   최애 메뉴를 만드는 기구가 없으면 그 고양이는 음식 취향 단서를 못 남긴다(아쉬운 한숨) → 기구를 사면 추리 채널이 열린다.
+    // · 레시피 강화: 그 메뉴를 일정 수 이상 팔았고 골드를 내면 단계↑ → 높은 별이 나올 확률↑.
     // · 별(1~3): 완성 순간 단계별 확률로 굴리고, 다 된 뒤 오래 방치하면(신선도) 하나 깎인다.
     public static class RecipeBook
     {
-        public static readonly string[] Starter = { "menu_americano", "menu_milk", "menu_fishcake" };
+        public static readonly string[] StarterTools = { "tool_coffee", "tool_oven" };
 
-        public struct Recipe { public string id; public int cafeLevel; public int price; }
-        public static readonly Recipe[] Recipes =
+        public struct ToolOffer { public string id; public int cafeLevel; public int price; }
+        public static readonly ToolOffer[] Tools =
         {
-            new Recipe { id = "menu_parfait",      cafeLevel = 1, price = 180 },
-            new Recipe { id = "menu_tuna_sand",    cafeLevel = 1, price = 240 },
-            new Recipe { id = "menu_catnip_tea",   cafeLevel = 2, price = 300 },
-            new Recipe { id = "menu_pudding",      cafeLevel = 2, price = 360 },
-            new Recipe { id = "menu_grilled_fish", cafeLevel = 3, price = 600 },
+            new ToolOffer { id = "tool_board",  cafeLevel = 1, price = 350 },
+            new ToolOffer { id = "tool_kettle", cafeLevel = 2, price = 300 },
+            new ToolOffer { id = "tool_grill",  cafeLevel = 3, price = 600 },
         };
 
-        public static bool IsStarter(string id) => System.Array.IndexOf(Starter, id) >= 0;
-        public static bool Owned(SaveGame s, string id) => IsStarter(id) || (s != null && s.ownedRecipes.Contains(id));
-        public static bool Unlocked(SaveGame s, Recipe r) => s != null && s.cafeLevel >= r.cafeLevel;
+        public static bool IsStarterTool(string toolId) => System.Array.IndexOf(StarterTools, toolId) >= 0;
+        public static bool ToolOwned(SaveGame s, string toolId) => IsStarterTool(toolId) || (s != null && s.ownedTools.Contains(toolId));
+        public static bool ToolUnlocked(SaveGame s, ToolOffer t) => s != null && s.cafeLevel >= t.cafeLevel;
+        public static bool Owned(SaveGame s, string menuId) => ToolOwned(s, YeogiCafe.Order.CookingStations.ToolFor(menuId));
 
         public static List<MenuData> Available(IEnumerable<MenuData> all, SaveGame s)
             => all.Where(m => m != null && Owned(s, m.menuId)).ToList();
+
+        // 옛 세이브: 산 레시피가 있으면 그 기구를 준 것으로
+        public static void Migrate(SaveGame s)
+        {
+            if (s == null) return;
+            foreach (var m in s.ownedRecipes)
+            {
+                var t = YeogiCafe.Order.CookingStations.ToolFor(m);
+                if (!IsStarterTool(t) && !s.ownedTools.Contains(t)) s.ownedTools.Add(t);
+            }
+            s.ownedRecipes.Clear();
+        }
 
         // ── 업그레이드 ──
         public const int MaxLevel = 3;

@@ -80,8 +80,10 @@ namespace YeogiCafe.Core
                 events.OnGrantReward += (gold, _) => { if (gold > 0) economy.AddGold(gold); };
             }
 
-            // 메뉴: 기본 3종 + 산 레시피만 메뉴판에(업그레이드 단계는 별 확률에)
+            // 메뉴: 가진 주방 기구로 만들 수 있는 메뉴만 메뉴판에(기구당 2개, 업그레이드 단계는 별 확률에)
             allMenus = new List<MenuData>(cafe.GetAvailableMenus());
+            YeogiCafe.Food.RecipeBook.Migrate(save);
+            YeogiCafe.Visual.NyanPlaque.Ensure(save);           // 문 위 냥슐랭 명판
             SyncMenus();
             YeogiCafe.Order.OrderSystem.MenuLevel = id => save.GetMenuStat(id).level;
             GameEvents.OnEvent += (id, _) =>

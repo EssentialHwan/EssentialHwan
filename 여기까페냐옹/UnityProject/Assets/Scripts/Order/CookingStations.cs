@@ -3,7 +3,7 @@ using YeogiCafe.Art;
 
 namespace YeogiCafe.Order
 {
-    // 주방 기구 5종과 메뉴 매핑(데이터 한 곳). 기구를 누르면 그 기구로 만드는 메뉴 중 가장 오래된 주문을 조리한다.
+    // 주방 기구 5종 × 메뉴 2개 매핑(데이터 한 곳). 기구를 누르면 메뉴 고르기 창 → 고른 메뉴를 기다리는 주문을 조리한다.
     public static class CookingStations
     {
         public struct Station
@@ -23,12 +23,23 @@ namespace YeogiCafe.Order
 
         static readonly Dictionary<string, string> menuToTool = new()
         {
-            { "menu_americano", "tool_coffee" },
+            { "menu_americano", "tool_coffee" }, { "menu_latte", "tool_coffee" },
             { "menu_milk", "tool_kettle" },     { "menu_catnip_tea", "tool_kettle" },
             { "menu_fishcake", "tool_oven" },   { "menu_pudding", "tool_oven" },
             { "menu_tuna_sand", "tool_board" }, { "menu_parfait", "tool_board" },
-            { "menu_grilled_fish", "tool_grill" },
+            { "menu_grilled_fish", "tool_grill" }, { "menu_skewer", "tool_grill" },
         };
+
+        public static string NameKey(string toolId)
+        {
+            foreach (var s in All) if (s.id == toolId) return s.nameKey;
+            return toolId;
+        }
+        public static Station? Get(string toolId)
+        {
+            foreach (var s in All) if (s.id == toolId) return s;
+            return null;
+        }
 
         public static IEnumerable<string> MenusFor(string toolId)
         {

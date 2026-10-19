@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using YeogiCafe.Order;
 using YeogiCafe.Data;
 using YeogiCafe.Loc;
 
@@ -29,15 +30,14 @@ namespace YeogiCafe.UI
                               new Vector2(0, -24), new Vector2(800, 600));
             UiFactory.Frame(panel, UiFactory.FrameStyle.Window);
 
-            var title = UiFactory.Label("Title", panel.transform, L.Get("ui.shop.title"), 26,
-                                        TextAnchor.MiddleCenter, UiFactory.Ink);
-            UiFactory.SetRect((RectTransform)title.transform, new Vector2(0, 1), new Vector2(1, 1),
-                              new Vector2(0.5f, 1), new Vector2(0, -28), new Vector2(0, 40));     // 창 테두리(≈24px) 아래로
+            // 제목 자리 = 탭 4개(가운데 정렬) — 제목과 탭이 겹치지 않게 탭이 곧 제목
 
             feedback = UiFactory.Label("Feedback", panel.transform, L.Get("ui.shop.hint"), 18,
                                        TextAnchor.MiddleCenter, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)feedback.transform, new Vector2(0, 0), new Vector2(1, 0),
-                              new Vector2(0.5f, 0), new Vector2(0, 14), new Vector2(-40, 30));
+                              new Vector2(0.5f, 0), new Vector2(0, 14), new Vector2(-60, 30));
+            feedback.verticalOverflow = VerticalWrapMode.Truncate;
+            feedback.resizeTextForBestFit = true; feedback.resizeTextMinSize = 12; feedback.resizeTextMaxSize = 18;
 
             var gridGo = new GameObject("Grid", typeof(RectTransform), typeof(GridLayoutGroup));
             gridGo.transform.SetParent(panel.transform, false);
@@ -67,13 +67,16 @@ namespace YeogiCafe.UI
             lg.cellSize = new Vector2(374, 76); lg.spacing = new Vector2(10, 6);
             lg.constraint = GridLayoutGroup.Constraint.FixedColumnCount; lg.constraintCount = 2;
 
-            string[] tabKeys = { "ui.shop.tab.furn", "ui.shop.tab.recipe", "ui.shop.tab.furnup" };
+            string[] tabKeys = { "ui.shop.tab.furn", "ui.shop.tab.tool", "ui.shop.tab.recipe", "ui.shop.tab.furnup" };
+            const float tabW = 150, tabGap = 8;
+            float tabsW = tabKeys.Length * tabW + (tabKeys.Length - 1) * tabGap;
             for (int i = 0; i < tabKeys.Length; i++)
             {
                 int idx = i;
                 var t = UiFactory.Button("Tab" + i, panel.transform, L.Get(tabKeys[i]), UiFactory.Wood, UiFactory.Cream, out var tl);
-                tl.fontSize = 15;
-                UiFactory.SetRect((RectTransform)t.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(14 + i * 96, -12), new Vector2(92, 36));
+                tl.fontSize = 18; UiFactory.FitOneLine(tl, tabW - 16, 12);
+                UiFactory.SetRect((RectTransform)t.transform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, 1),
+                                  new Vector2(-tabsW / 2 - 18 + i * (tabW + tabGap), -22), new Vector2(tabW, 40));
                 t.onClick.AddListener(() => { mode = idx; Render(); });
                 tabs.Add(t);
             }
@@ -131,8 +134,9 @@ namespace YeogiCafe.UI
             for (int i = 0; i < tabs.Count; i++)
                 tabs[i].GetComponent<Image>().color = i == mode ? UiFactory.PinkDeep : UiFactory.Wood;
             for (int i = listRoot.childCount - 1; i >= 0; i--) Object.Destroy(listRoot.GetChild(i).gameObject);
-            if (mode == 1) BuildRecipes();
-            else if (mode == 2) BuildFurnUpgrades();
+            if (mode == 1) BuildTools();
+            else if (mode == 2) BuildRecipes();
+            else if (mode == 3) BuildFurnUpgrades();
             RefreshAffordability();
         }
 
@@ -161,6 +165,33 @@ namespace YeogiCafe.UI
             return btn;
         }
 
+        // 주방 기구: 기구 하나 = 메뉴 2개. 카페 레벨이 되면 산다.
+        void BuildTools()
+        {
+            var s = owner.Save; if (s == null) return;
+            int gold = owner.Economy != null ? owner.Economy.Gold : 0;
+            foreach (var st in CookingStations.All)
+            {
+                string toolId = st.id;
+                var icon = YeogiCafe.Art.RuntimeSprites.Get(st.id, st.draw);
+                var names = new List<string>();
+                foreach (var m in CookingStations.MenusFor(toolId)) names.Add(L.Get("menu." + m));
+                string l1 = string.Join(" · ", names);
+                if (YeogiCafe.Food.RecipeBook.ToolOwned(s, toolId))
+                { Card(icon, L.Get(st.nameKey), l1, L.Get("ui.tool.owned"), L.Get("ui.tool.ownedbtn"), false, UiFactory.Wood); continue; }
+                var offer = System.Array.Find(YeogiCafe.Food.RecipeBook.Tools, x => x.id == toolId);
+                if (offer.id == null) continue;
+                bool unlocked = YeogiCafe.Food.RecipeBook.ToolUnlocked(s, offer);
+                var btn = Card(icon, L.Get(st.nameKey), l1,
+                               unlocked ? L.Get("ui.tool.hint") : L.Get("ui.recipe.locked", ("n", offer.cafeLevel.ToString())),
+                               unlocked ? L.Get("ui.recipe.buy", ("g", offer.price.ToString())) : L.Get("ui.recipe.lockedbtn", ("n", offer.cafeLevel.ToString())),
+                               unlocked && gold >= offer.price, UiFactory.PinkDeep);
+                btn.onClick.AddListener(() => { owner.TryBuyTool(toolId, out var msg); Render(); if (msg != null) feedback.text = msg; });
+            }
+            feedback.text = L.Get("ui.tool.tabhint");
+        }
+
+        // 레시피 강화: 가진 기구의 메뉴만
         void BuildRecipes()
         {
             var s = owner.Save; var flow = owner.Flow;
@@ -168,34 +199,21 @@ namespace YeogiCafe.UI
             int gold = owner.Economy != null ? owner.Economy.Gold : 0;
             foreach (var m in flow.AllMenus)
             {
-                if (m == null) continue;
+                if (m == null || !YeogiCafe.Food.RecipeBook.Owned(s, m.menuId)) continue;
                 var menu = m;
                 string name = L.Get("menu." + m.menuId);
                 var icon = KitchenView.DishSprite(m.menuId);
-                if (YeogiCafe.Food.RecipeBook.Owned(s, m.menuId))
-                {
-                    var st = s.GetMenuStat(m.menuId);
-                    var o = YeogiCafe.Food.RecipeBook.Odds(st.level);
-                    string l1 = L.Get("ui.recipe.odds", ("a", Mathf.RoundToInt(o.x * 100).ToString()), ("b", Mathf.RoundToInt(o.y * 100).ToString()), ("c", Mathf.RoundToInt(o.z * 100).ToString()));
-                    string l2 = L.Get("ui.recipe.level", ("n", (st.level + 1).ToString()), ("sold", st.sold.ToString()));
-                    if (st.level >= YeogiCafe.Food.RecipeBook.MaxLevel) { Card(icon, name, l1, l2, L.Get("ui.recipe.max"), false, UiFactory.Wood); continue; }
-                    int need = YeogiCafe.Food.RecipeBook.NeedSold(st.level), cost = YeogiCafe.Food.RecipeBook.UpgradeCost(m, st.level);
-                    bool ok = st.sold >= need;
-                    var btn = Card(icon, name, l1, l2,
-                                   ok ? L.Get("ui.recipe.upgrade", ("g", cost.ToString())) : L.Get("ui.recipe.needsoldbtn", ("n", st.sold.ToString()), ("t", need.ToString())),
-                                   ok && gold >= cost, UiFactory.Green);
-                    btn.onClick.AddListener(() => { owner.TryUpgradeMenu(menu, out var msg); Render(); if (msg != null) feedback.text = msg; });
-                }
-                else
-                {
-                    var r = System.Array.Find(YeogiCafe.Food.RecipeBook.Recipes, x => x.id == m.menuId);
-                    if (r.id == null) continue;
-                    bool unlocked = YeogiCafe.Food.RecipeBook.Unlocked(s, r);
-                    var btn = Card(icon, name, L.Get("ui.recipe.notowned"), unlocked ? L.Get("ui.recipe.hint") : L.Get("ui.recipe.locked", ("n", r.cafeLevel.ToString())),
-                                   unlocked ? L.Get("ui.recipe.buy", ("g", r.price.ToString())) : L.Get("ui.recipe.lockedbtn", ("n", r.cafeLevel.ToString())),
-                                   unlocked && gold >= r.price, UiFactory.PinkDeep);
-                    btn.onClick.AddListener(() => { owner.TryBuyRecipe(menu, out var msg); Render(); if (msg != null) feedback.text = msg; });
-                }
+                var st = s.GetMenuStat(m.menuId);
+                var o = YeogiCafe.Food.RecipeBook.Odds(st.level);
+                string l1 = L.Get("ui.recipe.odds", ("a", Mathf.RoundToInt(o.x * 100).ToString()), ("b", Mathf.RoundToInt(o.y * 100).ToString()), ("c", Mathf.RoundToInt(o.z * 100).ToString()));
+                string l2 = L.Get("ui.recipe.level", ("n", (st.level + 1).ToString()), ("sold", st.sold.ToString()));
+                if (st.level >= YeogiCafe.Food.RecipeBook.MaxLevel) { Card(icon, name, l1, l2, L.Get("ui.recipe.max"), false, UiFactory.Wood); continue; }
+                int need = YeogiCafe.Food.RecipeBook.NeedSold(st.level), cost = YeogiCafe.Food.RecipeBook.UpgradeCost(m, st.level);
+                bool ok = st.sold >= need;
+                var btn = Card(icon, name, l1, l2,
+                               ok ? L.Get("ui.recipe.upgrade", ("g", cost.ToString())) : L.Get("ui.recipe.needsoldbtn", ("n", st.sold.ToString()), ("t", need.ToString())),
+                               ok && gold >= cost, UiFactory.Green);
+                btn.onClick.AddListener(() => { owner.TryUpgradeMenu(menu, out var msg); Render(); if (msg != null) feedback.text = msg; });
             }
             feedback.text = L.Get("ui.recipe.tabhint");
         }

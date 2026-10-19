@@ -23,7 +23,7 @@ namespace YeogiCafe.UI
         public CafeContext cafe;
 
         // ── HUD 위젯 ──
-        Text goldText, phaseText, guestText, narrationText, nyanText;
+        Text goldText, phaseText, guestText, narrationText;
         Image timeBarFill;
 
         // ── 패널 컨트롤러 ──
@@ -100,6 +100,7 @@ namespace YeogiCafe.UI
                     ShowToast(L.Get("ui.review.toast", ("name", L.Get($"cat.{r.catId}.name")), ("paws", YeogiCafe.Food.ReviewBook.Paws(r.paws)), ("text", r.text)));
             };
             PawCursor.Ensure();
+            TextFitGuard.Ensure();                       // 글자 넘침 안전망(모든 UI 글자)
             BuildHud(root.transform);
 
             kitchen = new KitchenView(this, root.transform, bootstrap != null ? bootstrap.orderSystem : null);
@@ -141,14 +142,10 @@ namespace YeogiCafe.UI
                               Vector2.zero, new Vector2(0, 64));
             UiFactory.Frame(bar, UiFactory.FrameStyle.Plank);
 
-            goldText = UiFactory.Label("Gold", bar.transform, "0G", 24, TextAnchor.MiddleLeft, UiFactory.Ink);
+            goldText = UiFactory.Label("Gold", bar.transform, "0G", 26, TextAnchor.MiddleLeft, UiFactory.Ink);
             UiFactory.SetRect((RectTransform)goldText.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-                              new Vector2(0, 0.5f), new Vector2(20, 7), new Vector2(160, 34));
-
-            // 냥슐랭 스타(골드 오른쪽, 작게)
-            nyanText = UiFactory.Label("Nyan", bar.transform, "", 15, TextAnchor.MiddleLeft, new Color(0.85f, 0.55f, 0.15f));
-            UiFactory.SetRect((RectTransform)nyanText.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(22, -19), new Vector2(160, 18));
-            nyanText.raycastTarget = false;
+                              new Vector2(0, 0.5f), new Vector2(20, 0), new Vector2(170, 56));
+            goldText.horizontalOverflow = HorizontalWrapMode.Overflow;
 
             // 손님 수: 판자 나뭇결 선 위에 글자가 겹치지 않게 작은 종이 배지 위에
             var guestPill = UiFactory.Panel("GuestPill", bar.transform, UiFactory.Cream);
@@ -339,8 +336,6 @@ namespace YeogiCafe.UI
             if (phaseText != null && day != null)
                 phaseText.text = L.Get("ui.cafe.day", ("n", day.CurrentDay.ToString())) + "  " + HudFormatter.Phase(day.Phase)
                                  + "  " + L.Get("weather." + (int)Weather.Current);
-            if (nyanText != null && Save != null)
-                nyanText.text = L.Get("ui.nyan.hud") + " " + YeogiCafe.Food.NyanGuide.Stars(Save.nyanStars);
             if (guestText != null && cafe != null)
             {
                 int seated = cafe.SeatCount - cafe.FreeSeatCount;
@@ -411,16 +406,16 @@ namespace YeogiCafe.UI
         }
 
         // ── 레시피·음식 강화·가구 강화 ──
-        public bool TryBuyRecipe(MenuData m, out string msg)
+        public bool TryBuyTool(string toolId, out string msg)
         {
-            msg = null; var s = Save; if (s == null || m == null || economy == null) return false;
-            var r = System.Array.Find(YeogiCafe.Food.RecipeBook.Recipes, x => x.id == m.menuId);
-            if (r.id == null || YeogiCafe.Food.RecipeBook.Owned(s, m.menuId)) return false;
-            if (!YeogiCafe.Food.RecipeBook.Unlocked(s, r)) { msg = L.Get("ui.recipe.locked", ("n", r.cafeLevel.ToString())); return false; }
-            if (!economy.TrySpend(r.price)) { msg = L.Get("ui.shop.insufficient"); return false; }
-            s.ownedRecipes.Add(m.menuId);
+            msg = null; var s = Save; if (s == null || economy == null) return false;
+            var t = System.Array.Find(YeogiCafe.Food.RecipeBook.Tools, x => x.id == toolId);
+            if (t.id == null || YeogiCafe.Food.RecipeBook.ToolOwned(s, toolId)) return false;
+            if (!YeogiCafe.Food.RecipeBook.ToolUnlocked(s, t)) { msg = L.Get("ui.recipe.locked", ("n", t.cafeLevel.ToString())); return false; }
+            if (!economy.TrySpend(t.price)) { msg = L.Get("ui.shop.insufficient"); return false; }
+            s.ownedTools.Add(toolId);
             flow.SyncMenus();
-            msg = L.Get("ui.recipe.bought", ("menu", L.Get("menu." + m.menuId)));
+            msg = L.Get("ui.tool.bought", ("tool", L.Get(YeogiCafe.Order.CookingStations.NameKey(toolId))));
             YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
             RefreshHud();
             return true;

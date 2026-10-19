@@ -29,15 +29,17 @@ namespace YeogiCafe.EditorTools
 
         static void GenerateMenus()
         {
-            // 기본 5종 Always, 확장 3종은 레벨 게이트(문서 06/32)
+            // 주방 기구 5종 × 메뉴 2개. 언제 쓸 수 있는지는 기구 소유(RecipeBook)로만 정한다 → 메뉴 자체는 모두 Always.
             CreateMenu("menu_americano", "아메리카노", 30, 8, 3f, new FoodTag[0], U(UnlockType.Always, 0));
+            CreateMenu("menu_latte", "카페라떼", 40, 12, 4f, new[] { FoodTag.Warm, FoodTag.Sweet }, U(UnlockType.Always, 0));
             CreateMenu("menu_milk", "우유", 30, 10, 3f, new[] { FoodTag.Warm }, U(UnlockType.Always, 0));
             CreateMenu("menu_fishcake", "생선케이크", 60, 20, 5f, new[] { FoodTag.Fish, FoodTag.Sweet }, U(UnlockType.Always, 0));
             CreateMenu("menu_parfait", "딸기파르페", 70, 25, 6f, new[] { FoodTag.Fruit, FoodTag.Sweet }, U(UnlockType.Always, 0));
             CreateMenu("menu_tuna_sand", "참치샌드위치", 80, 30, 6f, new[] { FoodTag.Fish, FoodTag.Meal }, U(UnlockType.Always, 0));
-            CreateMenu("menu_catnip_tea", "캣닢차", 40, 12, 4f, new[] { FoodTag.Warm }, U(UnlockType.CafeLevel, 2));
-            CreateMenu("menu_pudding", "푸딩", 50, 18, 5f, new[] { FoodTag.Sweet }, U(UnlockType.CafeLevel, 2));
-            CreateMenu("menu_grilled_fish", "구운생선", 90, 35, 8f, new[] { FoodTag.Fish, FoodTag.Meal, FoodTag.Warm }, U(UnlockType.CafeLevel, 3));
+            CreateMenu("menu_catnip_tea", "캣닢차", 40, 12, 4f, new[] { FoodTag.Warm }, U(UnlockType.Always, 0));
+            CreateMenu("menu_pudding", "푸딩", 50, 18, 5f, new[] { FoodTag.Sweet }, U(UnlockType.Always, 0));
+            CreateMenu("menu_grilled_fish", "구운생선", 90, 35, 8f, new[] { FoodTag.Fish, FoodTag.Meal, FoodTag.Warm }, U(UnlockType.Always, 0));
+            CreateMenu("menu_skewer", "새우꼬치", 85, 30, 7f, new[] { FoodTag.Fish, FoodTag.Meal }, U(UnlockType.Always, 0));
         }
 
         static void GenerateFurniture()

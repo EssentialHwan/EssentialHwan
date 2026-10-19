@@ -28,7 +28,8 @@ namespace YeogiCafe.Save
         public int questDay = -1;                          // 의뢰를 뽑은 날
         public int weather, weatherDay = -1;               // 오늘의 날씨(WeatherKind)
         // ── 요리·평판 ──
-        public List<string> ownedRecipes = new();          // 산 레시피(기본 3종 제외)
+        public List<string> ownedRecipes = new();          // (구) 산 레시피 → ownedTools로 옮김
+        public List<string> ownedTools = new();            // 산 주방 기구(기본 커피머신·오븐 제외)
         public List<MenuStatDTO> menuStats = new();        // 메뉴별 판매 수·업그레이드 단계
         public int nyanStars;                              // 냥슐랭 스타 0~5
         public int inspectorLastDay = -1;                  // 심사원이 마지막으로 온 날

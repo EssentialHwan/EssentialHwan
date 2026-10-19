@@ -86,6 +86,35 @@ namespace YeogiCafe.Order
             return null;
         }
 
+        // 기구에서 고른 메뉴로 조리 시작: 그 메뉴를 기다리는 가장 오래된 주문 → 없으면 아직 해석 안 된 힌트 주문(고른 메뉴로 확정).
+        // 기다리는 주문이 없으면 null(만들지 않음).
+        public OrderTicket StartMenuAt(string toolId, MenuData menu)
+        {
+            if (menu == null || CookingOrReadyAt(toolId) != null) return null;
+            OrderTicket pick = null;
+            foreach (var t in tickets)
+                if (t.state == TicketState.Queued && !t.unresolved && t.menu == menu) { pick = t; break; }
+            if (pick == null)
+                foreach (var t in tickets)
+                    if (t.state == TicketState.Queued && t.unresolved) { Resolve(t, menu); pick = t; break; }
+            if (pick == null) return null;
+            pick.state = TicketState.Cooking; pick.toolId = toolId; pick.cookProgress = 0f;
+            return pick;
+        }
+
+        public int WaitingFor(MenuData menu)
+        {
+            int n = 0;
+            foreach (var t in tickets) if (t.state == TicketState.Queued && !t.unresolved && t.menu == menu) n++;
+            return n;
+        }
+        public int WaitingVague()
+        {
+            int n = 0;
+            foreach (var t in tickets) if (t.state == TicketState.Queued && t.unresolved) n++;
+            return n;
+        }
+
         // 기구를 누름: 완성품이 있으면 서빙, 비어 있으면 가장 오래 기다린 해당 메뉴 주문을 조리 시작.
         public enum ToolResult { Nothing, Started, Served, Busy }
         public ToolResult PressTool(string toolId, out OrderTicket ticket)

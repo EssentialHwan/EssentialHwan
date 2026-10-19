@@ -36,7 +36,7 @@ namespace YeogiCafe.DevTools
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (!show) return;
-            GUILayout.BeginArea(new Rect(10, 80, 260, 640), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(10, 80, 260, 720), GUI.skin.box);
             GUILayout.Label("== DevConsole (F1) ==");
             if (economy != null)
             {
@@ -64,6 +64,14 @@ namespace YeogiCafe.DevTools
                 GUILayout.EndHorizontal();
                 var raid = YeogiCafe.Visual.MouseRaid.Instance;
                 if (raid != null && GUILayout.Button("쥐 출몰")) raid.Spawn();
+                if (GUILayout.Button("글자 넘침 검사 → 콘솔"))
+                {
+                    var rep = YeogiCafe.UI.TextFitGuard.Report();
+                    Debug.Log(string.IsNullOrEmpty(rep) ? "[TextFit] 넘치는 글자 없음" : "[TextFit] 줄여도 넘치는 글자:\n" + rep);
+                    System.IO.File.WriteAllText(System.IO.Path.Combine(Application.dataPath, "../textfit_report.txt"), rep);
+                }
+                if (flow != null && flow.Save != null && GUILayout.Button($"냥슐랭 별 +1 (지금 {flow.Save.nyanStars})"))
+                    flow.Save.nyanStars = Mathf.Min(5, flow.Save.nyanStars + 1);
                 if (cats != null && flow != null && flow.Save != null && GUILayout.Button($"냥슐랭 심사원 호출 (★{flow.Save.nyanStars})"))
                 {
                     cats.Spawn(YeogiCafe.Food.NyanGuide.Data);

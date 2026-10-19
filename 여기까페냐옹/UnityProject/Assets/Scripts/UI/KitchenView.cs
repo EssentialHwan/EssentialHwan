@@ -388,6 +388,15 @@ namespace YeogiCafe.UI
                 hint.text = L.Get(distract == Distract.Knead ? "ui.kitchen.busyknead" : distract == Distract.Groom ? "ui.kitchen.busygroom" : "ui.kitchen.busysuckle");
                 return;
             }
+            // 아직 안 산 기구: 상점 안내
+            if (!YeogiCafe.Food.RecipeBook.ToolOwned(owner.Save, id))
+            {
+                hint.text = L.Get("ui.tool.notowned", ("tool", L.Get(CookingStations.NameKey(id))));
+                YeogiCafe.Audio.SoundManager.Sfx("sfx_boop", 0.4f);
+                return;
+            }
+            // 비어 있는 기구: 무엇을 만들지 고르는 창(완성품 서빙·조리 중이면 아래 기존 동작)
+            if (orders.CookingOrReadyAt(id) == null) { OpenToolPicker(id, w); return; }
             Punch(w);
             var r = orders.PressTool(id, out var ticket);
             switch (r)
@@ -433,10 +442,8 @@ namespace YeogiCafe.UI
                 bool ready = active != null && active.state == TicketState.Ready;
                 w.dish.gameObject.SetActive(ready);
                 w.stars.gameObject.SetActive(ready);
-                // 레시피가 하나도 없는 기구는 흐리게(상점 [레시피]에서 사면 켜진다)
-                bool usable = false;
-                foreach (var m in CookingStations.MenusFor(w.id)) if (YeogiCafe.Food.RecipeBook.Owned(owner.Save, m)) usable = true;
-                w.cg.alpha = usable ? 1f : 0.35f;
+                // 아직 안 산 기구는 흐리게(상점 [주방 기구]에서 사면 켜진다)
+                w.cg.alpha = YeogiCafe.Food.RecipeBook.ToolOwned(owner.Save, w.id) ? 1f : 0.35f;
                 if (ready)
                 {
                     float age = Time.time - active.readyAt;
@@ -504,31 +511,109 @@ namespace YeogiCafe.UI
             return img;
         }
 
-        // ── 힌트 주문 메뉴 고르기 ──
+        // ── 메뉴 고르기 창(공용) ──
+        // 머리글 두 줄(제목·부제) + 메뉴 버튼(아이콘·이름·배지). 글자는 칸에 맞춰 줄어든다.
         GameObject pickerGo;
-        void OpenPicker(OrderTicket tk)
+        RectTransform BuildPickerBox(string title, string sub, int count, int cols, float cellW, float cellH)
         {
             ClosePicker();
-            var menus = owner.Cafe != null ? owner.Cafe.GetAvailableMenus() : null;
-            if (menus == null || menus.Count == 0) return;
             var box = UiFactory.Panel("Picker", root, UiFactory.PanelBg);
             pickerGo = box.gameObject;
-            int cols = Mathf.Min(4, menus.Count), rows = (menus.Count + 3) / 4;
-            UiFactory.SetRect(box, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1),
-                              new Vector2(0, -140), new Vector2(40 + cols * 112, 84 + rows * 100));
+            int rows = (count + cols - 1) / cols;
+            float w = 48 + cols * (cellW + 8) - 8, h = 112 + rows * (cellH + 8) - 8 + 24;
+            UiFactory.SetRect(box, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -130), new Vector2(Mathf.Max(w, 420), h));
             UiFactory.Frame(box, UiFactory.FrameStyle.Window);
-            var title = UiFactory.Label("T", box.transform, L.Get("ui.order.pick", ("name", CatName(tk)), ("hint", L.Get(tk.hintKey))),
-                                        17, TextAnchor.MiddleCenter, UiFactory.Ink);
-            UiFactory.SetRect((RectTransform)title.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -8), new Vector2(-20, 30));
+            var t = UiFactory.Label("Title", box.transform, title, 20, TextAnchor.MiddleCenter, UiFactory.Ink);
+            UiFactory.SetRect((RectTransform)t.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -26), new Vector2(-104, 28));
+            Shrink(t, 13);
+            var st = UiFactory.Label("Sub", box.transform, sub, 15, TextAnchor.MiddleCenter, UiFactory.WoodDark);
+            UiFactory.SetRect((RectTransform)st.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -54), new Vector2(-64, 24));
+            Shrink(st, 11);
+            var close = UiFactory.Button("X", box.transform, "×", UiFactory.Pink, UiFactory.Cream, out _);
+            UiFactory.SetRect((RectTransform)close.transform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1), new Vector2(-24, -24), new Vector2(32, 32));
+            close.onClick.AddListener(ClosePicker);
+            return box;
+        }
+
+        // 한 줄짜리 글자를 칸 너비에 맞게 줄인다
+        static void Shrink(Text t, int min)
+        {
+            t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Truncate;
+            t.resizeTextForBestFit = true; t.resizeTextMinSize = min; t.resizeTextMaxSize = t.fontSize;
+        }
+
+        Button PickerButton(RectTransform box, int i, int cols, float cellW, float cellH, string menuId, string badge, bool badgeOn)
+        {
+            float rowW = cols * (cellW + 8) - 8, boxW = box.sizeDelta.x;
+            var b = UiFactory.Button("M_" + menuId, box.transform, "", UiFactory.Cream, UiFactory.Ink, out var bl);
+            UiFactory.SetRect((RectTransform)b.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1),
+                              new Vector2((boxW - rowW) / 2 + (i % cols) * (cellW + 8), -78 - (i / cols) * (cellH + 8)), new Vector2(cellW, cellH));
+            Icon((RectTransform)b.transform, DishSprite(menuId), new Vector2(cellW / 2 - 26, cellH - 62), 52);
+            var n = UiFactory.Label("Name", b.transform, L.Get("menu." + menuId), 15, TextAnchor.MiddleCenter, UiFactory.Ink);
+            UiFactory.SetRect((RectTransform)n.transform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, badge != null ? 26 : 10), new Vector2(-12, 22));
+            Shrink(n, 10); n.raycastTarget = false;
+            if (badge != null)
+            {
+                var bd = UiFactory.Label("Badge", b.transform, badge, 13, TextAnchor.MiddleCenter, badgeOn ? UiFactory.PinkDeep : UiFactory.WoodDark);
+                UiFactory.SetRect((RectTransform)bd.transform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 6), new Vector2(-12, 20));
+                Shrink(bd, 9); bd.raycastTarget = false;
+            }
+            return b;
+        }
+
+        // 기구를 눌렀을 때: 그 기구의 메뉴 2개 중 무엇을 만들지
+        void OpenToolPicker(string toolId, ToolWidget w)
+        {
+            var menus = new List<YeogiCafe.Data.MenuData>();
+            if (owner.Cafe != null)
+                foreach (var m in owner.Cafe.GetAvailableMenus())
+                    if (m != null && CookingStations.ToolFor(m.menuId) == toolId) menus.Add(m);
+            if (menus.Count == 0) { hint.text = L.Get("ui.kitchen.noorder"); return; }
+            int vague = orders.WaitingVague();
+            string sub = vague > 0 ? L.Get("ui.tool.pick.vague", ("n", vague.ToString())) : L.Get("ui.tool.pick.sub");
+            var box = BuildPickerBox(L.Get("ui.tool.pick.title", ("tool", L.Get(CookingStations.NameKey(toolId)))), sub, menus.Count, menus.Count, 150, 124);
             for (int i = 0; i < menus.Count; i++)
             {
                 var m = menus[i];
-                var b = UiFactory.Button("M_" + m.menuId, box.transform, L.Get("menu." + m.menuId), UiFactory.Cream, UiFactory.Ink, out var bl);
-                bl.fontSize = 13; bl.alignment = TextAnchor.LowerCenter;
-                UiFactory.SetRect((RectTransform)b.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1),
-                                  new Vector2(20 + (i % 4) * 112, -44 - (i / 4) * 100), new Vector2(104, 92));
-                Icon((RectTransform)b.transform, DishSprite(m.menuId), new Vector2(28, 30), 48);
-                var mm = m;
+                int n = orders.WaitingFor(m);
+                string badge = n > 0 ? L.Get("ui.tool.pick.waiting", ("n", n.ToString())) : vague > 0 ? L.Get("ui.tool.pick.guess") : L.Get("ui.tool.pick.none");
+                var b = PickerButton(box, i, menus.Count, 150, 124, m.menuId, badge, n > 0 || vague > 0);
+                b.onClick.AddListener(() => StartChosen(toolId, w, m));
+            }
+        }
+
+        void StartChosen(string toolId, ToolWidget w, YeogiCafe.Data.MenuData m)
+        {
+            ClosePicker();
+            if (PawBusy(w.rt.anchorMin.x < 0.5f))
+            {
+                hint.text = L.Get(distract == Distract.Knead ? "ui.kitchen.busyknead" : distract == Distract.Groom ? "ui.kitchen.busygroom" : "ui.kitchen.busysuckle");
+                return;
+            }
+            var tk = orders.StartMenuAt(toolId, m);
+            if (tk == null)
+            {
+                hint.text = L.Get("ui.tool.pick.nobody", ("menu", L.Get("menu." + m.menuId)));
+                YeogiCafe.Audio.SoundManager.Sfx("sfx_boop", 0.4f);
+                return;
+            }
+            Punch(w);
+            YeogiCafe.Audio.SoundManager.Sfx(toolId.Contains("coffee") || toolId.Contains("kettle") ? "sfx_pour" : "sfx_sizzle", 0.5f);
+            hint.text = L.Get("ui.kitchen.cooking", ("menu", MenuName(tk)));
+            RefreshRail(true);
+        }
+
+        // 힌트 주문 카드를 눌렀을 때: 어느 메뉴로 해석할지
+        void OpenPicker(OrderTicket tk)
+        {
+            var menus = owner.Cafe != null ? owner.Cafe.GetAvailableMenus() : null;
+            if (menus == null || menus.Count == 0) return;
+            int cols = Mathf.Min(4, menus.Count);
+            var box = BuildPickerBox(L.Get("ui.order.pick", ("name", CatName(tk))), "‘" + L.Get(tk.hintKey) + "’", menus.Count, cols, 112, 104);
+            for (int i = 0; i < menus.Count; i++)
+            {
+                var mm = menus[i];
+                var b = PickerButton(box, i, cols, 112, 104, mm.menuId, null, false);
                 b.onClick.AddListener(() =>
                 {
                     orders.Resolve(tk, mm);
@@ -537,9 +622,6 @@ namespace YeogiCafe.UI
                     RefreshRail(true);
                 });
             }
-            var close = UiFactory.Button("X", box.transform, "×", UiFactory.Pink, UiFactory.Cream, out _);
-            UiFactory.SetRect((RectTransform)close.transform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1), new Vector2(-6, -6), new Vector2(32, 32));
-            close.onClick.AddListener(ClosePicker);
         }
 
         void ClosePicker() { if (pickerGo != null) Object.Destroy(pickerGo); pickerGo = null; }

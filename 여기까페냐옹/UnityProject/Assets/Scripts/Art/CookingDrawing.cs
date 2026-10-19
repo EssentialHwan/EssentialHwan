@@ -134,6 +134,19 @@ namespace YeogiCafe.Art
             {
                 case "menu_americano":
                     Cup(c, PixelPalette.White, PixelPalette.WoodDeep); break;
+                case "menu_latte":
+                    Cup(c, PixelPalette.White, PixelPalette.WoodLight);
+                    c.Set(11, 13, PixelPalette.White); c.Set(13, 13, PixelPalette.White); c.HLine(11, 13, 12, PixelPalette.White);   // 하트 거품
+                    break;
+                case "menu_skewer":
+                    Plate(c);
+                    for (int i = 0; i < 16; i++) c.Set(4 + i, 5 + i * 10 / 16, PixelPalette.WoodMid);                  // 꼬치
+                    for (int k = 0; k < 3; k++)
+                    {
+                        int cx = 7 + k * 5, cy = 7 + k * 3;
+                        c.Disc(cx, cy, 2, PixelPalette.PinkMid); c.Set(cx - 1, cy + 1, PixelPalette.PinkLight); c.Set(cx + 1, cy - 1, PixelPalette.PinkDark);
+                    }
+                    break;
                 case "menu_catnip_tea":
                     Cup(c, PixelPalette.White, PixelPalette.GreenMid);
                     c.Set(12, 15, PixelPalette.GreenDark); break;
