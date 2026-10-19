@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace YeogiCafe.Art
 {
-    // 도트 시트 고양이(4×4 = 16포즈, 칸 56×56). Resources/CatSheets/{catId}.png.bytes 가 있으면 리그 대신 이것을 쓴다.
+    // 도트 시트 고양이(4×4 = 16포즈, 칸 56×56). Resources/CatSheets/{catId}.bytes 가 있으면 리그 대신 이것을 쓴다.
     // 포즈 번호: 0 앉기 · 1 윙크 · 2 눈웃음 · 3 야옹 / 4~7 걷기 / 8 식빵 · 9 잠 · 10 그루밍 · 11 먹기 / 12 엉덩이 들기 · 13 기지개 · 14 웅크림 · 15 꾹꾹이
     //           16 하악 · 17 뒹굴(옆으로 누움) · 18 점프 · 19 냥펀치(앞발 번쩍)
     // 클립(CatClips 이름)마다 포즈 번호와 살짝 흔들기(dx,dy)·눕히기(rot)를 조합해 프레임을 만든다.
@@ -61,13 +61,14 @@ namespace YeogiCafe.Art
         {
             if (sheets.TryGetValue(catId, out var px)) return px;
             px = null;
-            var ta = Resources.Load<TextAsset>("CatSheets/" + catId);
+            var ta = Resources.Load<TextAsset>("CatSheets/" + catId);             // Resources/CatSheets/cat_x.bytes (내용은 PNG)
             if (ta != null)
             {
                 var t = new Texture2D(2, 2, TextureFormat.RGBA32, false);
                 if (t.LoadImage(ta.bytes)) { px = t.GetPixels32(); sheetW[catId] = t.width; }
                 Object.Destroy(t);
             }
+            if (px == null) Debug.LogWarning($"[CatSheet] {catId} 시트 없음 → 리그 그림 사용");
             sheets[catId] = px;
             return px;
         }

@@ -5,7 +5,7 @@ namespace YeogiCafe.Art
 {
     // 고해상도 고양이 리그(CatRig) → 클립별 Sprite 프레임. 고양이마다 아틀라스 텍스처 1장(클립=행, 프레임=열).
     // 처음 요청될 때 한 번 그린다(고양이 1마리 ≈ 100프레임).
-    // 도트 시트: Resources/CatSheets/{catId}.png.bytes (CatSheet). 정식 아트 교체: Resources/ArtOverride/cat_rig/{catId}.png 에 같은 격자(64x48, 행 순서 = CatClips.All)로 넣으면 그것을 쓴다.
+    // 도트 시트: Resources/CatSheets/{catId}.bytes (CatSheet). 정식 아트 교체: Resources/ArtOverride/cat_rig/{catId}.png 에 같은 격자(64x48, 행 순서 = CatClips.All)로 넣으면 그것을 쓴다.
     public static class CatSpriteBank
     {
         public const int FW = CatRig.W, FH = CatRig.H;
