@@ -222,6 +222,58 @@ namespace YeogiCafe.Art
             return Finish(c);
         }
 
+        // ── 캣휠(60×62) ── 받침·다리만(정적). 바퀴는 WheelSpin(프레임)으로 런타임에 돌린다.
+        public const int WheelW = 60, WheelH = 62, WheelCX = 30, WheelCY = 34, WheelR = 26;
+        public static PixelCanvas FacWheel()
+        {
+            var c = new PixelCanvas(WheelW, WheelH); c.GroundShadow(30, 4, 24);
+            var W1 = PixelPalette.WoodLight; var W2 = PixelPalette.WoodMid; var W3 = PixelPalette.WoodDark;
+            c.FillRoundRect(6, 4, 53, 8, 2, W2); c.HLine(7, 52, 8, W1); c.HLine(6, 53, 4, W3);       // 받침 판
+            // A자 다리(양쪽) → 축
+            for (int i = 0; i <= 26; i++)
+            {
+                float u = i / 26f;
+                int lx = Mathf.RoundToInt(Mathf.Lerp(10, WheelCX - 2, u)), rx = Mathf.RoundToInt(Mathf.Lerp(49, WheelCX + 2, u));
+                int y = Mathf.RoundToInt(Mathf.Lerp(8, WheelCY, u));
+                c.FillRect(lx - 1, y, lx + 1, y, W2); c.Set(lx - 1, y, W1);
+                c.FillRect(rx - 1, y, rx + 1, y, W2); c.Set(rx + 1, y, W3);
+            }
+            Finish(c);
+            // 바퀴도 함께 그려 둔다(상점 아이콘·배치 미리보기용). 게임에선 WheelView가 같은 자리에 돌아가는 바퀴를 덮는다.
+            var w = WheelSpin(0);
+            for (int y = 0; y < WheelH; y++) for (int x = 0; x < WheelW; x++) { var p = w.Get(x, y); if (p.a > 0) c.Blend(x, y, p); }
+            return c;
+        }
+
+        // 바퀴 한 장(돌아가는 느낌: 바퀴살 8개 → 45° 주기, 프레임 4장으로 11.25°씩)
+        public static PixelCanvas WheelSpin(int frame)
+        {
+            var c = new PixelCanvas(WheelW, WheelH);
+            var rimO = new Color32(118, 182, 172, 255); var rim = new Color32(156, 214, 202, 255); var rimL = new Color32(204, 238, 228, 255);
+            var track = new Color32(250, 240, 222, 255); var back = new Color32(246, 236, 220, 120); var spoke = new Color32(130, 192, 182, 255);
+            int cx = WheelCX, cy = WheelCY, R = WheelR;
+            for (int y = cy - R - 1; y <= cy + R + 1; y++)
+                for (int x = cx - R - 1; x <= cx + R + 1; x++)
+                {
+                    float d = Mathf.Sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy));
+                    if (d <= R - 4) c.Set(x, y, back);                                  // 뒷판(반투명)
+                    else if (d <= R - 3) c.Set(x, y, track);                            // 달리는 바닥면
+                    else if (d <= R - 1) c.Set(x, y, y > cy ? rimL : rim);              // 테두리(위쪽 밝게)
+                    else if (d <= R) c.Set(x, y, rimO);
+                }
+            float baseAng = -frame * 11.25f * Mathf.Deg2Rad;                            // 시계 방향
+            for (int k = 0; k < 8; k++)
+            {
+                float a = baseAng + k * Mathf.PI / 4f;
+                float ca = Mathf.Cos(a), sa = Mathf.Sin(a);
+                for (float r = 3; r <= R - 4; r += 0.5f) c.Set(Mathf.RoundToInt(cx + ca * r), Mathf.RoundToInt(cy + sa * r), spoke);
+                // 테두리 표식(돌아가는 게 잘 보이게)
+                c.Set(Mathf.RoundToInt(cx + ca * (R - 2)), Mathf.RoundToInt(cy + sa * (R - 2)), k % 2 == 0 ? PixelPalette.PinkMid : PixelPalette.YellowMid);
+            }
+            c.Disc(cx, cy, 3, PixelPalette.YellowMid); c.Set(cx - 1, cy + 1, PixelPalette.YellowLight); c.Set(cx, cy, PixelPalette.MetalDark);
+            return c;
+        }
+
         public static PixelCanvas WandRod()
         {
             var c = new PixelCanvas(3, 34);

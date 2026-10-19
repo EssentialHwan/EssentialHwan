@@ -59,6 +59,8 @@ namespace YeogiCafe.DevTools
                 if (GUILayout.Button("→과일박스")) DebugSendTo(YeogiCafe.Data.FacilityTag.Box);
                 if (GUILayout.Button("→따뜻한곳")) DebugSendTo(YeogiCafe.Data.FacilityTag.Warm);
                 if (GUILayout.Button("→놀이")) DebugSendTo(YeogiCafe.Data.FacilityTag.Play);
+                if (GUILayout.Button("→캣휠")) DebugSendTo(YeogiCafe.Data.FacilityTag.Play, "furn_fac_wheel");
+                if (GUILayout.Button("→캣타워")) DebugSendTo(YeogiCafe.Data.FacilityTag.Height, "furn_fac_tower");
                 GUILayout.EndHorizontal();
                 var raid = YeogiCafe.Visual.MouseRaid.Instance;
                 if (raid != null && GUILayout.Button("쥐 출몰")) raid.Spawn();
@@ -99,12 +101,12 @@ namespace YeogiCafe.DevTools
         }
 
         // 개발용: 아무 고양이나 해당 태그 시설로 보낸다
-        void DebugSendTo(YeogiCafe.Data.FacilityTag tag)
+        void DebugSendTo(YeogiCafe.Data.FacilityTag tag, string idPrefix = null)
         {
             var cafe = FindObjectOfType<CafeContext>(); var cm = FindObjectOfType<CatManager>();
             if (cafe == null || cm == null) return;
             YeogiCafe.AI.IFacility target = null;
-            foreach (var f in cafe.GetFacilities()) { if (!f.IsFree) continue; foreach (var t in f.Tags) if (t == tag) target = f; }
+            foreach (var f in cafe.GetFacilities()) { if (!f.IsFree || (idPrefix != null && !f.FacilityId.StartsWith(idPrefix))) continue; foreach (var t in f.Tags) if (t == tag) target = f; }
             if (target == null) return;
             foreach (var b in cm.Active) if (b != null && !b.IsFinished && b.FacilityPhase == YeogiCafe.AI.CatBrain.FacPhase.None) { b.DebugUseFacility(target); return; }
         }

@@ -33,6 +33,7 @@ namespace YeogiCafe.Cafe
             "furn_fac_toybox" => 0.2f,
             "furn_fac_fruitbox" => 0.3f,      // 상자 안에 쏙(앞면 뒤로 숨어 머리만)
             "furn_fac_heatpad" => 0.12f,
+            "furn_fac_wheel" => 0.26f,        // 바퀴 안쪽 바닥
             _ => 0f,
         };
 
@@ -46,6 +47,8 @@ namespace YeogiCafe.Cafe
             sr.sprite = source.worldSprite;
             if (source.furnitureId == "furn_fac_wand" && GetComponent<YeogiCafe.Visual.WandToyView>() == null)
                 gameObject.AddComponent<YeogiCafe.Visual.WandToyView>();
+            if (source.furnitureId == "furn_fac_wheel" && GetComponent<YeogiCafe.Visual.WheelView>() == null)
+                gameObject.AddComponent<YeogiCafe.Visual.WheelView>();
             sr.sortingOrder = source.wallMounted ? YeogiCafe.Visual.YSort.WallProps
                                                  : YeogiCafe.Visual.YSort.Order(transform.position.y);
         }

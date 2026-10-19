@@ -40,6 +40,8 @@ namespace YeogiCafe.UI
         Text kitchenBtnLabel;
 
         float narrationTimer, hudTimer;
+        TitleScreen title;
+        public void OpenSettings() { settings?.Show(); }
 
         void Start()
         {
@@ -118,6 +120,10 @@ namespace YeogiCafe.UI
             questList.lineSpacing = 1.15f;
             UiFactory.SetRect((RectTransform)questList.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(18, -42), new Vector2(-36, 100));
             questPanel.SetActive(false);
+
+            // 시작 화면(맨 위). 세이브가 있으면 '이어하기 · N일차'
+            var sm = FindObjectOfType<YeogiCafe.Save.SaveManager>();
+            title = new TitleScreen(this, root.transform, sm != null && sm.HasSave(), day != null ? day.CurrentDay : 1);
         }
 
         void BuildHud(Transform parent)
@@ -286,6 +292,7 @@ namespace YeogiCafe.UI
             kitchen?.Tick(Time.unscaledDeltaTime);
             closing?.Tick(Time.unscaledDeltaTime);
             settings?.Tick();
+            title?.Tick(Time.unscaledDeltaTime);
             if (Input.GetKeyDown(KeyCode.Escape) && settings != null && (closing == null || !closing.IsOpen)) settings.Toggle();   // ESC = 설정
             editMode?.Tick(Time.unscaledDeltaTime);
             if (day != null && timeBarFill != null && bootstrap != null && bootstrap.balance != null)

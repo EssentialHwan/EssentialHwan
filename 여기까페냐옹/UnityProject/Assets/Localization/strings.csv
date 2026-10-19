@@ -445,3 +445,10 @@ opt.newgame,새 게임,New game
 opt.newgame.confirm,정말? 한 번 더!,Sure? Click again!
 opt.quit,게임 종료,Quit
 opt.close,닫기 (ESC),Close (ESC)
+title.logo,여기까페냐옹,Yeogi Cafe Nyaong
+title.sub,고양이 손님을 살피는 작은 카페,A little cafe where cats are the guests
+title.start,시작하기,Start
+title.day,{n}일차,Day {n}
+title.hint,ESC 설정  ·  M 소리 끄기/켜기,ESC Settings  ·  M Mute
+furn.furn_fac_wheel.name,캣휠,Cat Wheel
+furn.furn_fac_wheel,캣휠,Cat Wheel

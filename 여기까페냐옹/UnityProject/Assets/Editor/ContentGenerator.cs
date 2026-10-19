@@ -72,6 +72,9 @@ namespace YeogiCafe.EditorTools
             // 자동 낚싯대: 저절로 흔들리는 깃털 — 놀이 시설(놀이 선호 단서)
             CreateFacility("furn_fac_wand", "자동낚싯대", 380, new[] { FacilityTag.Play, FacilityTag.Active },
                            A((AtmosphereAxis.Lively, 3)));
+            // 캣휠: 안에서 달리면 바퀴가 돈다 — 활동적인 놀이 시설(놀이 선호 단서)
+            CreateFacility("furn_fac_wheel", "캣휠", 450, new[] { FacilityTag.Play, FacilityTag.Active },
+                           A((AtmosphereAxis.Lively, 4)));
             CreateFacility("furn_fac_plant", "화분", 180, new[] { FacilityTag.Quiet, FacilityTag.Natural },
                            A((AtmosphereAxis.Natural, 3), (AtmosphereAxis.Quiet, 1)));
             CreateFacility("furn_fac_window", "창문", 150, new[] { FacilityTag.Natural },

@@ -118,7 +118,7 @@ namespace YeogiCafe.Visual
             target = CafeLayout.RandomFloorPoint();
             st = St.Loose; t = 0f; pauseT = 0f;
             Toast?.Invoke(L.Get("mouse.appear"));
-            YeogiCafe.Audio.SoundManager.Sfx("sfx_squeak_2", 0.6f);
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_squeak_2", 0.5f);
             foreach (var b in cats.Active)
             {
                 if (b == null) continue;
@@ -127,14 +127,20 @@ namespace YeogiCafe.Visual
             }
         }
 
+        float squeakT = 1f;
+
         void Scurry(float dt, float speed)
         {
             if (pauseT > 0f) { pauseT -= dt; return; }       // 잠깐 멈춰 킁킁(잡을 기회)
             MoveToward(target, speed, dt);
+            // 달리는 동안 '사사삭' 발소리, 가끔 '찍'
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_scurry", 0.35f, 0.1f, "mouse_run", 0.45f);
+            squeakT -= dt;
+            if (squeakT <= 0f) { squeakT = Random.Range(1.2f, 2.6f); YeogiCafe.Audio.SoundManager.Sfx(Random.value < 0.6f ? "sfx_squeak" : "sfx_squeak_2", 0.4f, 0.12f); }
             if ((mouse.position - target).sqrMagnitude < 0.02f)
             {
                 target = CafeLayout.RandomFloorPoint();
-                if (st == St.Loose && Random.value < 0.45f) { pauseT = Random.Range(0.35f, 0.7f); YeogiCafe.Audio.SoundManager.Sfx("sfx_squeak", 0.45f, 0.1f); }
+                if (st == St.Loose && Random.value < 0.45f) { pauseT = Random.Range(0.35f, 0.7f); YeogiCafe.Audio.SoundManager.Sfx("sfx_squeak", 0.4f, 0.12f); }
             }
         }
 
@@ -163,7 +169,7 @@ namespace YeogiCafe.Visual
                 }
             }
             Toast?.Invoke(skipped > 0 ? L.Get("mouse.chase.pay", ("n", skipped.ToString())) : L.Get("mouse.chase"));
-            YeogiCafe.Audio.SoundManager.Sfx("sfx_squeak_2", 0.6f);
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_squeak_2", 0.5f);
             GameEvents.Raise(GameEvents.MouseEscaped);
         }
 
