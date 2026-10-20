@@ -229,6 +229,18 @@ namespace YeogiCafe.Cafe
         }
 
         // 슬롯 선택: 벽걸이→벽 슬롯 / 창가 좌석→창가 슬롯 우선 / 그 외→창가가 아닌 바닥 슬롯 우선.
+        // 상점 표시용: 지금 카페 레벨에서 열린 칸 중 비어 있는 칸 수
+        public (int free, int total) SlotCount(SlotKind kind)
+        {
+            int free = 0, total = 0;
+            foreach (var s in slots)
+            {
+                if (s.kind != kind || s.minCafeLevel > CafeLevel) continue;
+                total++; if (!s.occupied) free++;
+            }
+            return (free, total);
+        }
+
         SlotEntry FindSlotFor(FurnitureData data)
         {
             var want = data.wallMounted ? SlotKind.Wall : SlotKind.Floor;

@@ -176,7 +176,8 @@ namespace YeogiCafe.UI
             }
 
             int stamps = save != null ? save.pawStamps : 0;
-            header.text = L.Get("ui.catalog.discovered", ("a", discovered.ToString()), ("b", total.ToString()))
+            var goal = EndingPanel.Progress(save, all);
+            header.text = L.Get(save != null && save.endingSeen ? "ui.catalog.goaldone" : "ui.catalog.goal", ("a", goal.done.ToString()), ("b", goal.total.ToString()))
                           + "    " + L.Get("ui.catalog.stamps", ("n", stamps.ToString()))
                           + "    " + L.Get("ui.catalog.gifts", ("n", (save != null ? save.giftsCollected.Count : 0).ToString()),
                                            ("t", YeogiCafe.Data.GiftCatalog.All.Length.ToString()));

@@ -112,12 +112,13 @@ namespace YeogiCafe.EditorTools
                       "menu_milk", SeatTag.Corner, FacilityTag.Natural, AtmosphereAxis.Quiet, U(UnlockType.CafeLevel, 2));
             CreateCat("cat_tuxedo", "턱시도냥", PersonalityTag.Active, PersonalityTag.Playful,
                       "menu_americano", SeatTag.Sofa, FacilityTag.Play, AtmosphereAxis.Lively, U(UnlockType.CafeLevel, 2));
-            CreateCat("cat_mackerel", "고등어냥", PersonalityTag.Glutton, PersonalityTag.Relaxed,
-                      "menu_fishcake", SeatTag.Sofa, FacilityTag.Soft, AtmosphereAxis.Warm, U(UnlockType.CafeLevel, 3));
-            CreateCat("cat_siamese", "샴냥", PersonalityTag.Fickle, PersonalityTag.Curious,
-                      "menu_parfait", SeatTag.Window, FacilityTag.Play, AtmosphereAxis.Luxury, U(UnlockType.CafeLevel, 3));
-            CreateCat("cat_gray", "회색냥", PersonalityTag.Lonely, PersonalityTag.Social,
-                      "menu_tuna_sand", SeatTag.TwoSeat, FacilityTag.Social, AtmosphereAxis.Warm, U(UnlockType.RecordedAxesTotal, 6));
+            // 짝꿍(치즈·삼색·젖소)과 메뉴·시설·성격이 겹치지 않게: 추리가 앞 고양이 답을 베끼면 안 된다
+            CreateCat("cat_mackerel", "고등어냥", PersonalityTag.Glutton, PersonalityTag.Playful,
+                      "menu_skewer", SeatTag.Sofa, FacilityTag.Warm, AtmosphereAxis.Warm, U(UnlockType.CafeLevel, 3));
+            CreateCat("cat_siamese", "샴냥", PersonalityTag.Fickle, PersonalityTag.Introvert,
+                      "menu_catnip_tea", SeatTag.BarTable, FacilityTag.Height, AtmosphereAxis.Luxury, U(UnlockType.CafeLevel, 3));
+            CreateCat("cat_gray", "회색냥", PersonalityTag.Relaxed, PersonalityTag.Lonely,
+                      "menu_pudding", SeatTag.TwoSeat, FacilityTag.Quiet, AtmosphereAxis.Warm, U(UnlockType.RecordedAxesTotal, 6));
             // 숨은 9번째 고양이(네코아츠메 희귀 고양이 참고): 창가석 + 캣타워 + 카페 Lv3(구운생선 메뉴) 갖추면 찾아온다
             CreateCat("cat_moon", "달냥", PersonalityTag.Curious, PersonalityTag.Relaxed,
                       "menu_grilled_fish", SeatTag.Window, FacilityTag.Height, AtmosphereAxis.Quiet,

@@ -60,6 +60,8 @@ ui.settle.needmore,더 지켜봐야 해요,Need more observation
 ui.settle.next,다음 날,Next Day
 ui.catalog.title,관찰 도감,Catalog
 ui.catalog.discovered,발견 {a}/{b},Discovered {a}/{b}
+ui.catalog.goal,목표: 모두의 취향 {a}/{b},Goal: every taste {a}/{b}
+ui.catalog.goaldone,모두의 취향 완성! {a}/{b},All tastes found! {a}/{b}
 ui.catalog.observing,관찰 중,Observing
 ui.axis.food,음식,Food
 ui.axis.seat,좌석,Seat
@@ -209,6 +211,8 @@ tag.fac.Relax,늘어지기,Lounging
 tag.fac.Quiet,조용한 곳,Quiet spots
 tag.fac.Social,어울리기,Socializing
 tag.fac.Natural,자연,Nature
+tag.fac.Warm,따뜻한 곳,Warm spots
+tag.fac.Box,상자,Boxes
 ui.guess.btn,추리,Guess
 ui.guess.title,{name}가 좋아하는 {axis}은?,What {axis} does {name} like?
 ui.guess.correct,정답! {name}는 {item}를 좋아해요,Correct! {name} likes {item}
@@ -562,3 +566,18 @@ ui.edit.lastseat,마지막 기본 자리는 남겨 둬야 해요,Keep at least o
 ui.rel.bicker,티격태격,Squabbling
 ui.rel.pal,친구,Friends
 ui.rel.known,아는 사이,Acquainted
+ending.title,모두의 단골집,Everyone's Favorite Spot
+ending.sub,{day}일 만에 모든 손님의 마음을 알아냈어요,You learned every guest's heart in {day} days
+ending.body,"처음엔 이름도 모르던 고양이들이었는데,
+이제는 누가 뭘 좋아하는지 다 알아요.
+오늘도 문을 열면 다들 자기 자리를 찾아 오겠죠.","They were strangers once.
+Now you know exactly what each of them loves.
+Open the door — they'll all find their spot."
+ending.continue,계속 영업하기,Keep the cafe open
+tut.tag,처음 오셨나요?,First day tips
+tut.welcome,곧 고양이 손님이 와요. 어디에 앉고 무엇을 하는지 지켜보세요 — 모두 취향의 단서예요.,A cat guest is coming. Watch where it sits and what it does — every move is a clue.
+tut.order,주문이 들어왔어요! 위쪽 [주방]을 눌러 메뉴를 만들어 주세요.,An order! Tap [Kitchen] at the top to cook it.
+tut.served,잘했어요! 맛있게 먹는지 남기는지 봐 두세요. 고양이를 눌러 쓰다듬을 수도 있어요.,Nice! See whether it eats happily or leaves food. You can also tap a cat to pet it.
+tut.closing,마감 시간! 마지막 손님과 놀아 주세요. 좋아하는 곳을 쓰다듬으면 쭙쭙이를 할지도 몰라요.,Closing time! Play with the last guest. Pet its favorite spot and it might start suckling.
+tut.settle,오늘 본 단서로 고양이의 음식·좌석·시설 취향을 추리해 기록하세요. 모두의 취향을 알아내는 게 최종 목표예요!,Use today's clues to guess each cat's food · seat · facility. Learning everyone's taste is the final goal!
+ui.shop.slots,빈 칸  바닥 {f}/{ft} · 벽 {w}/{wt},Free  floor {f}/{ft} · wall {w}/{wt}

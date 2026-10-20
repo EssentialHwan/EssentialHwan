@@ -53,6 +53,8 @@ namespace YeogiCafe.DevTools
                 if (GUILayout.Button("x10")) Time.timeScale = 10f;
                 GUILayout.EndHorizontal();
                 if (GUILayout.Button("영업 즉시 종료 → 정산")) day.DebugEndDayNow();
+                if (GUILayout.Button("1일차 안내 다시")) { var ui = FindObjectOfType<YeogiCafe.UI.GameUiController>(); if (ui != null) ui.DebugTutorial(); }
+                if (GUILayout.Button("엔딩 미리보기")) { var ui = FindObjectOfType<YeogiCafe.UI.GameUiController>(); if (ui != null) ui.DebugEnding(); }
                 var flow = FindObjectOfType<GameFlowController>();
                 if (flow != null && GUILayout.Button($"날씨 바꾸기 (지금: {Weather.Current})")) Weather.DebugCycle(flow.Save);
                 GUILayout.BeginHorizontal();

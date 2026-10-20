@@ -11,6 +11,9 @@ namespace YeogiCafe.Save
     public class SaveGame
     {
         public int version = 1;
+        public int settledDay;                   // 정산(하루 마감)까지 끝낸 마지막 날
+        public int tutorialStep;                 // 1일차 안내 단계(TutorialGuide, 5=끝)
+        public bool endingSeen;                  // 최종 목표(모두의 취향) 엔딩을 봤는지
         public bool initialized;                 // 새 게임 시작 처리 여부(골드 초기값 1회 지급)
         public int gold;
         public int currentDay = 1;

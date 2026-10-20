@@ -30,6 +30,8 @@ namespace YeogiCafe.UI
         ShopPanel shop;
         SettlementPanel settlement;
         ClosingPlayPanel closing;
+        TutorialGuide guide;
+        bool guideBegun;
         SettingsPanel settings;
         CatalogPanel catalog;
         BubbleLayer bubbles;
@@ -111,6 +113,7 @@ namespace YeogiCafe.UI
             SettingsPanel.ApplySaved(day);
             catalog = new CatalogPanel(this, root.transform);
             editMode = new FurnitureEditMode(this, root.transform);
+            guide = new TutorialGuide(this, root.transform);
 
             quests = new YeogiCafe.Progression.QuestBoard(() => Save,
                 () => Save != null ? (IReadOnlyList<CatData>)UnlockService.UnlockedCats(AllCats, Save) : AllCats);
@@ -229,8 +232,8 @@ namespace YeogiCafe.UI
                     shop.Hide(); catalog.Hide(); CloseKitchen(); editMode.Exit(); questPanel.SetActive(false);
                     // 마감 직전: 마지막 손님과 놀아주기 → 끝나면 밤 정산(도감)
                     var guest = flow.ClosingGuestId != null ? LookupCat(flow.ClosingGuestId) : null;
-                    if (guest != null && Save != null) closing.Show(guest, Save.GetOrCreateCat(guest.catId), () => { settlement.Show(); RefreshHud(); });
-                    else settlement.Show();
+                    if (guest != null && Save != null) { closing.Show(guest, Save.GetOrCreateCat(guest.catId), () => { settlement.Show(); guide?.OnSettlement(); RefreshHud(); }); guide?.OnClosing(); }
+                    else { settlement.Show(); guide?.OnSettlement(); }
                 };
                 TryHookObservation();
             }
@@ -247,6 +250,8 @@ namespace YeogiCafe.UI
                 ? L.Get("ui.order.askhint", ("hint", L.Get(t.hintKey)))
                 : L.Get("ui.order.ask", ("menu", t.menu != null ? L.Get($"menu.{t.menu.menuId}") : ""))); };
             os.OnTicketCancelled += t => ShowCatBubble(t.catId, L.Get("ui.order.gaveup"));
+            os.OnTicketPlaced += _ => guide?.OnOrderPlaced();
+            os.OnTicketServed += _ => guide?.OnServed();
             os.OnTicketReady += _ => YeogiCafe.Audio.SoundManager.Sfx("sfx_bell", 0.45f, 0.02f);
             ordersHooked = true;
         }
@@ -361,6 +366,12 @@ namespace YeogiCafe.UI
             title?.Tick(Time.unscaledDeltaTime);
             if (Input.GetKeyDown(KeyCode.Escape) && settings != null && (closing == null || !closing.IsOpen)) settings.Toggle();   // ESC = 설정
             editMode?.Tick(Time.unscaledDeltaTime);
+            if (guide != null)
+            {
+                if (!guideBegun && Save != null && (title == null || !title.IsOpen)) { guideBegun = true; guide.Begin(); }
+                guide.Tick(Time.unscaledDeltaTime);
+                guide.BringToFront();
+            }
             if (day != null && timeBarFill != null && bootstrap != null && bootstrap.balance != null)
                 timeBarFill.fillAmount = HudFormatter.TimeProgress(day.DayTimer, bootstrap.balance.dayLength);
 
@@ -430,9 +441,19 @@ namespace YeogiCafe.UI
         public YeogiCafe.Cafe.FurnitureManager Furniture => bootstrap != null ? bootstrap.furniture : null;
         public IReadOnlyList<FurnitureData> AllFurniture => bootstrap != null && bootstrap.allFurniture != null ? (IReadOnlyList<FurnitureData>)bootstrap.allFurniture : new List<FurnitureData>();
 
+        public void DebugTutorial() => guide?.DebugReplay();
+        public void DebugEnding() => new EndingPanel(root.transform, Save, AllCats, null, preview: true);
+
         public void StartNextDay()
         {
+            // 최종 목표 달성(모두의 취향 기록) → 엔딩 편지 한 번, 닫으면 자유 영업
+            if (EndingPanel.Ready(Save, AllCats))
+            {
+                new EndingPanel(root.transform, Save, AllCats, StartNextDay);
+                return;
+            }
             settlement.Hide();
+            guide?.OnNextDay();
             if (flow != null) flow.BeginNextDay();       // 일차 증가·오토세이브·영업 시작
             else if (day != null) day.StartDay();
             RefreshHud();

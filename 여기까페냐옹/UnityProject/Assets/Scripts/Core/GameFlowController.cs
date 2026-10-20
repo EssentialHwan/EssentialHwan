@@ -35,6 +35,8 @@ namespace YeogiCafe.Core
         void Start()
         {
             save = saveManager != null ? saveManager.LoadOrNew() : new SaveGame();
+            // 정산까지 끝낸 날에 껐다면(다음 날 버튼 전) 그날은 끝난 것으로 보고 다음 날 아침부터
+            if (save.initialized && save.settledDay == save.currentDay) save.currentDay++;
             obs = new ObservationManager(cfg, save);
             regular = new RegularManager();
 
@@ -293,6 +295,7 @@ namespace YeogiCafe.Core
             }
             // 대기 이벤트(단골·관계 에피소드) 재생·보상 (정산 화면에서 순차 표시)
             if (events != null) { while (events.TryPlayNext()) { } }
+            save.settledDay = save.currentDay;               // 오늘 장사는 끝(정산 중 종료해도 이 날을 다시 하지 않게)
             if (saveManager != null) saveManager.Save(save); // 오토세이브
             // 정산 화면은 '남은 손님 정리 + 승격'이 끝난 뒤에 열어야 오늘 결과(…/★)가 반영된다.
             // (이전엔 Phase=Settlement 시점에 열려 승격 전 상태가 표시됐다)
@@ -331,6 +334,18 @@ namespace YeogiCafe.Core
             SyncSpawnerProgress();
             day.StartDay();
         }
+
+        // 창 닫기·게임 종료: 영업 중이면 구매·판매·배치·업그레이드는 남기고 오늘 번 돈(매출)과 재료비만 되돌려 저장한다.
+        // 다시 켜면 그날 아침부터 다시 영업(같은 날을 반복해 돈을 불리는 건 막는다).
+        public void SaveOnQuit()
+        {
+            if (saveManager == null || save == null || !save.initialized) return;
+            if (save.settledDay != save.currentDay && economy != null)
+                save.gold = Mathf.Max(0, economy.Gold - economy.TodayRevenue + economy.TodayCost);
+            saveManager.Save(save);
+        }
+        bool quitSaved;
+        void OnApplicationQuit() { if (quitSaved) return; quitSaved = true; SaveOnQuit(); }
 
         public int LostToMice { get; set; }
         public string ClosingGuestId { get; private set; }   // 마감 직전 놀아줄 마지막 손님
