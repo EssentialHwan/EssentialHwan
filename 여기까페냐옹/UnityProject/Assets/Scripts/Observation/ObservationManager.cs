@@ -26,7 +26,17 @@ namespace YeogiCafe.Observation
         public event Action<string, string> OnCatNarration; // (catId, narrationText) — 고양이 머리 위 말풍선
         public event Action<string, PrefAxis> OnPreferenceRecorded;
 
-        public ObservationManager(BalanceConfig cfg, SaveGame save) { this.cfg = cfg; this.save = save; }
+        public ObservationManager(BalanceConfig cfg, SaveGame save)
+        {
+            this.cfg = cfg; this.save = save;
+            if (save != null)
+                foreach (var c in save.cats)
+                    foreach (PrefAxis a in Enum.GetValues(typeof(PrefAxis)))
+                    {
+                        var r = c.observation.Get(a);
+                        if (r.state != ObsState.Recorded && !string.IsNullOrEmpty(r.recordedValue)) { r.state = ObsState.Recorded; r.pendingGuess = null; }
+                    }
+        }
 
         // §3.1 실시간 — 행동마다 호출
         public void RecordClue(string catId, ClueType type, string target, bool isFallback, string narration)
@@ -79,12 +89,12 @@ namespace YeogiCafe.Observation
 
         void Promote(AxisRecord axisRec)
         {
-            if (axisRec.state == ObsState.Recorded)
+            // 이미 맞힌 취향은 다시 묻지 않는다. 기록은 고양이의 실제 취향(CatTruth)으로 채점된 정답이라
+            // 방문이 쌓여 다른 태그가 커져도 틀릴 수 없다. (예전엔 '강한 반증'으로 강등 → 다 맞힌 고양이를 또 추리하게 되던 버그)
+            // 그 강등을 이미 당한 세이브도 정답이 남아 있으면 되돌린다.
+            if (axisRec.state == ObsState.Recorded || !string.IsNullOrEmpty(axisRec.recordedValue))
             {
-                // 강한 반증 시 강등 (부록 J-F) — 확정값 외 태그가 임계 넘게 쌓이면
-                var topOther = axisRec.Second();
-                if (topOther != null && topOther.total >= cfg.refuteThreshold)
-                    axisRec.state = ObsState.Suspected;
+                axisRec.state = ObsState.Recorded;
                 return;
             }
             var top = axisRec.Top();

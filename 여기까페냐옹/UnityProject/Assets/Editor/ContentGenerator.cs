@@ -69,7 +69,7 @@ namespace YeogiCafe.EditorTools
             CreateFacility("furn_fac_fruitbox", "과일박스", 600, new[] { FacilityTag.Box },
                            A((AtmosphereAxis.Lively, 2), (AtmosphereAxis.Warm, 2)));
             // 온열 방석: 따뜻한 걸 좋아하는 고양이가 모인다(Warm, 단서 아님)
-            CreateFacility("furn_fac_heatpad", "온열방석", 280, new[] { FacilityTag.Warm },
+            CreateFacility("furn_fac_heatpad", "온열방석", 280, new[] { FacilityTag.Warm, FacilityTag.Soft },
                            A((AtmosphereAxis.Warm, 4)));
             // 자동 낚싯대: 저절로 흔들리는 깃털 — 놀이 시설(놀이 선호 단서)
             CreateFacility("furn_fac_wand", "자동낚싯대", 380, new[] { FacilityTag.Play, FacilityTag.Active },

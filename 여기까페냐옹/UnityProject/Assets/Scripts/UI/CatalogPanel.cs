@@ -182,30 +182,61 @@ namespace YeogiCafe.UI
             for (int i = 0; i < met.Count; i++)
             {
                 float a = Mathf.PI * 0.5f - i * Mathf.PI * 2f / met.Count;
-                pos[met[i].catId] = new Vector2(Mathf.Cos(a) * 250f, Mathf.Sin(a) * 160f);
+                pos[met[i].catId] = new Vector2(Mathf.Cos(a) * 250f, Mathf.Sin(a) * 125f + 10f);   // 아래 범례 자리를 비워 둔다
             }
-            // 선 먼저(아이콘 아래)
+            // 관계 종류(색·이름이 모두 다르게): 앙숙 · 티격태격 · 단짝 · 친구 · 아는 사이
+            // 글자 칸끼리, 그리고 고양이 아이콘·이름과 겹치지 않게 선을 따라 자리를 옮겨 둔다
+            var taken = new List<Rect>();
+            foreach (var kv in pos) { taken.Add(new Rect(kv.Value.x - 44, kv.Value.y - 56, 88, 92)); }   // 아이콘+이름 칸
+            var tags = new List<(Vector2 at, string text, Color col)>();
             foreach (var r in save.relations)
             {
                 if (!pos.ContainsKey(r.catA) || !pos.ContainsKey(r.catB)) continue;
-                bool rival = r.fights >= 2 || r.bond <= -2;
-                bool friend = r.stage >= 2 || r.bond >= 3;
-                bool known = r.stage >= 1 || r.bond >= 1 || r.fights >= 1;
-                if (!rival && !friend && !known) continue;
-                Color col = rival ? new Color(0.84f, 0.32f, 0.33f) : friend ? UiFactory.PinkDeep : new Color(0.72f, 0.6f, 0.5f);
-                float th = friend || rival ? 6f : 3f;
+                var kind = RelKind(r);
+                if (kind < 0) continue;
+                Color col = RelColor(kind);
+                float th = kind == 0 || kind == 2 ? 6f : kind == 4 ? 2f : 4f;
                 Vector2 a = pos[r.catA], b = pos[r.catB], d = b - a;
-                var line = UiFactory.Panel("L", relRoot, col);
+                var line = UiFactory.Panel("L", relRoot, kind == 4 ? new Color(col.r, col.g, col.b, 0.55f) : col);
                 line.pivot = new Vector2(0.5f, 0.5f); line.anchorMin = line.anchorMax = new Vector2(0.5f, 0.5f);
-                line.anchoredPosition = (a + b) * 0.5f; line.sizeDelta = new Vector2(d.magnitude - 70f, th);
+                line.anchoredPosition = (a + b) * 0.5f; line.sizeDelta = new Vector2(Mathf.Max(0f, d.magnitude - 70f), th);
                 line.localEulerAngles = new Vector3(0, 0, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg);
                 line.GetComponent<Image>().raycastTarget = false;
-                string tag = rival ? L.Get("ui.rel.rival") : friend ? L.Get("ui.rel.friend") : "";
-                if (tag != "")
+                // 글자 자리: 가운데부터 양쪽으로 비켜 가며 빈 곳 찾기
+                Vector2 at = (a + b) * 0.5f; var tr = new Rect(at.x - 34, at.y - 11, 68, 22);
+                foreach (float t in new[] { 0.5f, 0.38f, 0.62f, 0.3f, 0.7f, 0.44f, 0.56f, 0.25f, 0.75f })
                 {
-                    var t = UiFactory.Label("Tag", relRoot, tag, 14, TextAnchor.MiddleCenter, col);
-                    var trt = (RectTransform)t.transform;
-                    trt.anchorMin = trt.anchorMax = new Vector2(0.5f, 0.5f); trt.anchoredPosition = (a + b) * 0.5f + new Vector2(0, 12); trt.sizeDelta = new Vector2(80, 20);
+                    var c = Vector2.Lerp(a, b, t); var rr = new Rect(c.x - 34, c.y - 11, 68, 22);
+                    bool hit = false; foreach (var q in taken) if (q.Overlaps(rr)) { hit = true; break; }
+                    at = c; tr = rr;
+                    if (!hit) break;
+                }
+                taken.Add(tr);
+                tags.Add((at, L.Get(RelKey(kind)), col));
+            }
+            // 글자는 선 위에(색 배지 + 흰 글자)
+            foreach (var (at, text, col) in tags)
+            {
+                var pill = UiFactory.Panel("TagBg", relRoot, col);
+                pill.anchorMin = pill.anchorMax = new Vector2(0.5f, 0.5f); pill.pivot = new Vector2(0.5f, 0.5f);
+                pill.anchoredPosition = at; pill.sizeDelta = new Vector2(64, 20);
+                pill.GetComponent<Image>().raycastTarget = false;
+                var t = UiFactory.Label("Tag", pill, text, 13, TextAnchor.MiddleCenter, Color.white);
+                UiFactory.Anchor((RectTransform)t.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+                t.raycastTarget = false;
+            }
+            // 범례(아래쪽)
+            {
+                int[] kinds = { 2, 3, 4, 1, 0 };
+                float lx = -((kinds.Length - 1) * 92f) / 2f;
+                for (int i = 0; i < kinds.Length; i++)
+                {
+                    var sw = UiFactory.Panel("Legend", relRoot, RelColor(kinds[i]));
+                    sw.anchorMin = sw.anchorMax = new Vector2(0.5f, 0f); sw.pivot = new Vector2(0.5f, 0.5f);
+                    sw.anchoredPosition = new Vector2(lx + i * 92f - 30f, 10f); sw.sizeDelta = new Vector2(14, 6);
+                    var lt = UiFactory.Label("LegendT", relRoot, L.Get(RelKey(kinds[i])), 13, TextAnchor.MiddleLeft, UiFactory.WoodDark);
+                    var lrt = (RectTransform)lt.transform; lrt.anchorMin = lrt.anchorMax = new Vector2(0.5f, 0f); lrt.pivot = new Vector2(0f, 0.5f);
+                    lrt.anchoredPosition = new Vector2(lx + i * 92f - 20f, 10f); lrt.sizeDelta = new Vector2(70, 18);
                 }
             }
             foreach (var d in met)
@@ -220,6 +251,26 @@ namespace YeogiCafe.UI
                 nrt.anchoredPosition = pos[d.catId] + new Vector2(0, -44); nrt.sizeDelta = new Vector2(100, 20);
             }
         }
+
+        // 관계 종류: 0 앙숙 · 1 티격태격 · 2 단짝 · 3 친구 · 4 아는 사이 · -1 표시 안 함
+        static int RelKind(RelationSaveData r)
+        {
+            if (r.fights >= 2 || r.bond <= -2) return 0;
+            if (r.fights >= 1 || r.bond < 0) return 1;
+            if (r.stage >= 2 || r.bond >= 3) return 2;
+            if (r.bond >= 1) return 3;
+            if (r.stage >= 1) return 4;
+            return -1;
+        }
+        static string RelKey(int k) => k switch { 0 => "ui.rel.rival", 1 => "ui.rel.bicker", 2 => "ui.rel.friend", 3 => "ui.rel.pal", _ => "ui.rel.known" };
+        static Color RelColor(int k) => k switch
+        {
+            0 => new Color(0.82f, 0.25f, 0.27f),     // 앙숙: 빨강
+            1 => new Color(0.93f, 0.55f, 0.2f),      // 티격태격: 주황
+            2 => new Color(0.88f, 0.38f, 0.62f),     // 단짝: 분홍
+            3 => new Color(0.38f, 0.66f, 0.38f),     // 친구: 초록
+            _ => new Color(0.55f, 0.55f, 0.66f),     // 아는 사이: 회보라
+        };
 
         // 하루를 마칠 때마다 찍은 손도장(최근 12개까지 표시)
         RectTransform stampRow;

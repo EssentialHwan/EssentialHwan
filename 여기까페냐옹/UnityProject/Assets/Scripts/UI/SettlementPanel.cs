@@ -531,7 +531,7 @@ namespace YeogiCafe.UI
         static bool IsUniversal(YeogiCafe.Data.FurnitureData f)
         {
             if (f.facilityTags == null) return false;
-            foreach (var t in f.facilityTags) if (t == YeogiCafe.Data.FacilityTag.Box || t == YeogiCafe.Data.FacilityTag.Warm) return true;
+            foreach (var t in f.facilityTags) if (t == YeogiCafe.Data.FacilityTag.Box) return true;   // 온열방석은 '푹신한 곳'으로 추리 보기에 나온다
             return false;
         }
 

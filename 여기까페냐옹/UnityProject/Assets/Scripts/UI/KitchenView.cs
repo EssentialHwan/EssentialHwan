@@ -376,7 +376,8 @@ namespace YeogiCafe.UI
                 return RuntimeSprites.Get(left ? "paw_pads_l" : "paw_pads_r", left ? (System.Func<PixelCanvas>)PawDrawing.Pads : () => PawDrawing.Mirror(PawDrawing.Pads()));
             return RuntimeSprites.Get(left ? "paw_left" : "paw_right", left ? CookingDrawing.PawLeft : CookingDrawing.PawRight);
         }
-        Vector2 AbsPos(RectTransform p) => new Vector2(p.anchorMin.x * root.rect.width + p.anchoredPosition.x, p.anchoredPosition.y);
+        // 화면 왼쪽 아래 기준 위치(기구는 상판 높이에 붙어 있어 anchor y도 더해야 한다 — 빠지면 별점이 양손 사이 바닥에 떴다)
+        Vector2 AbsPos(RectTransform p) => new Vector2(p.anchorMin.x * root.rect.width + p.anchoredPosition.x, p.anchorMin.y * root.rect.height + p.anchoredPosition.y);
 
         void Float(Vector2 at, string text)
         {

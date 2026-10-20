@@ -273,11 +273,14 @@ namespace YeogiCafe.UI
                 UiFactory.Anchor((RectTransform)toastText.transform, Vector2.zero, Vector2.one, new Vector2(20, 8), new Vector2(-20, -8));
             }
             toastText.text = text; toastT = 3.5f; toastCg.alpha = 1f;
-            // 주방에서는 위쪽 주문표를 가리지 않게 가운데쯤으로
-            ((RectTransform)toastText.transform.parent).anchoredPosition = new Vector2(0, kitchen != null && kitchen.IsOpen ? -200 : -76);
+            // 주방에서는 위쪽 주문표를 가리지 않게 화면 아래 양손 사이로, 홀에서는 상단 바 아래
+            var tbg = (RectTransform)toastText.transform.parent;
+            bool inKitchen = kitchen != null && kitchen.IsOpen;
+            tbg.anchorMin = tbg.anchorMax = tbg.pivot = new Vector2(0.5f, inKitchen ? 0f : 1f);
+            tbg.anchoredPosition = new Vector2(0, inKitchen ? 40 : -76);
             YeogiCafe.Audio.SoundManager.Sfx("sfx_boop", 0.35f, 0.04f, "toast", 0.4f);
             var trt = (RectTransform)toastText.transform.parent;          // 긴 알림은 두 줄로 → 높이 맞춤
-            trt.sizeDelta = new Vector2(720, Mathf.Max(64f, toastText.preferredHeight + 20f));
+            trt.sizeDelta = new Vector2(inKitchen ? 600 : 720, Mathf.Max(64f, toastText.preferredHeight + 20f));   // 양손(좌우 끝 ~250)과 안 겹치는 폭
             toastText.transform.parent.SetAsLastSibling();
         }
 

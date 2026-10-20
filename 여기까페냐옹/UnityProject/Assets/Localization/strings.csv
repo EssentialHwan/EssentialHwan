@@ -558,3 +558,6 @@ ui.edit.sellconfirm,한 번 더 누르면 판매 +{g}G,Tap again to sell +{g}G
 ui.edit.sold,{name} 판매 완료 +{g}G,Sold {name} +{g}G
 ui.edit.inuse,손님이 쓰는 중이라 지금은 못 팔아요,A guest is using it
 ui.edit.cantsell,기본 자리는 팔 수 없어요,Starter seats cannot be sold
+ui.rel.bicker,티격태격,Squabbling
+ui.rel.pal,친구,Friends
+ui.rel.known,아는 사이,Acquainted
