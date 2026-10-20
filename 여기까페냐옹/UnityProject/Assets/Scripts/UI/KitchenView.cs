@@ -95,8 +95,8 @@ namespace YeogiCafe.UI
             hl.childControlWidth = hl.childControlHeight = false; hl.childForceExpandWidth = hl.childForceExpandHeight = false;
 
             // ── 앞발 두 개(가장 앞) ──
-            pawL = BuildPaw("PawL", RuntimeSprites.Get("paw_left", CookingDrawing.PawLeft), new Vector2(0.08f, 0f));
-            pawR = BuildPaw("PawR", RuntimeSprites.Get("paw_right", CookingDrawing.PawRight), new Vector2(0.92f, 0f));
+            pawL = BuildPaw("PawL", PawSprite(PawArt.Idle, true), new Vector2(0.08f, 0f));
+            pawR = BuildPaw("PawR", PawSprite(PawArt.Idle, false), new Vector2(0.92f, 0f));
             pawLHome = pawL.anchoredPosition; pawRHome = pawR.anchoredPosition;
             {
                 var tg = new GameObject("Tongue", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
@@ -115,6 +115,7 @@ namespace YeogiCafe.UI
             hint.text = L.Get("ui.kitchen.hint");
 
             rootGo.SetActive(false);
+            Instance = this;
         }
 
         // 도트 타일을 화면에서 약 4배로 반복(Point 필터라 선명)
@@ -198,13 +199,15 @@ namespace YeogiCafe.UI
             return w;
         }
 
+        const float PawArtScale = 1.15f;                // 원화 칸(약 260×242) → 화면 크기
         RectTransform BuildPaw(string name, Sprite sprite, Vector2 anchor)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             go.transform.SetParent(root, false);
             var img = go.GetComponent<Image>(); img.sprite = sprite; img.raycastTarget = false;
             var rt = (RectTransform)go.transform;
-            UiFactory.SetRect(rt, anchor, anchor, new Vector2(0.5f, 0f), new Vector2(0, -40), new Vector2(PawDrawing.W, PawDrawing.H) * 3.4f);  // 고해상도 앞발
+            var size = PawArt.Has ? PawArt.CellSize * PawArtScale : new Vector2(PawDrawing.W, PawDrawing.H) * 3.4f;
+            UiFactory.SetRect(rt, anchor, anchor, new Vector2(0.5f, 0f), new Vector2(0, PawArt.Has ? -26 : -40), size);  // 고해상도 앞발
             return rt;
         }
 
@@ -267,6 +270,15 @@ namespace YeogiCafe.UI
             if (railTimer <= 0f) { railTimer = 0.25f; RefreshRail(false); }
         }
 
+        // 개발용: 딴짓 바로 보기(1 꾹꾹 · 2 그루밍 · 3 쭙쭙이)
+        public static KitchenView Instance;
+        public void DebugDistract(int kind)
+        {
+            if (distract != Distract.None) { distractT = DistractLen; TickDistract(0f); }
+            distract = kind == 1 ? Distract.Knead : kind == 2 ? Distract.Groom : Distract.Suckle;
+            distractPaw = Random.value < 0.5f ? pawL : pawR; distractT = 0f;
+        }
+
         void TickDistract(float dt)
         {
             if (distract == Distract.None)
@@ -287,7 +299,7 @@ namespace YeogiCafe.UI
             distract = Distract.None; nextDistract = Random.Range(18f, 34f);
             distractPaw.localEulerAngles = Vector3.zero; distractPaw.localScale = Vector3.one;
             bool left = distractPaw == pawL;
-            distractPaw.GetComponent<Image>().sprite = RuntimeSprites.Get(left ? "paw_left" : "paw_right", left ? CookingDrawing.PawLeft : CookingDrawing.PawRight);
+            distractPaw.GetComponent<Image>().sprite = PawSprite(PawArt.Idle, left);
             distractPaw = null;
         }
 
@@ -305,9 +317,7 @@ namespace YeogiCafe.UI
                 bool press = kb % 2 == 0;
                 if (press && kb != lastLick && rise > 0.5f) { lastLick = kb; YeogiCafe.Audio.SoundManager.Sfx("sfx_knead", 0.35f); }
                 distractPaw.anchoredPosition = home + new Vector2(0, rise * (110f + (press ? -14f : 0f)));
-                img.sprite = press
-                    ? RuntimeSprites.Get(left ? "paw_left_press" : "paw_right_press", left ? CookingDrawing.PawLeftPressed : CookingDrawing.PawRightPressed)
-                    : RuntimeSprites.Get(left ? "paw_left" : "paw_right", left ? CookingDrawing.PawLeft : CookingDrawing.PawRight);
+                img.sprite = PawSprite(press ? PawArt.Spread : PawArt.Curl, left);     // 발가락 쫙 폈다 오므렸다
                 distractPaw.localEulerAngles = Vector3.zero;
             }
             else if (distract == Distract.Groom)
@@ -320,9 +330,18 @@ namespace YeogiCafe.UI
                 distractPaw.anchoredPosition = home + new Vector2(toward * rise, rise * (150f + push * 22f));
                 distractPaw.localEulerAngles = new Vector3(0, 0, rise * ((left ? -28f : 28f) + push * (left ? 6f : -6f)));
                 float k = rise > 0.95f ? Mathf.SmoothStep(0f, 1f, lickUp) : 0f;
-                tongue.anchoredPosition = new Vector2(AbsPos(distractPaw).x - root.rect.width * 0.5f, -10f);   // 혀는 핥는 앞발 바로 아래에서
-                tongue.localScale = new Vector3(1f - k * 0.08f, k * 0.95f, 1f);
-                tongue.localEulerAngles = new Vector3(0, 0, left ? 8f : -8f);
+                if (PawArt.Has)
+                {   // 원화: 혀가 그려진 프레임으로 — 들어올림 → 혀 닿음/핥기 반복 → 끝날 때 젖은 털 반짝
+                    int fr = rise < 0.95f ? PawArt.Groom0 : DistractLen - distractT < 0.7f ? PawArt.Groom3 : lickUp > 0.55f ? PawArt.Groom2 : lickUp > 0.15f ? PawArt.Groom1 : PawArt.Groom0;
+                    img.sprite = PawSprite(fr, left);
+                    distractPaw.localEulerAngles = new Vector3(0, 0, rise * (left ? -10f : 10f));
+                }
+                else
+                {
+                    tongue.anchoredPosition = new Vector2(AbsPos(distractPaw).x - root.rect.width * 0.5f, -10f);   // 혀는 핥는 앞발 바로 아래에서
+                    tongue.localScale = new Vector3(1f - k * 0.08f, k * 0.95f, 1f);
+                    tongue.localEulerAngles = new Vector3(0, 0, left ? 8f : -8f);
+                }
                 if (k > 0.85f && ((int)(distractT * 2.6f)) != lastLick) { lastLick = (int)(distractT * 2.6f); Float(AbsPos(distractPaw) + new Vector2(0, 120), L.Get("ui.kitchen.lick")); YeogiCafe.Audio.SoundManager.Sfx("sfx_lick", 0.5f); }
             }
             else
@@ -330,9 +349,11 @@ namespace YeogiCafe.UI
                 // 내 쭙쭙이: 앞발을 뒤집어 말랑한 젤리를 펼치고, 입가에 대고 쭙·쭙(리듬 맞춰 살짝 빨려 들어감)
                 float toward = (left ? 1f : -1f) * root.rect.width * 0.30f;
                 float suck = Mathf.Pow(Mathf.Abs(Mathf.Sin(distractT * 6.5f)), 3f);
-                img.sprite = RuntimeSprites.Get(left ? "paw_pads_l" : "paw_pads_r", left ? (System.Func<PixelCanvas>)PawDrawing.Pads : () => PawDrawing.Mirror(PawDrawing.Pads()));
-                distractPaw.anchoredPosition = home + new Vector2(toward * rise, rise * (120f - suck * 18f));
-                distractPaw.localEulerAngles = new Vector3(0, 0, rise * (left ? -16f : 16f));
+                int sb = (int)(distractT * 6.5f / Mathf.PI) % 4;               // 쭙·쭙 박자마다 다음 프레임
+                img.sprite = PawSprite(PawArt.Has ? PawArt.Suck0 + sb : PawArt.Suck0, left);
+                // 원화는 입에 문 모습이 그려져 있어 들어올리지 않고 화면 아래 가운데로 끌어온다
+                distractPaw.anchoredPosition = home + new Vector2(toward * rise, PawArt.Has ? rise * (10f - suck * 10f) : rise * (120f - suck * 18f));
+                distractPaw.localEulerAngles = new Vector3(0, 0, PawArt.Has ? 0f : rise * (left ? -16f : 16f));
                 distractPaw.localScale = new Vector3(1f + suck * 0.04f, 1f - suck * 0.05f, 1f);
                 int beat = (int)(distractT * 6.5f / Mathf.PI);
                 if (rise > 0.9f && beat != lastLick) { lastLick = beat; Float(AbsPos(distractPaw) + new Vector2(0, 150), L.Get("ui.kitchen.suck")); YeogiCafe.Audio.SoundManager.Sfx("sfx_suck", 0.5f); }
@@ -340,6 +361,18 @@ namespace YeogiCafe.UI
         }
 
         int lastLick = -1;
+
+        // 앞발 그림: 원화(PawArt)가 있으면 그것, 없으면 예전 코드 그림
+        static Sprite PawSprite(int frame, bool left)
+        {
+            var s = PawArt.Get(frame, left);
+            if (s != null) return s;
+            if (frame == PawArt.Press || frame == PawArt.Spread)
+                return RuntimeSprites.Get(left ? "paw_left_press" : "paw_right_press", left ? CookingDrawing.PawLeftPressed : CookingDrawing.PawRightPressed);
+            if (frame >= PawArt.Suck0)
+                return RuntimeSprites.Get(left ? "paw_pads_l" : "paw_pads_r", left ? (System.Func<PixelCanvas>)PawDrawing.Pads : () => PawDrawing.Mirror(PawDrawing.Pads()));
+            return RuntimeSprites.Get(left ? "paw_left" : "paw_right", left ? CookingDrawing.PawLeft : CookingDrawing.PawRight);
+        }
         Vector2 AbsPos(RectTransform p) => new Vector2(p.anchorMin.x * root.rect.width + p.anchoredPosition.x, p.anchoredPosition.y);
 
         void Float(Vector2 at, string text)
@@ -381,9 +414,7 @@ namespace YeogiCafe.UI
                 pawPunch.anchoredPosition = Vector2.Lerp(home, pawPunchTarget, k * 0.55f);
                 var img = pawPunch.GetComponent<Image>();
                 bool left = pawPunch == pawL;
-                img.sprite = pawPunchT < outT + 0.06f
-                    ? RuntimeSprites.Get(left ? "paw_left_press" : "paw_right_press", left ? CookingDrawing.PawLeftPressed : CookingDrawing.PawRightPressed)
-                    : RuntimeSprites.Get(left ? "paw_left" : "paw_right", left ? CookingDrawing.PawLeft : CookingDrawing.PawRight);
+                img.sprite = PawSprite(pawPunchT < outT + 0.06f ? PawArt.Press : PawArt.Idle, left);
                 if (pawPunchT > outT + backT) { pawPunchT = -1f; pawPunch = null; }
             }
         }
