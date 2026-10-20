@@ -64,6 +64,10 @@ namespace YeogiCafe.Cafe
             if (go == null) return;
             var sb = go.GetComponent<SeatBehaviour>();
             if (sb != null) cafe.UnregisterSeat(sb);
+            // 판 기본 좌석 자리는 바닥 가구 1칸으로 돌려준다(어떤 바닥 가구든 놓을 수 있게)
+            var slotGo = new GameObject("Slot_starter#" + index);
+            slotGo.transform.position = go.transform.position;
+            slots.Add(new SlotEntry { slot = slotGo.transform, kind = SlotKind.Floor, nearWindow = false, minCafeLevel = 1 });
             Destroy(go);
         }
 
@@ -119,6 +123,9 @@ namespace YeogiCafe.Cafe
         public void RestoreFromSave(Func<string, FurnitureData> lookup)
         {
             if (save == null || lookup == null) return;
+            // 팔아 버린 기본 좌석을 먼저 치워야 그 자리에 놓았던 가구도 칸을 얻는다
+            if (save.soldStarters != null)
+                foreach (int idx in save.soldStarters.ToArray()) if (starters.Count > 1) RemoveStarter(idx);
             foreach (var dto in save.placedFurniture)
             {
                 var data = lookup(dto.furnitureId);
@@ -128,9 +135,7 @@ namespace YeogiCafe.Cafe
                 items.Add(new PlacedItem { data = data, dto = dto, slot = slot, go = Place(data, slot, dto) });
                 placedData.Add(data);
             }
-            // 팔아 버린 기본 좌석은 치우고, 남은 것은 옮겨 둔 위치 복원
-            if (save.soldStarters != null)
-                foreach (int idx in save.soldStarters.ToArray()) if (starters.Count > 1) RemoveStarter(idx);
+            // 남은 기본 좌석은 옮겨 둔 위치 복원
             foreach (var st in starters)
             {
                 var dto = FindStarterDto(st.index, false);

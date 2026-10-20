@@ -5,7 +5,7 @@ ui.title.settings,설정,Settings
 ui.title.quit,종료,Quit
 ui.cafe.customers,손님 {n},Guests {n}
 ui.cafe.day,{n}일차,Day {n}
-ui.shop.nospace,자리가 없어요. 정산 화면에서 카페를 넓혀보세요,No space left. Expand the cafe from the daily report
+ui.shop.nospace,자리가 없어요. 배치에서 가구를 팔거나 정산 화면에서 카페를 넓혀보세요,No space left. Sell furniture in Arrange or expand the cafe
 ui.shop.bought,배치했어요! 누가 쓰는지 지켜보세요,Placed! Watch who uses it
 ui.settle.expand,카페 넓히기,Expand Cafe
 ui.settle.cafelevel,카페 Lv.{n},Cafe Lv.{n}
