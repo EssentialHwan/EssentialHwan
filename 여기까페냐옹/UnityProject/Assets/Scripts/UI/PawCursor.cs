@@ -32,16 +32,37 @@ namespace YeogiCafe.UI
             rt = (RectTransform)g.transform;
             img = g.GetComponent<Image>(); img.raycastTarget = false;
             rt.anchorMin = rt.anchorMax = Vector2.zero;
-            rt.pivot = new Vector2(13f / PawDrawing.CW, 27f / PawDrawing.CH);   // 손끝(가운데 발가락 끝)이 클릭 지점
-            rt.sizeDelta = new Vector2(PawDrawing.CW, PawDrawing.CH) * Scale;
+            if (YeogiCafe.Art.PawArt.Has)
+            {
+                var cell = YeogiCafe.Art.PawArt.CellSize / CursorShrink;
+                rt.pivot = new Vector2(0.5f, YeogiCafe.Art.PawArt.TipY(YeogiCafe.Art.PawArt.Idle) - 0.02f);   // 발끝이 클릭 지점
+                rt.sizeDelta = new Vector2(Mathf.Floor(cell.x), Mathf.Floor(cell.y));
+            }
+            else
+            {
+                rt.pivot = new Vector2(13f / PawDrawing.CW, 27f / PawDrawing.CH);   // 손끝(가운데 발가락 끝)이 클릭 지점
+                rt.sizeDelta = new Vector2(PawDrawing.CW, PawDrawing.CH) * Scale;
+            }
             Set(0);
         }
 
-        void OnEnable() { Cursor.visible = false; }
-        void OnDisable() { Cursor.visible = true; }
+        // 끄면 그림도 같이 숨긴다(예전엔 커서만 돌아오고 앞발 그림이 그 자리에 남았다)
+        void OnEnable() { Cursor.visible = false; if (canvas != null) canvas.enabled = true; }
+        void OnDisable() { Cursor.visible = true; if (canvas != null) canvas.enabled = false; }
         void OnApplicationFocus(bool f) { if (f && enabled) Cursor.visible = false; }
 
-        void Set(int frame) => img.sprite = RuntimeSprites.Get("cursor_paw_" + frame, () => PawDrawing.Cursor(frame));
+        // 새 앞발 원화(PawArt)를 작게 줄여 쓴다: 0 보통 · 1 발가락 쫙 · 2 꾹 누름. 원화가 없으면 예전 코드 그림.
+        void Set(int frame)
+        {
+            if (YeogiCafe.Art.PawArt.Has)
+            {
+                int f = frame == 1 ? YeogiCafe.Art.PawArt.Spread : frame == 2 ? YeogiCafe.Art.PawArt.Press : YeogiCafe.Art.PawArt.Idle;
+                img.sprite = YeogiCafe.Art.PawArt.Small(f, false, CursorShrink);
+                return;
+            }
+            img.sprite = RuntimeSprites.Get("cursor_paw_" + frame, () => PawDrawing.Cursor(frame));
+        }
+        const int CursorShrink = 5;          // 원화 칸(258×240) → 51×48
 
         void Update()
         {

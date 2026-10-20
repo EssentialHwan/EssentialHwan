@@ -22,6 +22,7 @@ namespace YeogiCafe.Save
         public List<RelationSaveData> relations = new();   // 정식: 고양이 관계
         public int pawStamps;
         public List<PlacedFurnitureDTO> starterSeatPos = new();
+        public List<int> soldStarters = new();             // 팔아 버린 기본 좌석 번호(최대 2개, 1개는 남는다)
         public List<GiftDTO> pendingGifts = new();         // 다음 날 아침 문 앞에 놓일 선물
         public List<string> giftsCollected = new();        // 주운 선물 종류(수집)
         public List<QuestDTO> quests = new();              // 오늘의 의뢰(게시판)

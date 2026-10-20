@@ -43,6 +43,52 @@ namespace YeogiCafe.Art
             texFlip.SetPixels32(dst); texFlip.Apply();
         }
 
+        // 발끝(맨 위 불투명 줄)의 칸 기준 높이 비율 — 피벗을 발끝에 맞출 때
+        public static float TipY(int frame)
+        {
+            Load(); if (tex == null) return 0.92f;
+            int col = frame % Cols, row = frame / Cols;
+            int x0 = col * cw, y0 = (Rows - 1 - row) * ch;
+            var px = tex.GetPixels32();
+            for (int y = ch - 1; y >= 0; y--)
+                for (int x = 0; x < cw; x++)
+                    if (px[(y0 + y) * tex.width + x0 + x].a > 0) return (y + 1f) / ch;
+            return 0.92f;
+        }
+
+        // 작게 줄인 그림(커서 등): 칸을 factor배 줄여 면적 평균 → 도트가 뭉개지지 않게 Point 필터
+        static readonly Dictionary<int, Sprite> small = new();
+        public static Sprite Small(int frame, bool left, int factor)
+        {
+            Load();
+            if (tex == null) return null;
+            int key = (frame * 2 + (left ? 1 : 0)) * 16 + factor;
+            if (small.TryGetValue(key, out var s) && s != null) return s;
+            var src = (left ? texFlip : tex).GetPixels32();
+            int W = (left ? texFlip : tex).width;
+            int col = frame % Cols, row = frame / Cols, x0 = col * cw, y0 = (Rows - 1 - row) * ch;
+            int sw = cw / factor, sh = ch / factor;
+            var o = new Color32[sw * sh];
+            for (int y = 0; y < sh; y++)
+                for (int x = 0; x < sw; x++)
+                {
+                    float r = 0, g = 0, b = 0, a = 0; int n = factor * factor;
+                    for (int dy = 0; dy < factor; dy++)
+                        for (int dx = 0; dx < factor; dx++)
+                        {
+                            var c = src[(y0 + y * factor + dy) * W + x0 + x * factor + dx];
+                            float al = c.a / 255f; r += c.r * al; g += c.g * al; b += c.b * al; a += al;
+                        }
+                    if (a / n < 0.45f) { o[y * sw + x] = new Color32(0, 0, 0, 0); continue; }
+                    o[y * sw + x] = new Color32((byte)(r / a), (byte)(g / a), (byte)(b / a), 255);
+                }
+            var t = new Texture2D(sw, sh, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
+            t.SetPixels32(o); t.Apply();
+            s = Sprite.Create(t, new Rect(0, 0, sw, sh), new Vector2(0.5f, 0f), 100f, 0, SpriteMeshType.FullRect);
+            small[key] = s;
+            return s;
+        }
+
         public static Sprite Get(int frame, bool left)
         {
             Load();

@@ -428,6 +428,7 @@ namespace YeogiCafe.UI
         public CafeContext Cafe => cafe;
         public CatManager Cats => bootstrap != null ? bootstrap.cats : null;
         public YeogiCafe.Cafe.FurnitureManager Furniture => bootstrap != null ? bootstrap.furniture : null;
+        public IReadOnlyList<FurnitureData> AllFurniture => bootstrap != null && bootstrap.allFurniture != null ? (IReadOnlyList<FurnitureData>)bootstrap.allFurniture : new List<FurnitureData>();
 
         public void StartNextDay()
         {

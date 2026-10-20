@@ -100,9 +100,10 @@ namespace YeogiCafe.UI
             stampLabel = UiFactory.Label("StampDay", box.transform, "", 14, TextAnchor.LowerCenter, UiFactory.PinkDeep);
             UiFactory.SetRect((RectTransform)stampLabel.transform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 2), new Vector2(0, 18));
 
-            pawBack = RuntimeSprites.Get("paw_back", () => PawDrawing.Back());
-            pawPress = RuntimeSprites.Get("paw_back_press", () => PawDrawing.Back(true));
-            pawPads = RuntimeSprites.Get("paw_pads", PawDrawing.Pads);
+            bool art = PawArt.Has;     // 새 앞발 원화(주방과 같은 손)
+            pawBack = art ? PawArt.Get(PawArt.Idle, false) : RuntimeSprites.Get("paw_back", () => PawDrawing.Back());
+            pawPress = art ? PawArt.Get(PawArt.Press, false) : RuntimeSprites.Get("paw_back_press", () => PawDrawing.Back(true));
+            pawPads = art ? PawArt.Get(PawArt.Groom0, false) : RuntimeSprites.Get("paw_pads", PawDrawing.Pads);
             checkSprite = RuntimeSprites.Get("ui_check", PawDrawing.Check);
             stampSprite = RuntimeSprites.Get("ui_pawstamp", PawDrawing.Stamp);
 
@@ -112,8 +113,8 @@ namespace YeogiCafe.UI
             paw = (RectTransform)pg.transform; pawImg = pg.GetComponent<Image>(); pawImg.raycastTarget = false;
             pawImg.sprite = pawBack;
             paw.anchorMin = paw.anchorMax = new Vector2(0.5f, 0f);
-            paw.pivot = new Vector2(0.5f, 0.94f);
-            paw.sizeDelta = new Vector2(PawDrawing.W, PawDrawing.H) * 2.6f;
+            paw.pivot = new Vector2(0.5f, PawArt.Has ? PawArt.TipY(PawArt.Idle) : 0.94f);
+            paw.sizeDelta = PawArt.Has ? PawArt.CellSize * 1.0f : new Vector2(PawDrawing.W, PawDrawing.H) * 2.6f;
             pg.SetActive(false);
 
             rootGo.SetActive(false);

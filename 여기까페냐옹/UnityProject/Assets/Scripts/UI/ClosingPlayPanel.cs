@@ -310,10 +310,10 @@ namespace YeogiCafe.UI
                 var g = new GameObject("SuckPaw", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
                 g.transform.SetParent(root, false);
                 suckPaw = g.GetComponent<Image>(); suckPaw.raycastTarget = false;
-                suckPaw.sprite = RuntimeSprites.Get("paw_right", CookingDrawing.PawRight);
+                suckPaw.sprite = PawArt.Has ? PawArt.Get(PawArt.Idle, false) : RuntimeSprites.Get("paw_right", CookingDrawing.PawRight);
                 var rt = (RectTransform)g.transform;
-                rt.pivot = new Vector2(0.5f, 0.85f);
-                rt.sizeDelta = new Vector2(PawDrawing.W, PawDrawing.H) * 2.2f;
+                rt.pivot = new Vector2(0.5f, PawArt.Has ? PawArt.TipY(PawArt.Idle) - 0.08f : 0.85f);
+                rt.sizeDelta = PawArt.Has ? PawArt.CellSize * 0.85f : new Vector2(PawDrawing.W, PawDrawing.H) * 2.2f;
                 rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0f);
                 rt.anchoredPosition = new Vector2(70, -200);
                 rt.localEulerAngles = new Vector3(0, 0, 38f);
@@ -433,10 +433,11 @@ namespace YeogiCafe.UI
             g.transform.SetParent(fxLayer, false);
             var img = g.GetComponent<Image>(); img.raycastTarget = false;
             bool left = catPos.x < 84;
-            img.sprite = left ? RuntimeSprites.Get("paw_left_press", CookingDrawing.PawLeftPressed) : RuntimeSprites.Get("paw_right_press", CookingDrawing.PawRightPressed);
+            img.sprite = PawArt.Has ? PawArt.Get(PawArt.Press, left)
+                       : left ? RuntimeSprites.Get("paw_left_press", CookingDrawing.PawLeftPressed) : RuntimeSprites.Get("paw_right_press", CookingDrawing.PawRightPressed);
             var rt = (RectTransform)g.transform;
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f); rt.pivot = new Vector2(0.5f, 0.8f);
-            rt.sizeDelta = new Vector2(PawDrawing.W, PawDrawing.H) * 1.5f;
+            rt.sizeDelta = PawArt.Has ? PawArt.CellSize * 0.55f : new Vector2(PawDrawing.W, PawDrawing.H) * 1.5f;
             rt.anchoredPosition = CatToUi(catPos);
             fx.Add(new Fx { rt = rt, g = img, life = 0.35f, max = 0.35f, vel = Vector2.zero });
         }

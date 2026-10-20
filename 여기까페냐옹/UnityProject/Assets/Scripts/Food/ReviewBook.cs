@@ -68,6 +68,6 @@ namespace YeogiCafe.Food
         public static float InspectorBonus(float rep) => rep >= 4.5f ? 0.15f : rep >= 4f ? 0.1f : rep >= 3.5f ? 0.05f : 0f;
         public static float SpawnIntervalMult(float rep) => Mathf.Clamp(1f - (rep - 3f) * 0.08f, 0.84f, 1.1f);
 
-        public static string Paws(int n) => new string('●', n) + new string('○', 5 - n);
+        public static string Paws(int n) { n = UnityEngine.Mathf.Clamp(n, 0, 5); return (n > 0 ? "<color=#E0588A>" + new string('♥', n) + "</color>" : "") + (n < 5 ? "<color=#D8C8CC>" + new string('♥', 5 - n) + "</color>" : ""); }
     }
 }

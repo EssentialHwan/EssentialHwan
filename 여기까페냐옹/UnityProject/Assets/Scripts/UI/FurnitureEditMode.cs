@@ -66,6 +66,13 @@ namespace YeogiCafe.UI
             var d = m != null && fm != null ? fm.DataOf(m.gameObject) : null;
             sellBtn.gameObject.SetActive(m != null);
             if (m == null) return;
+            if (d == null && fm != null && fm.IsStarter(m.gameObject))
+            {
+                if (!fm.CanSellStarter) { sellLabel.text = L.Get("ui.edit.lastseat"); sellBtn.interactable = false; return; }
+                sellBtn.interactable = true;
+                sellLabel.text = L.Get("ui.edit.sell", ("name", ShopPanel.FurnitureName(fm.StarterData(m.gameObject))), ("g", "0"));
+                return;
+            }
             if (d == null) { sellLabel.text = L.Get("ui.edit.cantsell"); sellBtn.interactable = false; return; }
             sellBtn.interactable = true;
             sellLabel.text = L.Get("ui.edit.sell", ("name", ShopPanel.FurnitureName(d)), ("g", FurnitureManager.SellPrice(d).ToString()));
@@ -75,8 +82,12 @@ namespace YeogiCafe.UI
         {
             if (selected == null) return;
             var fm = owner.Furniture; if (fm == null) return;
-            var d = fm.DataOf(selected.gameObject); if (d == null) return;
-            if (!sellArmed) { sellArmed = true; sellLabel.text = L.Get("ui.edit.sellconfirm", ("g", FurnitureManager.SellPrice(d).ToString())); return; }   // 실수 방지: 한 번 더
+            var d = fm.DataOf(selected.gameObject);
+            bool starter = d == null && fm.IsStarter(selected.gameObject);
+            if (starter) d = fm.StarterData(selected.gameObject);
+            if (d == null) return;
+            int price = starter ? 0 : FurnitureManager.SellPrice(d);
+            if (!sellArmed) { sellArmed = true; sellLabel.text = L.Get("ui.edit.sellconfirm", ("g", price.ToString())); return; }   // 실수 방지: 한 번 더
             var go = selected.gameObject;
             if (fm.Sell(go, out int gold, out var why))
             {
@@ -88,7 +99,7 @@ namespace YeogiCafe.UI
             }
             else
             {
-                hintText.text = L.Get(why == FurnitureManager.SellFail.InUse ? "ui.edit.inuse" : "ui.edit.cantsell");
+                hintText.text = L.Get(why == FurnitureManager.SellFail.InUse ? "ui.edit.inuse" : why == FurnitureManager.SellFail.LastStarter ? "ui.edit.lastseat" : "ui.edit.cantsell");
                 sellArmed = false;
                 Select(selected);
             }

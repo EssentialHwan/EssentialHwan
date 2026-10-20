@@ -48,13 +48,39 @@ namespace YeogiCafe.Cafe
         // ── 판매: 산 값의 50%(10G 단위) 환급. 손님이 앉아 있거나 쓰는 중이면 못 판다. 시작 좌석은 판매 불가 ──
         public const float SellRate = 0.5f;
         public static int SellPrice(FurnitureData d) => d == null ? 0 : Mathf.Max(10, Mathf.RoundToInt(d.price * SellRate / 10f) * 10);
-        public enum SellFail { None, NotSellable, InUse }
+        public enum SellFail { None, NotSellable, InUse, LastStarter }
         public FurnitureData DataOf(GameObject go) { var it = items.Find(i => i.go == go); return it != null ? it.data : null; }
+
+        // 기본 좌석: 0G에 팔 수 있지만 최소 1개는 남겨야 한다(3개 중 2개까지)
+        public bool IsStarter(GameObject go) => starters.Exists(s => s.go == go);
+        public bool CanSellStarter => starters.Count > 1;
+        public FurnitureData StarterData(GameObject go) { var sb = go != null ? go.GetComponent<SeatBehaviour>() : null; return sb != null ? sb.source : null; }
+        void RemoveStarter(int index)
+        {
+            int k = starters.FindIndex(s => s.index == index);
+            if (k < 0) return;
+            var go = starters[k].go;
+            starters.RemoveAt(k);
+            if (go == null) return;
+            var sb = go.GetComponent<SeatBehaviour>();
+            if (sb != null) cafe.UnregisterSeat(sb);
+            Destroy(go);
+        }
 
         public bool Sell(GameObject go, out int gold, out SellFail why)
         {
             gold = 0; why = SellFail.None;
             var it = items.Find(i => i.go == go);
+            if (it == null && IsStarter(go))
+            {
+                if (!CanSellStarter) { why = SellFail.LastStarter; return false; }
+                var ssb = go.GetComponent<SeatBehaviour>();
+                if (ssb != null && !ssb.IsFree) { why = SellFail.InUse; return false; }
+                int idx = starters.Find(s => s.go == go).index;
+                if (save != null && !save.soldStarters.Contains(idx)) save.soldStarters.Add(idx);
+                RemoveStarter(idx);
+                return true;                                  // 0G
+            }
             if (it == null) { why = SellFail.NotSellable; return false; }
             var sb = go.GetComponent<SeatBehaviour>();
             var fb = go.GetComponent<FacilityBehaviour>();
@@ -102,7 +128,9 @@ namespace YeogiCafe.Cafe
                 items.Add(new PlacedItem { data = data, dto = dto, slot = slot, go = Place(data, slot, dto) });
                 placedData.Add(data);
             }
-            // 시작 좌석을 옮겨 둔 위치 복원
+            // 팔아 버린 기본 좌석은 치우고, 남은 것은 옮겨 둔 위치 복원
+            if (save.soldStarters != null)
+                foreach (int idx in save.soldStarters.ToArray()) if (starters.Count > 1) RemoveStarter(idx);
             foreach (var st in starters)
             {
                 var dto = FindStarterDto(st.index, false);

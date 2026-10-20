@@ -134,32 +134,45 @@ namespace YeogiCafe.UI
 
                 var row = UiFactory.Panel("Cat_" + data.catId, listContent, UiFactory.Cream);
                 UiFactory.Frame(row, UiFactory.FrameStyle.Card, UiFactory.Cream);
-                ((RectTransform)row.transform).sizeDelta = new Vector2(0, 38);
+                ((RectTransform)row.transform).sizeDelta = new Vector2(0, 36);
 
-                string catName = visited ? L.Get($"cat.{data.catId}.name") : "???";
-                if (cs != null && cs.bossSeen) catName += $" ({L.Get("ui.catalog.boss")})";
-                if (cs != null && cs.graduated) catName += $" ({L.Get("ui.catalog.grad")})";
-                string axes = cs == null ? "?  ?  ?" :
-                    $"{L.Get("ui.axis.food")} {ObservationCardBuilder.AxisText(cs.observation.food)}   " +
-                    $"{L.Get("ui.axis.seat")} {ObservationCardBuilder.AxisText(cs.observation.seat)}   " +
-                    $"{L.Get("ui.axis.facility")} {ObservationCardBuilder.AxisText(cs.observation.facility)}";
+                // 숨은 고양이: 소문만(두 줄 글)
+                if (!visited && data.unlockCondition != null && data.unlockCondition.type == UnlockType.FurnitureSet)
+                {
+                    ((RectTransform)row.transform).sizeDelta = new Vector2(0, 48);
+                    var rl = UiFactory.Label("Rumor", row.transform, "???    " + L.Get("ui.catalog.rumor"), 15, TextAnchor.MiddleLeft, UiFactory.Ink);
+                    rl.resizeTextForBestFit = true; rl.resizeTextMinSize = 10; rl.resizeTextMaxSize = 15; rl.verticalOverflow = VerticalWrapMode.Truncate;
+                    UiFactory.SetRect((RectTransform)rl.transform, Vector2.zero, Vector2.one, new Vector2(0, 0.5f), new Vector2(16, 0), new Vector2(-32, -6));
+                    continue;
+                }
+
+                // 얼굴 아이콘(아직 못 만난 고양이는 ?)
+                if (visited) RowIcon(row, YeogiCafe.Art.CatSpriteBank.Portrait(data.catId), 10, 34);
+                else RowMark(row, "?", 10, 34, UiFactory.WoodDark);
+                string marks = "";
+                if (cs != null && cs.bossSeen) marks += L.Get("ui.catalog.boss") + " ";
+                if (cs != null && cs.graduated) marks += L.Get("ui.catalog.grad");
+                if (marks != "")
+                {
+                    var ml = UiFactory.Label("Marks", row.transform, marks.Trim(), 11, TextAnchor.LowerLeft, UiFactory.PinkDeep);
+                    UiFactory.SetRect((RectTransform)ml.transform, new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0.5f), new Vector2(52, 0), new Vector2(46, -6));
+                    ml.resizeTextForBestFit = true; ml.resizeTextMinSize = 8; ml.resizeTextMaxSize = 11;
+                }
+
+                // 음식·좌석·시설: 맞히면 그 메뉴/가구 그림, 거의 확실이면 △, 그 외 ?
+                AxisCell(row, data, cs, PrefAxis.Food, 100);
+                AxisCell(row, data, cs, PrefAxis.Seat, 196);
+                AxisCell(row, data, cs, PrefAxis.Facility, 292);
 
                 string touchKey = cs != null ? YeogiCafe.AI.CatTemperament.ObservedKey(cs.touchSeen) : null;
                 string touch = $"{L.Get("ui.axis.touch")} {(touchKey != null ? L.Get(touchKey) : "?")}";
                 if (cs != null && cs.likeZones != 0) touch += " " + L.Get("ui.catalog.likes", ("z", ClosingPlayPanel.Zones(cs.likeZones)));
                 if (cs != null && cs.hateZones != 0) touch += " " + L.Get("ui.catalog.hates", ("z", ClosingPlayPanel.Zones(cs.hateZones)));
                 if (cs != null && cs.suckleSeen) touch += " " + L.Get("ui.catalog.suckle");
-                string rowText = $"{catName}    {axes}    {touch}";
-                if (!visited && data.unlockCondition != null && data.unlockCondition.type == UnlockType.FurnitureSet)
-                    rowText = "???    " + L.Get("ui.catalog.rumor");               // 숨은 고양이: 소문만
-                bool rumor = rowText.StartsWith("???    ") && rowText.Length > 40;
-                if (rumor) ((RectTransform)row.transform).sizeDelta = new Vector2(0, 54);   // 소문은 두 줄
-                var lbl = UiFactory.Label("Row", row.transform, rowText, 16,
-                                          TextAnchor.MiddleLeft, UiFactory.Ink);
-                lbl.resizeTextForBestFit = true; lbl.resizeTextMinSize = 10; lbl.resizeTextMaxSize = 16;   // 길어지면 글자를 줄여 한 칸 안에
+                var lbl = UiFactory.Label("Touch", row.transform, touch, 15, TextAnchor.MiddleLeft, UiFactory.Ink);
+                lbl.resizeTextForBestFit = true; lbl.resizeTextMinSize = 10; lbl.resizeTextMaxSize = 15;
                 lbl.verticalOverflow = VerticalWrapMode.Truncate;
-                UiFactory.SetRect((RectTransform)lbl.transform, Vector2.zero, Vector2.one,
-                                  new Vector2(0, 0.5f), new Vector2(20, 0), new Vector2(-20, 0));
+                UiFactory.SetRect((RectTransform)lbl.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 0.5f), new Vector2(390, 0), new Vector2(-404, -4));
             }
 
             int stamps = save != null ? save.pawStamps : 0;
@@ -250,6 +263,60 @@ namespace YeogiCafe.UI
                 var nrt = (RectTransform)n.transform; nrt.anchorMin = nrt.anchorMax = new Vector2(0.5f, 0.5f);
                 nrt.anchoredPosition = pos[d.catId] + new Vector2(0, -44); nrt.sizeDelta = new Vector2(100, 20);
             }
+        }
+
+        // ── 도감 줄 칸 도우미 ──
+        static void RowIcon(RectTransform row, Sprite sp, float x, float size)
+        {
+            var g = new GameObject("Icon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            g.transform.SetParent(row, false);
+            var im = g.GetComponent<Image>(); im.sprite = sp; im.preserveAspect = true; im.raycastTarget = false;
+            UiFactory.SetRect((RectTransform)g.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(x, 0), new Vector2(size, size));
+        }
+        static void RowMark(RectTransform row, string mark, float x, float size, Color col)
+        {
+            var t = UiFactory.Label("Mark", row, mark, 20, TextAnchor.MiddleCenter, col);
+            UiFactory.SetRect((RectTransform)t.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(x, 0), new Vector2(size, size));
+        }
+
+        void AxisCell(RectTransform row, CatData data, CatSaveData cs, PrefAxis axis, float x)
+        {
+            var lab = UiFactory.Label("Axis", row, L.Get(axis == PrefAxis.Food ? "ui.axis.food" : axis == PrefAxis.Seat ? "ui.axis.seat" : "ui.axis.facility"), 13, TextAnchor.MiddleLeft, UiFactory.WoodDark);
+            UiFactory.SetRect((RectTransform)lab.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(x, 0), new Vector2(40, 20));
+            lab.horizontalOverflow = HorizontalWrapMode.Overflow;
+            var rec = cs != null ? cs.observation.Get(axis) : null;
+            float cx = x + 40;
+            if (rec != null && rec.state == ObsState.Recorded)
+            {
+                var sp = AnswerSprite(data, axis, rec.recordedValue);
+                if (sp != null) { RowIcon(row, sp, cx, 30); return; }
+                RowMark(row, "○", cx, 30, UiFactory.Green);
+                return;
+            }
+            if (rec != null && rec.state == ObsState.Confirmable) { RowMark(row, "△", cx, 30, UiFactory.PinkDeep); return; }
+            RowMark(row, "?", cx, 30, UiFactory.WoodDark);
+        }
+
+        // 맞힌 답의 그림: 기록값이 메뉴/가구 id면 그것, 태그면 그 취향의 대표 메뉴/가구
+        Sprite AnswerSprite(CatData data, PrefAxis axis, string v)
+        {
+            if (axis == PrefAxis.Food)
+            {
+                string id = !string.IsNullOrEmpty(v) && v.StartsWith("menu_") ? v : data.foodFavoriteMenuId;
+                return string.IsNullOrEmpty(id) ? null : KitchenView.DishSprite(id);
+            }
+            if (!string.IsNullOrEmpty(v) && v.StartsWith("furn_"))
+            {
+                var f = owner.LookupFurniture(v);
+                if (f != null && f.worldSprite != null) return f.worldSprite;
+            }
+            foreach (var f in owner.AllFurniture)
+            {
+                if (f == null || f.worldSprite == null) continue;
+                if (axis == PrefAxis.Seat && f.seatTags != null && System.Array.IndexOf(f.seatTags, data.seatPreference) >= 0) return f.worldSprite;
+                if (axis == PrefAxis.Facility && f.facilityTags != null && System.Array.IndexOf(f.facilityTags, data.facilityPreference) >= 0) return f.worldSprite;
+            }
+            return null;
         }
 
         // 관계 종류: 0 앙숙 · 1 티격태격 · 2 단짝 · 3 친구 · 4 아는 사이 · -1 표시 안 함
