@@ -13,6 +13,7 @@ namespace YeogiCafe.UI
     public class CatalogPanel
     {
         readonly GameUiController owner;
+        RectTransform listView;
         readonly GameObject rootGo;
         Text header;
         RectTransform listContent;
@@ -40,11 +41,23 @@ namespace YeogiCafe.UI
             UiFactory.SetRect((RectTransform)header.transform, new Vector2(0, 1), new Vector2(1, 1),
                               new Vector2(0.5f, 1), new Vector2(0, -66), new Vector2(-60, 40));
 
-            var listGo = new GameObject("List", typeof(RectTransform), typeof(VerticalLayoutGroup));
-            listGo.transform.SetParent(panel.transform, false);
-            listContent = (RectTransform)listGo.transform;
-            UiFactory.SetRect(listContent, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f),
+            // 고양이가 늘어 한 화면을 넘으면 휠/드래그로 내려 본다
+            var viewGo = new GameObject("ListView", typeof(RectTransform), typeof(RectMask2D), typeof(ScrollRect), typeof(Image));
+            viewGo.transform.SetParent(panel.transform, false);
+            var view = (RectTransform)viewGo.transform;
+            UiFactory.SetRect(view, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f),
                               new Vector2(0, -22), new Vector2(-48, -178));
+            viewGo.GetComponent<Image>().color = new Color(1, 1, 1, 0);      // 빈 곳도 휠·드래그가 먹게
+            var listGo = new GameObject("List", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+            listGo.transform.SetParent(view, false);
+            listContent = (RectTransform)listGo.transform;
+            listContent.anchorMin = new Vector2(0, 1); listContent.anchorMax = new Vector2(1, 1); listContent.pivot = new Vector2(0.5f, 1);
+            listContent.anchoredPosition = Vector2.zero; listContent.sizeDelta = new Vector2(0, 0);
+            listGo.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            var sr = viewGo.GetComponent<ScrollRect>();
+            sr.content = listContent; sr.viewport = view; sr.horizontal = false; sr.vertical = true;
+            sr.movementType = ScrollRect.MovementType.Clamped; sr.scrollSensitivity = 24f;
+            listView = view;
             var vlg = listGo.GetComponent<VerticalLayoutGroup>();
             vlg.spacing = 4; vlg.childControlHeight = false; vlg.childForceExpandHeight = false;
             vlg.childControlWidth = true; vlg.childForceExpandWidth = true;
@@ -74,7 +87,7 @@ namespace YeogiCafe.UI
 
         void RenderReviews()
         {
-            listContent.gameObject.SetActive(true);
+            listView.gameObject.SetActive(true);
             relRoot.gameObject.SetActive(false);
             tabLabel.text = L.Get("ui.catalog.reltab");
             var s = owner.Save;
@@ -114,9 +127,10 @@ namespace YeogiCafe.UI
         void Render()
         {
             ClearRows();
+            listContent.anchoredPosition = Vector2.zero;          // 탭을 바꾸면 맨 위부터
             reviewTabLabel.text = L.Get(showReview ? "ui.catalog.listtab" : "ui.catalog.reviewtab");
             if (showReview) { RenderReviews(); return; }
-            listContent.gameObject.SetActive(!showRel);
+            listView.gameObject.SetActive(!showRel);
             relRoot.gameObject.SetActive(showRel);
             tabLabel.text = L.Get(showRel ? "ui.catalog.listtab" : "ui.catalog.reltab");
             if (showRel) RenderRelations();

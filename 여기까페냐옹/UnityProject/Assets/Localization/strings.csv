@@ -581,3 +581,35 @@ tut.served,잘했어요! 맛있게 먹는지 남기는지 봐 두세요. 고양�
 tut.closing,마감 시간! 마지막 손님과 놀아 주세요. 좋아하는 곳을 쓰다듬으면 쭙쭙이를 할지도 몰라요.,Closing time! Play with the last guest. Pet its favorite spot and it might start suckling.
 tut.settle,오늘 본 단서로 고양이의 음식·좌석·시설 취향을 추리해 기록하세요. 모두의 취향을 알아내는 게 최종 목표예요!,Use today's clues to guess each cat's food · seat · facility. Learning everyone's taste is the final goal!
 ui.shop.slots,빈 칸  바닥 {f}/{ft} · 벽 {w}/{wt},Free  floor {f}/{ft} · wall {w}/{wt}
+cat.cat_fold.name,폴드냥,Mochi
+cat.cat_munchkin.name,먼치냥,Peanut
+cat.cat_persian.name,페르냥,Cocoa
+cat.cat_tortie.name,카오스냥,Tori
+ep.cat_fold.regular2.01,(접힌 귀를 살짝 세우고 네 쪽을 본다),(Perks its folded ears a little and looks at you)
+ep.cat_fold.regular2.02,…여기 의자는 평범해서 좋아냥.,…The chairs here are plain. I like that.
+ep.cat_fold.regular3.01,쿠션에 늘어져 있으면 시간이 천천히 가냥.,Time slows down when I melt into a cushion.
+ep.cat_fold.regular3.02,라떼 거품은… 귀가 안 닿아서 좋다냥.,Latte foam… my ears never get in it.
+ep.cat_fold.grad.01,"처음엔 문 앞에서 한참 망설였어냥.","At first, I hesitated at the door for ages."
+ep.cat_fold.grad.02,이제 새 집 소파에서도 잘 늘어질 수 있을 것 같아냥.,I think I can melt into my new home's sofa now.
+ep.cat_fold.grad.03,라떼 냄새가 나면 생각날 거다냥. — 폴드냥,The smell of latte will remind me of you. — Mochi
+ep.cat_munchkin.regular2.01,다리가 짧아도 바 의자쯤은 거뜬하다냥!,Short legs? I can still climb a bar stool!
+ep.cat_munchkin.regular2.02,장난감 바구니에 같이 놀 친구 있냥?,Anyone at the toy basket to play with?
+ep.cat_munchkin.regular3.01,여기 오면 다들 나랑 놀아줘서 좋아냥.,Everyone plays with me here. I love it.
+ep.cat_munchkin.regular3.02,아메리카노 냄새 맡으면 힘이 펄펄 난다냥!,The smell of americano gives me energy!
+ep.cat_munchkin.grad.01,제일 높은 바 의자에 처음 올라간 날 기억나냥?,Remember the day I first climbed the tallest bar stool?
+ep.cat_munchkin.grad.02,새 집에도 친구가 많대냥. 다 같이 놀 거다냥.,My new home has lots of friends. We'll all play together.
+ep.cat_munchkin.grad.03,짧은 다리로 열심히 놀러 올게냥! — 먼치냥,I'll come visit on my short little legs! — Peanut
+ep.cat_persian.regular2.01,흥. 소파 쿠션 상태는… 나쁘지 않다냥.,Hmph. The sofa cushions are… acceptable.
+ep.cat_persian.regular2.02,파르페 딸기는 제일 큰 걸로 부탁한다냥.,The biggest strawberry on my parfait. Please.
+ep.cat_persian.regular3.01,진주 목걸이가 오늘따라 잘 어울리지 않냥?,Doesn't my pearl necklace look extra nice today?
+ep.cat_persian.regular3.02,…네 카페는 격이 있다냥. 칭찬이다냥.,…Your cafe has class. That's a compliment.
+ep.cat_persian.grad.01,털 한 올까지 신경 써 준 곳은 여기가 처음이다냥.,"No place ever cared for every strand of my fur. Until here."
+ep.cat_persian.grad.02,새 집 집사도 꽤 품위가 있더라냥.,My new human has decent taste too.
+ep.cat_persian.grad.03,가끔은 들러서 파르페를 먹어 주겠다냥. — 페르냥,I shall drop by for parfait now and then. — Cocoa
+ep.cat_tortie.regular2.01,오늘은 기분 좋다냥. 내일은 모른다냥.,I'm in a good mood today. Tomorrow? Who knows.
+ep.cat_tortie.regular2.02,구운 생선이면… 봐줄 수도 있다냥.,For grilled fish… I might forgive you.
+ep.cat_tortie.regular3.01,2인석은 혼자 넓게 쓰는 게 국룰이다냥.,A two-seater is best used alone. Obviously.
+ep.cat_tortie.regular3.02,얼룩이 엉망이라고? 이게 다 멋이다냥.,My coat is messy? It's called style.
+ep.cat_tortie.grad.01,변덕 부려도 매번 받아 준 건 너뿐이었다냥.,You were the only one who put up with my moods.
+ep.cat_tortie.grad.02,새 집에서도 하루에 열 번은 마음이 바뀔 거다냥.,I'll change my mind ten times a day at my new home too.
+ep.cat_tortie.grad.03,그래도 여긴 계속 좋아할 거다냥. — 카오스냥,But I'll keep liking this place. — Tori

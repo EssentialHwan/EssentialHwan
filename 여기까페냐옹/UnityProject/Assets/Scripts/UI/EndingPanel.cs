@@ -55,18 +55,19 @@ namespace YeogiCafe.UI
             // 고양이 단체 사진: 한 줄에 5마리씩
             var list = new List<CatData>();
             if (cats != null) foreach (var c in cats) if (c != null) list.Add(c);
-            const float cell = 108f;
-            int perRow = Mathf.Min(5, Mathf.Max(1, list.Count));
+            bool many = list.Count > 10;                     // 13마리: 7+6 두 줄
+            float cell = many ? 96f : 108f, rowH = many ? 104f : 118f, icon = many ? 72f : 84f;
+            int perRow = Mathf.Min(many ? 7 : 5, Mathf.Max(1, list.Count));
             for (int i = 0; i < list.Count; i++)
             {
                 int row = i / perRow, col = i % perRow;
                 int inRow = Mathf.Min(perRow, list.Count - row * perRow);
                 float x = (col - (inRow - 1) * 0.5f) * cell;
-                float y = 112f - row * 118f;
+                float y = (many ? 118f : 112f) - row * rowH;
                 var g = new GameObject("Cat_" + list[i].catId, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
                 g.transform.SetParent(paper, false);
                 var im = g.GetComponent<Image>(); im.sprite = CatSpriteBank.Portrait(list[i].catId); im.preserveAspect = true; im.raycastTarget = false;
-                UiFactory.SetRect((RectTransform)g.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(x, y), new Vector2(84, 84));
+                UiFactory.SetRect((RectTransform)g.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(x, y), new Vector2(icon, icon));
                 var n = UiFactory.Label("N", g.transform, L.Get($"cat.{list[i].catId}.name"), 14, TextAnchor.UpperCenter, UiFactory.Ink);
                 UiFactory.SetRect((RectTransform)n.transform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 1), new Vector2(0, -2), new Vector2(104, 20));
             }

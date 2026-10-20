@@ -123,6 +123,15 @@ namespace YeogiCafe.EditorTools
             CreateCat("cat_moon", "달냥", PersonalityTag.Curious, PersonalityTag.Relaxed,
                       "menu_grilled_fish", SeatTag.Window, FacilityTag.Height, AtmosphereAxis.Quiet,
                       new UnlockCondition { type = UnlockType.FurnitureSet, value = 3, requireFurniture = new[] { "furn_seat_window", "furn_fac_tower" } });
+            // 새 고양이 4종(AI 원화 시트): 다른 고양이와 취향이 두 칸 이상 겹치지 않게, 아무도 안 쓰던 답(라떼·일반석·늘어지기·어울리기 단독)을 채운다
+            CreateCat("cat_fold", "폴드냥", PersonalityTag.Relaxed, PersonalityTag.Introvert,
+                      "menu_latte", SeatTag.Normal, FacilityTag.Relax, AtmosphereAxis.Quiet, U(UnlockType.RecordedAxesTotal, 3));
+            CreateCat("cat_munchkin", "먼치냥", PersonalityTag.Active, PersonalityTag.Playful,
+                      "menu_americano", SeatTag.BarTable, FacilityTag.Social, AtmosphereAxis.Lively, U(UnlockType.CafeLevel, 2));
+            CreateCat("cat_persian", "페르냥", PersonalityTag.Introvert, PersonalityTag.Glutton,
+                      "menu_parfait", SeatTag.Sofa, FacilityTag.Soft, AtmosphereAxis.Luxury, U(UnlockType.RecordedAxesTotal, 12));
+            CreateCat("cat_tortie", "카오스냥", PersonalityTag.Fickle, PersonalityTag.Active,
+                      "menu_grilled_fish", SeatTag.TwoSeat, FacilityTag.Play, AtmosphereAxis.Natural, U(UnlockType.CafeLevel, 3));
         }
 
         static UnlockCondition U(UnlockType t, int v) => new UnlockCondition { type = t, value = v };
@@ -164,6 +173,10 @@ namespace YeogiCafe.EditorTools
             CreateEpisode("ep_siamese", "cat_siamese", 70);
             CreateEpisode("ep_gray", "cat_gray", 70);
             CreateEpisode("ep_moon", "cat_moon", 100);
+            CreateEpisode("ep_fold", "cat_fold", 50);
+            CreateEpisode("ep_munchkin", "cat_munchkin", 60);
+            CreateEpisode("ep_persian", "cat_persian", 80);
+            CreateEpisode("ep_tortie", "cat_tortie", 80);
         }
 
         static void CreateEpisode(string epId, string catId, int gold)
