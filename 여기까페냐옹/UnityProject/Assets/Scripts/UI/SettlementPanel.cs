@@ -45,7 +45,7 @@ namespace YeogiCafe.UI
 
             revenueText = UiFactory.Label("Revenue", panel.transform, "", 21, TextAnchor.UpperCenter, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)revenueText.transform, new Vector2(0, 1), new Vector2(1, 1),
-                              new Vector2(0.5f, 1), new Vector2(0, -68), new Vector2(-96, 60));
+                              new Vector2(0.5f, 1), new Vector2(0, -68), new Vector2(-300, 60));      // 오른쪽 위 도장 칸과 안 겹치게
 
             var cardsGo = new GameObject("Cards", typeof(RectTransform), typeof(VerticalLayoutGroup));
             cardsGo.transform.SetParent(panel.transform, false);
@@ -86,17 +86,17 @@ namespace YeogiCafe.UI
             UiFactory.SetRect((RectTransform)expandInfo.transform, new Vector2(0, 0), new Vector2(1, 0),
                               new Vector2(0, 0), new Vector2(24, 76), new Vector2(-48, 24));
 
-            // 오늘의 도장 칸(오른쪽 아래, 다음 날 버튼 위)
+            // 오늘의 도장 칸(창 오른쪽 위 — 아래쪽 추리 줄을 가리지 않게)
             var box = UiFactory.Panel("StampBox", panel.transform, new Color(1f, 0.98f, 0.94f, 1f));
             stampBox = (RectTransform)box.transform;
             UiFactory.Frame(stampBox, UiFactory.FrameStyle.Paper);
-            UiFactory.SetRect(stampBox, new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0), new Vector2(-24, 84), new Vector2(120, 120));
+            UiFactory.SetRect(stampBox, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1), new Vector2(-26, -26), new Vector2(104, 104));
             var boxTitle = UiFactory.Label("StampTitle", box.transform, L.Get("ui.settle.stamp"), 15, TextAnchor.UpperCenter, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)boxTitle.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -4), new Vector2(0, 20));
             var si = new GameObject("Stamp", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             si.transform.SetParent(box.transform, false);
             stampImg = si.GetComponent<Image>(); stampImg.raycastTarget = false; stampImg.preserveAspect = true;
-            UiFactory.SetRect((RectTransform)si.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -6), new Vector2(80, 80));
+            UiFactory.SetRect((RectTransform)si.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -3), new Vector2(64, 64));
             stampLabel = UiFactory.Label("StampDay", box.transform, "", 14, TextAnchor.LowerCenter, UiFactory.PinkDeep);
             UiFactory.SetRect((RectTransform)stampLabel.transform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 2), new Vector2(0, 18));
 
@@ -316,6 +316,7 @@ namespace YeogiCafe.UI
             levelText.text = L.Get("ui.settle.cafelevel", ("n", owner.CafeLevel.ToString()));
         }
         public void Hide() => rootGo.SetActive(false);
+        public bool IsOpen => rootGo != null && rootGo.activeSelf;
 
         void RenderEconomy()
         {

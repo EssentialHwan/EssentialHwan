@@ -254,5 +254,6 @@ namespace YeogiCafe.UI
             if (next) { Render(); rootGo.transform.SetAsLastSibling(); }   // 주방 화면 위로(겹침 방지)
         }
         public void Hide() => rootGo.SetActive(false);
+        public bool IsOpen => rootGo != null && rootGo.activeSelf;
     }
 }

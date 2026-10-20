@@ -189,10 +189,13 @@ namespace YeogiCafe.UI
                 var im = ig.GetComponent<Image>(); im.sprite = RuntimeSprites.Get("ui_lock", CookingDrawing.Lock); im.preserveAspect = true; im.raycastTarget = false;
                 UiFactory.SetRect((RectTransform)ig.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 10), new Vector2(48, 54));
                 var offer = System.Array.Find(YeogiCafe.Food.RecipeBook.Tools, x => x.id == st.id);
-                var lt = UiFactory.Label("Cond", lrt, offer.id != null ? L.Get("ui.tool.lock", ("n", offer.cafeLevel.ToString()), ("g", offer.price.ToString())) : "",
-                                         15, TextAnchor.MiddleCenter, UiFactory.Cream);
-                var ol = lt.gameObject.AddComponent<Outline>(); ol.effectColor = new Color(0.15f, 0.08f, 0.06f, 0.9f); ol.effectDistance = new Vector2(1.5f, -1.5f);
-                UiFactory.SetRect((RectTransform)lt.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -32), new Vector2(150, 22));
+                // 해금 조건: 기구 그림 위에서도 읽히게 작은 진한 배지 위에
+                var pill = UiFactory.Panel("CondPill", lrt, new Color(0.22f, 0.13f, 0.11f, 0.88f));
+                UiFactory.SetRect(pill, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -30), new Vector2(112, 24));
+                pill.GetComponent<Image>().raycastTarget = false;
+                var lt = UiFactory.Label("Cond", pill, offer.id != null ? L.Get("ui.tool.lock", ("n", offer.cafeLevel.ToString()), ("g", offer.price.ToString())) : "",
+                                         15, TextAnchor.MiddleCenter, new Color(1f, 0.92f, 0.7f));
+                UiFactory.Anchor((RectTransform)lt.transform, Vector2.zero, Vector2.one, new Vector2(4, 0), new Vector2(-4, 0));
                 lt.raycastTarget = false;
                 w.lockGo = lk;
             }

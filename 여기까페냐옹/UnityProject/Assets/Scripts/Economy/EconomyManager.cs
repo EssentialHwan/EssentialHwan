@@ -29,6 +29,15 @@ namespace YeogiCafe.Economy
             if (amount != 0) OnGoldDelta?.Invoke(amount);
         }
 
+        // 가구 판매 등 환급: 골드는 늘지만 오늘 매출에는 넣지 않는다
+        public void Refund(int amount)
+        {
+            if (amount <= 0) return;
+            Gold += amount;
+            OnGoldChanged?.Invoke(Gold);
+            OnGoldDelta?.Invoke(amount);
+        }
+
         public bool TrySpend(int amount)
         {
             if (Gold < amount) return false;

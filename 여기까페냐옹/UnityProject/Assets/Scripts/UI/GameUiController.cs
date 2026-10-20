@@ -144,19 +144,20 @@ namespace YeogiCafe.UI
 
             goldText = UiFactory.Label("Gold", bar.transform, "0G", 26, TextAnchor.MiddleLeft, UiFactory.Ink);
             UiFactory.SetRect((RectTransform)goldText.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-                              new Vector2(0, 0.5f), new Vector2(20, 0), new Vector2(170, 56));
+                              new Vector2(0, 0.5f), new Vector2(20, 0), new Vector2(140, 56));
             goldText.horizontalOverflow = HorizontalWrapMode.Overflow;
 
             // 손님 수: 판자 나뭇결 선 위에 글자가 겹치지 않게 작은 종이 배지 위에
             var guestPill = UiFactory.Panel("GuestPill", bar.transform, UiFactory.Cream);
             UiFactory.Frame(guestPill, UiFactory.FrameStyle.Card, UiFactory.Cream);
-            UiFactory.SetRect(guestPill, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(186, 0), new Vector2(124, 40));
+            UiFactory.SetRect(guestPill, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(160, 0), new Vector2(110, 40));
             guestText = UiFactory.Label("Guests", guestPill.transform, "", 19, TextAnchor.MiddleCenter, UiFactory.Ink);
             UiFactory.Anchor((RectTransform)guestText.transform, Vector2.zero, Vector2.one, new Vector2(6, 0), new Vector2(-6, 0));
 
             phaseText = UiFactory.Label("Phase", bar.transform, "", 24, TextAnchor.MiddleCenter, UiFactory.Ink);
+            phaseText.horizontalOverflow = HorizontalWrapMode.Overflow;   // 한 줄 — 칸보다 길면 TextFitGuard가 줄인다
             UiFactory.SetRect((RectTransform)phaseText.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                              new Vector2(0.5f, 0.5f), new Vector2(0, 8), new Vector2(260, 36));
+                              new Vector2(0.5f, 0.5f), new Vector2(4, 8), new Vector2(330, 36));      // 왼쪽 묶음(~452)과 오른쪽 버튼(~834) 사이
 
             // 하루 진행 바(시간대 텍스트 바로 아래)
             var barBg = UiFactory.Panel("TimeBarBg", bar.transform, UiFactory.Wood);
@@ -173,40 +174,40 @@ namespace YeogiCafe.UI
             var shopBtn = UiFactory.Button("ShopBtn", bar.transform, L.Get("ui.shop.buy"),
                                            UiFactory.Wood, UiFactory.Cream, out _);
             UiFactory.SetRect((RectTransform)shopBtn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f),
-                              new Vector2(1, 0.5f), new Vector2(-14, 0), new Vector2(120, 48));
+                              new Vector2(1, 0.5f), new Vector2(-12, 0), new Vector2(104, 48));
             shopBtn.onClick.AddListener(() => { catalog.Hide(); shop.Toggle(); });
 
             var catBtn = UiFactory.Button("CatalogBtn", bar.transform, L.Get("ui.pause.catalog"),
                                           UiFactory.Wood, UiFactory.Cream, out _);
             UiFactory.SetRect((RectTransform)catBtn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f),
-                              new Vector2(1, 0.5f), new Vector2(-144, 0), new Vector2(120, 48));
+                              new Vector2(1, 0.5f), new Vector2(-122, 0), new Vector2(104, 48));
             catBtn.onClick.AddListener(() => { shop.Hide(); catalog.Toggle(); });
 
             // 주방(1인칭 조리) ↔ 홀 전환 — 가장 자주 누르는 버튼이라 가운데 왼쪽에 크게
             var kitBtn = UiFactory.Button("KitchenBtn", bar.transform, L.Get("ui.kitchen.open"),
                                           UiFactory.Green, UiFactory.Ink, out kitchenBtnLabel);
             UiFactory.SetRect((RectTransform)kitBtn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f),
-                              new Vector2(1, 0.5f), new Vector2(-274, 0), new Vector2(120, 48));
+                              new Vector2(1, 0.5f), new Vector2(-232, 0), new Vector2(104, 48));
             kitBtn.onClick.AddListener(ToggleKitchen);
 
             // 오늘의 의뢰(왼쪽, 손님 수 옆)
             var qBtn = UiFactory.Button("QuestBtn", bar.transform, L.Get("ui.quest.btn"), UiFactory.YellowLight, UiFactory.Ink, out questBtnLabel);
             UiFactory.SetRect((RectTransform)qBtn.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-                              new Vector2(0, 0.5f), new Vector2(330, 0), new Vector2(110, 44));
+                              new Vector2(0, 0.5f), new Vector2(278, 0), new Vector2(100, 44));
             qBtn.onClick.AddListener(ToggleQuests);
 
             // 가구 배치(끌어서 옮기기)
             var editBtn = UiFactory.Button("EditBtn", bar.transform, L.Get("ui.edit.open"),
                                            UiFactory.Wood, UiFactory.Cream, out _);
             UiFactory.SetRect((RectTransform)editBtn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f),
-                              new Vector2(1, 0.5f), new Vector2(-404, 0), new Vector2(120, 48));
+                              new Vector2(1, 0.5f), new Vector2(-342, 0), new Vector2(104, 48));
             editBtn.onClick.AddListener(() => { shop.Hide(); catalog.Hide(); CloseKitchen(); editMode.Toggle(); });
 
             // 설정 — 의뢰 버튼 오른쪽(가운데 시간 표시와 겹치지 않게 작게). ESC로도 열림
             var optBtn = UiFactory.Button("OptBtn", bar.transform, L.Get("opt.btn"), UiFactory.CreamDim, UiFactory.WoodDark, out var optLbl);
             optLbl.fontSize = 18;
             UiFactory.SetRect((RectTransform)optBtn.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-                              new Vector2(0, 0.5f), new Vector2(446, 0), new Vector2(68, 44));
+                              new Vector2(0, 0.5f), new Vector2(384, 0), new Vector2(64, 44));
             optBtn.onClick.AddListener(() => settings.Toggle());
 
             // (구) 하단 서술 텍스트는 고양이 머리 위 말풍선(BubbleLayer)으로 대체. 필드는 호환용으로 유지.
@@ -255,9 +256,13 @@ namespace YeogiCafe.UI
         // 화면 위쪽 알림(선물·의뢰 완료 등) — 3.5초 뒤 사라짐
         Text toastText; CanvasGroup toastCg; float toastT;
         readonly Queue<string> toastQueue = new();
+        // 창(상점·도감·설정·마감 놀아주기·정산)이 떠 있으면 알림은 기다렸다가 닫힌 뒤에 — 창 제목·탭을 가리지 않게
+        bool ModalOpen => (shop != null && shop.IsOpen) || (catalog != null && catalog.IsOpen) || (settings != null && settings.IsOpen)
+                          || (closing != null && closing.IsOpen) || (settlement != null && settlement.IsOpen);
+
         public void ShowToast(string text)
         {
-            if (toastCg != null && toastT > 0.6f) { toastQueue.Enqueue(text); return; }   // 앞 알림이 끝나면 차례로
+            if ((toastCg != null && toastT > 0.6f) || ModalOpen) { toastQueue.Enqueue(text); return; }   // 앞 알림이 끝나면 / 창이 닫히면 차례로
             if (toastText == null)
             {
                 var bg = UiFactory.Panel("Toast", root.transform, new Color(1f, 0.98f, 0.93f, 0.97f));
@@ -268,6 +273,8 @@ namespace YeogiCafe.UI
                 UiFactory.Anchor((RectTransform)toastText.transform, Vector2.zero, Vector2.one, new Vector2(20, 8), new Vector2(-20, -8));
             }
             toastText.text = text; toastT = 3.5f; toastCg.alpha = 1f;
+            // 주방에서는 위쪽 주문표를 가리지 않게 가운데쯤으로
+            ((RectTransform)toastText.transform.parent).anchoredPosition = new Vector2(0, kitchen != null && kitchen.IsOpen ? -200 : -76);
             YeogiCafe.Audio.SoundManager.Sfx("sfx_boop", 0.35f, 0.04f, "toast", 0.4f);
             var trt = (RectTransform)toastText.transform.parent;          // 긴 알림은 두 줄로 → 높이 맞춤
             trt.sizeDelta = new Vector2(720, Mathf.Max(64f, toastText.preferredHeight + 20f));
@@ -356,7 +363,8 @@ namespace YeogiCafe.UI
 
             bubbles?.Tick(Time.unscaledDeltaTime);
             if (toastCg != null && toastT > 0f) { toastT -= Time.unscaledDeltaTime; toastCg.alpha = Mathf.Clamp01(toastT / 0.5f); }
-            if (toastCg != null && toastT <= 0.6f && toastQueue.Count > 0) { toastT = 0f; ShowToast(toastQueue.Dequeue()); }
+            if (toastCg != null && toastT <= 0.6f && toastQueue.Count > 0 && !ModalOpen) { toastT = 0f; ShowToast(toastQueue.Dequeue()); }
+            else if (toastCg == null && toastQueue.Count > 0 && !ModalOpen) ShowToast(toastQueue.Dequeue());
             hudTimer -= Time.unscaledDeltaTime;
             if (hudTimer <= 0f) { hudTimer = 0.5f; RefreshHud(); }   // 손님 수 등 이벤트 없는 값 주기 갱신
 
@@ -416,6 +424,7 @@ namespace YeogiCafe.UI
         public DayManager Day => day;
         public CafeContext Cafe => cafe;
         public CatManager Cats => bootstrap != null ? bootstrap.cats : null;
+        public YeogiCafe.Cafe.FurnitureManager Furniture => bootstrap != null ? bootstrap.furniture : null;
 
         public void StartNextDay()
         {

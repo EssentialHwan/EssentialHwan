@@ -96,17 +96,19 @@ namespace YeogiCafe.UI
         }
 
         // 개발용: 최소 크기로도 안 들어간 글자(FAIL)와 줄여서 맞춘 글자(SHRUNK) 목록 — 패널을 닫아도 남는다
-        static readonly Dictionary<string, string> log = new();
+        static readonly Dictionary<string, (Text t, string msg)> log = new();
         static void Note(Text tx, State st)
         {
-            if (st.failed) log[Path(tx.transform)] = "FAIL   | " + tx.text.Replace("\n", " ");
-            else if (tx.fontSize < st.baseSize) log[Path(tx.transform)] = $"SHRUNK {st.baseSize}->{tx.fontSize} | " + tx.text.Replace("\n", " ");
+            string key = Path(tx.transform) + "#" + tx.GetInstanceID();
+            if (st.failed) log[key] = (tx, "FAIL   | " + tx.text.Replace("\n", " "));
+            else if (tx.fontSize < st.baseSize) log[key] = (tx, $"SHRUNK {st.baseSize}->{tx.fontSize} | " + tx.text.Replace("\n", " "));
+            else log.Remove(key);                                    // 칸이 제대로 잡힌 뒤 다시 맞으면 기록 지움
         }
         public static string Report()
         {
             var sb = new StringBuilder();
-            foreach (var kv in log) if (kv.Value.StartsWith("FAIL")) sb.Append(kv.Value).Append("  @ ").Append(kv.Key).Append('\n');
-            foreach (var kv in log) if (!kv.Value.StartsWith("FAIL")) sb.Append(kv.Value).Append("  @ ").Append(kv.Key).Append('\n');
+            foreach (var kv in log) if (kv.Value.t != null && kv.Value.msg.StartsWith("FAIL")) sb.Append(kv.Value.msg).Append("  @ ").Append(kv.Key).Append('\n');
+            foreach (var kv in log) if (kv.Value.t != null && !kv.Value.msg.StartsWith("FAIL")) sb.Append(kv.Value.msg).Append("  @ ").Append(kv.Key).Append('\n');
             return sb.ToString();
         }
 

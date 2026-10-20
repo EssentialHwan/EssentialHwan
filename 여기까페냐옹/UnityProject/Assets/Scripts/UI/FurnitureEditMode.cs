@@ -19,6 +19,9 @@ namespace YeogiCafe.UI
         MovableFurniture dragging; Vector3 grabOffset, startPos; int startOrder; bool overlapping;
         readonly List<MovableFurniture> all = new();
         float pulse;
+        // 판매: 가구를 톡 누르면(끌지 않고) 선택 → [팔기 +NG] 두 번 눌러 판매
+        MovableFurniture selected; bool sellArmed;
+        Text hintText; Button sellBtn; Text sellLabel;
 
         public FurnitureEditMode(GameUiController owner, Transform parent)
         {
@@ -27,8 +30,14 @@ namespace YeogiCafe.UI
             bannerGo = bar.gameObject;
             UiFactory.Frame(bar, UiFactory.FrameStyle.Window);
             UiFactory.SetRect(bar, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 16), new Vector2(820, 64));
-            var t = UiFactory.Label("Hint", bar.transform, L.Get("ui.edit.hint"), 20, TextAnchor.MiddleLeft, UiFactory.Ink);
-            UiFactory.SetRect((RectTransform)t.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 0.5f), new Vector2(20, 0), new Vector2(-170, 0));
+            var t = UiFactory.Label("Hint", bar.transform, L.Get("ui.edit.hint"), 18, TextAnchor.MiddleLeft, UiFactory.Ink);
+            UiFactory.SetRect((RectTransform)t.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 0.5f), new Vector2(20, 0), new Vector2(-380, 0));
+            t.verticalOverflow = VerticalWrapMode.Truncate; t.resizeTextForBestFit = true; t.resizeTextMinSize = 12; t.resizeTextMaxSize = 18;
+            hintText = t;
+            sellBtn = UiFactory.Button("Sell", bar.transform, "", UiFactory.Pink, UiFactory.Cream, out sellLabel);
+            sellLabel.fontSize = 17; sellLabel.resizeTextForBestFit = true; sellLabel.resizeTextMinSize = 11; sellLabel.resizeTextMaxSize = 17;
+            UiFactory.SetRect((RectTransform)sellBtn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-162, 0), new Vector2(200, 48));
+            sellBtn.onClick.AddListener(OnSell);
             var done = UiFactory.Button("Done", bar.transform, L.Get("ui.edit.done"), UiFactory.Green, UiFactory.Ink, out _);
             UiFactory.SetRect((RectTransform)done.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-12, 0), new Vector2(140, 48));
             done.onClick.AddListener(Exit);
@@ -46,6 +55,43 @@ namespace YeogiCafe.UI
             bannerGo.SetActive(true); bannerGo.transform.SetAsLastSibling();
             all.Clear();
             all.AddRange(Object.FindObjectsOfType<MovableFurniture>());
+            Select(null);
+            hintText.text = L.Get("ui.edit.hint");
+        }
+
+        void Select(MovableFurniture m)
+        {
+            selected = m; sellArmed = false;
+            var fm = owner.Furniture;
+            var d = m != null && fm != null ? fm.DataOf(m.gameObject) : null;
+            sellBtn.gameObject.SetActive(m != null);
+            if (m == null) return;
+            if (d == null) { sellLabel.text = L.Get("ui.edit.cantsell"); sellBtn.interactable = false; return; }
+            sellBtn.interactable = true;
+            sellLabel.text = L.Get("ui.edit.sell", ("name", ShopPanel.FurnitureName(d)), ("g", FurnitureManager.SellPrice(d).ToString()));
+        }
+
+        void OnSell()
+        {
+            if (selected == null) return;
+            var fm = owner.Furniture; if (fm == null) return;
+            var d = fm.DataOf(selected.gameObject); if (d == null) return;
+            if (!sellArmed) { sellArmed = true; sellLabel.text = L.Get("ui.edit.sellconfirm", ("g", FurnitureManager.SellPrice(d).ToString())); return; }   // 실수 방지: 한 번 더
+            var go = selected.gameObject;
+            if (fm.Sell(go, out int gold, out var why))
+            {
+                all.Remove(selected);
+                hintText.text = L.Get("ui.edit.sold", ("name", ShopPanel.FurnitureName(d)), ("g", gold.ToString()));
+                YeogiCafe.Audio.SoundManager.Sfx("sfx_coin", 0.5f, 0.02f);
+                Select(null);
+                owner.RefreshHud();
+            }
+            else
+            {
+                hintText.text = L.Get(why == FurnitureManager.SellFail.InUse ? "ui.edit.inuse" : "ui.edit.cantsell");
+                sellArmed = false;
+                Select(selected);
+            }
         }
 
         public void Exit()
@@ -56,6 +102,7 @@ namespace YeogiCafe.UI
             Time.timeScale = prevTimeScale <= 0f ? 1f : prevTimeScale;
             YeogiCafe.Visual.CatInteractionDirector.Suspended = false;
             bannerGo.SetActive(false);
+            Select(null);
             foreach (var m in all) if (m != null && m.Renderer != null) m.Renderer.color = Color.white;
         }
 
@@ -71,7 +118,8 @@ namespace YeogiCafe.UI
             foreach (var m in all)
             {
                 if (m == null || m.Renderer == null || m == dragging) continue;
-                m.Renderer.color = new Color(1f, glow + 0.08f, glow, 1f);
+                m.Renderer.color = m == selected ? new Color(1f, 0.85f + Mathf.Sin(pulse * 1.5f) * 0.1f, 0.45f, 1f)   // 선택: 노랗게
+                                                 : new Color(1f, glow + 0.08f, glow, 1f);
             }
 
             if (dragging == null)
@@ -85,6 +133,7 @@ namespace YeogiCafe.UI
                         startOrder = hit.Renderer != null ? hit.Renderer.sortingOrder : 0;
                         if (hit.Renderer != null) hit.Renderer.sortingOrder = 30000;
                     }
+                    else Select(null);
                 }
                 return;
             }
@@ -100,12 +149,15 @@ namespace YeogiCafe.UI
                 dragging.Renderer.color = overlapping ? new Color(1f, 0.55f, 0.55f, 0.9f) : new Color(1f, 1f, 1f, 0.92f);
                 dragging.transform.localScale = Vector3.one * 1.05f;
             }
-            if (Input.GetMouseButtonUp(0)) Drop();
+            if (Input.GetMouseButtonUp(0) || !Input.GetMouseButton(0)) Drop();   // 떼는 순간을 놓쳐도(아주 빠른 클릭) 버튼이 안 눌려 있으면 내려놓기
         }
 
         void Drop()
         {
             var m = dragging; dragging = null;
+            bool click = (m.transform.position - startPos).sqrMagnitude < 0.0025f;   // 거의 안 움직였으면 '선택'
+            if (click) Select(m == selected ? null : m);
+            else if (m != selected) Select(null);
             m.transform.localScale = Vector3.one;
             if (m.Renderer != null) { m.Renderer.color = Color.white; m.Renderer.sortingOrder = startOrder; }
             if (overlapping)

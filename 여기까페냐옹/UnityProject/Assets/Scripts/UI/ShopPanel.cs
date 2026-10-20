@@ -150,17 +150,17 @@ namespace YeogiCafe.UI
             var im = ig.GetComponent<Image>(); im.sprite = icon; im.preserveAspect = true; im.raycastTarget = false;
             UiFactory.SetRect((RectTransform)ig.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(8, 0), new Vector2(54, 54));
             var n = UiFactory.Label("Name", card, name, 17, TextAnchor.UpperLeft, UiFactory.Ink);
-            UiFactory.SetRect((RectTransform)n.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(68, -7), new Vector2(-76, 22));
+            UiFactory.SetRect((RectTransform)n.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(68, -5), new Vector2(-76, 22));
             var a = UiFactory.Label("L1", card, line1, 13, TextAnchor.UpperLeft, UiFactory.WoodDark);
-            UiFactory.SetRect((RectTransform)a.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(68, -29), new Vector2(-76, 18));
+            UiFactory.SetRect((RectTransform)a.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(68, -26), new Vector2(-76, 20));
             UiFactory.FitOneLine(a, 374 - 76, 10);
             var b = UiFactory.Label("L2", card, line2, 13, TextAnchor.UpperLeft, UiFactory.WoodDark);
-            UiFactory.SetRect((RectTransform)b.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(68, -49), new Vector2(160, 18));
-            UiFactory.FitOneLine(b, 160, 10);
+            UiFactory.SetRect((RectTransform)b.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(68, -46), new Vector2(140, 20));
+            UiFactory.FitOneLine(b, 140, 10);      // 오른쪽 아래 버튼(x≥220)과 안 겹치게
             n.raycastTarget = a.raycastTarget = b.raycastTarget = false;
             var btn = UiFactory.Button("Btn", card, btnText, btnOn ? btnColor : UiFactory.CreamDim, btnOn ? UiFactory.Cream : UiFactory.WoodDark, out var bl);
             bl.fontSize = 14; UiFactory.FitOneLine(bl, 136, 10);
-            UiFactory.SetRect((RectTransform)btn.transform, new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0), new Vector2(-8, 7), new Vector2(146, 30));
+            UiFactory.SetRect((RectTransform)btn.transform, new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0), new Vector2(-8, 5), new Vector2(146, 26));
             btn.interactable = btnOn;
             return btn;
         }

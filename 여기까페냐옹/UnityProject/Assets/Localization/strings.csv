@@ -186,7 +186,7 @@ ui.settle.stamp,오늘의 도장,Today's Stamp
 ui.settle.stampday,{n}일차,Day {n}
 ui.catalog.stamps,손도장 {n}개,{n} paw stamps
 ui.edit.open,배치,Arrange
-ui.edit.hint,가구를 끌어서 옮겨 보세요. 겹치면 원래 자리로 돌아가요.,Drag furniture to move it. Overlaps snap back.
+ui.edit.hint,끌어서 옮기기 · 톡 누르면 판매(산 값의 50%),Drag to move · tap to sell (50%)
 ui.edit.done,완료,Done
 social.steal,{boss}가 {name}의 자리를 차지했다!,{boss} took {name}'s seat!
 ui.catalog.boss,대장,Boss
@@ -531,7 +531,7 @@ order.hint.menu_skewer.2,통통한 게 줄줄이 꽂힌 거냥,plump things line
 ui.shop.tab.tool,주방 기구,Kitchen
 ui.tool.owned,보유 중,Owned
 ui.tool.ownedbtn,보유,Owned
-ui.tool.hint,사면 메뉴 2개가 메뉴판에 올라가요,Adds 2 menus
+ui.tool.hint,메뉴 2개 추가,Adds 2 menus
 ui.tool.tabhint,기구 하나에 메뉴 2개. 기구가 늘면 손님 입맛을 알아내기 쉬워요.,Each tool adds 2 menus.
 ui.tool.bought,새 기구: {tool}! 메뉴 2개 추가,New tool: {tool}! +2 menus
 ui.tool.notowned,{tool}는 아직 없어요. 상점 [주방 기구]에서 살 수 있어요,No {tool} yet. Buy it in the shop.
@@ -553,3 +553,8 @@ delivery.partial,배달냥이 {b}개 중 {a}개만 챙겨 갔어요 +{g}G,Took o
 delivery.fail,배달냥이 기다리다 그냥 갔어요…,The delivery cat gave up and left…
 delivery.hurry,빨리빨리냥! 배달 늦는다냥!,Hurry! The delivery is late!
 ui.tool.lock,Lv.{n} · {g}G,Lv.{n} · {g}G
+ui.edit.sell,{name} 팔기 +{g}G,Sell {name} +{g}G
+ui.edit.sellconfirm,한 번 더 누르면 판매 +{g}G,Tap again to sell +{g}G
+ui.edit.sold,{name} 판매 완료 +{g}G,Sold {name} +{g}G
+ui.edit.inuse,손님이 쓰는 중이라 지금은 못 팔아요,A guest is using it
+ui.edit.cantsell,기본 자리는 팔 수 없어요,Starter seats cannot be sold

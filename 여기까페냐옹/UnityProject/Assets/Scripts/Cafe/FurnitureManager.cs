@@ -41,6 +41,37 @@ namespace YeogiCafe.Cafe
         readonly List<FurnitureData> placedData = new();
         public AtmosphereSnapshot CurrentAtmosphere { get; private set; }
 
+        // 배치된 가구 기록(판매용)
+        class PlacedItem { public FurnitureData data; public PlacedFurnitureDTO dto; public SlotEntry slot; public GameObject go; }
+        readonly List<PlacedItem> items = new();
+
+        // ── 판매: 산 값의 50%(10G 단위) 환급. 손님이 앉아 있거나 쓰는 중이면 못 판다. 시작 좌석은 판매 불가 ──
+        public const float SellRate = 0.5f;
+        public static int SellPrice(FurnitureData d) => d == null ? 0 : Mathf.Max(10, Mathf.RoundToInt(d.price * SellRate / 10f) * 10);
+        public enum SellFail { None, NotSellable, InUse }
+        public FurnitureData DataOf(GameObject go) { var it = items.Find(i => i.go == go); return it != null ? it.data : null; }
+
+        public bool Sell(GameObject go, out int gold, out SellFail why)
+        {
+            gold = 0; why = SellFail.None;
+            var it = items.Find(i => i.go == go);
+            if (it == null) { why = SellFail.NotSellable; return false; }
+            var sb = go.GetComponent<SeatBehaviour>();
+            var fb = go.GetComponent<FacilityBehaviour>();
+            if ((sb != null && !sb.IsFree) || (fb != null && !fb.IsFree)) { why = SellFail.InUse; return false; }
+            if (sb != null) cafe.UnregisterSeat(sb);
+            if (fb != null) cafe.UnregisterFacility(fb);
+            if (save != null && it.dto != null) save.placedFurniture.Remove(it.dto);
+            if (it.slot != null) it.slot.occupied = false;
+            placedData.Remove(it.data);
+            items.Remove(it);
+            gold = SellPrice(it.data);
+            economy.Refund(gold);
+            Destroy(go);
+            RecalcAtmosphere();
+            return true;
+        }
+
         // 구매+배치 (관찰 채널 개방)
         public bool BuyAndPlace(FurnitureData data)
         {
@@ -51,7 +82,7 @@ namespace YeogiCafe.Cafe
 
             PlacedFurnitureDTO dto = null;
             if (save != null) { dto = new PlacedFurnitureDTO { furnitureId = data.furnitureId }; save.placedFurniture.Add(dto); }
-            Place(data, slot, dto);
+            items.Add(new PlacedItem { data = data, dto = dto, slot = slot, go = Place(data, slot, dto) });
             placedData.Add(data);
             OnFurniturePlaced?.Invoke(data);
             RecalcAtmosphere();
@@ -68,7 +99,7 @@ namespace YeogiCafe.Cafe
                 if (data == null) continue;
                 var slot = FindSlotFor(data);
                 if (slot == null) continue;
-                Place(data, slot, dto);
+                items.Add(new PlacedItem { data = data, dto = dto, slot = slot, go = Place(data, slot, dto) });
                 placedData.Add(data);
             }
             // 시작 좌석을 옮겨 둔 위치 복원
@@ -129,7 +160,7 @@ namespace YeogiCafe.Cafe
             }
         }
 
-        void Place(FurnitureData data, SlotEntry slot, PlacedFurnitureDTO dto)
+        GameObject Place(FurnitureData data, SlotEntry slot, PlacedFurnitureDTO dto)
         {
             slot.occupied = true;
             GameObject placed;
@@ -161,6 +192,7 @@ namespace YeogiCafe.Cafe
                 placed = go;
             }
             MakeMovable(placed, data, dto);
+            return placed;
         }
 
         // 슬롯 선택: 벽걸이→벽 슬롯 / 창가 좌석→창가 슬롯 우선 / 그 외→창가가 아닌 바닥 슬롯 우선.
