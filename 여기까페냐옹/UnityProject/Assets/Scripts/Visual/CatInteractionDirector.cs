@@ -184,7 +184,8 @@ namespace YeogiCafe.Visual
             foreach (var v in views)
             {
                 if (v.Brain.State != CatState.WaitFood || v.Brain.OrderPatienceRatio >= 0.5f) continue;
-                if (R() < 0.6f) say?.Invoke(v.Data.catId, L.Get("meme.hungry." + (rng.Next(3) + 1)));
+                if (R() < 0.6f) say?.Invoke(v.Data.catId, YeogiCafe.Food.DeliveryCat.IsDelivery(v.Data.catId)
+                    ? L.Get("delivery.hurry") : L.Get("meme.hungry." + (rng.Next(3) + 1)));
             }
         }
 

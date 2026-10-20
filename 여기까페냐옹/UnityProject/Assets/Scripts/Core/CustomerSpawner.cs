@@ -34,6 +34,7 @@ namespace YeogiCafe.Core
         readonly HashSet<string> firstMetToday = new();   // 오늘 처음 만난 고양이는 호기심에 한 번 더(최대 3회) — 1일차가 너무 비지 않게
         int rolledDay = -1;
         bool inspectorSpawned;
+        readonly List<float> deliveryAt = new();           // 오늘 배달냥이 올 시각(하루 타이머 기준)
         public static System.Action<string> Toast;          // UI 토스트(심사원 등장 알림)
 
         // 아침마다: 지난 방문 만족·단골 단계로 오늘 올 고양이를 굴린다(RevisitSystem). 처음 보는 고양이는 늘 올 수 있다.
@@ -55,6 +56,12 @@ namespace YeogiCafe.Core
             inspectorSpawned = false;
             if (save.inspectorPlanDay != day.CurrentDay && YeogiCafe.Food.NyanGuide.RollVisit(save, day.CurrentDay, YeogiCafe.Food.ReviewBook.InspectorBonus(rep)))
                 save.inspectorPlanDay = day.CurrentDay;
+            // 배달냥: 2일차부터 하루 0~2번, 점심~저녁 사이 아무 때나
+            deliveryAt.Clear();
+            int dv = YeogiCafe.Food.DeliveryCat.RollVisits(day.CurrentDay, save.cafeLevel);
+            float m = day.cfg.phaseSeconds.x, total = m + day.cfg.phaseSeconds.y + day.cfg.phaseSeconds.z;
+            for (int i = 0; i < dv; i++) deliveryAt.Add(Random.Range(m, total * 0.85f));
+            deliveryAt.Sort();
             // 너무 썰렁한 날 방지: 최소 2마리(또는 해금된 전부)
             for (int guard = 0; comersToday.Count < Mathf.Min(2, pool.Count) && guard < 20; guard++)
                 comersToday.Add(pool[Random.Range(0, pool.Count)].catId);
@@ -142,6 +149,18 @@ namespace YeogiCafe.Core
                 return;
             }
 
+            // 배달냥: 시간이 되면 들어온다(자리 필요 없음). 이미 와 있으면 다음 기회로.
+            if (deliveryAt.Count > 0 && day.DayTimer >= deliveryAt[0] && day.Phase != DayPhase.Morning)
+            {
+                deliveryAt.RemoveAt(0);
+                if (!cats.IsInCafe(YeogiCafe.Food.DeliveryCat.Id) && cafe.GetAvailableMenus().Count > 0)
+                {
+                    cats.Spawn(YeogiCafe.Food.DeliveryCat.Data);
+                    Toast?.Invoke(YeogiCafe.Loc.L.Get("delivery.arrive"));
+                    return;
+                }
+            }
+
             // [버그수정] 아침 시작 즉시 첫 손님 1마리 스폰(대기시간 없이 바로 움직임이 보이도록)
             if (TrySpawnFirst()) { timer = 0; return; }
 
@@ -149,7 +168,7 @@ namespace YeogiCafe.Core
             var pool = ResolvePool();
             if (pool.Count == 0) return;
 
-            timer += Time.deltaTime * day.speed;
+            timer += Time.deltaTime * day.Rate;
             if (timer < day.SpawnInterval * IntervalMultiplier()) return;
             timer = 0;
 

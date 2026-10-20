@@ -33,6 +33,7 @@ namespace YeogiCafe.UI
             public Image barBg, barFill; public Image dish; public Text label;
             public Text stars;            // 완성 접시 위 별(★★☆), 식어 가면 깜빡임
             public CanvasGroup cg;        // 레시피가 없으면 흐리게
+            public GameObject lockGo;     // 아직 안 산 기구: 자물쇠 + 해금 조건
         }
 
         // 카메라 전환
@@ -176,6 +177,24 @@ namespace YeogiCafe.UI
             var sh = w.stars.gameObject.AddComponent<Outline>(); sh.effectColor = new Color(0.29f, 0.21f, 0.18f, 0.9f); sh.effectDistance = new Vector2(1.5f, -1.5f);
             w.stars.raycastTarget = false;
             w.cg = w.rt.gameObject.AddComponent<CanvasGroup>();
+            // 자물쇠(흐린 기구 위에 또렷하게 — CanvasGroup 밖, 기구 앞에 따로 둔다)
+            {
+                var lk = new GameObject("Lock_" + st.id, typeof(RectTransform));
+                lk.transform.SetParent(root, false);
+                var lrt = (RectTransform)lk.transform;
+                UiFactory.SetRect(lrt, w.rt.anchorMin, w.rt.anchorMax, new Vector2(0.5f, 0f), new Vector2(0, -40), new Vector2(144, 144));
+                var ig = new GameObject("Icon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                ig.transform.SetParent(lrt, false);
+                var im = ig.GetComponent<Image>(); im.sprite = RuntimeSprites.Get("ui_lock", CookingDrawing.Lock); im.preserveAspect = true; im.raycastTarget = false;
+                UiFactory.SetRect((RectTransform)ig.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 10), new Vector2(48, 54));
+                var offer = System.Array.Find(YeogiCafe.Food.RecipeBook.Tools, x => x.id == st.id);
+                var lt = UiFactory.Label("Cond", lrt, offer.id != null ? L.Get("ui.tool.lock", ("n", offer.cafeLevel.ToString()), ("g", offer.price.ToString())) : "",
+                                         15, TextAnchor.MiddleCenter, UiFactory.Cream);
+                var ol = lt.gameObject.AddComponent<Outline>(); ol.effectColor = new Color(0.15f, 0.08f, 0.06f, 0.9f); ol.effectDistance = new Vector2(1.5f, -1.5f);
+                UiFactory.SetRect((RectTransform)lt.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -32), new Vector2(150, 22));
+                lt.raycastTarget = false;
+                w.lockGo = lk;
+            }
             return w;
         }
 
@@ -443,7 +462,9 @@ namespace YeogiCafe.UI
                 w.dish.gameObject.SetActive(ready);
                 w.stars.gameObject.SetActive(ready);
                 // 아직 안 산 기구는 흐리게(상점 [주방 기구]에서 사면 켜진다)
-                w.cg.alpha = YeogiCafe.Food.RecipeBook.ToolOwned(owner.Save, w.id) ? 1f : 0.35f;
+                bool owned = YeogiCafe.Food.RecipeBook.ToolOwned(owner.Save, w.id);
+                w.cg.alpha = owned ? 1f : 0.35f;
+                if (w.lockGo != null && w.lockGo.activeSelf == owned) w.lockGo.SetActive(!owned);
                 if (ready)
                 {
                     float age = Time.time - active.readyAt;

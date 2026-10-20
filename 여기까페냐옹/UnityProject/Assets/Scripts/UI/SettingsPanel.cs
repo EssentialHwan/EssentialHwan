@@ -29,7 +29,7 @@ namespace YeogiCafe.UI
             SoundManager.SfxVolume = PlayerPrefs.GetFloat("opt.sfx", 0.8f);
             SoundManager.AmbVolume = PlayerPrefs.GetFloat("opt.amb", 0.35f);
             SoundManager.Muted = PlayerPrefs.GetInt("opt.mute", 0) == 1;
-            if (day != null) day.speed = PlayerPrefs.GetFloat("opt.speed", 2f);
+            if (day != null) day.speed = PlayerPrefs.GetFloat("opt.speed6", 1f);
             var cur = Object.FindObjectOfType<PawCursor>();
             if (cur != null) cur.enabled = PlayerPrefs.GetInt("opt.paw", 1) == 1;
         }
@@ -69,7 +69,7 @@ namespace YeogiCafe.UI
             {
                 var day = owner.Day; if (day == null) return;
                 day.speed = day.speed >= 3f ? 1f : day.speed + 1f;
-                PlayerPrefs.SetFloat("opt.speed", day.speed);
+                PlayerPrefs.SetFloat("opt.speed6", day.speed);
                 Refresh();
             }, ref y);
 
@@ -161,7 +161,7 @@ namespace YeogiCafe.UI
             resLabel.text = $"{Screen.width} × {Screen.height}";
             cursorLabel.text = L.Get(PlayerPrefs.GetInt("opt.paw", 1) == 1 ? "opt.on" : "opt.off");
             var day = owner.Day;
-            speedLabel.text = day != null ? $"{day.speed:0}x" : "-";
+            speedLabel.text = day != null ? L.Get("opt.speedval", ("x", day.speed.ToString("0")), ("m", Mathf.RoundToInt(720f / day.Rate / 60f).ToString())) : "-";
             newGameLabel.text = L.Get("opt.newgame");
         }
 

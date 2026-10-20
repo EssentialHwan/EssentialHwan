@@ -41,6 +41,12 @@ namespace YeogiCafe.AI
         public string SeatFurnitureId => seat != null ? seat.SeatId.Split('#')[0] : null;
         public readonly HashSet<string> UsedFacilityIds = new(); // 이용한 시설 가구 id(강화 사용 수)
         public bool IsInspector => YeogiCafe.Food.NyanGuide.IsInspector(data.catId);
+        public bool IsDelivery => YeogiCafe.Food.DeliveryCat.IsDelivery(data.catId);
+        public bool IsSpecialGuest => IsInspector || IsDelivery;          // 도감·관계·마감 놀아주기와 무관한 손님
+        // 배달냥: 주문 여러 개 → 나온 것만 사 간다
+        readonly List<YeogiCafe.Order.OrderTicket> deliveryTickets = new();
+        public int DeliveryOrdered => deliveryTickets.Count;
+        public readonly List<(MenuData menu, int stars)> DeliveryServed = new();
         public bool ServedFavorite { get; private set; }
         public bool ForcedSecond { get; private set; }
         public bool UsedPreferredSeat { get; private set; }
@@ -48,7 +54,21 @@ namespace YeogiCafe.AI
         public bool WrongDish { get; private set; }        // 모호 주문을 잘못 해석해 다른 메뉴가 나옴
         public bool MindRead { get; private set; }         // 모호 주문을 정확히 맞힘
         public System.Func<int> GetRegularStage;           // 매니저 주입(단골 단계)
-        public float OrderPatienceRatio => currentTicket != null && state == CatState.WaitFood ? currentTicket.PatienceRatio : 1f;
+        public System.Func<int> GetCafeLevel;              // 매니저 주입(배달 주문 개수)
+        public float OrderPatienceRatio
+        {
+            get
+            {
+                if (state != CatState.WaitFood) return 1f;
+                if (IsDelivery)
+                {
+                    float r = 1f;
+                    foreach (var t in deliveryTickets) if (t.state == YeogiCafe.Order.TicketState.Queued) r = Mathf.Min(r, t.PatienceRatio);
+                    return r;
+                }
+                return currentTicket != null ? currentTicket.PatienceRatio : 1f;
+            }
+        }
         public CatState State => state;
         // 이번 방문 중 쓰다듬기 기분(표현 레이어가 기록, 만족도에 반영). ±SessionMoodClamp
         public int TouchMood { get; private set; }
@@ -140,6 +160,12 @@ namespace YeogiCafe.AI
 
         void DoFindSeat()
         {
+            if (IsDelivery)
+            {   // 배달냥은 자리에 앉지 않고 카운터 앞에 선다
+                if (Mover != null) { Mover.MoveTo(YeogiCafe.Food.DeliveryCat.WaitPoint); walkingToSeat = true; }
+                state = CatState.Sit;
+                return;
+            }
             var stolen = TrySteal();
             if (stolen != null)
             {
@@ -195,6 +221,7 @@ namespace YeogiCafe.AI
 
         void DoOrder()
         {
+            if (IsDelivery) { PlaceDelivery(); return; }
             var order = OrderDecider.Choose(data, GetAvailableMenus(), mvpMode: true);
             ServedMenu = order.primary;
             ServedFavorite = order.wasFavorite;
@@ -221,8 +248,44 @@ namespace YeogiCafe.AI
 
         YeogiCafe.Order.OrderTicket currentTicket;
 
+        void PlaceDelivery()
+        {
+            var menus = GetAvailableMenus != null ? GetAvailableMenus() : null;
+            if (OrderSystem == null || menus == null || menus.Count == 0) { state = CatState.Leave; return; }
+            int lv = GetCafeLevel != null ? GetCafeLevel() : 1;
+            int n = YeogiCafe.Food.DeliveryCat.RollCount(lv);
+            float pat = YeogiCafe.Food.DeliveryCat.Patience(n);
+            for (int i = 0; i < n; i++)
+            {
+                var t = OrderSystem.Place(data.catId, menus[Random.Range(0, menus.Count)]);
+                t.patience = t.maxPatience = pat;
+                deliveryTickets.Add(t);
+            }
+            Obs?.NarrateOnly(data.catId, YeogiCafe.Loc.L.Get("narr.delivery.order", ("name", YeogiCafe.Loc.L.Get($"cat.{data.catId}.name")), ("n", n.ToString())));
+            state = CatState.WaitFood;
+        }
+
+        // 남은 주문이 없으면(전부 나왔거나 취소) 나온 것만 챙겨 바로 떠난다
+        void DoWaitDelivery()
+        {
+            foreach (var t in deliveryTickets)
+                if (t.state == YeogiCafe.Order.TicketState.Queued || t.state == YeogiCafe.Order.TicketState.Cooking || t.state == YeogiCafe.Order.TicketState.Ready) return;
+            CollectDelivery();
+            state = CatState.Leave;
+        }
+
+        void CollectDelivery()
+        {
+            DeliveryServed.Clear();
+            foreach (var t in deliveryTickets)
+                if (t.state == YeogiCafe.Order.TicketState.Served && t.menu != null) DeliveryServed.Add((t.menu, t.stars));
+            ServedMenu = DeliveryServed.Count > 0 ? DeliveryServed[0].menu : null;
+            ServedStars = DeliveryServed.Count > 0 ? DeliveryServed[0].stars : 0;
+        }
+
         void DoWaitFood()
         {
+            if (IsDelivery) { DoWaitDelivery(); return; }
             if (currentTicket == null) { state = CatState.Eat; return; }
             if (currentTicket.state == YeogiCafe.Order.TicketState.Served)
             {
@@ -499,7 +562,8 @@ namespace YeogiCafe.AI
             if (IsZooming) { IsZooming = false; zoomPath.Clear(); if (Mover is SimpleLerpMover m && baseSpeed > 0f) m.speed = baseSpeed; }
             if (seat != null) { SetOccupant?.Invoke(seat, null); seat.Vacate(); seat = null; }
             if (OrderSystem != null) OrderSystem.DropForCat(data.catId);
-            if (state == CatState.WaitFood) ServedMenu = null;   // 못 받고 떠나면 결제 없음
+            if (IsDelivery) CollectDelivery();                  // 배달냥: 이미 나온 것은 가져간다
+            else if (state == CatState.WaitFood) ServedMenu = null;   // 못 받고 떠나면 결제 없음
             state = CatState.Leave;
             sessionCompleted = true;
             OnSessionComplete?.Invoke(this);

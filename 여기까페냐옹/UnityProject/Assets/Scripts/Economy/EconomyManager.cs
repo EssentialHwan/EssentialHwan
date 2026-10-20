@@ -14,6 +14,7 @@ namespace YeogiCafe.Economy
         public int TodayCost { get; private set; }
 
         public event Action<int> OnGoldChanged;
+        public event Action<int> OnGoldDelta;          // 판매·구매로 늘고 준 양(HUD 골드 옆 +/- 표시용)
 
         public void Init() { Gold = cfg != null ? cfg.startGold : 300; OnGoldChanged?.Invoke(Gold); }
 
@@ -25,6 +26,7 @@ namespace YeogiCafe.Economy
             Gold += amount;
             if (amount > 0) TodayRevenue += amount;
             OnGoldChanged?.Invoke(Gold);
+            if (amount != 0) OnGoldDelta?.Invoke(amount);
         }
 
         public bool TrySpend(int amount)
@@ -32,6 +34,7 @@ namespace YeogiCafe.Economy
             if (Gold < amount) return false;
             Gold -= amount;
             OnGoldChanged?.Invoke(Gold);
+            if (amount != 0) OnGoldDelta?.Invoke(-amount);
             return true;
         }
 
@@ -39,8 +42,10 @@ namespace YeogiCafe.Economy
         public void AddIngredientCost(int cost)
         {
             TodayCost += cost;
+            int before = Gold;
             Gold = Mathf.Max(0, Gold - cost);
             OnGoldChanged?.Invoke(Gold);
+            if (before != Gold) OnGoldDelta?.Invoke(Gold - before);
         }
 
         public void ResetDaily() { TodayRevenue = 0; TodayCost = 0; }

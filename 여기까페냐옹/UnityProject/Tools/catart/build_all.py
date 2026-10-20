@@ -4,7 +4,7 @@ from PIL import Image
 import numpy as np
 scalefix.apply(R)
 F = R.F
-for key in ['calico', 'cheese', 'cow', 'black', 'tuxedo', 'mackerel', 'siamese', 'gray', 'moon', 'inspector']:
+for key in ['calico', 'cheese', 'cow', 'black', 'tuxedo', 'mackerel', 'siamese', 'gray', 'moon']:   # 심사원·배달냥은 원화 변환(newcats/convert2.py)
     sh = Image.new('RGBA', (F * 4, F * 7), (0, 0, 0, 0))
     for i in range(25):
         im = R.render(key, i)

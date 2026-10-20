@@ -145,7 +145,7 @@ namespace YeogiCafe.Core
                 {
                     var a = active[i]; var b = active[j];
                     if (a == null || b == null) continue;
-                    if (YeogiCafe.Food.NyanGuide.IsInspector(a.data.catId) || YeogiCafe.Food.NyanGuide.IsInspector(b.data.catId)) continue;
+                    if (a.IsSpecialGuest || b.IsSpecialGuest) continue;
                     // 둘 다 착석 중일 때만
                     if (a.State == CatState.Idle || a.State == CatState.FacilityAction || a.State == CatState.Eat)
                         if (b.State == CatState.Idle || b.State == CatState.FacilityAction || b.State == CatState.Eat)
@@ -155,12 +155,33 @@ namespace YeogiCafe.Core
 
         readonly System.Random giftRng = new();
 
+        // 배달냥: 나온 메뉴만 판매가의 70%로(별·냥슐랭 배율 반영) 사 간다. 도감·리뷰·단골과 무관.
+        void HandleDelivery(CatBrain brain)
+        {
+            int pay = 0, cost = 0;
+            foreach (var (menu, stars) in brain.DeliveryServed)
+            {
+                pay += Mathf.RoundToInt(menu.price * YeogiCafe.Food.DeliveryCat.PayRate
+                                        * YeogiCafe.Food.RecipeBook.StarPayMult(stars) * YeogiCafe.Food.NyanGuide.PayMult(save.nyanStars));
+                cost += menu.cost;
+                if (stars > 0) save.GetMenuStat(menu.menuId).sold++;
+            }
+            if (pay > 0) economy.AddGold(pay);
+            if (cost > 0) economy.AddIngredientCost(cost);
+            int got = brain.DeliveryServed.Count, want = brain.DeliveryOrdered;
+            CustomerSpawner.Toast?.Invoke(got == 0 ? YeogiCafe.Loc.L.Get("delivery.fail")
+                : got < want ? YeogiCafe.Loc.L.Get("delivery.partial", ("a", got.ToString()), ("b", want.ToString()), ("g", pay.ToString()))
+                : YeogiCafe.Loc.L.Get("delivery.done", ("n", got.ToString()), ("g", pay.ToString())));
+            cats.Despawn(brain, got == want ? 80f : 30f);
+        }
+
         // §3.2 OnLeave 파이프라인
         void HandleSessionComplete(CatBrain brain)
         {
             var data = brain.data;
+            if (brain.IsDelivery) { HandleDelivery(brain); return; }
             var catSave = save.GetOrCreateCat(data.catId);
-            if (brain.State == CatState.Leave && brain.ServedMenu != null && !brain.IsInspector) lastLeftToday = data.catId;
+            if (brain.State == CatState.Leave && brain.ServedMenu != null && !brain.IsSpecialGuest) lastLeftToday = data.catId;
 
             // 만족도 계산 (§3.3). 분위기 승수는 cfg.atmosphereAffectsSatisfaction=true(정식)일 때만 반영.
             var atmo = furniture != null ? furniture.CurrentAtmosphere : default;
@@ -253,7 +274,7 @@ namespace YeogiCafe.Core
             ClosingGuestId = null;
             var cands = new List<CatBrain>();
             foreach (var b in remaining)
-                if (b != null && !b.IsInspector && (b.State == CatState.Idle || b.State == CatState.FacilityAction || b.State == CatState.Eat || b.State == CatState.WaitFood))
+                if (b != null && !b.IsSpecialGuest && (b.State == CatState.Idle || b.State == CatState.FacilityAction || b.State == CatState.Eat || b.State == CatState.WaitFood))
                     cands.Add(b);
             if (cands.Count > 0) ClosingGuestId = cands[Random.Range(0, cands.Count)].data.catId;
             else ClosingGuestId = lastLeftToday;

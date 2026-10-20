@@ -185,6 +185,25 @@ namespace YeogiCafe.Art
             return c;
         }
 
+        // ── 자물쇠(16×18): 아직 안 산 주방 기구 위에 ──
+        public static PixelCanvas Lock()
+        {
+            var c = new PixelCanvas(16, 18);
+            var gold = new Color32(246, 196, 72, 255); var goldD = new Color32(176, 120, 36, 255); var goldL = new Color32(255, 236, 150, 255);
+            var steel = new Color32(150, 150, 166, 255); var steelL = new Color32(205, 205, 218, 255);
+            // 고리(쇠)
+            for (int y = 9; y <= 15; y++) { c.Set(4, y, steel); c.Set(5, y, steelL); c.Set(10, y, steel); c.Set(11, y, steel); }
+            c.HLine(5, 10, 16, steel); c.HLine(6, 9, 17, steel); c.Set(6, 16, steelL);
+            // 몸통(금)
+            c.FillRoundRect(1, 0, 14, 9, 1, gold);
+            c.HLine(2, 13, 9, goldL); c.HLine(2, 13, 0, goldD);
+            c.VLine(14, 1, 8, goldD);
+            // 열쇠 구멍
+            c.Set(7, 6, PixelPalette.Outline); c.Set(8, 6, PixelPalette.Outline); c.VLine(7, 3, 5, PixelPalette.Outline); c.VLine(8, 3, 5, PixelPalette.Outline);
+            c.AutoOutline(PixelPalette.Outline);
+            return c;
+        }
+
         static void Cup(PixelCanvas c, Color32 cup, Color32 drink)
         {
             c.FillRoundRect(5, 2, 18, 5, 1, PixelPalette.CreamMid);              // 받침

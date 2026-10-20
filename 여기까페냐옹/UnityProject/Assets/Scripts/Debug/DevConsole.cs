@@ -72,6 +72,11 @@ namespace YeogiCafe.DevTools
                 }
                 if (flow != null && flow.Save != null && GUILayout.Button($"냥슐랭 별 +1 (지금 {flow.Save.nyanStars})"))
                     flow.Save.nyanStars = Mathf.Min(5, flow.Save.nyanStars + 1);
+                if (cats != null && GUILayout.Button("배달냥 호출"))
+                {
+                    cats.Spawn(YeogiCafe.Food.DeliveryCat.Data);
+                    YeogiCafe.Core.CustomerSpawner.Toast?.Invoke(YeogiCafe.Loc.L.Get("delivery.arrive"));
+                }
                 if (cats != null && flow != null && flow.Save != null && GUILayout.Button($"냥슐랭 심사원 호출 (★{flow.Save.nyanStars})"))
                 {
                     cats.Spawn(YeogiCafe.Food.NyanGuide.Data);

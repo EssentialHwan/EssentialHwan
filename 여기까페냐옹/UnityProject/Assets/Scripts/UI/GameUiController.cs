@@ -216,6 +216,7 @@ namespace YeogiCafe.UI
         void HookEvents()
         {
             if (economy != null) economy.OnGoldChanged += _ => RefreshHud();
+            if (economy != null) economy.OnGoldDelta += ShowGoldDelta;
             if (day != null)
             {
                 day.OnPhaseChanged += _ => RefreshHud();
@@ -241,9 +242,9 @@ namespace YeogiCafe.UI
         {
             var os = bootstrap != null ? bootstrap.orderSystem : null;
             if (ordersHooked || os == null) return;
-            os.OnTicketPlaced += t => ShowCatBubble(t.catId, t.vague
+            os.OnTicketPlaced += t => { if (!YeogiCafe.Food.DeliveryCat.IsDelivery(t.catId)) ShowCatBubble(t.catId, t.vague
                 ? L.Get("ui.order.askhint", ("hint", L.Get(t.hintKey)))
-                : L.Get("ui.order.ask", ("menu", t.menu != null ? L.Get($"menu.{t.menu.menuId}") : "")));
+                : L.Get("ui.order.ask", ("menu", t.menu != null ? L.Get($"menu.{t.menu.menuId}") : ""))); };
             os.OnTicketCancelled += t => ShowCatBubble(t.catId, L.Get("ui.order.gaveup"));
             os.OnTicketReady += _ => YeogiCafe.Audio.SoundManager.Sfx("sfx_bell", 0.45f, 0.02f);
             ordersHooked = true;
@@ -295,8 +296,51 @@ namespace YeogiCafe.UI
             obsHooked = true;
         }
 
+        // ── 골드 증감 표시: 보유 골드 오른쪽에 +60G(초록) / -350G(빨강)이 떠올랐다 사라진다 ──
+        class GoldPop { public RectTransform rt; public Text t; public float age; public int sum; }
+        readonly List<GoldPop> goldPops = new();
+        void ShowGoldDelta(int d)
+        {
+            if (goldText == null || d == 0) return;
+            // 같은 방향 변화가 연달아 오면 한 숫자로 합친다(재료비·팁 등 잔돈이 줄줄이 뜨지 않게)
+            var last = goldPops.Count > 0 ? goldPops[goldPops.Count - 1] : null;
+            if (last != null && last.age < 0.35f && Mathf.Sign(last.sum) == Mathf.Sign(d)) { last.sum += d; last.age = 0f; SetPopText(last); return; }
+            var t = UiFactory.Label("GoldPop", goldText.canvas.rootCanvas.transform, "", 24, TextAnchor.MiddleLeft, Color.white);   // 상단 바는 밖으로 나간 글자를 잘라서 캔버스에 직접
+            t.fontStyle = FontStyle.Bold;
+            t.horizontalOverflow = HorizontalWrapMode.Overflow; t.raycastTarget = false;
+            var o = t.gameObject.AddComponent<Outline>(); o.effectColor = new Color(0.2f, 0.1f, 0.08f, 0.8f); o.effectDistance = new Vector2(1.5f, -1.5f);
+            var rt = (RectTransform)t.transform;
+            UiFactory.SetRect(rt, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), Vector2.zero, new Vector2(140, 30));
+            var p = new GoldPop { rt = rt, t = t, sum = d };
+            SetPopText(p);
+            goldPops.Add(p);
+        }
+        static void SetPopText(GoldPop p)
+        {
+            p.t.text = (p.sum > 0 ? "+" : "-") + Mathf.Abs(p.sum) + "G";
+            p.t.color = p.sum > 0 ? new Color(0.35f, 0.78f, 0.35f) : new Color(0.92f, 0.32f, 0.32f);
+        }
+        void TickGoldPops()
+        {
+            if (goldText == null) return;
+            var grt = goldText.rectTransform;
+            Vector3 basePos = grt.TransformPoint(new Vector3(grt.rect.xMin + 2f, grt.rect.center.y, 0f));   // 골드 글자 왼쪽 가운데
+            float k = goldText.canvas.rootCanvas.scaleFactor;
+            for (int i = goldPops.Count - 1; i >= 0; i--)
+            {
+                var p = goldPops[i];
+                p.age += Time.unscaledDeltaTime;
+                if (p.rt == null || p.age > 1.6f) { if (p.rt != null) Destroy(p.rt.gameObject); goldPops.RemoveAt(i); continue; }
+                int stack = goldPops.Count - 1 - i;                       // 새 것일수록 아래(골드 옆), 이전 것은 위로 밀림
+                p.rt.position = basePos + new Vector3(0f, -(46f + p.age * 10f + stack * 26f) * k, 0f);   // 골드 바로 아래로 살짝 내려가며 사라짐
+                p.rt.SetAsLastSibling();
+                var c = p.t.color; c.a = p.age < 1.0f ? 1f : Mathf.Clamp01(1f - (p.age - 1.0f) / 0.6f); p.t.color = c;
+            }
+        }
+
         void Update()
         {
+            TickGoldPops();
             TryHookObservation();
             if (Save != null) Weather.EnsureToday(Save);
             if (quests != null && Save != null && Save.questDay != Save.currentDay && flow != null) { quests.EnsureToday(); RefreshQuests(); }

@@ -544,3 +544,12 @@ ui.tool.pick.none,주문 없음,no orders
 ui.tool.pick.nobody,{menu}를 기다리는 손님이 없어요,Nobody is waiting for {menu}
 nyan.plaque.info,냥슐랭 {stars} · 다음 별: 심사 {need}점 이상,Nyanchelin {stars} · next star at {need}
 nyan.plaque.max,냥슐랭 ★★★★★ — 최고의 카페!,Nyanchelin ★★★★★ — the best cafe!
+opt.speedval,{x}배속 (하루 {m}분),{x}x ({m} min/day)
+cat.cat_delivery.name,배달냥,Delivery Cat
+narr.delivery.order,포장 {n}개 부탁한다냥! 다 되면 바로 간다냥,{n} to-go orders! I leave as soon as they are ready.
+delivery.arrive,배달냥이 왔다! 포장을 한꺼번에 주문해요 (판매가의 70%),The delivery cat is here! Bulk to-go order (70% price).
+delivery.done,배달 출발! 포장 {n}개 +{g}G,Delivery out! {n} orders +{g}G
+delivery.partial,배달냥이 {b}개 중 {a}개만 챙겨 갔어요 +{g}G,Took only {a} of {b} orders +{g}G
+delivery.fail,배달냥이 기다리다 그냥 갔어요…,The delivery cat gave up and left…
+delivery.hurry,빨리빨리냥! 배달 늦는다냥!,Hurry! The delivery is late!
+ui.tool.lock,Lv.{n} · {g}G,Lv.{n} · {g}G
