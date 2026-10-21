@@ -453,7 +453,8 @@ title.logo,여기까페냐옹,Yeogi Cafe Nyaong
 title.sub,고양이 손님을 살피는 작은 카페,A little cafe where cats are the guests
 title.start,시작하기,Start
 title.day,{n}일차,Day {n}
-title.hint,ESC 설정  ·  M 소리 끄기/켜기,ESC Settings  ·  M Mute
+title.era,2027년 · NeuroNya 이후,2027 · After NeuroNya
+title.hint,ESC 설정 · M 소리 · C 도감 · B 구매 · K 주방,ESC Settings · M Mute · C Catalog · B Shop · K Kitchen
 furn.furn_fac_wheel.name,캣휠,Cat Wheel
 furn.furn_fac_wheel,캣휠,Cat Wheel
 ui.shop.tab.furn,가구,Furniture
@@ -568,11 +569,11 @@ ui.rel.pal,친구,Friends
 ui.rel.known,아는 사이,Acquainted
 ending.title,모두의 단골집,Everyone's Favorite Spot
 ending.sub,{day}일 만에 모든 손님의 마음을 알아냈어요,You learned every guest's heart in {day} days
-ending.body,"처음엔 이름도 모르던 고양이들이었는데,
-이제는 누가 뭘 좋아하는지 다 알아요.
-오늘도 문을 열면 다들 자기 자리를 찾아 오겠죠.","They were strangers once.
-Now you know exactly what each of them loves.
-Open the door — they'll all find their spot."
+ending.body,"뉴로냐는 고양이들에게 똑똑한 머리를 줬지만,
+좋아하는 걸 찾아 준 건 이 작은 카페였어요.
+내일도 출근해요. 다른 고양이들을 위해.","NeuroNya gave cats clever minds,
+but it was this little cafe that helped them find what they love.
+See you tomorrow. For the other cats."
 ending.continue,계속 영업하기,Keep the cafe open
 tut.tag,처음 오셨나요?,First day tips
 tut.welcome,곧 고양이 손님이 와요. 어디에 앉고 무엇을 하는지 지켜보세요 — 모두 취향의 단서예요.,A cat guest is coming. Watch where it sits and what it does — every move is a clue.
