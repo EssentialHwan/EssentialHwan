@@ -112,7 +112,9 @@ namespace YeogiCafe.Cafe
 
             PlacedFurnitureDTO dto = null;
             if (save != null) { dto = new PlacedFurnitureDTO { furnitureId = data.furnitureId }; save.placedFurniture.Add(dto); }
-            items.Add(new PlacedItem { data = data, dto = dto, slot = slot, go = Place(data, slot, dto) });
+            var placedGo = Place(data, slot, dto);
+            if (dto != null) Store(dto, placedGo.transform.position);      // 다음에 불러와도 같은 자리
+            items.Add(new PlacedItem { data = data, dto = dto, slot = slot, go = placedGo });
             placedData.Add(data);
             OnFurniturePlaced?.Invoke(data);
             RecalcAtmosphere();
@@ -130,7 +132,8 @@ namespace YeogiCafe.Cafe
             {
                 var data = lookup(dto.furnitureId);
                 if (data == null) continue;
-                var slot = FindSlotFor(data);
+                // 옮겨 둔(또는 산 자리) 좌표가 있으면 그 자리에 그대로 — 칸 수와 상관없이 복원한다
+                var slot = dto.hasPos ? VirtualSlot(data, new Vector3(dto.gridX / 100f, dto.gridY / 100f, 0f)) : FindSlotFor(data);
                 if (slot == null) continue;
                 items.Add(new PlacedItem { data = data, dto = dto, slot = slot, go = Place(data, slot, dto) });
                 placedData.Add(data);
@@ -228,20 +231,116 @@ namespace YeogiCafe.Cafe
             return placed;
         }
 
-        // 슬롯 선택: 벽걸이→벽 슬롯 / 창가 좌석→창가 슬롯 우선 / 그 외→창가가 아닌 바닥 슬롯 우선.
-        // 상점 표시용: 지금 카페 레벨에서 열린 칸 중 비어 있는 칸 수
+        // ── 자유 배치: 정해진 칸이 다 차도, 바닥(벽)에 겹치지 않는 빈 곳이 있으면 거기에 놓는다 ──
+        // 칸(slots)은 '처음 놓일 보기 좋은 자리' 역할만 하고, 개수 제한은 실제 빈 공간이 정한다.
+        // 카페 레벨: Lv1은 바닥 뒤쪽 두 줄, Lv2부터 앞줄, Lv3부터 양 끝까지.
+        static bool IsFlat(FurnitureData d) => d != null && d.furnitureId == "furn_deco_rug";
+
+        SlotEntry VirtualSlot(FurnitureData data, Vector3 pos)
+        {
+            var go = new GameObject("Slot_free");
+            go.transform.position = pos;
+            var e = new SlotEntry { slot = go.transform, kind = data.wallMounted ? SlotKind.Wall : SlotKind.Floor, minCafeLevel = 1 };
+            slots.Add(e);
+            return e;
+        }
+
+        // 지금 놓여 있는 것들의 자리(러그는 다른 가구와 겹쳐도 된다)
+        System.Collections.Generic.List<Vector3> Occupied(SlotKind kind, bool flat)
+        {
+            var list = new System.Collections.Generic.List<Vector3>();
+            foreach (var it in items)
+            {
+                if (it.go == null || it.data == null) continue;
+                bool wall = it.data.wallMounted;
+                if ((kind == SlotKind.Wall) != wall) continue;
+                if (kind == SlotKind.Floor && IsFlat(it.data) != flat) continue;
+                list.Add(it.go.transform.position);
+            }
+            if (kind == SlotKind.Floor && !flat)
+                foreach (var st in starters) if (st.go != null) list.Add(st.go.transform.position);
+            return list;
+        }
+
+        static bool Clear(Vector3 p, System.Collections.Generic.List<Vector3> occ, SlotKind kind)
+        {
+            float rx = kind == SlotKind.Wall ? 1.0f : 1.25f, ry = kind == SlotKind.Wall ? 0.9f : 0.75f;
+            foreach (var o in occ) if (Mathf.Abs(o.x - p.x) < rx && Mathf.Abs(o.y - p.y) < ry) return false;
+            return true;
+        }
+
+        bool Allowed(Vector3 p, SlotKind kind)
+        {
+            if (kind == SlotKind.Wall)
+                return p.x < 3.0f || p.x > 11.4f;                                 // 가운데 통유리 창은 비운다
+            if (p.x < 2.4f && p.y > 2.6f) return false;                           // 문 앞 통로
+            if (p.x > 11.6f && p.y > 2.4f) return false;                          // 카운터
+            int lv = save != null ? save.cafeLevel : 1;
+            if (lv < 2 && p.y < 1.3f) return false;                               // 앞줄은 Lv2부터
+            if (lv < 3 && (p.x < 1.6f || p.x > 12.4f)) return false;              // 양 끝은 Lv3부터
+            return true;
+        }
+
+        // 뒤쪽 줄·가운데부터 차례로 훑어 처음 나오는 빈 곳
+        bool FindFreeSpot(SlotKind kind, bool flat, System.Collections.Generic.List<Vector3> occ, out Vector3 spot)
+        {
+            spot = Vector3.zero;
+            float x0, x1, y0, y1, sx, sy;
+            if (kind == SlotKind.Wall) { x0 = 1.0f; x1 = 13.2f; y0 = CafeLayout.FloorTop + 1.6f; y1 = CafeLayout.CeilingY - 1.2f; sx = 0.6f; sy = 0.5f; }
+            else { x0 = 1.0f; x1 = 13.0f; y0 = 0.4f; y1 = CafeLayout.FloorTop - 0.7f; sx = 0.5f; sy = 0.4f; }
+            float cx = (x0 + x1) * 0.5f;
+            for (float y = y1; y >= y0 - 0.001f; y -= sy)
+            {
+                int n = Mathf.FloorToInt((x1 - x0) / sx) + 1;
+                for (int k = 0; k < n; k++)
+                {
+                    // 가운데에서 바깥으로 번갈아
+                    int off = (k + 1) / 2 * (k % 2 == 0 ? 1 : -1);
+                    float x = cx + off * sx;
+                    if (x < x0 || x > x1) continue;
+                    var p = new Vector3(Mathf.Round(x * 10f) / 10f, Mathf.Round(y * 10f) / 10f, 0f);
+                    if (!Allowed(p, kind) || !Clear(p, occ, kind)) continue;
+                    spot = p; return true;
+                }
+            }
+            return false;
+        }
+
+        // 상점 표시용: 지금 더 놓을 수 있는 자리 수(겹치지 않게 차례로 채워 본 개수, 최대 20)
         public (int free, int total) SlotCount(SlotKind kind)
         {
-            int free = 0, total = 0;
-            foreach (var s in slots)
+            if (kind == SlotKind.Wall)
             {
-                if (s.kind != kind || s.minCafeLevel > CafeLevel) continue;
-                total++; if (!s.occupied) free++;
+                int f = 0, t = 0;
+                var wocc = Occupied(SlotKind.Wall, false);
+                foreach (var s in slots)
+                {
+                    if (s.kind != SlotKind.Wall || s.minCafeLevel > CafeLevel) continue;
+                    t++; if (!s.occupied && (s.slot == null || Clear(s.slot.position, wocc, SlotKind.Wall))) f++;
+                }
+                return (f, t);
             }
-            return (free, total);
+            var occ = Occupied(kind, false);
+            int n = 0;
+            while (n < 20 && FindFreeSpot(kind, false, occ, out var p)) { occ.Add(p); n++; }
+            return (n, n);
         }
 
         SlotEntry FindSlotFor(FurnitureData data)
+        {
+            {
+                var kind = data.wallMounted ? SlotKind.Wall : SlotKind.Floor;
+                var occ = Occupied(kind, IsFlat(data));
+                // 1) 미리 정해 둔 보기 좋은 칸(비어 있고, 누가 그 위로 옮겨 두지 않았으면)
+                var pre = FindPresetSlot(data, occ);
+                if (pre != null) return pre;
+                // 2) 그 외 바닥 빈 공간(벽은 문·명판·칠판·통유리 때문에 정해 둔 칸만 쓴다)
+                if (kind == SlotKind.Floor && FindFreeSpot(kind, IsFlat(data), occ, out var spot)) return VirtualSlot(data, spot);
+                return null;
+            }
+        }
+
+        SlotEntry FindPresetSlot(FurnitureData data, System.Collections.Generic.List<Vector3> occ)
         {
             var want = data.wallMounted ? SlotKind.Wall : SlotKind.Floor;
             bool windowSeat = false;
@@ -252,6 +351,7 @@ namespace YeogiCafe.Cafe
             foreach (var s in slots)
             {
                 if (s.occupied || s.kind != want || s.minCafeLevel > CafeLevel) continue;
+                if (s.slot != null && !Clear(s.slot.position, occ, want)) continue;     // 다른 가구를 그 위로 옮겨 둔 칸
                 if (want == SlotKind.Floor && s.nearWindow != windowSeat) { if (fallback == null) fallback = s; continue; }
                 return s;
             }

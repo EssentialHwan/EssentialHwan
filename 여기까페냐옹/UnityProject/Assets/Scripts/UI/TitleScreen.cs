@@ -59,9 +59,9 @@ namespace YeogiCafe.UI
             var sh = logo.gameObject.AddComponent<Shadow>(); sh.effectColor = new Color(0.86f, 0.6f, 0.62f, 0.9f); sh.effectDistance = new Vector2(3, -3);
             var sub = UiFactory.Label("Sub", sign, L.Get("title.sub"), 19, TextAnchor.MiddleCenter, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)sub.transform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 30), new Vector2(-80, 26));
-            // 세계관 한 줄(간판 바로 아래)
-            var era = UiFactory.Label("Era", bg, L.Get("title.era"), 16, TextAnchor.MiddleCenter, new Color(0.45f, 0.33f, 0.27f, 0.9f));
-            UiFactory.SetRect((RectTransform)era.transform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -188), new Vector2(360, 22));
+            // 세계관 한 줄(왼쪽 아래 — 오른쪽 아래 단축키 안내와 짝)
+            var era = UiFactory.Label("Era", bg, L.Get("title.era"), 15, TextAnchor.LowerLeft, new Color(0.45f, 0.33f, 0.27f, 0.85f));
+            UiFactory.SetRect((RectTransform)era.transform, new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0), new Vector2(16, 8), new Vector2(360, 24));
             era.raycastTarget = false;
 
             // 버튼(창 앞, 가운데 세로로)

@@ -5,7 +5,7 @@ ui.title.settings,설정,Settings
 ui.title.quit,종료,Quit
 ui.cafe.customers,손님 {n},Guests {n}
 ui.cafe.day,{n}일차,Day {n}
-ui.shop.nospace,자리가 없어요. 배치에서 가구를 팔거나 정산 화면에서 카페를 넓혀보세요,No space left. Sell furniture in Arrange or expand the cafe
+ui.shop.nospace,빈 자리가 없어요. 배치에서 가구를 옮기거나 팔고 다시 사 보세요(카페를 넓히면 앞줄도 열려요),No space left. Sell furniture in Arrange or expand the cafe
 ui.shop.bought,배치했어요! 누가 쓰는지 지켜보세요,Placed! Watch who uses it
 ui.settle.expand,카페 넓히기,Expand Cafe
 ui.settle.cafelevel,카페 Lv.{n},Cafe Lv.{n}
@@ -581,7 +581,8 @@ tut.order,주문이 들어왔어요! 위쪽 [주방]을 눌러 메뉴를 만들�
 tut.served,잘했어요! 맛있게 먹는지 남기는지 봐 두세요. 고양이를 눌러 쓰다듬을 수도 있어요.,Nice! See whether it eats happily or leaves food. You can also tap a cat to pet it.
 tut.closing,마감 시간! 마지막 손님과 놀아 주세요. 좋아하는 곳을 쓰다듬으면 쭙쭙이를 할지도 몰라요.,Closing time! Play with the last guest. Pet its favorite spot and it might start suckling.
 tut.settle,오늘 본 단서로 고양이의 음식·좌석·시설 취향을 추리해 기록하세요. 모두의 취향을 알아내는 게 최종 목표예요!,Use today's clues to guess each cat's food · seat · facility. Learning everyone's taste is the final goal!
-ui.shop.slots,빈 칸  바닥 {f}/{ft} · 벽 {w}/{wt},Free  floor {f}/{ft} · wall {w}/{wt}
+ui.shop.slots,남은 자리  바닥 {f}곳 · 벽 {w}곳,Space left  floor {f} · wall {w}
+ui.shop.slotsmany,남은 자리  바닥 넉넉 · 벽 {w}곳,Space left  floor plenty · wall {w}
 cat.cat_fold.name,폴드냥,Mochi
 cat.cat_munchkin.name,먼치냥,Peanut
 cat.cat_persian.name,페르냥,Cocoa

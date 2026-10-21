@@ -36,10 +36,10 @@ namespace YeogiCafe.UI
             feedback = UiFactory.Label("Feedback", panel.transform, L.Get("ui.shop.hint"), 18,
                                        TextAnchor.MiddleCenter, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)feedback.transform, new Vector2(0, 0), new Vector2(1, 0),
-                              new Vector2(0.5f, 0), new Vector2(80, 14), new Vector2(-220, 30));
+                              new Vector2(0.5f, 0), new Vector2(130, 14), new Vector2(-320, 30));
             // 남은 칸(바닥·벽) — 사기 전에 자리가 있는지 보이게
             slotLabel = UiFactory.Label("Slots", panel.transform, "", 16, TextAnchor.MiddleLeft, UiFactory.Ink);
-            UiFactory.SetRect((RectTransform)slotLabel.transform, new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0), new Vector2(28, 14), new Vector2(170, 30));
+            UiFactory.SetRect((RectTransform)slotLabel.transform, new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0), new Vector2(28, 14), new Vector2(260, 30));
             feedback.verticalOverflow = VerticalWrapMode.Truncate;
             feedback.resizeTextForBestFit = true; feedback.resizeTextMinSize = 12; feedback.resizeTextMaxSize = 18;
 
@@ -267,6 +267,7 @@ namespace YeogiCafe.UI
             var w = fm.SlotCount(YeogiCafe.Cafe.FurnitureManager.SlotKind.Wall);
             slotLabel.text = L.Get("ui.shop.slots", ("f", f.free.ToString()), ("ft", f.total.ToString()), ("w", w.free.ToString()), ("wt", w.total.ToString()));
             slotLabel.color = f.free == 0 ? UiFactory.PinkDeep : UiFactory.Ink;
+            if (f.free >= 20) slotLabel.text = L.Get("ui.shop.slotsmany", ("w", w.free.ToString()));
         }
 
         // 살 수 없는 가격은 붉게 → 무엇을 목표로 돈을 모을지 보이게
