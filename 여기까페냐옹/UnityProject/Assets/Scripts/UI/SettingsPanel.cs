@@ -41,7 +41,7 @@ namespace YeogiCafe.UI
             rootGo = scrim.gameObject;
             UiFactory.Anchor(scrim, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             box = UiFactory.Panel("Settings", scrim, UiFactory.PanelBg);
-            UiFactory.SetRect(box, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(560, 560));
+            UiFactory.SetRect(box, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(560, 600));
             UiFactory.Frame(box, UiFactory.FrameStyle.Window);
             UiFactory.TitleTab(box, L.Get("opt.title"), 200);
 
@@ -72,6 +72,7 @@ namespace YeogiCafe.UI
                 PlayerPrefs.SetFloat("opt.speed6", day.speed);
                 Refresh();
             }, ref y);
+            ButtonRow(L.Get("opt.opening"), L.Get("opt.opening.btn"), () => owner.PlayOpening(), ref y);
 
             // 아래 버튼: 새 게임 / 게임 종료 / 닫기
             var newBtn = UiFactory.Button("NewGame", box, L.Get("opt.newgame"), UiFactory.Pink, UiFactory.Cream, out newGameLabel);

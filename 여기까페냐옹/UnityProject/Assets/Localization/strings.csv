@@ -613,3 +613,20 @@ ep.cat_tortie.regular3.02,얼룩이 엉망이라고? 이게 다 멋이다냥.,My
 ep.cat_tortie.grad.01,변덕 부려도 매번 받아 준 건 너뿐이었다냥.,You were the only one who put up with my moods.
 ep.cat_tortie.grad.02,새 집에서도 하루에 열 번은 마음이 바뀔 거다냥.,I'll change my mind ten times a day at my new home too.
 ep.cat_tortie.grad.03,그래도 여긴 계속 좋아할 거다냥. — 카오스냥,But I'll keep liking this place. — Tori
+opening.1,"2027년, 커다란 혜성이 지구에 떨어졌어요.","In 2027, a giant comet struck the Earth."
+opening.2,"혜성이 품고 온 이상한 바이러스는
+사람들을 모두 데려가 버렸어요.","The strange virus it carried
+took every human away."
+opening.3,"오직 고양이만 무사했어요. 아니, 오히려 똑똑해졌죠.
+고양이들은 그 바이러스를 'NeuroNya(뉴로냐)'라고 불러요.","Only cats were immune. In fact, they grew smart.
+Cats call the virus 'NeuroNya'."
+opening.4,"이제 고양이들은 말도 하고 가게도 열어요.
+그런데… 자기가 뭘 좋아하는지는 아직 잘 모른대요.","Now cats talk and run shops.
+But… they still don't quite know what they like."
+opening.5,"그래서 오늘도 나는 카페에 출근해요.
+다른 고양이들을 위해.","So today, again, I head to the cafe.
+For the other cats."
+opening.skip,건너뛰기 ▶▶,Skip ▶▶
+opening.hint,클릭해서 넘기기,Click to continue
+opt.opening,오프닝,Opening
+opt.opening.btn,다시 보기,Replay

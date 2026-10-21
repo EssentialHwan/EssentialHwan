@@ -159,6 +159,7 @@ namespace YeogiCafe.UI
             closing = true; group.blocksRaycasts = false;
             Time.timeScale = 1f;
             YeogiCafe.Audio.SoundManager.Sfx("sfx_trill", 0.45f);
+            if (!hasSave) owner.PlayOpening();           // 처음 시작: 1일차 전에 오프닝 그림책
         }
 
         void NewGame()
@@ -167,6 +168,7 @@ namespace YeogiCafe.UI
             var sm = Object.FindObjectOfType<YeogiCafe.Save.SaveManager>();
             if (sm != null) sm.DeleteSave();
             SkipOnce = true;
+            OpeningPanel.Pending = true;
             Time.timeScale = 1f;
             UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
         }

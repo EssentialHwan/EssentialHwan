@@ -135,6 +135,8 @@ namespace YeogiCafe.UI
             // 시작 화면(맨 위). 세이브가 있으면 '이어하기 · N일차'
             var sm = FindObjectOfType<YeogiCafe.Save.SaveManager>();
             title = new TitleScreen(this, root.transform, sm != null && sm.HasSave(), day != null ? day.CurrentDay : 1);
+            // 시작 화면의 '새 게임'으로 다시 불러온 직후: 오프닝부터
+            if (OpeningPanel.Pending) { OpeningPanel.Pending = false; PlayOpening(); }
         }
 
         void BuildHud(Transform parent)
@@ -364,13 +366,14 @@ namespace YeogiCafe.UI
             closing?.Tick(Time.unscaledDeltaTime);
             settings?.Tick();
             title?.Tick(Time.unscaledDeltaTime);
-            if (Input.GetKeyDown(KeyCode.Escape) && settings != null && (closing == null || !closing.IsOpen)) settings.Toggle();   // ESC = 설정
+            if (Input.GetKeyDown(KeyCode.Escape) && opening == null && settings != null && (closing == null || !closing.IsOpen)) settings.Toggle();   // ESC = 설정
             // 단축키: C 도감 · B 구매 · K 주방 (영업 중 화면에서만)
             bool hotkeysOk = (title == null || !title.IsOpen) && (closing == null || !closing.IsOpen) && (settlement == null || !settlement.IsOpen)
                              && (settings == null || !settings.IsOpen) && !EndingPanel.IsOpen;
             if (hotkeysOk && Input.GetKeyDown(KeyCode.C)) { shop.Hide(); catalog.Toggle(); }
             if (hotkeysOk && Input.GetKeyDown(KeyCode.B)) { catalog.Hide(); shop.Toggle(); }
             if (hotkeysOk && Input.GetKeyDown(KeyCode.K)) { shop.Hide(); catalog.Hide(); ToggleKitchen(); }
+            if (opening != null) { opening.Tick(Time.unscaledDeltaTime); return; }   // 오프닝 동안은 다른 입력·안내 멈춤
             editMode?.Tick(Time.unscaledDeltaTime);
             catalog?.Tick();
             if (guide != null)
@@ -448,6 +451,15 @@ namespace YeogiCafe.UI
         public CatManager Cats => bootstrap != null ? bootstrap.cats : null;
         public YeogiCafe.Cafe.FurnitureManager Furniture => bootstrap != null ? bootstrap.furniture : null;
         public IReadOnlyList<FurnitureData> AllFurniture => bootstrap != null && bootstrap.allFurniture != null ? (IReadOnlyList<FurnitureData>)bootstrap.allFurniture : new List<FurnitureData>();
+
+        OpeningPanel opening;
+        public bool OpeningOpen => opening != null;
+        public void PlayOpening()
+        {
+            if (opening != null) return;
+            settings?.Hide();
+            opening = new OpeningPanel(root.transform, () => { opening = null; RefreshHud(); });
+        }
 
         public void DebugTutorial() => guide?.DebugReplay();
         public void DebugEnding() => new EndingPanel(root.transform, Save, AllCats, null, preview: true);
