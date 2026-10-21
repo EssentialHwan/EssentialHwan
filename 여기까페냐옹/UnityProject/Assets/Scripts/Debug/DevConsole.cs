@@ -41,7 +41,7 @@ namespace YeogiCafe.DevTools
             if (economy != null)
             {
                 GUILayout.Label($"Gold: {economy.Gold}");
-                if (GUILayout.Button("+1000 Gold")) economy.AddGold(1000);
+                if (GUILayout.Button("+1000 Gold")) economy.SetGold(economy.Gold + 1000);   // 매출로 치지 않음(영업 중 종료 시 되돌림 대상 아님)
             }
             if (day != null)
             {

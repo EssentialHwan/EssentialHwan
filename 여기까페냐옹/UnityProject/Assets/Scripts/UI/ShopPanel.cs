@@ -233,7 +233,7 @@ namespace YeogiCafe.UI
                 var th = t;
                 bool own = t.price == 0 || s.themesOwned.Contains(t.id), cur = s.theme == t.id;
                 string l1 = t.none ? L.Get("ui.theme.basic") : L.Get("ui.theme.mood", ("mood", L.Get("atmo." + t.axis)));
-                string l2 = cur ? L.Get("ui.theme.current") : L.Get("ui.theme.hint");
+                string l2 = cur ? L.Get("ui.theme.current") : "";   // 안내는 하단 한 줄로(카드마다 반복하면 버튼 밑으로 넘침)
                 string btnText = cur ? L.Get("ui.theme.using") : own ? L.Get("ui.theme.apply") : L.Get("ui.recipe.buy", ("g", t.price.ToString()));
                 var btn = Card(YeogiCafe.Visual.ThemeView.Swatch(t.id), L.Get("theme." + t.id), l1, l2, btnText,
                                !cur && (own || gold >= t.price), own ? UiFactory.Green : UiFactory.PinkDeep);
@@ -248,7 +248,7 @@ namespace YeogiCafe.UI
                 string l1 = L.Get("ui.season.only", ("season", L.Get("season." + m.season)));
                 string l2 = !toolOk ? L.Get("ui.season.needtool", ("tool", L.Get(YeogiCafe.Order.CookingStations.NameKey(m.toolId))))
                           : done ? L.Get(m.season == season ? "ui.season.onmenu" : "ui.season.later", ("season", L.Get("season." + m.season)))
-                          : L.Get("ui.season.hint");
+                          : "";
                 var btn = Card(KitchenView.DishSprite(m.id), L.Get("menu." + m.id), l1, l2,
                                done ? L.Get("ui.season.done") : L.Get("ui.season.research", ("g", m.research.ToString())),
                                !done && gold >= m.research, UiFactory.PinkDeep);

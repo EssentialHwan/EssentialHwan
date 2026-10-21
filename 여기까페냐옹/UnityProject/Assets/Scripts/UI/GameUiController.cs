@@ -610,7 +610,7 @@ namespace YeogiCafe.UI
             CloseAll();
             yield return Shot("hud");
             ToggleQuests(); yield return Shot("quests"); questPanel.SetActive(false);
-            for (int m = 0; m < 4; m++) { shop.DebugTab(m); yield return Shot("shop" + m); }
+            for (int m = 0; m < 5; m++) { shop.DebugTab(m); yield return Shot("shop" + m); }
             shop.Hide();
             catalog.DebugTab(false, false); yield return Shot("catalog_list");
             catalog.DebugTab(true, false); yield return Shot("catalog_rel");
@@ -644,6 +644,10 @@ namespace YeogiCafe.UI
             settlement.Show(); settlement.DebugCloseStory(); guide.SetCompact(true); guide.DebugStep(4); yield return Shot("tutorial_settle_compact");
             guide.DebugStep(-1); guide.SetCompact(false); settlement.Hide();
             editMode.Enter(); yield return Shot("editmode"); editMode.Exit();
+            settlement.Show(); settlement.DebugCloseStory(); shelter.Open(); yield return Shot("shelter"); shelter.Close(); settlement.Hide();
+            photo.Enter(); yield return Shot("photo_live");
+            photo.DebugShoot(); yield return new WaitForSecondsRealtime(0.5f); yield return Shot("photo_edit");
+            photo.OpenAlbum(); yield return Shot("photo_album"); photo.Exit();
             CloseAll();
 
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, $"textfit_{lang}.txt"), report.ToString());

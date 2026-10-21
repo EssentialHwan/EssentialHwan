@@ -206,6 +206,7 @@ namespace YeogiCafe.UI
 
         // ── 찰칵 ──
         void Shoot() { if (!busy && mode == Mode.Live) owner.StartCoroutine(ShootCo()); }
+        public void DebugShoot() { if (!IsOpen) Enter(); Shoot(); }   // UI 점검용
 
         IEnumerator ShootCo()
         {
