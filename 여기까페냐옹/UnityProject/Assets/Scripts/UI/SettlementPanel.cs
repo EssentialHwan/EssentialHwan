@@ -19,6 +19,7 @@ namespace YeogiCafe.UI
         Text revenueText, cardsInfo, levelText, expandInfo;
         Button expandBtn;
         RectTransform cardsContent;
+        WheelList cardsList;
 
         // 밤의 관찰 일지 연출: 플레이어 고양이 앞발이 [기록]을 체크하고, 하루를 마칠 때 손도장을 찍는다.
         RectTransform paw; Image pawImg; Sprite pawBack, pawPress, pawPads, checkSprite, stampSprite;
@@ -47,14 +48,10 @@ namespace YeogiCafe.UI
             UiFactory.SetRect((RectTransform)revenueText.transform, new Vector2(0, 1), new Vector2(1, 1),
                               new Vector2(0.5f, 1), new Vector2(0, -68), new Vector2(-300, 60));      // 오른쪽 위 도장 칸과 안 겹치게
 
-            var cardsGo = new GameObject("Cards", typeof(RectTransform), typeof(VerticalLayoutGroup));
-            cardsGo.transform.SetParent(panel.transform, false);
-            cardsContent = (RectTransform)cardsGo.transform;
-            UiFactory.SetRect(cardsContent, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f),
+            // 오늘 온 고양이가 많으면(13마리) 휠로 내려 본다
+            cardsList = WheelList.Create(panel.transform, "Cards", 4f, out cardsContent);
+            UiFactory.SetRect(cardsList.view, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f),
                               new Vector2(0, -28), new Vector2(-48, -250));
-            var vlg = cardsGo.GetComponent<VerticalLayoutGroup>();
-            vlg.spacing = 4; vlg.childControlHeight = false; vlg.childForceExpandHeight = false;
-            vlg.childControlWidth = true; vlg.childForceExpandWidth = true;
 
             cardsInfo = UiFactory.Label("CardsInfo", panel.transform, "", 20, TextAnchor.LowerLeft, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)cardsInfo.transform, new Vector2(0, 0), new Vector2(1, 0),
@@ -306,6 +303,7 @@ namespace YeogiCafe.UI
             if (!busy && stampImg != null) { stampImg.sprite = null; stampImg.color = new Color(1, 1, 1, 0); stampLabel.text = ""; }
             if (expandInfo != null) expandInfo.text = "";
             RenderEconomy();
+            cardsContent.anchoredPosition = Vector2.zero;       // 새 밤 일지는 맨 위부터
             RenderCards();
             RenderLevel();
             if (storyGo == null && owner.Save != null && owner.Save.storyQueue.Count > 0) OpenStory(owner.Save.storyQueue[0]);
@@ -331,11 +329,7 @@ namespace YeogiCafe.UI
             if (lost > 0) revenueText.text += "\n<color=#C45C6E>" + L.Get("ui.settle.mice", ("g", lost.ToString())) + "</color>";
         }
 
-        void ClearCards()
-        {
-            for (int i = cardsContent.childCount - 1; i >= 0; i--)
-                Object.Destroy(cardsContent.GetChild(i).gameObject);
-        }
+        void ClearCards() => cardsList.Clear();
 
         void RenderCards()
         {
@@ -356,6 +350,7 @@ namespace YeogiCafe.UI
                 shown++;
             }
             cardsInfo.text = shown == 0 ? L.Get("ui.settle.needmore") : "";
+            cardsList.Fit(toTop: false);
         }
 
         void BuildCatRow(CatData data, CatSaveData cs)

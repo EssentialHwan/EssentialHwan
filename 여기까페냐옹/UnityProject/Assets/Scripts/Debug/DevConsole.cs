@@ -54,6 +54,17 @@ namespace YeogiCafe.DevTools
                 GUILayout.EndHorizontal();
                 if (GUILayout.Button("영업 즉시 종료 → 정산")) day.DebugEndDayNow();
                 if (GUILayout.Button("1일차 안내 다시")) { var ui = FindObjectOfType<YeogiCafe.UI.GameUiController>(); if (ui != null) ui.DebugTutorial(); }
+                if (GUILayout.Button("새 고양이 편지 4장 → 정산"))
+                {
+                    var f0 = FindObjectOfType<GameFlowController>();
+                    if (f0 != null && f0.Save != null)
+                    {
+                        f0.Save.storyQueue.Add(new YeogiCafe.Save.StoryDTO { catId = "cat_fold", kind = 2 });
+                        f0.Save.storyQueue.Add(new YeogiCafe.Save.StoryDTO { catId = "cat_munchkin", kind = 3 });
+                        f0.Save.storyQueue.Add(new YeogiCafe.Save.StoryDTO { catId = "cat_persian", kind = 9 });
+                        f0.Save.storyQueue.Add(new YeogiCafe.Save.StoryDTO { catId = "cat_tortie", kind = 9 });
+                    }
+                }
                 if (GUILayout.Button("엔딩 미리보기")) { var ui = FindObjectOfType<YeogiCafe.UI.GameUiController>(); if (ui != null) ui.DebugEnding(); }
                 var flow = FindObjectOfType<GameFlowController>();
                 if (flow != null && GUILayout.Button($"날씨 바꾸기 (지금: {Weather.Current})")) Weather.DebugCycle(flow.Save);

@@ -365,17 +365,19 @@ namespace YeogiCafe.UI
             settings?.Tick();
             title?.Tick(Time.unscaledDeltaTime);
             if (Input.GetKeyDown(KeyCode.Escape) && settings != null && (closing == null || !closing.IsOpen)) settings.Toggle();   // ESC = 설정
-            // 단축키: C 도감 · B 구매 (영업 중 화면에서만)
+            // 단축키: C 도감 · B 구매 · K 주방 (영업 중 화면에서만)
             bool hotkeysOk = (title == null || !title.IsOpen) && (closing == null || !closing.IsOpen) && (settlement == null || !settlement.IsOpen)
                              && (settings == null || !settings.IsOpen) && !EndingPanel.IsOpen;
             if (hotkeysOk && Input.GetKeyDown(KeyCode.C)) { shop.Hide(); catalog.Toggle(); }
             if (hotkeysOk && Input.GetKeyDown(KeyCode.B)) { catalog.Hide(); shop.Toggle(); }
+            if (hotkeysOk && Input.GetKeyDown(KeyCode.K)) { shop.Hide(); catalog.Hide(); ToggleKitchen(); }
             editMode?.Tick(Time.unscaledDeltaTime);
             catalog?.Tick();
             if (guide != null)
             {
                 if (!guideBegun && Save != null && (title == null || !title.IsOpen)) { guideBegun = true; guide.Begin(); }
                 guide.Tick(Time.unscaledDeltaTime);
+                guide.SetCompact(settlement != null && settlement.IsOpen);
                 guide.BringToFront();
             }
             if (day != null && timeBarFill != null && bootstrap != null && bootstrap.balance != null)

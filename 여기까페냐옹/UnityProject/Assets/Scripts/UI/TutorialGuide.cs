@@ -81,6 +81,16 @@ namespace YeogiCafe.UI
         }
 
         // 다른 패널이 위로 올라왔을 때 안내가 가려지지 않게
+        // 밤 일지(가운데 큰 창)가 열리면 왼쪽 아래 좁은 틈에 맞게 세로로 길쭉하게
+        bool compact;
+        public void SetCompact(bool c)
+        {
+            if (c == compact) return;
+            compact = c;
+            card.sizeDelta = c ? new Vector2(196, 176) : new Vector2(470, 96);
+            text.fontSize = c ? 15 : 17;
+        }
+
         public void BringToFront()
         {
             if (EndingPanel.IsOpen) { if (card.gameObject.activeSelf) card.SetAsFirstSibling(); return; }
