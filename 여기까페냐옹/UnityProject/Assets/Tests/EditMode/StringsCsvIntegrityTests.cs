@@ -32,7 +32,7 @@ namespace YeogiCafe.Tests
             L.Load(File.ReadAllText(path));
             L.Current = Language.Ko;
 
-            Assert.AreEqual("오늘의 정산", L.Get("ui.settle.title"));
+            Assert.AreEqual("오늘 밤의 관찰 일지", L.Get("ui.settle.title"));
             Assert.AreEqual("치즈냥", L.Get("cat.cat_cheese.name"));
             // 따옴표+콤마 포함 라인 파싱 확인
             Assert.IsTrue(L.Get("ep.cat_cheese.regular3.02").Contains("이 자리"));
@@ -40,7 +40,12 @@ namespace YeogiCafe.Tests
             Assert.IsTrue(L.Get("ui.discover.toast", ("name", "치즈냥")).Contains("치즈냥"));
 
             L.Current = Language.En;
-            Assert.AreEqual("Today's Report", L.Get("ui.settle.title"));
+            Assert.AreEqual("Tonight's Cat Journal", L.Get("ui.settle.title"));
+            L.Current = Language.Zh;
+            Assert.AreEqual("芝士喵", L.Get("cat.cat_cheese.name"));
+            L.Current = Language.Ja;
+            Assert.AreEqual("チーズニャン", L.Get("cat.cat_cheese.name"));
+            L.Current = Language.Ko;
         }
     }
 }

@@ -10,7 +10,7 @@ namespace YeogiCafe.Tests
         [SetUp]
         public void Setup()
         {
-            L.Load("key,ko,en\nui.cafe.customers,손님 {n},Guests {n}\nui.regular.stage,단골 {s}단계,Regular Lv.{s}\n");
+            L.Load("key,ko,en\nui.cafe.customers,손님 {n},Guests {n}\nui.regular.stage,단골 {s}단계,Regular Lv.{s}\nhud.phase.morning,아침,Morning\nhud.phase.evening,저녁,Evening\n");
             L.Current = Language.Ko;
         }
 

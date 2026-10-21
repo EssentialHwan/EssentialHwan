@@ -41,7 +41,7 @@ namespace YeogiCafe.UI
             rootGo = scrim.gameObject;
             UiFactory.Anchor(scrim, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             box = UiFactory.Panel("Settings", scrim, UiFactory.PanelBg);
-            UiFactory.SetRect(box, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(560, 600));
+            UiFactory.SetRect(box, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(560, 640));
             UiFactory.Frame(box, UiFactory.FrameStyle.Window);
             UiFactory.TitleTab(box, L.Get("opt.title"), 200);
 
@@ -73,6 +73,7 @@ namespace YeogiCafe.UI
                 Refresh();
             }, ref y);
             ButtonRow(L.Get("opt.opening"), L.Get("opt.opening.btn"), () => owner.PlayOpening(), ref y);
+            ButtonRow(L.Get("opt.lang"), L.Get("lang.name"), CycleLanguage, ref y);
 
             // 아래 버튼: 새 게임 / 게임 종료 / 닫기
             var newBtn = UiFactory.Button("NewGame", box, L.Get("opt.newgame"), UiFactory.Pink, UiFactory.Cream, out newGameLabel);
@@ -144,6 +145,17 @@ namespace YeogiCafe.UI
             var r = Resolutions[(cur + 1) % Resolutions.Length];
             Screen.SetResolution(r.x, r.y, Screen.fullScreen);
             refreshLater = 2;
+        }
+
+        // 언어: 한국어 → English → 简体中文 → 日本語. 바꾸면 저장하고 화면을 새 언어로 다시 만든다(시작 화면부터).
+        void CycleLanguage()
+        {
+            var next = (Language)(((int)L.Current + 1) % 4);
+            L.SetAndSave(next);
+            var flow = Object.FindObjectOfType<YeogiCafe.Core.GameFlowController>();
+            if (flow != null) flow.SaveOnQuit();            // 영업 중이면 그날 아침부터(구매·배치는 유지)
+            Time.timeScale = 1f;
+            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
         }
 
         void NewGame()

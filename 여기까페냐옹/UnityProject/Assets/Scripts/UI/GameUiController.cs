@@ -436,7 +436,7 @@ namespace YeogiCafe.UI
             foreach (var q in s.quests)
             {
                 if (q.done) done++;
-                sb.Append(q.done ? "<color=#6F9A55>[완료]</color> " : $"[{q.progress}/{q.goal}] ").Append(L.Get(q.id))
+                sb.Append(q.done ? "<color=#6F9A55>" + L.Get("quest.donetag") + "</color> " : $"[{q.progress}/{q.goal}] ").Append(L.Get(q.id))
                   .Append($"  <color=#B8864E>+{q.reward}G</color>\n");
             }
             questList.text = sb.ToString().TrimEnd('\n');

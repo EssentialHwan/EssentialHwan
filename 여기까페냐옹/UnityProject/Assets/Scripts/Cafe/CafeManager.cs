@@ -40,7 +40,7 @@ namespace YeogiCafe.Cafe
         {
             blockedHint = null;
             var next = NextReq();
-            if (next == null) { blockedHint = "최대 레벨"; return false; }
+            if (next == null) { blockedHint = YeogiCafe.Loc.L.Get("cafe.block.max"); return false; }
 
             var state = new GrowthState
             {
@@ -57,7 +57,7 @@ namespace YeogiCafe.Cafe
         public static bool Evaluate(GrowthState s, CafeLevelReq next, out string blockedHint)
         {
             blockedHint = null;
-            if (s.gold < next.goldCost) { blockedHint = $"골드 부족 ({s.gold}/{next.goldCost})"; return false; }
+            if (s.gold < next.goldCost) { blockedHint = YeogiCafe.Loc.L.Get("cafe.block.gold", ("a", s.gold.ToString()), ("b", next.goldCost.ToString())); return false; }
 
             bool observationPath = s.discoveredCats >= next.minDiscoveredCats
                                    && s.recordedAxesTotal >= next.minRecordedAxesTotal
@@ -66,7 +66,7 @@ namespace YeogiCafe.Cafe
 
             if (!observationPath && !altPath)
             {
-                blockedHint = "취향을 더 발견하거나(관찰) 새로운 가구를 설치해보세요";
+                blockedHint = YeogiCafe.Loc.L.Get("cafe.block.need");
                 return false;
             }
             return true;

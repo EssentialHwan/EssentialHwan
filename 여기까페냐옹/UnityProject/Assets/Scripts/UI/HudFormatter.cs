@@ -10,11 +10,11 @@ namespace YeogiCafe.UI
 
         public static string Phase(DayPhase p) => p switch
         {
-            DayPhase.Morning => "아침",
-            DayPhase.Lunch => "☼ 점심",
-            DayPhase.Evening => "저녁",
-            DayPhase.Settlement => "정산",
-            _ => "준비"
+            DayPhase.Morning => L.Get("hud.phase.morning"),
+            DayPhase.Lunch => L.Get("hud.phase.lunch"),
+            DayPhase.Evening => L.Get("hud.phase.evening"),
+            DayPhase.Settlement => L.Get("hud.phase.settle"),
+            _ => L.Get("hud.phase.prep")
         };
 
         public static string Guests(int n) => L.Get("ui.cafe.customers", ("n", n.ToString()));

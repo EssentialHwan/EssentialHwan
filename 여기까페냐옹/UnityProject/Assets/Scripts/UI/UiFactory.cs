@@ -24,12 +24,16 @@ namespace YeogiCafe.UI
         // 게임 내장 폰트(갈무리11, SIL OFL — 상업 이용 가능, Assets/Resources/Fonts/LICENSE_Galmuri.txt).
         // 이전엔 OS 폰트(맑은 고딕)에 의존 → 한글 폰트 없는 PC·Steam Deck에서 글자가 안 보일 위험.
         static Font cachedFont;
+        static YeogiCafe.Loc.Language cachedFontLang;
         public static Font DefaultFont
         {
             get
             {
-                if (cachedFont != null) return cachedFont;
-                cachedFont = Resources.Load<Font>("Fonts/Galmuri11");
+                if (cachedFont != null && cachedFontLang == YeogiCafe.Loc.L.Current) return cachedFont;
+                cachedFont = null; cachedFontLang = YeogiCafe.Loc.L.Current;
+                // 간체 중국어는 갈무리에 없는 글자가 많아 퓨전 픽셀(OFL, 게임에 쓰는 글자만 담은 판)로
+                if (YeogiCafe.Loc.L.Current == YeogiCafe.Loc.Language.Zh) cachedFont = Resources.Load<Font>("Fonts/FusionPixelZh");
+                if (cachedFont == null) cachedFont = Resources.Load<Font>("Fonts/Galmuri11");
                 if (cachedFont == null)
                     cachedFont = Font.CreateDynamicFontFromOSFont(new[] { "Malgun Gothic", "AppleGothic", "NanumGothic", "Arial" }, 24);
                 return cachedFont;
