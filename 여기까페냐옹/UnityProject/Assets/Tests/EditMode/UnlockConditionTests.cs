@@ -58,6 +58,20 @@ namespace YeogiCafe.Tests
         }
 
         [Test]
+        public void Shelter_TierGate_And_EndingExclusion()
+        {
+            var u = new UnlockCondition { type = UnlockType.Shelter, value = 2 };
+            var s = Save(day: 1);
+            s.shelterDonated = 1499; Assert.IsFalse(u.IsMet(s), "1단계만");
+            s.shelterDonated = 1500; Assert.IsTrue(u.IsMet(s), "2단계 도달");
+            Assert.AreEqual(4, ShelterBook.TierOf(9999));
+            Assert.AreEqual(500, ShelterBook.NextNeed(0));
+            Assert.AreEqual(-1, ShelterBook.NextNeed(5000));
+            Assert.IsTrue(ShelterBook.IsShelterCat("cat_sphynx"));
+            Assert.IsFalse(ShelterBook.IsShelterCat("cat_cheese"));
+        }
+
+        [Test]
         public void NullSave_AlwaysType_True_OthersFalse()
         {
             Assert.IsTrue(new UnlockCondition { type = UnlockType.Always }.IsMet(null));

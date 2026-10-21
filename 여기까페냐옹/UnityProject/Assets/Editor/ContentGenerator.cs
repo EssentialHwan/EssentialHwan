@@ -132,6 +132,13 @@ namespace YeogiCafe.EditorTools
                       "menu_parfait", SeatTag.Sofa, FacilityTag.Soft, AtmosphereAxis.Luxury, U(UnlockType.RecordedAxesTotal, 12));
             CreateCat("cat_tortie", "카오스냥", PersonalityTag.Fickle, PersonalityTag.Active,
                       "menu_grilled_fish", SeatTag.TwoSeat, FacilityTag.Play, AtmosphereAxis.Natural, U(UnlockType.CafeLevel, 3));
+            // 냥냥 보호소 후원으로 찾아오는 고양이 3종(ShelterBook 단계 1~3) — 기존 13마리와 두 칸 이상 겹치지 않는 조합
+            CreateCat("cat_sphynx", "스핑냥", PersonalityTag.Lonely, PersonalityTag.Social,
+                      "menu_milk", SeatTag.Window, FacilityTag.Warm, AtmosphereAxis.Warm, U(UnlockType.Shelter, 1));
+            CreateCat("cat_kitten", "꼬물냥", PersonalityTag.Playful, PersonalityTag.Curious,
+                      "menu_tuna_sand", SeatTag.Normal, FacilityTag.Active, AtmosphereAxis.Lively, U(UnlockType.Shelter, 2));
+            CreateCat("cat_senior", "어르신냥", PersonalityTag.Relaxed, PersonalityTag.Introvert,
+                      "menu_pudding", SeatTag.Corner, FacilityTag.Warm, AtmosphereAxis.Quiet, U(UnlockType.Shelter, 3));
         }
 
         static UnlockCondition U(UnlockType t, int v) => new UnlockCondition { type = t, value = v };
@@ -177,6 +184,9 @@ namespace YeogiCafe.EditorTools
             CreateEpisode("ep_munchkin", "cat_munchkin", 60);
             CreateEpisode("ep_persian", "cat_persian", 80);
             CreateEpisode("ep_tortie", "cat_tortie", 80);
+            CreateEpisode("ep_sphynx", "cat_sphynx", 80);
+            CreateEpisode("ep_kitten", "cat_kitten", 80);
+            CreateEpisode("ep_senior", "cat_senior", 100);
         }
 
         static void CreateEpisode(string epId, string catId, int gold)

@@ -17,7 +17,7 @@ namespace YeogiCafe.UI
         readonly GameUiController owner;
         readonly GameObject rootGo;
         Text revenueText, cardsInfo, levelText, expandInfo;
-        Button expandBtn;
+        Button expandBtn, shelterBtn;
         RectTransform cardsContent;
         WheelList cardsList;
 
@@ -76,6 +76,11 @@ namespace YeogiCafe.UI
                 expandInfo.text = msg;
                 RenderLevel();
             });
+            // 냥냥 보호소 후원(카페 Lv2부터) — 오늘 번 골드를 다른 고양이를 위해
+            shelterBtn = UiFactory.Button("Shelter", panel.transform, L.Get("shelter.btn"), UiFactory.PinkDeep, UiFactory.Cream, out var shLbl);
+            shLbl.fontSize = 19; shLbl.horizontalOverflow = HorizontalWrapMode.Overflow;
+            UiFactory.SetRect((RectTransform)shelterBtn.transform, new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0), new Vector2(364, 20), new Vector2(190, 52));
+            shelterBtn.onClick.AddListener(() => { if (!busy) owner.OpenShelter(); });
             levelText = UiFactory.Label("Level", panel.transform, "", 20, TextAnchor.MiddleLeft, UiFactory.Ink);
             UiFactory.SetRect((RectTransform)levelText.transform, new Vector2(0, 0), new Vector2(0, 0),
                               new Vector2(0, 0), new Vector2(214, 20), new Vector2(140, 52));
@@ -313,6 +318,7 @@ namespace YeogiCafe.UI
 
         void RenderLevel()
         {
+            if (shelterBtn != null) shelterBtn.gameObject.SetActive(owner.CafeLevel >= 2);
             levelText.text = L.Get("ui.settle.cafelevel", ("n", owner.CafeLevel.ToString()));
         }
         public void Hide() => rootGo.SetActive(false);

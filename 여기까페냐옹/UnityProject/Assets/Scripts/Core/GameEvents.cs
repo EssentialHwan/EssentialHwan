@@ -27,6 +27,7 @@ namespace YeogiCafe.Core
         public const string PhotoGroup = "photo_group";    // 두 마리 이상 함께 찍힘
         public const string PhotoHang = "photo_hang";      // 사진을 액자에 걺
         public const string PhotoReact = "photo_react";    // 액자 속 자기 사진에 반응
+        public const string Donate = "shelter_donate";     // 보호소 후원
         public const string Suckle = "suckle";             // 쭙쭙이 목격
 
         public static event Action<string, string> OnEvent;   // (eventId, catId)

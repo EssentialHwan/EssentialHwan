@@ -5,7 +5,7 @@ namespace YeogiCafe.Data
 {
     // 사양서 §24/§32 — 해금 조건(데이터 주도). 고양이·메뉴·가구 공용.
     // 코드 수정 없이 조건만 데이터로. 순수 평가(테스트 용이).
-    public enum UnlockType { Always, CafeLevel, DiscoveredCats, RecordedAxesTotal, RegularCount, DayReached, FurnitureSet }
+    public enum UnlockType { Always, CafeLevel, DiscoveredCats, RecordedAxesTotal, RegularCount, DayReached, FurnitureSet, Shelter }
 
     [Serializable]
     public class UnlockCondition
@@ -26,6 +26,7 @@ namespace YeogiCafe.Data
                 case UnlockType.RecordedAxesTotal: return CountRecorded(save) >= value;
                 case UnlockType.RegularCount: return CountRegulars(save) >= value;
                 case UnlockType.DayReached: return save.currentDay >= value;
+                case UnlockType.Shelter: return ShelterBook.TierOf(save.shelterDonated) >= value;   // 보호소 후원 단계
                 case UnlockType.FurnitureSet:
                     if (save.cafeLevel < value) return false;
                     if (requireFurniture != null)

@@ -115,6 +115,7 @@ namespace YeogiCafe.UI
             editMode = new FurnitureEditMode(this, root.transform);
             guide = new TutorialGuide(this, root.transform);
             photo = new PhotoMode(this);
+            shelter = new ShelterPanel(this, root.transform);
 
             quests = new YeogiCafe.Progression.QuestBoard(() => Save,
                 () => Save != null ? (IReadOnlyList<CatData>)UnlockService.UnlockedCats(AllCats, Save) : AllCats);
@@ -379,6 +380,7 @@ namespace YeogiCafe.UI
             settings?.Tick();
             title?.Tick(Time.unscaledDeltaTime);
             if (photo != null && photo.IsOpen) { photo.Tick(Time.unscaledDeltaTime); return; }   // 포토 모드: 다른 입력·HUD 멈춤
+            if (Input.GetKeyDown(KeyCode.Escape) && ShelterOpen) { shelter.Close(); return; }
             if (Input.GetKeyDown(KeyCode.Escape) && opening == null && settings != null && (closing == null || !closing.IsOpen)) settings.Toggle();   // ESC = 설정
             // 단축키: C 도감 · B 구매 · K 주방 (영업 중 화면에서만)
             bool hotkeysOk = (title == null || !title.IsOpen) && (closing == null || !closing.IsOpen) && (settlement == null || !settlement.IsOpen)
@@ -467,6 +469,11 @@ namespace YeogiCafe.UI
         public CatManager Cats => bootstrap != null ? bootstrap.cats : null;
         public YeogiCafe.Cafe.FurnitureManager Furniture => bootstrap != null ? bootstrap.furniture : null;
         public IReadOnlyList<FurnitureData> AllFurniture => bootstrap != null && bootstrap.allFurniture != null ? (IReadOnlyList<FurnitureData>)bootstrap.allFurniture : new List<FurnitureData>();
+
+        // ── 냥냥 보호소 후원 ──
+        ShelterPanel shelter;
+        public void OpenShelter() => shelter?.Open();
+        public bool ShelterOpen => shelter != null && shelter.IsOpen;
 
         // ── 포토 모드 ──
         PhotoMode photo;

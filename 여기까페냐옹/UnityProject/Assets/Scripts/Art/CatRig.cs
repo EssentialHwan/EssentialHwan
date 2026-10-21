@@ -56,6 +56,10 @@ namespace YeogiCafe.Art
         static readonly Fur Seal   = F(122, 96, 80);
         static readonly Fur Moon   = F(248, 246, 252);
         static readonly Fur Silver = F(196, 204, 222);
+        static readonly Fur Skin   = F(234, 188, 180);   // 스핑크스: 털 없는 분홍빛 피부
+        static readonly Fur SkinDk = F(206, 150, 146);
+        static readonly Fur KitGray = F(150, 152, 162);  // 아기 고양이: 짙은 회색 태비
+        static readonly Fur OldBrown = F(176, 146, 116); // 노묘: 빛바랜 갈색 태비
 
         static Color32 EyeColor(string id) => id switch
         {
@@ -64,6 +68,9 @@ namespace YeogiCafe.Art
             "cat_tuxedo"  => new Color32(150, 196, 110, 255),
             "cat_gray"    => new Color32(232, 176, 80, 255),
             "cat_moon"    => new Color32(236, 196, 90, 255),     // 달냥: 오드아이(앞 눈 금색, 뒤 눈 파랑)
+            "cat_sphynx"  => new Color32(110, 190, 196, 255),
+            "cat_kitten"  => new Color32(110, 160, 220, 255),    // 아기 고양이 파란 눈
+            "cat_senior"  => new Color32(214, 176, 90, 255),
             _             => new Color32(120, 170, 110, 255),
         };
 
@@ -82,6 +89,13 @@ namespace YeogiCafe.Art
                     if (part == Part.Head && v > 0.55f && Mathf.Abs(u - 0.1f) < 0.35f) return Silver;
                     return Moon;
                 case "cat_black":    return Black;
+                case "cat_sphynx":   return part == Part.Ear || (part == Part.Tail && v < 0.3f) ? SkinDk : Skin;
+                case "cat_kitten":
+                    if (part == Part.Muzzle || (part == Part.Leg && v < -0.2f) || (part == Part.Chest && u > 0f)) return White;
+                    return KitGray;
+                case "cat_senior":
+                    if (part == Part.Muzzle || (part == Part.Chest && u > -0.1f && v < 0.3f)) return White;   // 희끗한 주둥이·턱받이
+                    return OldBrown;
                 case "cat_siamese":
                     if (part == Part.Ear || part == Part.Tail || part == Part.Muzzle) return Seal;
                     if (part == Part.Leg && v < 0.2f) return Seal;
@@ -117,7 +131,7 @@ namespace YeogiCafe.Art
         static float Blob(float x, float y, float f, float seed)
             => (Mathf.Sin(x * f + seed) * Mathf.Sin(y * f * 1.3f + seed * 2.1f) + Mathf.Sin((x + y) * f * 0.55f + seed * 3.7f)) * 0.75f;
 
-        static bool Tabby(string id) => id == "cat_cheese" || id == "cat_mackerel";
+        static bool Tabby(string id) => id == "cat_cheese" || id == "cat_mackerel" || id == "cat_kitten" || id == "cat_senior";
 
         // ── 다른 그림(마감 클로즈업 등)이 같은 털색·무늬를 쓰도록 여는 창구 ──
         public enum CoatPart : byte { Body = 1, Chest, Hip, Head, Muzzle, Ear, Leg, Tail }

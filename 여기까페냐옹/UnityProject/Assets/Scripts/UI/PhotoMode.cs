@@ -265,6 +265,7 @@ namespace YeogiCafe.UI
                 case "postcard": l = r = t = 20; b = 58; bg = new Color(0.96f, 0.92f, 0.84f, 1f); break;
                 case "film": l = r = 18; t = b = 40; bg = new Color(0.12f, 0.11f, 0.12f, 1f); break;
                 case "gold": l = r = t = b = 30; bg = new Color(0.86f, 0.69f, 0.3f, 1f); break;
+                case "heart": l = r = t = 24; b = 78; bg = new Color(1f, 0.89f, 0.9f, 1f); break;   // 보호소 하트(후원 보상)
                 default: l = r = t = 20; b = 78; bg = Paper; break;     // 폴라로이드
             }
             card = UiFactory.Panel("Card", editGo.transform, bg);
@@ -293,6 +294,13 @@ namespace YeogiCafe.UI
             var ri = photoGo.GetComponent<RawImage>(); ri.texture = PhotoTex; ri.raycastTarget = false;
             UiFactory.SetRect((RectTransform)photoGo.transform, Vector2.zero, Vector2.zero, Vector2.zero, new Vector2(l, b), new Vector2(pw, ph));
 
+            if (frame == "heart")
+                foreach (var corner in new[] { new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, 1), new Vector2(1, 1) })
+                {
+                    var h = UiFactory.Label("Heart", card, "♥", 22, TextAnchor.MiddleCenter, UiFactory.PinkDeep);
+                    UiFactory.SetRect((RectTransform)h.transform, corner, corner, new Vector2(0.5f, 0.5f),
+                                      new Vector2(corner.x < 0.5f ? 12 : -12, corner.y < 0.5f ? 12 : -12), new Vector2(24, 24));
+                }
             if (frame == "postcard")
             {
                 var st = UiFactory.Panel("PostStamp", card, UiFactory.Pink);
@@ -305,7 +313,7 @@ namespace YeogiCafe.UI
 
             string dateText = DateText();
             string nameText = NamesText();
-            bool captionUnder = frame == "polaroid" || frame == "postcard";
+            bool captionUnder = frame == "polaroid" || frame == "postcard" || frame == "heart";
             if (captionUnder)
             {
                 var cap = UiFactory.Label("Caption", card, names ? nameText : "", 22, TextAnchor.MiddleLeft, UiFactory.Ink);
@@ -372,16 +380,17 @@ namespace YeogiCafe.UI
             }
 
             Row(L.Get("photo.frame"), -78);
-            x = -330;
+            x = -340;
             foreach (var fd in PhotoKit.Frames)
             {
                 var d = fd;
                 bool own = FrameOwned(d.id), on = frame == d.id;
                 string name = L.Get("photo.frame." + d.id);
-                string label = own ? name : L.Get("photo.frame.buy", ("name", name), ("g", d.price.ToString()));
+                if (d.price < 0 && !own) name = L.Get("photo.frame.locked");
+                string label = own || d.price < 0 ? name : L.Get("photo.frame.buy", ("name", name), ("g", d.price.ToString()));
                 Btn(optRoot, label, on ? UiFactory.PinkDeep : own ? UiFactory.Wood : UiFactory.CreamDim, on || own ? UiFactory.Cream : UiFactory.WoodDark,
-                    new Vector2(x + 31, -78), new Vector2(148, 34), () => PickFrame(d), 15, new Vector2(0.5f, 1));
-                x += 155;
+                    new Vector2(x + 31, -78), new Vector2(130, 34), () => PickFrame(d), 14, new Vector2(0.5f, 1));
+                x += 136;
             }
 
             Btn(optRoot, L.Get(stamp ? "photo.stamp.on" : "photo.stamp.off"), stamp ? UiFactory.Green : UiFactory.CreamDim, UiFactory.Ink,
@@ -401,6 +410,7 @@ namespace YeogiCafe.UI
 
         void PickFrame(PhotoKit.FrameDef d)
         {
+            if (!FrameOwned(d.id) && d.price < 0) { Toast(L.Get("photo.frame.lockedhint")); return; }
             if (!FrameOwned(d.id))
             {
                 var eco = owner.Economy;

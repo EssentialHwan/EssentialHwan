@@ -21,7 +21,8 @@ namespace YeogiCafe.Save
         public List<PlacedFurnitureDTO> placedFurniture = new();
         public List<PhotoDTO> photos = new();                // 포토 모드 앨범(파일은 persistentDataPath/Photos)
         public List<string> photoFrames = new();             // 산 사진 프레임(폴라로이드는 기본)
-        public int albumCap = 12;                            // 앨범 칸 수(골드로 늘림)
+        public int albumCap = 12;
+        public int shelterDonated;                           // 냥냥 보호소 누적 후원액(ShelterBook)                            // 앨범 칸 수(골드로 늘림)
         public List<string> unlockedMenuIds = new();
         public List<CatSaveData> cats = new();
         public List<string> completedEventIds = new();

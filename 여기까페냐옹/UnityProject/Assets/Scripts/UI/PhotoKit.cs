@@ -48,6 +48,7 @@ namespace YeogiCafe.UI
             new FrameDef { id = "postcard", price = 200 },
             new FrameDef { id = "film", price = 250 },
             new FrameDef { id = "gold", price = 500 },
+            new FrameDef { id = "heart", price = -1 },     // 냥냥 보호소 후원 4단계 보상(살 수 없음)
         };
 
         // ── 필터 ──

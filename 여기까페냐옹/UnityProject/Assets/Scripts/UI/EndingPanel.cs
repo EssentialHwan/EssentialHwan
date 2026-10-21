@@ -18,7 +18,7 @@ namespace YeogiCafe.UI
             if (cats == null) return (0, 0);
             foreach (var c in cats)
             {
-                if (c == null) continue;
+                if (c == null || ShelterBook.IsShelterCat(c.catId)) continue;   // 보호소 고양이는 엔딩 목표 밖
                 total += 3;
                 if (save != null) done += Mathf.Min(3, save.GetOrCreateCat(c.catId).observation.RecordedAxisCount());
             }
@@ -55,7 +55,7 @@ namespace YeogiCafe.UI
 
             // 고양이 단체 사진: 한 줄에 5마리씩
             var list = new List<CatData>();
-            if (cats != null) foreach (var c in cats) if (c != null) list.Add(c);
+            if (cats != null) foreach (var c in cats) if (c != null && !ShelterBook.IsShelterCat(c.catId)) list.Add(c);
             bool many = list.Count > 10;                     // 13마리: 7+6 두 줄
             float cell = many ? 96f : 108f, rowH = many ? 104f : 118f, icon = many ? 72f : 84f;
             int perRow = Mathf.Min(many ? 7 : 5, Mathf.Max(1, list.Count));
