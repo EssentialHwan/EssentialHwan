@@ -14,6 +14,22 @@ namespace YeogiCafe.UI
     {
         readonly GameUiController owner;
         RectTransform listView;
+        ScrollRect scroll;
+        const float WheelStep = 40f;            // 휠 한 칸 = 한 줄
+
+        // 휠 스크롤: 한 칸에 한 줄씩(도감이 열려 있고 목록 위에 마우스가 있을 때)
+        public void Tick()
+        {
+            if (!IsOpen || listView == null || !listView.gameObject.activeInHierarchy) return;
+            float d = Input.mouseScrollDelta.y;
+            if (Mathf.Approximately(d, 0f)) return;
+            if (!RectTransformUtility.RectangleContainsScreenPoint(listView, Input.mousePosition, null)) return;
+            float max = Mathf.Max(0f, listContent.rect.height - listView.rect.height);
+            var p = listContent.anchoredPosition;
+            p.y = Mathf.Clamp(p.y - Mathf.Sign(d) * WheelStep, 0f, max);
+            listContent.anchoredPosition = p;
+            if (scroll != null) scroll.StopMovement();
+        }
         readonly GameObject rootGo;
         Text header;
         RectTransform listContent;
@@ -48,15 +64,27 @@ namespace YeogiCafe.UI
             UiFactory.SetRect(view, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f),
                               new Vector2(0, -22), new Vector2(-48, -178));
             viewGo.GetComponent<Image>().color = new Color(1, 1, 1, 0);      // 빈 곳도 휠·드래그가 먹게
-            var listGo = new GameObject("List", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+            var listGo = new GameObject("List", typeof(RectTransform), typeof(VerticalLayoutGroup));
             listGo.transform.SetParent(view, false);
             listContent = (RectTransform)listGo.transform;
             listContent.anchorMin = new Vector2(0, 1); listContent.anchorMax = new Vector2(1, 1); listContent.pivot = new Vector2(0.5f, 1);
             listContent.anchoredPosition = Vector2.zero; listContent.sizeDelta = new Vector2(0, 0);
-            listGo.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             var sr = viewGo.GetComponent<ScrollRect>();
             sr.content = listContent; sr.viewport = view; sr.horizontal = false; sr.vertical = true;
-            sr.movementType = ScrollRect.MovementType.Clamped; sr.scrollSensitivity = 24f;
+            sr.movementType = ScrollRect.MovementType.Clamped;
+            sr.scrollSensitivity = 0f;          // 휠은 Tick에서 직접(에디터·기기마다 휠 값이 0.1~1로 달라 너무 느리던 문제)
+            // 오른쪽 스크롤바: 더 내려 볼 게 있다는 걸 보여 준다
+            var barGo = new GameObject("Scrollbar", typeof(RectTransform), typeof(Image), typeof(Scrollbar));
+            barGo.transform.SetParent(panel.transform, false);
+            var bar = (RectTransform)barGo.transform;
+            UiFactory.SetRect(bar, new Vector2(1, 0), new Vector2(1, 1), new Vector2(1, 0.5f), new Vector2(-14, -22), new Vector2(8, -178));
+            barGo.GetComponent<Image>().color = new Color(0.55f, 0.42f, 0.32f, 0.25f);
+            var handle = UiFactory.Panel("Handle", bar, UiFactory.WoodDark);
+            UiFactory.Anchor(handle, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            var sb = barGo.GetComponent<Scrollbar>();
+            sb.handleRect = handle; sb.targetGraphic = handle.GetComponent<Image>(); sb.direction = Scrollbar.Direction.BottomToTop;
+            sr.verticalScrollbar = sb; sr.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
+            scroll = sr;
             listView = view;
             var vlg = listGo.GetComponent<VerticalLayoutGroup>();
             vlg.spacing = 4; vlg.childControlHeight = false; vlg.childForceExpandHeight = false;
@@ -99,10 +127,11 @@ namespace YeogiCafe.UI
             {
                 var e = UiFactory.Label("Empty", listContent, L.Get("ui.review.empty"), 17, TextAnchor.MiddleCenter, UiFactory.WoodDark);
                 ((RectTransform)e.transform).sizeDelta = new Vector2(0, 60);
+                FitList();
                 return;
             }
             int shown = 0;
-            for (int i = s.reviews.Count - 1; i >= 0 && shown < 9; i--, shown++)
+            for (int i = s.reviews.Count - 1; i >= 0 && shown < 30; i--, shown++)
             {
                 var r = s.reviews[i];
                 var row = UiFactory.Panel("Review", listContent, UiFactory.Cream);
@@ -116,12 +145,35 @@ namespace YeogiCafe.UI
                 lbl.verticalOverflow = VerticalWrapMode.Truncate;
                 UiFactory.SetRect((RectTransform)lbl.transform, Vector2.zero, Vector2.one, new Vector2(0, 0.5f), new Vector2(104, 0), new Vector2(-120, 0));
             }
+            FitList();
         }
 
         void ClearRows()
         {
+            // 지울 줄은 바로 떼어 낸다(Destroy는 프레임 끝이라 남아 있으면 목록 높이 계산에 섞인다)
             for (int i = listContent.childCount - 1; i >= 0; i--)
-                Object.Destroy(listContent.GetChild(i).gameObject);
+            {
+                var c = listContent.GetChild(i);
+                c.SetParent(null, false);
+                Object.Destroy(c.gameObject);
+            }
+        }
+
+        // 스크롤 범위 = 줄 높이 합(자동 맞춤에 기대지 않고 직접 잰다)
+        void FitList()
+        {
+            var vlg = listContent.GetComponent<VerticalLayoutGroup>();
+            float h = 0; int n = 0;
+            for (int i = 0; i < listContent.childCount; i++)
+            {
+                var c = (RectTransform)listContent.GetChild(i);
+                if (!c.gameObject.activeSelf) continue;
+                h += c.sizeDelta.y; n++;
+            }
+            if (n > 1) h += vlg.spacing * (n - 1);
+            h += vlg.padding.top + vlg.padding.bottom;
+            listContent.sizeDelta = new Vector2(listContent.sizeDelta.x, h);
+            listContent.anchoredPosition = Vector2.zero;
         }
 
         void Render()
@@ -196,6 +248,7 @@ namespace YeogiCafe.UI
                           + "    " + L.Get("ui.catalog.gifts", ("n", (save != null ? save.giftsCollected.Count : 0).ToString()),
                                            ("t", YeogiCafe.Data.GiftCatalog.All.Length.ToString()));
             RenderStamps(stamps);
+            FitList();
         }
 
         // ── 관계도: 만난 고양이를 원으로 놓고 사이를 선으로(친구=분홍 굵게, 아는 사이=옅게, 앙숙=빨강) ──
