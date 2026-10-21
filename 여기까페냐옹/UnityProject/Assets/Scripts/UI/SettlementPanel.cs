@@ -53,9 +53,9 @@ namespace YeogiCafe.UI
             UiFactory.SetRect(cardsList.view, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f),
                               new Vector2(0, -28), new Vector2(-48, -250));
 
-            cardsInfo = UiFactory.Label("CardsInfo", panel.transform, "", 20, TextAnchor.LowerLeft, UiFactory.WoodDark);
+            cardsInfo = UiFactory.Label("CardsInfo", panel.transform, "", 20, TextAnchor.LowerCenter, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)cardsInfo.transform, new Vector2(0, 0), new Vector2(1, 0),
-                              new Vector2(0.5f, 0), new Vector2(0, 104), new Vector2(-40, 30));
+                              new Vector2(0.5f, 0), new Vector2(0, 104), new Vector2(-72, 30));    // 테두리에 붙지 않게 가운데 정렬·안쪽 여백
 
             var nextBtn = UiFactory.Button("Next", panel.transform, L.Get("ui.settle.next"),
                                            UiFactory.Green, UiFactory.Ink, out _);
@@ -89,6 +89,7 @@ namespace YeogiCafe.UI
             UiFactory.Frame(stampBox, UiFactory.FrameStyle.Paper);
             UiFactory.SetRect(stampBox, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1), new Vector2(-26, -26), new Vector2(104, 104));
             var boxTitle = UiFactory.Label("StampTitle", box.transform, L.Get("ui.settle.stamp"), 15, TextAnchor.UpperCenter, UiFactory.WoodDark);
+            UiFactory.FitOneLine(boxTitle, 92, 11);                  // 도장 칸 104px 안에 한 줄(영어 'Today's Stamp')
             UiFactory.SetRect((RectTransform)boxTitle.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -4), new Vector2(0, 20));
             var si = new GameObject("Stamp", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             si.transform.SetParent(box.transform, false);
@@ -361,6 +362,7 @@ namespace YeogiCafe.UI
 
             string catName = L.Get($"cat.{data.catId}.name");
             var label = UiFactory.Label("Name", row.transform, catName, 20, TextAnchor.MiddleLeft, UiFactory.Ink);
+            UiFactory.FitOneLine(label, 104, 13);                    // 'タキシードニャン' 같은 긴 이름이 체크 표시를 덮지 않게
             UiFactory.SetRect((RectTransform)label.transform, new Vector2(0, 0), new Vector2(0, 1),
                               new Vector2(0, 0.5f), new Vector2(16, 0), new Vector2(110, 0));
 
@@ -452,7 +454,8 @@ namespace YeogiCafe.UI
                 var img = go.GetComponent<Image>(); img.sprite = checkSprite; img.raycastTarget = false;
                 UiFactory.SetRect((RectTransform)go.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
                                   new Vector2(0, 0.5f), new Vector2(0, 0), new Vector2(30, 30));
-                var t = UiFactory.Label("Val", cell.transform, $"{AxisLabel(axis)} {ObservationCardBuilder.ValueName(axis, rec.recordedValue)}",
+                // 기록된 칸은 값만(체크 + 'Fish Cake') — 칸 위치가 곧 축이고, 축 이름까지 붙이면 긴 언어에서 11px로 줄었다
+                var t = UiFactory.Label("Val", cell.transform, ObservationCardBuilder.ValueName(axis, rec.recordedValue),
                                         15, TextAnchor.MiddleLeft, UiFactory.PinkDeep);
                 UiFactory.FitOneLine(t, cellW - 8 - 36, 11);
                 UiFactory.SetRect((RectTransform)t.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 0.5f),
@@ -530,6 +533,19 @@ namespace YeogiCafe.UI
             foreach (var t in f.facilityTags) if (t == YeogiCafe.Data.FacilityTag.Box) return true;   // 온열방석은 '푹신한 곳'으로 추리 보기에 나온다
             return false;
         }
+
+        public void DebugGuess(CatData cat, PrefAxis axis) => OpenGuess(cat, axis, null);
+        public void DebugCloseGuess() => CloseGuess();
+        public void DebugStory(StoryDTO st) { if (storyGo != null) Object.Destroy(storyGo); OpenStory(st); }
+        public void DebugReport()
+        {
+            var s = owner.Save; if (s == null) return;
+            if (storyGo != null) Object.Destroy(storyGo); storyGo = null;
+            var r = s.lastReport; r.day = owner.Day != null ? owner.Day.CurrentDay : 1; r.seen = false;
+            r.dish = 30; r.speed = 20; r.furniture = 18; r.clean = 12; r.total = 80; r.starsBefore = 0; r.starsAfter = 1;
+            TryOpenReport();
+        }
+        public void DebugCloseStory() { if (storyGo != null) Object.Destroy(storyGo); storyGo = null; }
 
         void OpenGuess(CatData cat, PrefAxis axis, RectTransform from)
         {

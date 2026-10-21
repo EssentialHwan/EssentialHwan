@@ -177,13 +177,15 @@ namespace YeogiCafe.UI
             timeBarFill.sprite = UiFactory.WhiteSprite;
 
             var shopBtn = UiFactory.Button("ShopBtn", bar.transform, L.Get("ui.shop.buy"),
-                                           UiFactory.Wood, UiFactory.Cream, out _);
+                                           UiFactory.Wood, UiFactory.Cream, out var shopLbl);
+            shopLbl.horizontalOverflow = HorizontalWrapMode.Overflow;     // 한 줄 유지 — 길면 TextFitGuard가 줄인다(언어별 길이 차)
             UiFactory.SetRect((RectTransform)shopBtn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f),
                               new Vector2(1, 0.5f), new Vector2(-12, 0), new Vector2(104, 48));
             shopBtn.onClick.AddListener(() => { catalog.Hide(); shop.Toggle(); });
 
             var catBtn = UiFactory.Button("CatalogBtn", bar.transform, L.Get("ui.pause.catalog"),
-                                          UiFactory.Wood, UiFactory.Cream, out _);
+                                          UiFactory.Wood, UiFactory.Cream, out var catLbl);
+            catLbl.horizontalOverflow = HorizontalWrapMode.Overflow;
             UiFactory.SetRect((RectTransform)catBtn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f),
                               new Vector2(1, 0.5f), new Vector2(-122, 0), new Vector2(104, 48));
             catBtn.onClick.AddListener(() => { shop.Hide(); catalog.Toggle(); });
@@ -191,28 +193,31 @@ namespace YeogiCafe.UI
             // 주방(1인칭 조리) ↔ 홀 전환 — 가장 자주 누르는 버튼이라 가운데 왼쪽에 크게
             var kitBtn = UiFactory.Button("KitchenBtn", bar.transform, L.Get("ui.kitchen.open"),
                                           UiFactory.Green, UiFactory.Ink, out kitchenBtnLabel);
+            kitchenBtnLabel.horizontalOverflow = HorizontalWrapMode.Overflow;
             UiFactory.SetRect((RectTransform)kitBtn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f),
                               new Vector2(1, 0.5f), new Vector2(-232, 0), new Vector2(104, 48));
             kitBtn.onClick.AddListener(ToggleKitchen);
 
             // 오늘의 의뢰(왼쪽, 손님 수 옆)
             var qBtn = UiFactory.Button("QuestBtn", bar.transform, L.Get("ui.quest.btn"), UiFactory.YellowLight, UiFactory.Ink, out questBtnLabel);
+            questBtnLabel.horizontalOverflow = HorizontalWrapMode.Overflow;
             UiFactory.SetRect((RectTransform)qBtn.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-                              new Vector2(0, 0.5f), new Vector2(278, 0), new Vector2(100, 44));
+                              new Vector2(0, 0.5f), new Vector2(278, 0), new Vector2(112, 44));
             qBtn.onClick.AddListener(ToggleQuests);
 
             // 가구 배치(끌어서 옮기기)
             var editBtn = UiFactory.Button("EditBtn", bar.transform, L.Get("ui.edit.open"),
-                                           UiFactory.Wood, UiFactory.Cream, out _);
+                                           UiFactory.Wood, UiFactory.Cream, out var editLbl);
+            editLbl.horizontalOverflow = HorizontalWrapMode.Overflow;
             UiFactory.SetRect((RectTransform)editBtn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f),
                               new Vector2(1, 0.5f), new Vector2(-342, 0), new Vector2(104, 48));
             editBtn.onClick.AddListener(() => { shop.Hide(); catalog.Hide(); CloseKitchen(); editMode.Toggle(); });
 
             // 설정 — 의뢰 버튼 오른쪽(가운데 시간 표시와 겹치지 않게 작게). ESC로도 열림
             var optBtn = UiFactory.Button("OptBtn", bar.transform, L.Get("opt.btn"), UiFactory.CreamDim, UiFactory.WoodDark, out var optLbl);
-            optLbl.fontSize = 18;
+            optLbl.fontSize = 18; optLbl.horizontalOverflow = HorizontalWrapMode.Overflow;
             UiFactory.SetRect((RectTransform)optBtn.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-                              new Vector2(0, 0.5f), new Vector2(384, 0), new Vector2(64, 44));
+                              new Vector2(0, 0.5f), new Vector2(396, 0), new Vector2(64, 44));
             optBtn.onClick.AddListener(() => settings.Toggle());
 
             // (구) 하단 서술 텍스트는 고양이 머리 위 말풍선(BubbleLayer)으로 대체. 필드는 호환용으로 유지.
@@ -463,6 +468,87 @@ namespace YeogiCafe.UI
 
         public void DebugTutorial() => guide?.DebugReplay();
         public void DebugEnding() => new EndingPanel(root.transform, Save, AllCats, null, preview: true);
+
+        // ── 현지화 QA: 현재 언어로 화면을 하나씩 열어 스크린샷 + 글자 넘침 보고서를 Build/uicheck 에 남긴다 ──
+        public bool UiTourRunning { get; private set; }
+        public void DebugUiTour() { if (!UiTourRunning) StartCoroutine(UiTour()); }
+
+        System.Collections.IEnumerator UiTour()
+        {
+            UiTourRunning = true;
+            string lang = L.Current.ToString().ToLowerInvariant();
+            string dir = System.IO.Path.Combine(System.IO.Directory.GetParent(Application.dataPath).FullName, "Build", "uicheck");
+            System.IO.Directory.CreateDirectory(dir);
+            var report = new System.Text.StringBuilder();
+            report.Append($"# UI tour  lang={lang}  screen={Screen.width}x{Screen.height}  {System.DateTime.Now}\n");
+            int n = 0;
+            float prevScale = Time.timeScale;
+
+            System.Collections.IEnumerator Shot(string name)
+            {
+                yield return new WaitForSecondsRealtime(0.7f);
+                Canvas.ForceUpdateCanvases();
+                yield return new WaitForEndOfFrame();
+                string file = System.IO.Path.Combine(dir, $"{lang}_{n:00}_{name}.png");
+                var tex = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+                tex.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0); tex.Apply();
+                System.IO.File.WriteAllBytes(file, tex.EncodeToPNG()); Destroy(tex);
+                string rep = TextFitGuard.Report();
+                report.Append($"\n## {n:00} {name}\n").Append(string.IsNullOrEmpty(rep) ? "(ok)\n" : rep);
+                n++;
+                yield return new WaitForSecondsRealtime(0.3f);
+            }
+            void CloseAll()
+            {
+                shop.Hide(); catalog.Hide(); settings.Hide(); CloseKitchen(); editMode.Exit();
+                settlement.DebugCloseGuess(); settlement.DebugCloseStory(); settlement.Hide();
+                closing.DebugClose(); if (questPanel.activeSelf) questPanel.SetActive(false);
+                guide.DebugStep(-1);
+            }
+
+            CloseAll();
+            yield return Shot("hud");
+            ToggleQuests(); yield return Shot("quests"); questPanel.SetActive(false);
+            for (int m = 0; m < 4; m++) { shop.DebugTab(m); yield return Shot("shop" + m); }
+            shop.Hide();
+            catalog.DebugTab(false, false); yield return Shot("catalog_list");
+            catalog.DebugTab(true, false); yield return Shot("catalog_rel");
+            catalog.DebugTab(false, true); yield return Shot("catalog_review");
+            catalog.Hide();
+            settings.Show(); yield return Shot("settings"); settings.Hide();
+            ToggleKitchen(); yield return Shot("kitchen");
+            kitchen.DebugPicker(null); yield return Shot("kitchen_picker"); kitchen.DebugClosePicker();
+            CloseKitchen();
+            var cats = AllCats; CatData c0 = null; foreach (var c in cats) if (c != null) { c0 = c; break; }
+            settlement.Show(); settlement.DebugCloseStory(); yield return Shot("settle");
+            if (c0 != null)
+            {
+                settlement.DebugGuess(c0, PrefAxis.Food); yield return Shot("settle_guess"); settlement.DebugCloseGuess();
+                settlement.DebugStory(new StoryDTO { catId = c0.catId, kind = 2 }); yield return Shot("story_lv2"); settlement.DebugCloseStory();
+                settlement.DebugStory(new StoryDTO { catId = c0.catId, kind = 9 }); yield return Shot("story_grad"); settlement.DebugCloseStory();
+            }
+            settlement.DebugReport(); yield return Shot("settle_report"); settlement.DebugCloseStory();
+            settlement.Hide();
+            if (c0 != null && Save != null)
+            {
+                closing.Show(c0, Save.GetOrCreateCat(c0.catId), null); yield return Shot("closing"); closing.DebugClose();
+            }
+            var end = new EndingPanel(root.transform, Save, AllCats, null, preview: true); yield return Shot("ending"); end.DebugClose();
+            var op = opening = new OpeningPanel(root.transform, () => { opening = null; });
+            for (int p = 0; p < 5; p++) { op.DebugPage(p); yield return Shot("opening" + (p + 1)); }
+            op.DebugFinish();
+            Time.timeScale = prevScale;
+            for (int st = 0; st < 5; st++) { guide.DebugStep(st); yield return Shot("tutorial" + st); }
+            guide.DebugStep(-1);
+            settlement.Show(); settlement.DebugCloseStory(); guide.SetCompact(true); guide.DebugStep(4); yield return Shot("tutorial_settle_compact");
+            guide.DebugStep(-1); guide.SetCompact(false); settlement.Hide();
+            editMode.Enter(); yield return Shot("editmode"); editMode.Exit();
+            CloseAll();
+
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, $"textfit_{lang}.txt"), report.ToString());
+            ShowToast($"UI check done: {n} shots → Build/uicheck");
+            UiTourRunning = false;
+        }
 
         public void StartNextDay()
         {

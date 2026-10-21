@@ -23,7 +23,7 @@ namespace YeogiCafe.Food
         public static ReviewDTO Write(SaveGame s, in Visit v)
         {
             int paws = Mathf.Clamp(Mathf.RoundToInt(v.satisfaction / 20f), 1, 5);
-            string menu = v.menu != null ? L.Get("menu." + v.menu.menuId) : "";
+            string menu = v.menu != null ? "@menu." + v.menu.menuId : "";
             var parts = new List<string>();
             if (v.orderFailed) { parts.Add(Pick("review.fail")); paws = 1; }
             else if (v.wrongDish) parts.Add(Pick("review.wrong", ("menu", menu)));
@@ -31,26 +31,69 @@ namespace YeogiCafe.Food
             else if (v.menu != null) parts.Add(Pick(v.stars >= 3 ? "review.star3" : v.stars == 2 ? "review.star2" : "review.star1", ("menu", menu)));
 
             var extra = new List<string>();
-            if (v.preferredSeat) extra.Add(Pick("review.seat", ("seat", L.Get($"tag.seat.{v.cat.seatPreference}"))));
-            if (v.preferredFacility) extra.Add(Pick("review.fac", ("fac", L.Get($"tag.fac.{v.cat.facilityPreference}"))));
+            if (v.preferredSeat) extra.Add(Pick("review.seat", ("seat", $"@tag.seat.{v.cat.seatPreference}")));
+            if (v.preferredFacility) extra.Add(Pick("review.fac", ("fac", $"@tag.fac.{v.cat.facilityPreference}")));
             if (v.mouse == 1) extra.Add(Pick("review.mouse.caught"));
             if (v.mouse == 2) extra.Add(Pick("review.mouse.escaped"));
             if (s.nyanStars >= 3 && paws >= 4) extra.Add(Pick("review.nyan"));
             if (extra.Count > 0 && (parts.Count == 0 || Random.value < 0.7f)) parts.Add(extra[Random.Range(0, extra.Count)]);
 
-            var r = new ReviewDTO { day = v.day, catId = v.cat.catId, paws = paws, text = string.Join(" ", parts) };
+            var r = new ReviewDTO { day = v.day, catId = v.cat.catId, paws = paws, parts = parts };
+            r.text = Text(r);
             s.reviews.Add(r);
             if (s.reviews.Count > Keep) s.reviews.RemoveRange(0, s.reviews.Count - Keep);
             return r;
         }
 
+        // 지금 언어로 리뷰 문장을 그린다. 구버전(문장만 저장된) 리뷰는 저장된 그대로.
+        public static string Text(ReviewDTO r)
+        {
+            if (r == null) return "";
+            if (r.parts == null || r.parts.Count == 0) return r.text ?? "";
+            var sb = new System.Text.StringBuilder();
+            foreach (var code in r.parts)
+            {
+                var seg = code.Split('|');
+                var args = new (string, string)[seg.Length - 1];
+                for (int i = 1; i < seg.Length; i++)
+                {
+                    int eq = seg[i].IndexOf('=');
+                    string name = eq > 0 ? seg[i].Substring(0, eq) : seg[i], val = eq > 0 ? seg[i].Substring(eq + 1) : "";
+                    if (val.StartsWith("@")) val = L.Get(val.Substring(1));
+                    args[i - 1] = (name, val);
+                }
+                if (sb.Length > 0) sb.Append(' ');
+                sb.Append(L.Get(seg[0], args));
+            }
+            return sb.ToString();
+        }
+
+        // 구버전 리뷰(문장만 저장)는 그 문장을 쓴 언어 화면에서만 보인다 — 다른 언어 목록에 섞이지 않게
+        public static bool Visible(ReviewDTO r) =>
+            r != null && ((r.parts != null && r.parts.Count > 0) || ScriptOf(r.text) == L.Current);
+
+        // 문장에 쓰인 글자로 언어 추정: 한글 → 한국어, 가나 → 일본어, 한자만 → 중국어, 그 밖 → 영어
+        static Language ScriptOf(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return L.Current;
+            bool han = false;
+            foreach (char c in s)
+            {
+                if (c >= 0xAC00 && c <= 0xD7A3) return Language.Ko;
+                if (c >= 0x3040 && c <= 0x30FF) return Language.Ja;
+                if (c >= 0x4E00 && c <= 0x9FFF) han = true;
+            }
+            return han ? Language.Zh : Language.En;
+        }
+
         static string Pick(string key, params (string, string)[] args)
         {
-            // 같은 뜻 문장 3가지 중 하나(key.1~3, 없으면 key)
+            // 같은 뜻 문장 3가지 중 하나(key.1~3, 없으면 key) — 키와 인자만 기록
             string k = $"{key}.{Random.Range(1, 4)}";
-            string t = L.Get(k, args);
-            if (t == k) t = L.Get(key, args);
-            return t;
+            if (!L.Has(k)) k = key;          // 변형 문장이 없는 키(1개짜리)는 기본 키로 — 'missing key' 경고 없이
+            var sb = new System.Text.StringBuilder(k);
+            foreach (var (n, v) in args) sb.Append('|').Append(n).Append('=').Append(v);
+            return sb.ToString();
         }
 
         // 평판 1~5 (리뷰가 적으면 3에 가깝게)

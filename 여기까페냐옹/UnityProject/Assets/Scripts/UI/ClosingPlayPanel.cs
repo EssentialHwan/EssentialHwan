@@ -94,7 +94,7 @@ namespace YeogiCafe.UI
             UiFactory.SetRect((RectTransform)timerText.transform, new Vector2(1, 0), new Vector2(1, 1), new Vector2(1, 0.5f), new Vector2(-12, 0), new Vector2(60, 0));
 
             byeBtn = UiFactory.Button("Bye", root, L.Get("closing.bye"), UiFactory.Green, UiFactory.Ink, out _);
-            UiFactory.SetRect((RectTransform)byeBtn.transform, new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0), new Vector2(-24, 24), new Vector2(200, 54));
+            UiFactory.SetRect((RectTransform)byeBtn.transform, new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0), new Vector2(-24, 24), new Vector2(236, 54));      // 'Bye, come again!'(영어)가 들어가게
             byeBtn.onClick.AddListener(() => Finish(false));
 
             rootGo.SetActive(false);
@@ -376,6 +376,8 @@ namespace YeogiCafe.UI
             else if (mood >= 50f) owner.ShowToast(L.Get("closing.bye.ok", ("name", Name)) + "  " + ZoneSummary());
             Close();
         }
+
+        public void DebugClose() { if (!open) return; open = false; CatInteractionDirector.Suspended = false; Close(); }
 
         string ZoneSummary()
         {

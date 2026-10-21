@@ -27,7 +27,10 @@ namespace YeogiCafe.UI
             UiFactory.SetRect((RectTransform)tag.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(18, -10), new Vector2(200, 20));
             text = UiFactory.Label("Text", card, "", 17, TextAnchor.MiddleLeft, UiFactory.Ink);
             text.lineSpacing = 1.1f;
-            UiFactory.SetRect((RectTransform)text.transform, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), new Vector2(-14, -8), new Vector2(-72, -30));
+            // 글 칸은 태그(위 30px)·닫기 버튼(오른쪽 56px) 아래/왼쪽 — 세 줄이 되어도 태그와 겹치지 않게
+            var trt = (RectTransform)text.transform;
+            trt.anchorMin = Vector2.zero; trt.anchorMax = Vector2.one; trt.pivot = new Vector2(0.5f, 0.5f);
+            trt.offsetMin = new Vector2(18, 10); trt.offsetMax = new Vector2(-56, -32);
             var close = UiFactory.Button("Close", card, "×", UiFactory.Pink, UiFactory.Cream, out _);
             UiFactory.SetRect((RectTransform)close.transform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1), new Vector2(-8, -8), new Vector2(36, 36));
             close.onClick.AddListener(() => card.gameObject.SetActive(false));
@@ -45,6 +48,11 @@ namespace YeogiCafe.UI
             if (s.tutorialStep == Welcome || s.tutorialStep == Order) Show(s.tutorialStep == Welcome ? "tut.welcome" : "tut.order");
         }
 
+        public void DebugStep(int step)
+        {
+            string[] keys = { "tut.welcome", "tut.order", "tut.served", "tut.closing", "tut.settle" };
+            if (step >= 0 && step < keys.Length) Show(keys[step]); else card.gameObject.SetActive(false);
+        }
         public void DebugReplay() { if (Save != null) Go(Welcome, "tut.welcome"); }
 
         public void OnOrderPlaced() { if (Step == Welcome) Go(Order, "tut.order"); }
@@ -68,6 +76,7 @@ namespace YeogiCafe.UI
         void Show(string key)
         {
             text.text = L.Get(key);
+            FitCard();
             card.gameObject.SetActive(true);
             card.SetAsLastSibling();
             autoHide = -1f;
@@ -87,8 +96,19 @@ namespace YeogiCafe.UI
         {
             if (c == compact) return;
             compact = c;
-            card.sizeDelta = c ? new Vector2(196, 176) : new Vector2(470, 96);
-            text.fontSize = c ? 15 : 17;
+            FitCard();
+        }
+
+        // 언어마다 문장 길이가 달라 세 줄이 되면 카드 높이를 늘린다(96~150). 좁은 정산 모드는 고정 크기.
+        void FitCard()
+        {
+            text.fontSize = compact ? 15 : 17;
+            if (compact) { card.sizeDelta = new Vector2(196, 176); return; }
+            card.sizeDelta = new Vector2(470, 96);
+            var gs = text.GetGenerationSettings(new Vector2(470 - 18 - 56, 0));
+            gs.verticalOverflow = VerticalWrapMode.Overflow;
+            float h = text.cachedTextGeneratorForLayout.GetPreferredHeight(text.text, gs) / Mathf.Max(0.01f, text.pixelsPerUnit);
+            card.sizeDelta = new Vector2(470, Mathf.Clamp(Mathf.Ceil(h) + 46, 96, 150));
         }
 
         public void BringToFront()

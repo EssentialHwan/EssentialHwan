@@ -159,7 +159,8 @@ namespace YeogiCafe.Save
         public int day;
         public string catId;
         public int paws;           // 1~5
-        public string text;        // 작성 시점 언어로 완성된 문장
+        public string text;        // 작성 시점 언어로 완성된 문장(구버전 호환 — 표시엔 parts 우선)
+        public List<string> parts = new();   // 언어 무관 원본: "문장키|이름=값|이름=@번역키" — 언어를 바꿔도 다시 그린다
     }
 
     [Serializable]

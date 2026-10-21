@@ -34,6 +34,7 @@ namespace YeogiCafe.UI
 
         readonly GameObject go;
         public static bool IsOpen { get; private set; }
+        public void DebugClose() { if (go != null) Object.Destroy(go); IsOpen = false; }
 
         public EndingPanel(Transform parent, SaveGame save, IReadOnlyList<CatData> cats, System.Action onClose, bool preview = false)
         {
@@ -77,7 +78,7 @@ namespace YeogiCafe.UI
             UiFactory.SetRect((RectTransform)body.transform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 80), new Vector2(-80, 120));
 
             var btn = UiFactory.Button("Continue", paper, L.Get("ending.continue"), UiFactory.Green, UiFactory.Ink, out _);
-            UiFactory.SetRect((RectTransform)btn.transform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 22), new Vector2(220, 48));
+            UiFactory.SetRect((RectTransform)btn.transform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 22), new Vector2(260, 48));      // 'Keep the cafe open'(영어)
             btn.onClick.AddListener(() =>
             {
                 if (save != null && !preview)

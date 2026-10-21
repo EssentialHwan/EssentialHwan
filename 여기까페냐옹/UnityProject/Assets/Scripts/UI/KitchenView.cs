@@ -580,7 +580,7 @@ namespace YeogiCafe.UI
             UiFactory.SetRect(box, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -130), new Vector2(Mathf.Max(w, 420), h));
             UiFactory.Frame(box, UiFactory.FrameStyle.Window);
             var t = UiFactory.Label("Title", box.transform, title, 20, TextAnchor.MiddleCenter, UiFactory.Ink);
-            UiFactory.SetRect((RectTransform)t.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -26), new Vector2(-104, 28));
+            UiFactory.SetRect((RectTransform)t.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -26), new Vector2(-124, 28));   // 오른쪽 닫기(×)와 닿지 않게
             Shrink(t, 13);
             var st = UiFactory.Label("Sub", box.transform, sub, 15, TextAnchor.MiddleCenter, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)st.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -54), new Vector2(-64, 24));
@@ -616,6 +616,9 @@ namespace YeogiCafe.UI
             }
             return b;
         }
+
+        public void DebugPicker(string toolId) { var w = toolId == null ? (tools.Count > 0 ? tools[0] : null) : tools.Find(t => t.id == toolId); if (w != null) OpenToolPicker(w.id, w); }
+        public void DebugClosePicker() => ClosePicker();
 
         // 기구를 눌렀을 때: 그 기구의 메뉴 2개 중 무엇을 만들지
         void OpenToolPicker(string toolId, ToolWidget w)

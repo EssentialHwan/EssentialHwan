@@ -65,6 +65,7 @@ namespace YeogiCafe.DevTools
                         f0.Save.storyQueue.Add(new YeogiCafe.Save.StoryDTO { catId = "cat_tortie", kind = 9 });
                     }
                 }
+                if (GUILayout.Button("UI 전체 점검(현재 언어) → Build/uicheck")) { var ui = FindObjectOfType<YeogiCafe.UI.GameUiController>(); if (ui != null) { ui.DebugUiTour(); show = false; } }
                 if (GUILayout.Button("엔딩 미리보기")) { var ui = FindObjectOfType<YeogiCafe.UI.GameUiController>(); if (ui != null) ui.DebugEnding(); }
                 var flow = FindObjectOfType<GameFlowController>();
                 if (flow != null && GUILayout.Button($"날씨 바꾸기 (지금: {Weather.Current})")) Weather.DebugCycle(flow.Save);

@@ -66,6 +66,9 @@ namespace YeogiCafe.UI
             Next();
         }
 
+        public void DebugPage(int p) { page = p - 1; shown = 0; Next(); shown = full.Length; body.text = full; inT = 1f; }
+        public void DebugFinish() { if (rootGo != null) { Object.Destroy(rootGo); Time.timeScale = 1f; onDone?.Invoke(); } }
+
         void Advance()
         {
             if (fade >= 0f) return;
@@ -79,7 +82,7 @@ namespace YeogiCafe.UI
             if (page >= Pages) { Finish(); return; }
             for (int i = picture.childCount - 1; i >= 0; i--) Object.Destroy(picture.GetChild(i).gameObject);
             BuildPicture(page);
-            full = L.Get($"opening.{page + 1}");
+            full = TextFitGuard.Kinsoku(body, L.Get($"opening.{page + 1}"));   // 타자 효과 중 줄이 튀지 않게 미리 금칙 처리
             shown = 0; body.text = ""; inT = 0f;
             pageLabel.text = $"{page + 1} / {Pages}   ·   {L.Get("opening.hint")}";
             YeogiCafe.Audio.SoundManager.Sfx("sfx_boop", 0.3f, 0.05f);

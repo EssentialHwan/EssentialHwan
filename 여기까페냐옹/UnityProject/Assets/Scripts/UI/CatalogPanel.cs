@@ -123,7 +123,9 @@ namespace YeogiCafe.UI
             int stars = s != null ? s.nyanStars : 0;
             header.text = L.Get("ui.review.header", ("rep", rep.ToString("0.0")), ("stars", YeogiCafe.Food.NyanGuide.Stars(stars)),
                                 ("need", YeogiCafe.Food.NyanGuide.NextPassScore(stars).ToString()));
-            if (s == null || s.reviews.Count == 0)
+            bool any = false;
+            if (s != null) foreach (var rv in s.reviews) if (YeogiCafe.Food.ReviewBook.Visible(rv)) { any = true; break; }
+            if (!any)
             {
                 var e = UiFactory.Label("Empty", listContent, L.Get("ui.review.empty"), 17, TextAnchor.MiddleCenter, UiFactory.WoodDark);
                 ((RectTransform)e.transform).sizeDelta = new Vector2(0, 60);
@@ -131,16 +133,18 @@ namespace YeogiCafe.UI
                 return;
             }
             int shown = 0;
-            for (int i = s.reviews.Count - 1; i >= 0 && shown < 30; i--, shown++)
+            for (int i = s.reviews.Count - 1; i >= 0 && shown < 30; i--)
             {
                 var r = s.reviews[i];
+                if (!YeogiCafe.Food.ReviewBook.Visible(r)) continue;
+                shown++;
                 var row = UiFactory.Panel("Review", listContent, UiFactory.Cream);
                 UiFactory.Frame(row, UiFactory.FrameStyle.Card, UiFactory.Cream);
                 ((RectTransform)row.transform).sizeDelta = new Vector2(0, 38);
                 string who = L.Get($"cat.{r.catId}.name");
                 var paws = UiFactory.Label("Paws", row.transform, YeogiCafe.Food.ReviewBook.Paws(r.paws), 15, TextAnchor.MiddleLeft, UiFactory.PinkDeep);
                 UiFactory.SetRect((RectTransform)paws.transform, new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0.5f), new Vector2(16, 0), new Vector2(84, 0));
-                var lbl = UiFactory.Label("Text", row.transform, $"{who} · {L.Get("ui.cafe.day", ("n", r.day.ToString()))}   {r.text}", 15, TextAnchor.MiddleLeft, UiFactory.Ink);
+                var lbl = UiFactory.Label("Text", row.transform, $"{who} · {L.Get("ui.cafe.day", ("n", r.day.ToString()))}   {YeogiCafe.Food.ReviewBook.Text(r)}", 15, TextAnchor.MiddleLeft, UiFactory.Ink);
                 lbl.resizeTextForBestFit = true; lbl.resizeTextMinSize = 10; lbl.resizeTextMaxSize = 15;
                 lbl.verticalOverflow = VerticalWrapMode.Truncate;
                 UiFactory.SetRect((RectTransform)lbl.transform, Vector2.zero, Vector2.one, new Vector2(0, 0.5f), new Vector2(104, 0), new Vector2(-120, 0));
@@ -350,10 +354,10 @@ namespace YeogiCafe.UI
         void AxisCell(RectTransform row, CatData data, CatSaveData cs, PrefAxis axis, float x)
         {
             var lab = UiFactory.Label("Axis", row, L.Get(axis == PrefAxis.Food ? "ui.axis.food" : axis == PrefAxis.Seat ? "ui.axis.seat" : "ui.axis.facility"), 13, TextAnchor.MiddleLeft, UiFactory.WoodDark);
-            UiFactory.SetRect((RectTransform)lab.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(x, 0), new Vector2(40, 20));
+            UiFactory.SetRect((RectTransform)lab.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(x, 0), new Vector2(52, 20));   // 'スポット'(4자)도 13px 그대로
             lab.horizontalOverflow = HorizontalWrapMode.Overflow;
             var rec = cs != null ? cs.observation.Get(axis) : null;
-            float cx = x + 40;
+            float cx = x + 52;                                       // 아이콘 30px → 다음 칸(96px 간격)과 안 겹침
             if (rec != null && rec.state == ObsState.Recorded)
             {
                 var sp = AnswerSprite(data, axis, rec.recordedValue);
@@ -440,6 +444,7 @@ namespace YeogiCafe.UI
             if (next) { Render(); rootGo.transform.SetAsLastSibling(); }   // 주방 화면 위로(겹침 방지)
         }
         public void Hide() => rootGo.SetActive(false);
+        public void DebugTab(bool rel, bool review) { if (!IsOpen) Toggle(); showRel = rel; showReview = review; Render(); }
         public bool IsOpen => rootGo != null && rootGo.activeSelf;
     }
 }

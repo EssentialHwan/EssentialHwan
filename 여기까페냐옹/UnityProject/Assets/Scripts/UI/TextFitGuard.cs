@@ -55,12 +55,48 @@ namespace YeogiCafe.UI
             int min = Mathf.Max(9, Mathf.RoundToInt(baseSize * 0.6f));
             int fs = baseSize;
             while (fs > min && !Fits(tx, size, fs)) fs--;
+            // 중국어·일본어: 줄 머리에 。、！ 같은 문장부호가 오지 않게 줄을 한 글자 앞에서 꺾는다(금칙 처리)
+            string k = Kinsoku(tx, tx.text, size, fs);
+            if (k != tx.text) { tx.text = k; while (fs > min && !Fits(tx, size, fs)) fs--; }
             tx.fontSize = fs;
             st.failed = !Fits(tx, size, fs);
             st.text = tx.text; st.size = size; st.baseSize = baseSize;
             states[tx] = st;
             Note(tx, st);
         }
+
+        // ── 금칙 처리(行頭禁則) — UGUI Text는 CJK 문장부호를 줄 맨 앞에 두기도 해서 직접 고친다 ──
+        const string NoStart = "、。，．,.!?！？）)」』】〉》〕］}ー…‥・：；:;ゝゞヽヾ々ぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ～〜—”’％%";
+        const string NoEnd = "（(「『【〈《〔［{“‘";
+        static readonly TextGenerator kgen = new TextGenerator();
+
+        public static string Kinsoku(Text tx, string s, Vector2 size, int fs)
+        {
+            var lang = YeogiCafe.Loc.L.Current;
+            if (lang != YeogiCafe.Loc.Language.Zh && lang != YeogiCafe.Loc.Language.Ja) return s;
+            if (string.IsNullOrEmpty(s) || s.IndexOf('<') >= 0 || tx.horizontalOverflow == HorizontalWrapMode.Overflow) return s;
+            if (size.x < 4f) return s;
+            for (int iter = 0; iter < 8; iter++)
+            {
+                var gs = tx.GetGenerationSettings(new Vector2(size.x, 0));
+                gs.fontSize = fs; gs.resizeTextForBestFit = false; gs.verticalOverflow = VerticalWrapMode.Overflow;
+                kgen.Populate(s, gs);
+                var lines = kgen.lines;
+                bool changed = false;
+                for (int i = 1; i < lines.Count; i++)
+                {
+                    int idx = lines[i].startCharIdx, prevStart = lines[i - 1].startCharIdx;
+                    if (idx <= 0 || idx >= s.Length || s[idx - 1] == '\n') continue;
+                    int cut = -1;
+                    if (NoStart.IndexOf(s[idx]) >= 0) { cut = idx - 1; while (cut > prevStart && NoStart.IndexOf(s[cut]) >= 0) cut--; }
+                    else if (NoEnd.IndexOf(s[idx - 1]) >= 0) cut = idx - 1;
+                    if (cut > prevStart && s[cut - 1] != '\n') { s = s.Insert(cut, "\n"); changed = true; break; }
+                }
+                if (!changed) break;
+            }
+            return s;
+        }
+        public static string Kinsoku(Text tx, string s) => Kinsoku(tx, s, tx.rectTransform.rect.size, tx.fontSize);
 
         static readonly Dictionary<Text, bool> driven = new();
         static bool LayoutDriven(Text tx)

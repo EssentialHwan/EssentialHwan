@@ -302,6 +302,7 @@ namespace YeogiCafe.UI
         }
 
         public void Hide() => rootGo.SetActive(false);
+        public void DebugTab(int m) { if (!IsOpen) Toggle(); mode = m; Render(); }
         public bool IsOpen => rootGo.activeSelf;
     }
 }

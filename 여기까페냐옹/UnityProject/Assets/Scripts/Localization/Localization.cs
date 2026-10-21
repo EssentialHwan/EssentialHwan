@@ -67,6 +67,8 @@ namespace YeogiCafe.Loc
             else { loaded = true; Debug.LogWarning("[L] strings.csv not found in Resources"); }
         }
 
+        public static bool Has(string key) { EnsureLoaded(); return table.ContainsKey(key); }
+
         public static string Get(string key)
         {
             EnsureLoaded();
