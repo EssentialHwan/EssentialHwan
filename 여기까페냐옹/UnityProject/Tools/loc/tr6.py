@@ -8,7 +8,10 @@ PATCH = {
     "quest.done":         {"en": "Task done! {q} (+{g}G)"},
     "ui.pause.catalog":   {"en": "Journal"},
     "ui.catalog.title":   {"en": "Cat Journal"},
-    "title.hint":         {"en": "ESC Settings · M Mute · C Journal · B Shop · K Kitchen"},
+    "title.hint":         {"ko": "ESC 설정 · M 소리 · C 도감 · B 구매 · K 주방 · P 사진",
+                           "en": "ESC Settings · M Mute · C Journal · B Shop · K Kitchen · P Photo",
+                           "zh": "ESC 设置 · M 声音 · C 图鉴 · B 商店 · K 厨房 · P 拍照",
+                           "ja": "ESC 設定・M 音・C 図鑑・B ショップ・K キッチン・P 写真"},
     # 상점 탭: 'Recipe/Furniture Upgrades'가 12px까지 줄어들었다 → 별(강화 표시)로
     "ui.shop.tab.recipe": {"en": "Recipes ★"},
     "ui.shop.tab.furnup": {"en": "Furniture ★"},

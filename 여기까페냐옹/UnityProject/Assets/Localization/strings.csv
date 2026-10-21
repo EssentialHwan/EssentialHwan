@@ -454,7 +454,7 @@ title.sub,고양이 손님을 살피는 작은 카페,A little cafe where cats a
 title.start,시작하기,Start,开始游戏,はじめる
 title.day,{n}일차,Day {n},第{n}天,{n}日目
 title.era,2027년 · NeuroNya 이후,2027 · After NeuroNya,2027年 · NeuroNya之后,2027年・NeuroNya以後
-title.hint,ESC 설정 · M 소리 · C 도감 · B 구매 · K 주방,ESC Settings · M Mute · C Journal · B Shop · K Kitchen,ESC 设置 · M 声音 · C 图鉴 · B 商店 · K 厨房,ESC 設定・M 音・C 図鑑・B ショップ・K キッチン
+title.hint,ESC 설정 · M 소리 · C 도감 · B 구매 · K 주방 · P 사진,ESC Settings · M Mute · C Journal · B Shop · K Kitchen · P Photo,ESC 设置 · M 声音 · C 图鉴 · B 商店 · K 厨房 · P 拍照,ESC 設定・M 音・C 図鑑・B ショップ・K キッチン・P 写真
 furn.furn_fac_wheel.name,캣휠,Cat Wheel,猫跑轮,ネコ回し車
 furn.furn_fac_wheel,캣휠,Cat Wheel,猫跑轮,ネコ回し車
 ui.shop.tab.furn,가구,Furniture,家具,家具
@@ -655,3 +655,55 @@ cafe.block.need,취향을 더 발견하거나(관찰) 새로운 가구를 설치
 quest.donetag,[완료],[Done],[完成],[達成]
 opt.lang,언어,Language,语言,言語
 lang.name,한국어,English,简体中文,日本語
+photo.btn,사진 (P),Photo (P),拍照 (P),写真 (P)
+photo.hint,방향키·드래그: 이동 · 휠: 확대 · Space: 찰칵,Arrows/drag: move · Wheel: zoom · Space: snap,方向键/拖动：移动 · 滚轮：缩放 · 空格：拍照,矢印・ドラッグ：移動 · ホイール：ズーム · Space：パシャ
+photo.shoot,찰칵! (Space),Snap! (Space),咔嚓！(空格),パシャ！(Space)
+photo.album,앨범,Album,相册,アルバム
+photo.exit,나가기 (Esc),Exit (Esc),退出 (Esc),やめる (Esc)
+photo.filter,필터,Filter,滤镜,フィルター
+photo.frame,프레임,Frame,相框,フレーム
+photo.filter.none,원본,Original,原图,そのまま
+photo.filter.warm,따뜻하게,Warm,暖色,あたたか
+photo.filter.sepia,옛날 사진,Vintage,老照片,セピア
+photo.filter.mono,흑백,B&W,黑白,モノクロ
+photo.filter.night,밤,Night,夜晚,夜
+photo.filter.film,필름,Film,胶片,フィルム
+photo.frame.polaroid,폴라로이드,Polaroid,拍立得,ポラロイド
+photo.frame.wood,나무 액자,Wood,木相框,木の額
+photo.frame.postcard,엽서,Postcard,明信片,ポストカード
+photo.frame.film,필름,Film strip,胶片,フィルム
+photo.frame.gold,금빛 액자,Gold,金色相框,金の額
+photo.frame.buy,{name} {g}G,{name} {g}G,{name} {g}G,{name} {g}G
+photo.frame.bought,{name} 프레임을 샀어요!,Got the {name} frame!,买下了{name}！,{name}を買いました！
+photo.stamp.on,날짜 도장 켬,Date: on,日期：开,日付：オン
+photo.stamp.off,날짜 도장 끔,Date: off,日期：关,日付：オフ
+photo.names.on,이름표 켬,Names: on,名字：开,名前：オン
+photo.names.off,이름표 끔,Names: off,名字：关,名前：オフ
+photo.retake,다시 찍기,Retake,重拍,撮り直す
+photo.save,앨범에 저장,Save to album,存入相册,アルバムに保存
+photo.saved,앨범에 저장했어요 ({n}/{cap}),Saved to album ({n}/{cap}),已存入相册（{n}/{cap}）,アルバムに保存しました（{n}/{cap}）
+photo.full,앨범이 가득 찼어요. 사진을 지우거나 칸을 늘려 주세요,Album is full. Delete a photo or add pages.,相册满了。删掉照片或扩充页数吧,アルバムがいっぱいです。写真を消すかページを増やしてね
+photo.album.title,앨범  {n}/{cap},Album  {n}/{cap},相册  {n}/{cap},アルバム  {n}/{cap}
+photo.album.empty,아직 사진이 없어요. 포토 모드(P)에서 찰칵!,No photos yet. Press P and snap away!,还没有照片。按P进入拍照模式吧！,まだ写真がありません。Pで撮影モードへ！
+photo.album.expand,칸 늘리기 +12 · {g}G,+12 pages · {g}G,扩充 +12 · {g}G,ページ追加 +12 · {g}G
+photo.album.max,앨범이 가장 커요,Album is at max size,相册已经最大了,アルバムは最大です
+photo.album.expanded,앨범이 {cap}칸이 됐어요!,Album now holds {cap} photos!,相册扩充到{cap}张了！,アルバムが{cap}枚になりました！
+photo.album.folder,폴더 열기,Open folder,打开文件夹,フォルダを開く
+photo.close,닫기,Close,关闭,閉じる
+photo.back,뒤로,Back,返回,戻る
+photo.hang,액자에 걸기 · {g}G,Hang it · {g}G,挂进相框 · {g}G,額に飾る · {g}G
+photo.hung,액자에 걸려 있어요,On the wall,已挂在墙上,飾ってあります
+photo.hang.noframe,벽에 '액자' 가구가 있어야 걸 수 있어요 (상점 → 가구),You need a Painting on the wall to hang photos (Shop → Furniture).,墙上要有【相框】家具才能挂（商店 → 家具）,壁に「額縁」がないと飾れません（ショップ → 家具）
+photo.hang.done,액자에 사진을 걸었어요! 찍힌 고양이가 오면 반응할지도…,Photo hung! The cats in it might react when they visit…,照片挂好啦！照片里的猫咪来了说不定会有反应…,写真を飾りました！写っているネコが来たら反応するかも…
+photo.delete,삭제,Delete,删除,削除
+photo.delete.confirm,한 번 더 누르면 삭제,Tap again to delete,再点一次就删除,もう一度押すと削除
+photo.deleted,사진을 지웠어요,Photo deleted,照片已删除,写真を消しました
+photo.react.affectionate,"어머, 이거 나다냥! 예쁘게 나왔다냥♥","Oh, that's me! I look so cute, meow♥",哎呀，这是我喵！拍得好可爱喵♥,あら、これワタシだニャ！かわいく撮れてるニャ♥
+photo.react.playful,나다! 나 찍혔다냥! 또 찍어 줘냥!,"It's me! I'm in a photo! Take another, meow!",是我！我被拍下来了喵！再拍一张喵！,ボクだ！写ってるニャ！もっと撮ってニャ！
+photo.react.curious,킁킁… 액자 속에 나랑 닮은 고양이가 있다냥?,Sniff… there's a cat in the frame who looks like me?,嗅嗅…相框里有只跟我很像的猫喵？,クンクン…額の中にボクそっくりのネコがいるニャ？
+photo.react.fickle,"흥, 잘 나왔네… 오늘은 봐 준다냥.","Hmph, not bad… I'll allow it today.",哼，拍得还行…今天就放过你喵。,ふん、悪くないニャ…今日は許してやるニャ。
+photo.react.shy,"…저, 저건 내 사진…? 부끄럽다냥…",…Th-that's my photo…? So embarrassing…,…那、那是我的照片…？好害羞喵…,…あ、あれはボクの写真…？はずかしいニャ…
+photo.react.grumpy,"누가 허락도 없이 걸어 놨냥. …뭐, 나쁘진 않다냥.",Who hung that without asking? …Fine. It's not bad.,谁没经过允许就挂上去了喵。…嘛，还不错喵。,勝手に飾ったのは誰ニャ。…まあ、悪くないニャ。
+q_photo,고양이 사진 2장 찍기,Take 2 photos of cats,拍2张猫咪照片,ネコの写真を2枚撮る
+q_photo_group,두 마리 이상 함께 찍기,Photograph 2+ cats together,拍下两只以上猫咪的合照,2匹以上いっしょに撮る
+q_photo_react,액자 속 자기 사진에 반응하는 고양이 보기,See a cat react to its framed photo,看到猫咪对相框里自己的照片有反应,額の自分の写真に反応するネコを見る

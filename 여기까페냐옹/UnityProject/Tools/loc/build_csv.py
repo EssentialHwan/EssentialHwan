@@ -15,7 +15,7 @@ for k,ko,en in rows:
     toks=lambda s:sorted(set(re.findall(r'\{\w+\}',s)))
     for lang,v in (('en',en),('zh',zh),('ja',ja)):
         if toks(v)!=toks(ko): tokbad.append((k,lang,toks(ko),toks(v)))
-    P=PATCH.get(k,{}); en=P.get('en',en); zh=P.get('zh',zh); ja=P.get('ja',ja)
+    P=PATCH.get(k,{}); ko=P.get('ko',ko); en=P.get('en',en); zh=P.get('zh',zh); ja=P.get('ja',ja)
     out.append([k,ko,en,zh,ja])
 for k,(e,zh,ja) in TR.items():
     if k not in keys: out.append([k,m4.KO_NEW[k],e,zh,ja])
@@ -23,5 +23,11 @@ extra=[k for k in TR if k not in keys and k not in m4.KO_NEW]
 print('patch-miss',[k for k in PATCH if k not in keys and k not in TR]); print('missing',missing); print('tokbad',tokbad); print('extra no ko',extra)
 print('quotes', [r[0] for r in out if any('"' in c for c in r)])
 print('jip-sa', [r[0] for r in out if '집사' in r[1]])
+NEW=load('tr7').NEW
+have={r[0] for r in out}
+for k,v in NEW.items():
+    if k in have: print('DUP',k); continue
+    out.append([k,*v])
+print('quotes2', [k for k,v in NEW.items() if any('"' in c for c in v)])
 buf=io.StringIO(); w=csv.writer(buf, lineterminator='\n'); w.writerow(['key','ko','en','zh','ja']); w.writerows(out)
 open('strings_new.csv','w',encoding='utf-8').write(buf.getvalue()); print(len(out))

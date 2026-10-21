@@ -19,6 +19,9 @@ namespace YeogiCafe.Save
         public int currentDay = 1;
         public int cafeLevel = 1;
         public List<PlacedFurnitureDTO> placedFurniture = new();
+        public List<PhotoDTO> photos = new();                // 포토 모드 앨범(파일은 persistentDataPath/Photos)
+        public List<string> photoFrames = new();             // 산 사진 프레임(폴라로이드는 기본)
+        public int albumCap = 12;                            // 앨범 칸 수(골드로 늘림)
         public List<string> unlockedMenuIds = new();
         public List<CatSaveData> cats = new();
         public List<string> completedEventIds = new();
@@ -85,6 +88,17 @@ namespace YeogiCafe.Save
         public int gridX, gridY;          // 플레이어가 옮긴 위치(1/100 유닛). hasPos일 때만 사용
         public int rotation;
         public bool hasPos;
+        public string photo;              // 벽 액자에 건 사진 파일 이름(없으면 그림)
+    }
+
+    [Serializable]
+    public class PhotoDTO
+    {
+        public string file;               // Photos 폴더 안 PNG 이름(프레임까지 꾸민 카드)
+        public string print;              // 벽 액자용 인화본(필터만, 테두리 없음)
+        public int day, weather;
+        public string frame, filter;
+        public List<string> cats = new(); // 찍힌 고양이(액자 반응·사진 의뢰)
     }
 
     [Serializable]

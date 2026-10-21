@@ -23,6 +23,10 @@ namespace YeogiCafe.Core
         public const string MouseCaught = "mouse_caught";  // 쥐를 잡음
         public const string MouseEscaped = "mouse_escaped"; // 쥐 소동(놓침)
         public const string ClosingPlay = "closing_play";  // 마감 놀아주기 완료
+        public const string Photo = "photo";               // 고양이가 찍힌 사진 저장
+        public const string PhotoGroup = "photo_group";    // 두 마리 이상 함께 찍힘
+        public const string PhotoHang = "photo_hang";      // 사진을 액자에 걺
+        public const string PhotoReact = "photo_react";    // 액자 속 자기 사진에 반응
         public const string Suckle = "suckle";             // 쭙쭙이 목격
 
         public static event Action<string, string> OnEvent;   // (eventId, catId)

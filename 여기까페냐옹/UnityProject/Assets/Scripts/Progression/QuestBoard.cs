@@ -32,8 +32,13 @@ namespace YeogiCafe.Progression
             new Template { id = "q_ambush", eventId = GameEvents.Ambush, goal = 1, reward = 30, available = (s, c) => Any(c, CatTemperament.IsKid) },
             new Template { id = "q_steal", eventId = GameEvents.Steal, goal = 1, reward = 30, available = (s, c) => Any(c, CatTemperament.IsBoss) },
             new Template { id = "q_guess", eventId = GameEvents.GuessCorrect, goal = 1, reward = 60, available = (s, c) => true },
+            // 사진 의뢰(포토 모드)
+            new Template { id = "q_photo", eventId = GameEvents.Photo, goal = 2, reward = 30, available = (s, c) => true },
+            new Template { id = "q_photo_group", eventId = GameEvents.PhotoGroup, goal = 1, reward = 40, available = (s, c) => c.Count >= 2 },
+            new Template { id = "q_photo_react", eventId = GameEvents.PhotoReact, goal = 1, reward = 50, available = (s, c) => HasHungPhoto(s) },
         };
 
+        static bool HasHungPhoto(SaveGame s) { foreach (var f in s.placedFurniture) if (!string.IsNullOrEmpty(f.photo)) return true; return false; }
         static bool HasRegular(SaveGame s) { foreach (var c in s.cats) if (c.regularStage >= 2) return true; return false; }
         static bool HasFriends(SaveGame s) { foreach (var r in s.relations) if (r.stage >= 2 || r.bond >= 2) return true; return false; }
 

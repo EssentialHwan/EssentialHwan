@@ -54,6 +54,7 @@ namespace YeogiCafe.UI
         public bool PawBusy(bool left) => distract != Distract.None && distractPaw == (left ? pawL : pawR);
 
         public bool IsOpen => open;
+        public bool Busy => open || (rootGo != null && rootGo.activeSelf);   // 열려 있거나 닫히는 중(카메라 이동 중)
 
         public KitchenView(GameUiController owner, Transform canvas, OrderSystem orders)
         {

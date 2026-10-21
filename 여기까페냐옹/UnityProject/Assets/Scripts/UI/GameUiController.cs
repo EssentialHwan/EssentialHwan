@@ -114,6 +114,7 @@ namespace YeogiCafe.UI
             catalog = new CatalogPanel(this, root.transform);
             editMode = new FurnitureEditMode(this, root.transform);
             guide = new TutorialGuide(this, root.transform);
+            photo = new PhotoMode(this);
 
             quests = new YeogiCafe.Progression.QuestBoard(() => Save,
                 () => Save != null ? (IReadOnlyList<CatData>)UnlockService.UnlockedCats(AllCats, Save) : AllCats);
@@ -219,6 +220,12 @@ namespace YeogiCafe.UI
             UiFactory.SetRect((RectTransform)optBtn.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
                               new Vector2(0, 0.5f), new Vector2(396, 0), new Vector2(64, 44));
             optBtn.onClick.AddListener(() => settings.Toggle());
+
+            // 포토 모드(P) — 오른쪽 아래 작은 버튼
+            var photoBtn = UiFactory.Button("PhotoBtn", parent, L.Get("photo.btn"), UiFactory.CreamDim, UiFactory.Ink, out var photoLbl);
+            photoLbl.fontSize = 17; photoLbl.horizontalOverflow = HorizontalWrapMode.Overflow;
+            UiFactory.SetRect((RectTransform)photoBtn.transform, new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0), new Vector2(-14, 14), new Vector2(132, 40));
+            photoBtn.onClick.AddListener(TryEnterPhoto);
 
             // (구) 하단 서술 텍스트는 고양이 머리 위 말풍선(BubbleLayer)으로 대체. 필드는 호환용으로 유지.
             narrationText = null;
@@ -371,6 +378,7 @@ namespace YeogiCafe.UI
             closing?.Tick(Time.unscaledDeltaTime);
             settings?.Tick();
             title?.Tick(Time.unscaledDeltaTime);
+            if (photo != null && photo.IsOpen) { photo.Tick(Time.unscaledDeltaTime); return; }   // 포토 모드: 다른 입력·HUD 멈춤
             if (Input.GetKeyDown(KeyCode.Escape) && opening == null && settings != null && (closing == null || !closing.IsOpen)) settings.Toggle();   // ESC = 설정
             // 단축키: C 도감 · B 구매 · K 주방 (영업 중 화면에서만)
             bool hotkeysOk = (title == null || !title.IsOpen) && (closing == null || !closing.IsOpen) && (settlement == null || !settlement.IsOpen)
@@ -378,6 +386,7 @@ namespace YeogiCafe.UI
             if (hotkeysOk && Input.GetKeyDown(KeyCode.C)) { shop.Hide(); catalog.Toggle(); }
             if (hotkeysOk && Input.GetKeyDown(KeyCode.B)) { catalog.Hide(); shop.Toggle(); }
             if (hotkeysOk && Input.GetKeyDown(KeyCode.K)) { shop.Hide(); catalog.Hide(); ToggleKitchen(); }
+            if (hotkeysOk && Input.GetKeyDown(KeyCode.P)) TryEnterPhoto();
             if (opening != null) { opening.Tick(Time.unscaledDeltaTime); return; }   // 오프닝 동안은 다른 입력·안내 멈춤
             editMode?.Tick(Time.unscaledDeltaTime);
             catalog?.Tick();
@@ -391,6 +400,8 @@ namespace YeogiCafe.UI
             if (day != null && timeBarFill != null && bootstrap != null && bootstrap.balance != null)
                 timeBarFill.fillAmount = HudFormatter.TimeProgress(day.DayTimer, bootstrap.balance.dayLength);
 
+            photoTimer -= Time.unscaledDeltaTime;
+            if (photoTimer <= 0f) { photoTimer = 2f; PhotoMode.RefreshFrames(this); PhotoReactions(); }
             bubbles?.Tick(Time.unscaledDeltaTime);
             if (toastCg != null && toastT > 0f) { toastT -= Time.unscaledDeltaTime; toastCg.alpha = Mathf.Clamp01(toastT / 0.5f); }
             if (toastCg != null && toastT <= 0.6f && toastQueue.Count > 0 && !ModalOpen) { toastT = 0f; ShowToast(toastQueue.Dequeue()); }
@@ -456,6 +467,55 @@ namespace YeogiCafe.UI
         public CatManager Cats => bootstrap != null ? bootstrap.cats : null;
         public YeogiCafe.Cafe.FurnitureManager Furniture => bootstrap != null ? bootstrap.furniture : null;
         public IReadOnlyList<FurnitureData> AllFurniture => bootstrap != null && bootstrap.allFurniture != null ? (IReadOnlyList<FurnitureData>)bootstrap.allFurniture : new List<FurnitureData>();
+
+        // ── 포토 모드 ──
+        PhotoMode photo;
+        float photoTimer;
+        readonly HashSet<string> photoReacted = new();
+        // 캔버스를 끄면 Graphic.canvas가 null이 되어 HUD 코드가 깨진다 → 투명·클릭 무시로만 숨긴다
+        public void SetMainUiVisible(bool v)
+        {
+            if (root == null) return;
+            var cg = root.GetComponent<CanvasGroup>(); if (cg == null) cg = root.gameObject.AddComponent<CanvasGroup>();
+            cg.alpha = v ? 1f : 0f; cg.blocksRaycasts = v; cg.interactable = v;
+        }
+        public bool PhotoOpen => photo != null && photo.IsOpen;
+
+        void TryEnterPhoto()
+        {
+            if (photo == null || photo.IsOpen || kitchen.Busy || opening != null) return;
+            shop.Hide(); catalog.Hide(); settings.Hide(); editMode.Exit();
+            if (questPanel != null) questPanel.SetActive(false);
+            photo.Enter();
+        }
+
+        // 벽 액자 속 자기 사진을 본 고양이의 반응(하루 한 번) — 성격이 드러나는 작은 단서
+        void PhotoReactions()
+        {
+            var s = Save; var cm = Cats; if (s == null || cm == null) return;
+            var hung = new HashSet<string>();
+            foreach (var f in s.placedFurniture)
+            {
+                if (string.IsNullOrEmpty(f.photo)) continue;
+                var p = s.photos.Find(x => x.file == f.photo);
+                if (p != null) foreach (var c in p.cats) hung.Add(c);
+            }
+            if (hung.Count == 0) return;
+            foreach (var b in cm.Active)
+            {
+                if (b == null || b.data == null || b.IsSpecialGuest) continue;
+                var st = b.State;
+                if (st != CatState.Sit && st != CatState.WaitFood && st != CatState.Eat && st != CatState.Idle && st != CatState.FacilityAction) continue;
+                string id = b.data.catId;
+                if (!hung.Contains(id)) continue;
+                string key = s.currentDay + ":" + id;
+                if (photoReacted.Contains(key) || Random.value > 0.35f) continue;
+                photoReacted.Add(key);
+                var style = YeogiCafe.AI.CatTemperament.Style(b.data);
+                ShowCatBubble(id, L.Get("photo.react." + style.ToString().ToLowerInvariant()));
+                GameEvents.Raise(GameEvents.PhotoReact, id);
+            }
+        }
 
         OpeningPanel opening;
         public bool OpeningOpen => opening != null;

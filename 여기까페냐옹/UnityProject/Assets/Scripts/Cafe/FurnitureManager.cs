@@ -49,6 +49,14 @@ namespace YeogiCafe.Cafe
         public const float SellRate = 0.5f;
         public static int SellPrice(FurnitureData d) => d == null ? 0 : Mathf.Max(10, Mathf.RoundToInt(d.price * SellRate / 10f) * 10);
         public enum SellFail { None, NotSellable, InUse, LastStarter }
+        // 벽 액자(사진을 걸 수 있는 가구) 목록 — 포토 모드
+        public const string PhotoFrameId = "furn_deco_frame";
+        public List<(GameObject go, PlacedFurnitureDTO dto)> PhotoFrames()
+        {
+            var list = new List<(GameObject, PlacedFurnitureDTO)>();
+            foreach (var it in items) if (it.go != null && it.dto != null && it.data != null && it.data.furnitureId == PhotoFrameId) list.Add((it.go, it.dto));
+            return list;
+        }
         public FurnitureData DataOf(GameObject go) { var it = items.Find(i => i.go == go); return it != null ? it.data : null; }
 
         // 기본 좌석: 0G에 팔 수 있지만 최소 1개는 남겨야 한다(3개 중 2개까지)
