@@ -507,7 +507,7 @@ namespace YeogiCafe.UI
             {
                 foreach (var m in cafe.GetAvailableMenus())
                 {
-                    if (m == null || !seen.Add(m.menuId)) continue;
+                    if (m == null || m.seasonal || !seen.Add(m.menuId)) continue;      // 한정 메뉴는 추리 보기에서 제외(정답이 될 수 없음)
                     list.Add(new Option { id = m.menuId, name = L.Get("menu." + m.menuId), icon = KitchenView.DishSprite(m.menuId), correct = CatTruth.IsFood(cat, m) });
                 }
             }

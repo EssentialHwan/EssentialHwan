@@ -66,6 +66,12 @@ namespace YeogiCafe.DevTools
                     }
                 }
                 if (GUILayout.Button("UI 전체 점검(현재 언어) → Build/uicheck")) { var ui = FindObjectOfType<YeogiCafe.UI.GameUiController>(); if (ui != null) { ui.DebugUiTour(); show = false; } }
+                if (GUILayout.Button("계절 넘기기(+7일)"))
+                {
+                    var f1 = FindObjectOfType<GameFlowController>();
+                    day.DebugSkipDays(YeogiCafe.Data.SeasonBook.DaysPerSeason);
+                    if (f1 != null && f1.Save != null) { f1.Save.currentDay = day.CurrentDay; f1.SyncMenus(); }
+                }
                 if (GUILayout.Button("엔딩 미리보기")) { var ui = FindObjectOfType<YeogiCafe.UI.GameUiController>(); if (ui != null) ui.DebugEnding(); }
                 var flow = FindObjectOfType<GameFlowController>();
                 if (flow != null && GUILayout.Button($"날씨 바꾸기 (지금: {Weather.Current})")) Weather.DebugCycle(flow.Save);

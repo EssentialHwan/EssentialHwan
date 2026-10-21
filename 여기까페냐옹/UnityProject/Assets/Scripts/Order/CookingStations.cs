@@ -28,6 +28,9 @@ namespace YeogiCafe.Order
             { "menu_fishcake", "tool_oven" },   { "menu_pudding", "tool_oven" },
             { "menu_tuna_sand", "tool_board" }, { "menu_parfait", "tool_board" },
             { "menu_grilled_fish", "tool_grill" }, { "menu_skewer", "tool_grill" },
+            // 계절 한정(SeasonBook)
+            { "menu_sakura_pudding", "tool_oven" }, { "menu_watermelon", "tool_board" },
+            { "menu_potato_latte", "tool_coffee" }, { "menu_taiyaki", "tool_oven" },
         };
 
         public static string NameKey(string toolId)
@@ -43,7 +46,7 @@ namespace YeogiCafe.Order
 
         public static IEnumerable<string> MenusFor(string toolId)
         {
-            foreach (var kv in menuToTool) if (kv.Value == toolId) yield return kv.Key;
+            foreach (var kv in menuToTool) if (kv.Value == toolId && !YeogiCafe.Data.SeasonBook.IsSeasonal(kv.Key)) yield return kv.Key;   // 기구 기본 메뉴 2개(한정 메뉴 제외)
         }
 
         public static string ToolFor(string menuId)

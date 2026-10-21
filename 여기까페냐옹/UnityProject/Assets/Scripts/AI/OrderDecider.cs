@@ -33,7 +33,11 @@ namespace YeogiCafe.AI
             }
 
             float r = Random.value;
-            if (cat.HasPersonality(PersonalityTag.Glutton) && r >= 0.6f && Random.value < 0.35f)
+            // 제철 한정 메뉴: 최애와 같은 맛 계열이면 가끔(20%) 먹어 본다 — 단서는 '천천히 먹음'(최애 아님)
+            MenuData season = null;
+            if (fav != null) foreach (var m in available) if (m != null && m.seasonal && SeasonBook.Likes(m, fav)) { season = m; break; }
+            if (season != null && Random.value < 0.2f) result.primary = season;
+            if (result.primary == null && cat.HasPersonality(PersonalityTag.Glutton) && r >= 0.6f && Random.value < 0.35f)
             {
                 var meals = available.Where(m => m.HasTag(FoodTag.Meal) && m != fav).ToList();
                 if (meals.Count > 0) result.primary = meals[Random.Range(0, meals.Count)];

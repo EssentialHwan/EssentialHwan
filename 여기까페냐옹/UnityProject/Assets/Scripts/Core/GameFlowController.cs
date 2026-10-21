@@ -84,6 +84,7 @@ namespace YeogiCafe.Core
 
             // 메뉴: 가진 주방 기구로 만들 수 있는 메뉴만 메뉴판에(기구당 2개, 업그레이드 단계는 별 확률에)
             allMenus = new List<MenuData>(cafe.GetAvailableMenus());
+            allMenus.RemoveAll(m => m == null || m.seasonal);   // 한정 메뉴는 SyncMenus가 계절마다 따로 붙인다
             YeogiCafe.Food.RecipeBook.Migrate(save);
             YeogiCafe.Visual.NyanPlaque.Ensure(save);           // 문 위 냥슐랭 명판
             SyncMenus();
@@ -111,7 +112,9 @@ namespace YeogiCafe.Core
         public void SyncMenus()
         {
             if (allMenus == null || save == null) return;
-            cafe.SetMenu(YeogiCafe.Food.RecipeBook.Available(allMenus, save));
+            var list = YeogiCafe.Food.RecipeBook.Available(allMenus, save);
+            foreach (var m in SeasonBook.Today(save, t => YeogiCafe.Food.RecipeBook.ToolOwned(save, t))) list.Add(m);   // 계절 한정
+            cafe.SetMenu(list);
         }
 
         void SyncSpawnerProgress()
@@ -209,6 +212,13 @@ namespace YeogiCafe.Core
             satisfaction += YeogiCafe.Food.RecipeBook.StarSatisfaction(brain.ServedMenu != null ? brain.ServedStars : 0)
                           + YeogiCafe.Food.NyanGuide.SatisfactionBonus(save.nyanStars)
                           + YeogiCafe.Food.FurnitureStars.Satisfaction(Mathf.Max(fseat, ffac));
+            // 인테리어 테마가 좋아하는 분위기면 + / 제철 한정 메뉴가 최애와 같은 맛 계열이면 +
+            if (ThemeBook.Matches(save.theme, data.atmospherePreference)) satisfaction += ThemeBook.Bonus;
+            if (brain.ServedMenu != null && brain.ServedMenu.seasonal && allMenus != null)
+            {
+                var fav = allMenus.Find(m => m != null && m.menuId == data.foodFavoriteMenuId);
+                if (SeasonBook.Likes(brain.ServedMenu, fav)) satisfaction += SeasonBook.Bonus;
+            }
             satisfaction = Mathf.Clamp(satisfaction, 0f, 100f);
 
             // 결제 (§3.4)
@@ -332,6 +342,7 @@ namespace YeogiCafe.Core
             save.currentDay = day.CurrentDay;
             if (saveManager != null) saveManager.Save(save);
             SyncSpawnerProgress();
+            SyncMenus();                                       // 계절이 바뀌면 한정 메뉴도 바뀐다
             day.StartDay();
         }
 

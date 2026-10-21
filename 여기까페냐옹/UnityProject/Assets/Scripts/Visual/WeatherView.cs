@@ -40,6 +40,12 @@ namespace YeogiCafe.Visual
             frame.sprite = RuntimeSprites.Get("glass_frame", GlassWindowDrawing.Frame);
         }
 
+        int Season()
+        {
+            if (day == null) day = FindObjectOfType<DayManager>();
+            return day != null ? YeogiCafe.Data.SeasonBook.Season(day.CurrentDay) : 1;
+        }
+
         int PhaseIndex()
         {
             if (day == null) day = FindObjectOfType<DayManager>();
@@ -56,12 +62,13 @@ namespace YeogiCafe.Visual
         void Update()
         {
             if (Weather.Current != shown) Apply(Weather.Current);
-            int key = (int)Weather.Current * 3 + PhaseIndex();
+            int season = Season();
+            int key = ((int)Weather.Current * 3 + PhaseIndex()) * 4 + season;
             if (outside != null && key != shownOutside)
             {
                 shownOutside = key;
                 int w = (int)Weather.Current, p = PhaseIndex();
-                outside.sprite = RuntimeSprites.Get($"glass_out_{w}_{p}", () => GlassWindowDrawing.Outside(w, p));
+                outside.sprite = RuntimeSprites.Get($"glass_out_{w}_{p}_{season}", () => GlassWindowDrawing.Outside(w, p, season));
             }
             if (Weather.Current != WeatherKind.Rain) return;
             float dt = Time.deltaTime;

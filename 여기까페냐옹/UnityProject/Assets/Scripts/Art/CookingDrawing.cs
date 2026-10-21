@@ -178,6 +178,34 @@ namespace YeogiCafe.Art
                     for (int i = 0; i < 3; i++) c.VLine(17 + i, 6 + i, 10 - i, PixelPalette.BlueMid);
                     for (int x = 7; x < 16; x += 3) c.VLine(x, 7, 9, PixelPalette.WoodDeep);
                     c.Set(5, 8, PixelPalette.Outline); break;
+                // ── 계절 한정 ──
+                case "menu_sakura_pudding":            // 봄: 분홍 푸딩 + 벚꽃 한 송이
+                    Plate(c);
+                    for (int y = 6; y <= 14; y++) { int h = 6 - (y - 6) / 3; c.HLine(12 - h, 11 + h, y, y > 12 ? PixelPalette.White : PixelPalette.PinkLight); }
+                    c.HLine(9, 14, 15, PixelPalette.PinkMid);
+                    c.Disc(12, 18, 2, PixelPalette.PinkLight); c.Set(12, 18, PixelPalette.White);
+                    c.Set(10, 18, PixelPalette.PinkMid); c.Set(14, 18, PixelPalette.PinkMid); c.Set(12, 20, PixelPalette.PinkMid); c.Set(12, 16, PixelPalette.PinkMid);
+                    break;
+                case "menu_watermelon":                // 여름: 수박 셔벗(유리잔 + 빨간 셔벗 + 수박 조각)
+                    for (int y = 3; y <= 11; y++) { int h = 3 + (y - 3) / 2; c.HLine(12 - h, 11 + h, y, PixelPalette.SkyLow); }
+                    c.VLine(11, 1, 3, PixelPalette.SkyLow); c.VLine(12, 1, 3, PixelPalette.SkyLow); c.HLine(8, 15, 1, PixelPalette.SkyLow);
+                    c.Disc(10, 13, 3, PixelPalette.PinkMid); c.Disc(14, 13, 3, PixelPalette.PinkDark);
+                    c.Set(9, 13, PixelPalette.Outline); c.Set(14, 14, PixelPalette.Outline);
+                    for (int i = 0; i < 6; i++) c.HLine(15 + i / 2, 20 - i / 3, 15 + i, i == 0 ? PixelPalette.GreenDark : i == 1 ? PixelPalette.White : PixelPalette.PinkMid);   // 조각
+                    break;
+                case "menu_potato_latte":              // 가을: 군고구마 라떼(주황빛 라떼 + 보라 고구마 조각)
+                    Cup(c, PixelPalette.White, PixelPalette.YellowDark);
+                    c.HLine(11, 13, 12, PixelPalette.White);
+                    c.FillRoundRect(1, 3, 5, 5, 1, PixelPalette.LilacDark); c.Set(3, 4, PixelPalette.YellowLight);
+                    break;
+                case "menu_taiyaki":                   // 겨울: 생선 붕어빵
+                    Plate(c);
+                    c.FillRoundRect(4, 6, 15, 13, 3, PixelPalette.YellowDark);
+                    for (int i = 0; i < 4; i++) c.VLine(16 + i, 7 + i, 12 - i, PixelPalette.YellowDark);   // 꼬리
+                    c.HLine(17, 19, 13, PixelPalette.YellowDark); c.HLine(17, 19, 6, PixelPalette.YellowDark);
+                    for (int x = 8; x < 15; x += 3) { c.Set(x, 10, PixelPalette.WoodMid); c.Set(x + 1, 8, PixelPalette.WoodMid); }   // 비늘
+                    c.Set(6, 10, PixelPalette.Outline); c.HLine(4, 6, 8, PixelPalette.WoodMid);
+                    break;
                 default:
                     Plate(c); break;
             }

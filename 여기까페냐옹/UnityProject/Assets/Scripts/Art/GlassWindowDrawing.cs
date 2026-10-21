@@ -19,7 +19,10 @@ namespace YeogiCafe.Art
         static Color32 Mul(Color32 c, float k) => new Color32((byte)Mathf.Clamp(c.r * k, 0, 255), (byte)Mathf.Clamp(c.g * k, 0, 255), (byte)Mathf.Clamp(c.b * k, 0, 255), c.a);
 
         // weather: 0 맑음, 1 흐림, 2 비 / phase: 0 아침, 1 점심, 2 저녁
-        public static PixelCanvas Outside(int weather, int phase)
+        public static PixelCanvas Outside(int weather, int phase) => Outside(weather, phase, 1);
+
+        // season: 0 봄(벚꽃) 1 여름(초록) 2 가을(단풍) 3 겨울(눈)
+        public static PixelCanvas Outside(int weather, int phase, int season)
         {
             var c = new PixelCanvas(GW, GH);
             var rng = new System.Random(7);
@@ -81,6 +84,12 @@ namespace YeogiCafe.Art
                 if (hi % 2 == 0)
                     for (int k = 0; k <= w / 2 + 2; k++) c.HLine(bx - 2 + k, bx + w + 1 - k, baseY + h + 1 + k / 2, roof);
                 else c.FillRect(bx - 1, baseY + h + 1, bx + w, baseY + h + 3, roof);
+                if (season == 3)                                       // 겨울: 지붕 위 눈
+                {
+                    int ry = hi % 2 == 0 ? baseY + h + 1 + (w / 2 + 2) / 2 : baseY + h + 3;
+                    c.HLine(bx + (hi % 2 == 0 ? w / 2 - 3 : -1), bx + (hi % 2 == 0 ? w / 2 + 3 : w), ry, C(248, 250, 255));
+                    if (hi % 2 != 0) c.HLine(bx - 1, bx + w, ry + 1, C(236, 242, 250));
+                }
                 // 창문들
                 for (int wy = baseY + 6; wy < baseY + h - 4; wy += 9)
                     for (int wx = bx + 4; wx < bx + w - 6; wx += 9)
@@ -99,12 +108,12 @@ namespace YeogiCafe.Art
                 }
                 bx += w + rng.Next(2, 6);
                 // 집 사이 가로수
-                if (rng.NextDouble() < 0.55 && bx < GW) { Tree(c, bx - 2, baseY, weather, phase); }
+                if (rng.NextDouble() < 0.55 && bx < GW) { Tree(c, bx - 2, baseY, weather, phase, season); }
             }
 
             // ── 길·보도 ──
             var road = weather == 2 ? C(70, 74, 86) : C(128, 126, 132);
-            var walk = weather == 2 ? C(120, 122, 134) : C(206, 196, 184);
+            var walk = weather == 2 ? C(120, 122, 134) : season == 3 ? C(232, 236, 244) : C(206, 196, 184);
             c.FillRect(0, 9, GW - 1, baseY - 1, road);
             for (int x = 6; x < GW; x += 22) c.HLine(x, x + 9, 15, weather == 2 ? C(170, 170, 160) : C(240, 232, 200));   // 차선
             c.FillRect(0, 0, GW - 1, 8, walk);
@@ -118,6 +127,14 @@ namespace YeogiCafe.Art
                 c.FillRect(x - 2, 31, x + 2, 33, lamp);
                 if (lights) for (int r = 1; r < 6; r++) { c.Blend(x - r, 32, C(255, 226, 150, 60)); c.Blend(x + r, 32, C(255, 226, 150, 60)); }
             }
+
+            // ── 계절 소품: 봄 꽃잎 · 가을 낙엽 · 겨울 눈송이 ──
+            if (season == 0 && weather != 2)
+                for (int i = 0; i < 26; i++) { int x = rng.Next(0, GW), y = rng.Next(10, GH); c.Set(x, y, C(255, 206, 222)); if (i % 3 == 0) c.Set(x + 1, y, C(248, 180, 200)); }
+            if (season == 2)
+                for (int i = 0; i < 22; i++) { int x = rng.Next(0, GW), y = rng.Next(0, 8); c.Set(x, y, i % 2 == 0 ? C(222, 128, 60) : C(200, 92, 54)); }
+            if (season == 3 && weather != 2)
+                for (int i = 0; i < 40; i++) { int x = rng.Next(0, GW), y = rng.Next(10, GH); c.Set(x, y, C(255, 255, 255)); }
 
             // ── 비: 물웅덩이 반사 + 안개 ──
             if (weather == 2)
@@ -147,11 +164,23 @@ namespace YeogiCafe.Art
             c.HLine(x - s + 1, x + 3 * s - 1, y - s + 1, shade);
         }
 
-        static void Tree(PixelCanvas c, int x, int y, int weather, int phase)
+        static void Tree(PixelCanvas c, int x, int y, int weather, int phase, int season = 1)
         {
-            var leaf = weather == 2 ? new Color32(84, 120, 96, 255) : phase == 2 ? new Color32(140, 150, 96, 255) : new Color32(122, 178, 108, 255);
-            var leafL = Mul(leaf, 1.18f);
-            c.VLine(x, y, y + 9, new Color32(120, 88, 70, 255));
+            var trunk = new Color32(120, 88, 70, 255);
+            if (season == 3)                                            // 겨울: 앙상한 가지 + 눈
+            {
+                c.VLine(x, y, y + 15, trunk);
+                c.Set(x - 1, y + 10, trunk); c.Set(x - 2, y + 11, trunk); c.Set(x + 1, y + 12, trunk); c.Set(x + 2, y + 13, trunk);
+                c.Set(x - 2, y + 12, new Color32(248, 250, 255, 255)); c.Set(x + 2, y + 14, new Color32(248, 250, 255, 255)); c.Set(x, y + 16, new Color32(248, 250, 255, 255));
+                return;
+            }
+            Color32 leaf = season == 0 ? new Color32(244, 186, 204, 255)        // 봄: 벚꽃
+                         : season == 2 ? new Color32(224, 134, 66, 255)         // 가을: 단풍
+                         : new Color32(122, 178, 108, 255);
+            if (weather == 2) leaf = Mul(leaf, 0.72f);
+            else if (phase == 2) leaf = Lerp(leaf, new Color32(170, 130, 96, 255), 0.25f);
+            var leafL = Mul(leaf, 1.12f);
+            c.VLine(x, y, y + 9, trunk);
             c.Disc(x, y + 14, 6, leaf); c.Disc(x - 2, y + 16, 3, leafL);
         }
 

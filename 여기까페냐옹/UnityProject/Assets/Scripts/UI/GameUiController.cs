@@ -403,7 +403,11 @@ namespace YeogiCafe.UI
                 timeBarFill.fillAmount = HudFormatter.TimeProgress(day.DayTimer, bootstrap.balance.dayLength);
 
             photoTimer -= Time.unscaledDeltaTime;
-            if (photoTimer <= 0f) { photoTimer = 2f; PhotoMode.RefreshFrames(this); PhotoReactions(); }
+            if (photoTimer <= 0f)
+            {
+                photoTimer = 2f; PhotoMode.RefreshFrames(this); PhotoReactions();
+                if (Save != null) { YeogiCafe.Visual.ThemeView.Apply(Save.theme); ThemeReactions(); SeasonNotice(); }
+            }
             bubbles?.Tick(Time.unscaledDeltaTime);
             if (toastCg != null && toastT > 0f) { toastT -= Time.unscaledDeltaTime; toastCg.alpha = Mathf.Clamp01(toastT / 0.5f); }
             if (toastCg != null && toastT <= 0.6f && toastQueue.Count > 0 && !ModalOpen) { toastT = 0f; ShowToast(toastQueue.Dequeue()); }
@@ -429,7 +433,7 @@ namespace YeogiCafe.UI
         {
             if (goldText != null && economy != null) goldText.text = HudFormatter.Gold(economy.Gold);
             if (phaseText != null && day != null)
-                phaseText.text = L.Get("ui.cafe.day", ("n", day.CurrentDay.ToString())) + "  " + HudFormatter.Phase(day.Phase)
+                phaseText.text = L.Get("season." + SeasonBook.Season(day.CurrentDay)) + " " + L.Get("ui.cafe.day", ("n", day.CurrentDay.ToString())) + "  " + HudFormatter.Phase(day.Phase)
                                  + "  " + L.Get("weather." + (int)Weather.Current);
             if (guestText != null && cafe != null)
             {
@@ -494,6 +498,36 @@ namespace YeogiCafe.UI
             shop.Hide(); catalog.Hide(); settings.Hide(); editMode.Exit();
             if (questPanel != null) questPanel.SetActive(false);
             photo.Enter();
+        }
+
+        // 인테리어 테마가 좋아하는 분위기인 고양이: 하루 한 번 말풍선(분위기 취향 단서)
+        readonly HashSet<string> themeReacted = new();
+        void ThemeReactions()
+        {
+            var s = Save; var cm = Cats; if (s == null || cm == null || ThemeBook.Get(s.theme).none) return;
+            foreach (var b in cm.Active)
+            {
+                if (b == null || b.data == null || b.IsSpecialGuest) continue;
+                var st = b.State;
+                if (st != CatState.Sit && st != CatState.WaitFood && st != CatState.Idle) continue;
+                if (!ThemeBook.Matches(s.theme, b.data.atmospherePreference)) continue;
+                string key = s.currentDay + ":" + s.theme + ":" + b.data.catId;
+                if (themeReacted.Contains(key) || Random.value > 0.3f) continue;
+                themeReacted.Add(key);
+                ShowCatBubble(b.data.catId, L.Get("theme.react." + Random.Range(1, 4)));
+            }
+        }
+
+        // 계절이 바뀐 아침: 알림 한 번
+        int seasonShown = -1;
+        void SeasonNotice()
+        {
+            var s = Save; if (s == null || (title != null && title.IsOpen)) return;
+            int season = SeasonBook.Season(s.currentDay);
+            if (seasonShown == -1) { seasonShown = season; return; }      // 켜자마자는 알리지 않음
+            if (season == seasonShown) return;
+            seasonShown = season;
+            ShowToast(L.Get("season.toast." + season));
         }
 
         // 벽 액자 속 자기 사진을 본 고양이의 반응(하루 한 번) — 성격이 드러나는 작은 단서
@@ -667,6 +701,38 @@ namespace YeogiCafe.UI
             s.ownedTools.Add(toolId);
             flow.SyncMenus();
             msg = L.Get("ui.tool.bought", ("tool", L.Get(YeogiCafe.Order.CookingStations.NameKey(toolId))));
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
+            RefreshHud();
+            return true;
+        }
+
+        // ── 인테리어 테마 · 계절 한정 메뉴 ──
+        public bool TryTheme(string id, out string msg)
+        {
+            msg = null; var s = Save; if (s == null || economy == null) return false;
+            var t = ThemeBook.Get(id);
+            bool own = t.price == 0 || s.themesOwned.Contains(id);
+            if (!own)
+            {
+                if (!economy.TrySpend(t.price)) { msg = L.Get("ui.shop.insufficient"); return false; }
+                s.themesOwned.Add(id);
+                YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
+            }
+            s.theme = id;
+            YeogiCafe.Visual.ThemeView.Apply(id);
+            msg = L.Get("ui.theme.changed", ("name", L.Get("theme." + id)));
+            RefreshHud();
+            return true;
+        }
+
+        public bool TryResearchSeasonal(string menuId, out string msg)
+        {
+            msg = null; var s = Save; if (s == null || economy == null) return false;
+            var def = SeasonBook.Get(menuId); if (def == null || s.seasonResearched.Contains(menuId)) return false;
+            if (!economy.TrySpend(def.Value.research)) { msg = L.Get("ui.shop.insufficient"); return false; }
+            s.seasonResearched.Add(menuId);
+            flow.SyncMenus();
+            msg = L.Get("ui.season.learned", ("menu", L.Get("menu." + menuId)), ("season", L.Get("season." + def.Value.season)));
             YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
             RefreshHud();
             return true;
