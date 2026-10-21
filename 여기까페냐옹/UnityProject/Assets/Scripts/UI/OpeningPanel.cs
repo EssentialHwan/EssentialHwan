@@ -128,7 +128,15 @@ namespace YeogiCafe.UI
             if (art != null)
             {
                 var tex = new Texture2D(2, 2) { filterMode = FilterMode.Point };
-                if (tex.LoadImage(art.bytes)) { Img(Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f)), Vector2.zero, Vector2.one, Color.white, true); return; }
+                if (tex.LoadImage(art.bytes))
+                {
+                    // 액자를 꽉 채우고 넘치는 가장자리는 잘라 낸다(3:2 그림 → 16:9 액자)
+                    var im = Img(Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f)), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Color.white, false);
+                    var fit = im.gameObject.AddComponent<AspectRatioFitter>();
+                    fit.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+                    fit.aspectRatio = tex.width / (float)tex.height;
+                    return;
+                }
             }
             var town = RuntimeSprites.Get("title_bg", TitleDrawing.Background);
             switch (i)
