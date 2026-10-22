@@ -42,8 +42,8 @@ namespace YeogiCafe.Core
 
             // 이어하기 복원: 골드·일차·배치 가구. (이전엔 관찰 기록만 남고 골드/가구가 초기화되던 문제)
             economy.cfg = cfg; economy.Init();
-            if (save.initialized) economy.RestoreGold(save.gold);
-            else { save.initialized = true; save.gold = economy.Gold; }
+            if (save.initialized) economy.RestoreGold(Mathf.Max(0, save.gold));   // 예전 규칙(빚 이월)으로 남은 마이너스는 0으로
+            else { save.initialized = true; save.gold = economy.Gold; if (saveManager != null) saveManager.Save(save); }   // 1일차 아침 저장본
             economy.OnGoldChanged += g => save.gold = g;
             day.RestoreDay(save.currentDay);
             cats.obs = obs;
@@ -346,14 +346,24 @@ namespace YeogiCafe.Core
             day.StartDay();
         }
 
-        // 창 닫기·게임 종료: 영업 중이면 구매·판매·배치·업그레이드는 남기고 오늘 번 돈(매출)과 재료비만 되돌려 저장한다.
-        // 다시 켜면 그날 아침부터 다시 영업(같은 날을 반복해 돈을 불리는 건 막는다).
+        // 저장은 하루 단위(장르 표준): 정산이 끝나면 저장하고, 다음 날 아침에 한 번 더 저장한다.
+        // 영업 중에 끄면 디스크의 '오늘 아침' 저장본을 그대로 둔다 → 다시 켜면 그날 아침부터(번 돈·산 것·관찰 모두 되돌아감).
+        // 예외: 찍은 사진은 남긴다(사진 파일은 이미 저장돼 있고, 지워지면 억울하다).
+        public bool InBusiness => save != null && save.initialized && save.settledDay != save.currentDay;
+        public bool HasProgressToday => InBusiness && day != null && day.DayTimer > 1f;
+
         public void SaveOnQuit()
         {
             if (saveManager == null || save == null || !save.initialized) return;
-            if (save.settledDay != save.currentDay && economy != null)
-                save.gold = economy.Gold - economy.TodayRevenue + economy.TodayCost;   // 오늘 번 돈을 이미 썼으면 마이너스(빚)로 남김
-            saveManager.Save(save);
+            if (!InBusiness) { saveManager.Save(save); return; }      // 정산 이후(구매·기록 포함) 그대로 저장
+            var disk = saveManager.LoadDisk();
+            if (disk == null) return;
+            // 사진만 옮겨 적기: 오늘 찍은 사진 추가, 오늘 지운 사진(파일 없음) 정리
+            disk.photos.RemoveAll(p => p == null || !System.IO.File.Exists(System.IO.Path.Combine(YeogiCafe.UI.PhotoKit.Dir, p.file)));
+            foreach (var p in save.photos)
+                if (p != null && !disk.photos.Exists(x => x.file == p.file)) disk.photos.Add(p);
+            if (disk.photos.Count > disk.albumCap) disk.albumCap = disk.photos.Count;
+            saveManager.Save(disk);
         }
         bool quitSaved;
         void OnApplicationQuit() { if (quitSaved) return; quitSaved = true; SaveOnQuit(); }

@@ -30,6 +30,14 @@ namespace YeogiCafe.Save
             return new SaveGame();
         }
 
+        // 디스크에 있는 마지막 저장본(오늘 아침 상태). 없으면 null.
+        public SaveGame LoadDisk()
+        {
+            try { if (File.Exists(Path)) { var sg = JsonUtility.FromJson<SaveGame>(File.ReadAllText(Path)); if (sg != null) return Migrate(sg); } }
+            catch (System.Exception e) { Debug.LogWarning($"[SaveManager] disk read failed: {e.Message}"); }
+            return null;
+        }
+
         public void Save(SaveGame save)
         {
             try

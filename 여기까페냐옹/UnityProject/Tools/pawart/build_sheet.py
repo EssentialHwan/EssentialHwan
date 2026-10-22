@@ -20,9 +20,10 @@ def extract(path, minarea=2000):
         if area<minarea: continue
         piece=a[sl].copy().astype(np.uint8); m=(lab2[sl]==i)
         piece[...,3]=np.where(m,255,0)
-        out.append((xs.start, Image.fromarray(piece,'RGBA')))
-    out.sort(key=lambda t:t[0])
-    return [p for _,p in out]
+        out.append(((ys.start+ys.stop)/2, xs.start, Image.fromarray(piece,'RGBA')))
+    H=a.shape[0]; rows=max(1,round(H/400)) if H>600 else 1
+    out.sort(key=lambda t:(int(t[0]/(H/rows)), t[1]))     # 줄(위→아래) 다음 왼쪽→오른쪽
+    return [p for _,_,p in out]
 
 def forearm(p):
     a=np.array(p)[...,3]>0
@@ -42,9 +43,10 @@ def place(p, target_w, scale_extra=1.0):
     cell.alpha_composite(q,(max(-q.width,x),y)) if x>=0 else cell.paste(q,(x,y),q)
     return cell
 
-back=extract('back4.png',800)
+grid=extract('orig_grid.png',3000)          # 원본 4x3(고화질): 1줄 손등 4 · 2줄 1번 손바닥 · 3줄 3번 손바닥
+back=grid[0:4]
 gro=extract('groom3.png',20000)
-pa=extract('palmA.png',500)[0]; pb=extract('palmB.png',500)[0]
+pa=grid[4]; pb=grid[10]
 print(len(back),len(gro))
 TW=118   # 팔뚝 폭(칸 258 중) — 예전 시트와 비슷한 화면 크기
 cells=[place(b,TW) for b in back[:4]]

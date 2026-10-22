@@ -280,9 +280,11 @@ namespace YeogiCafe.UI
         bool ModalOpen => (shop != null && shop.IsOpen) || (catalog != null && catalog.IsOpen) || (settings != null && settings.IsOpen)
                           || (closing != null && closing.IsOpen) || (settlement != null && settlement.IsOpen);
 
-        public void ShowToast(string text)
+        public void ShowToast(string text) => ShowToast(text, false);
+        // force: 창이 열려 있어도 바로(설정 창 안에서 누른 버튼의 안내 등)
+        public void ShowToast(string text, bool force)
         {
-            if ((toastCg != null && toastT > 0.6f) || ModalOpen) { toastQueue.Enqueue(text); return; }   // 앞 알림이 끝나면 / 창이 닫히면 차례로
+            if (!force && ((toastCg != null && toastT > 0.6f) || ModalOpen)) { toastQueue.Enqueue(text); return; }   // 앞 알림이 끝나면 / 창이 닫히면 차례로
             if (toastText == null)
             {
                 var bg = UiFactory.Panel("Toast", root.transform, new Color(1f, 0.98f, 0.93f, 0.97f));
