@@ -33,7 +33,10 @@ namespace YeogiCafe.Tests
             Assert.IsFalse(u.IsMet(save));
             save.GetOrCreateCat("a").visitCount = 1;
             save.GetOrCreateCat("b").visitCount = 3;
-            Assert.IsTrue(u.IsMet(save), "발견 2마리 → 해금");
+            Assert.IsFalse(u.IsMet(save), "방문만으로는 '발견' 아님(취향 1축 이상 기록해야 발견)");
+            save.GetOrCreateCat("a").observation.food.state = ObsState.Recorded;
+            save.GetOrCreateCat("b").observation.seat.state = ObsState.Recorded;
+            Assert.IsTrue(u.IsMet(save), "취향 기록 2마리 → 해금");
         }
 
         [Test]

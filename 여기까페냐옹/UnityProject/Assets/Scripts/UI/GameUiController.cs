@@ -431,7 +431,11 @@ namespace YeogiCafe.UI
 
         public void RefreshHud()
         {
-            if (goldText != null && economy != null) goldText.text = HudFormatter.Gold(economy.Gold);
+            if (goldText != null && economy != null)
+            {
+                goldText.text = HudFormatter.Gold(economy.Gold);
+                goldText.color = economy.Gold < 0 ? UiFactory.PinkDeep : UiFactory.Ink;   // 빚(영업 중 종료로 되돌린 매출을 이미 쓴 경우)
+            }
             if (phaseText != null && day != null)
                 phaseText.text = L.Get("season." + SeasonBook.Season(day.CurrentDay)) + " " + L.Get("ui.cafe.day", ("n", day.CurrentDay.ToString())) + "  " + HudFormatter.Phase(day.Phase)
                                  + "  " + L.Get("weather." + (int)Weather.Current);

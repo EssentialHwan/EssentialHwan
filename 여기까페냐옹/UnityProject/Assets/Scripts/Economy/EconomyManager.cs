@@ -21,6 +21,10 @@ namespace YeogiCafe.Economy
         // 이어하기: 저장된 잔액 복원(매출 집계에는 포함하지 않음)
         public void SetGold(int amount) { Gold = Mathf.Max(0, amount); OnGoldChanged?.Invoke(Gold); }
 
+        // 이어하기 전용: 영업 중 종료로 '오늘 번 돈'을 되돌렸는데 그 돈을 이미 썼다면 잔액이 마이너스로 남는다(빚).
+        // 0으로 막으면 '벌고→사고→끄고→같은 날 다시 벌기'로 공짜 구매가 되므로 빚을 그대로 들고 온다.
+        public void RestoreGold(int amount) { Gold = amount; OnGoldChanged?.Invoke(Gold); }
+
         public void AddGold(int amount)
         {
             Gold += amount;
@@ -52,7 +56,7 @@ namespace YeogiCafe.Economy
         {
             TodayCost += cost;
             int before = Gold;
-            Gold = Mathf.Max(0, Gold - cost);
+            Gold = Gold >= cost ? Gold - cost : Mathf.Min(Gold, 0);      // 모자라면 0까지만, 빚(마이너스)은 그대로
             OnGoldChanged?.Invoke(Gold);
             if (before != Gold) OnGoldDelta?.Invoke(Gold - before);
         }

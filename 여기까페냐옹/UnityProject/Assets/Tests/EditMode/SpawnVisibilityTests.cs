@@ -10,11 +10,11 @@ namespace YeogiCafe.Tests
     public class SpawnVisibilityTests
     {
         [Test]
-        public void DayManager_DefaultSpeed_IsBoosted()
+        public void DayManager_DefaultSpeed_IsNormal()
         {
             var go = new GameObject("day");
             var day = go.AddComponent<DayManager>();
-            Assert.GreaterOrEqual(day.speed, 2f, "체감 개선을 위해 기본 배속은 2x 이상이어야");
+            Assert.AreEqual(1f, day.speed, "기본은 1배속(하루 6분) — 2x/3x는 설정에서");
         }
 
         [Test]

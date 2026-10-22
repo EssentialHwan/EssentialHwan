@@ -42,7 +42,7 @@ namespace YeogiCafe.Core
 
             // 이어하기 복원: 골드·일차·배치 가구. (이전엔 관찰 기록만 남고 골드/가구가 초기화되던 문제)
             economy.cfg = cfg; economy.Init();
-            if (save.initialized) economy.SetGold(save.gold);
+            if (save.initialized) economy.RestoreGold(save.gold);
             else { save.initialized = true; save.gold = economy.Gold; }
             economy.OnGoldChanged += g => save.gold = g;
             day.RestoreDay(save.currentDay);
@@ -352,7 +352,7 @@ namespace YeogiCafe.Core
         {
             if (saveManager == null || save == null || !save.initialized) return;
             if (save.settledDay != save.currentDay && economy != null)
-                save.gold = Mathf.Max(0, economy.Gold - economy.TodayRevenue + economy.TodayCost);
+                save.gold = economy.Gold - economy.TodayRevenue + economy.TodayCost;   // 오늘 번 돈을 이미 썼으면 마이너스(빚)로 남김
             saveManager.Save(save);
         }
         bool quitSaved;

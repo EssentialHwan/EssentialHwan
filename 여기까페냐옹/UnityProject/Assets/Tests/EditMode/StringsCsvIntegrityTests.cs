@@ -40,7 +40,7 @@ namespace YeogiCafe.Tests
             Assert.IsTrue(L.Get("ui.discover.toast", ("name", "치즈냥")).Contains("치즈냥"));
 
             L.Current = Language.En;
-            Assert.AreEqual("Tonight's Cat Journal", L.Get("ui.settle.title"));
+            Assert.AreEqual("Tonight's Notes", L.Get("ui.settle.title"));
             L.Current = Language.Zh;
             Assert.AreEqual("芝士喵", L.Get("cat.cat_cheese.name"));
             L.Current = Language.Ja;

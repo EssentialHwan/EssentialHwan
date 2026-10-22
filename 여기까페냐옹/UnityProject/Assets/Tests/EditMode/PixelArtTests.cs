@@ -74,8 +74,8 @@ namespace YeogiCafe.Tests
             Assert.AreEqual(18, pieces.Count, "가구 18종");
             foreach (var c in pieces)
             {
-                // 기본 32×32. 캣타워(32×48)·러그(64×24)처럼 큰 가구는 8px 격자 배수만 허용(PPU 32 정렬).
-                Assert.AreEqual(0, c.W % 8, "가로 8px 배수"); Assert.AreEqual(0, c.H % 8, "세로 8px 배수");
+                // 가로는 8px 격자 배수(바닥 칸 정렬). 세로는 바닥 기준 피벗이라 짝수면 된다(스크래처 32×46처럼 키 큰 가구 허용).
+                Assert.AreEqual(0, c.W % 8, "가로 8px 배수"); Assert.AreEqual(0, c.H % 2, "세로 짝수");
                 Assert.That(c.W, Is.InRange(32, 64)); Assert.That(c.H, Is.InRange(24, 48));
                 Assert.Greater(CountOpaque(c), 40, "가구 스프라이트가 비어있으면 안 됨");
             }

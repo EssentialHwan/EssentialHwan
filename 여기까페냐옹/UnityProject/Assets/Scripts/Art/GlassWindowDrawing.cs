@@ -84,11 +84,22 @@ namespace YeogiCafe.Art
                 if (hi % 2 == 0)
                     for (int k = 0; k <= w / 2 + 2; k++) c.HLine(bx - 2 + k, bx + w + 1 - k, baseY + h + 1 + k / 2, roof);
                 else c.FillRect(bx - 1, baseY + h + 1, bx + w, baseY + h + 3, roof);
-                if (season == 3)                                       // 겨울: 지붕 위 눈
+                if (season == 3)                                       // 겨울: 지붕을 눈이 덮는다(처마 한 줄만 기와색, 그늘진 오른쪽은 푸른 회색)
                 {
-                    int ry = hi % 2 == 0 ? baseY + h + 1 + (w / 2 + 2) / 2 : baseY + h + 3;
-                    c.HLine(bx + (hi % 2 == 0 ? w / 2 - 3 : -1), bx + (hi % 2 == 0 ? w / 2 + 3 : w), ry, C(248, 250, 255));
-                    if (hi % 2 != 0) c.HLine(bx - 1, bx + w, ry + 1, C(236, 242, 250));
+                    var snow = weather == 2 ? C(196, 202, 216) : phase == 2 ? C(226, 222, 240) : C(248, 250, 255);
+                    var shade = Mul(snow, 0.86f);
+                    if (hi % 2 == 0)
+                        for (int k = 1; k <= w / 2 + 2; k++)
+                        {
+                            int x0 = bx - 2 + k, x1 = bx + w + 1 - k, y = baseY + h + 1 + k / 2, mid = (x0 + x1) / 2;
+                            c.HLine(x0, mid, y, snow);
+                            if (x1 > mid) c.HLine(mid + 1, x1, y, shade);
+                        }
+                    else
+                    {
+                        c.FillRect(bx - 1, baseY + h + 2, bx + w, baseY + h + 4, snow);
+                        for (int x = bx; x < bx + w; x += 5) c.Set(x, baseY + h + 1, snow);   // 처마에 매달린 눈
+                    }
                 }
                 // 창문들
                 for (int wy = baseY + 6; wy < baseY + h - 4; wy += 9)

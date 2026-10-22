@@ -29,7 +29,9 @@ namespace YeogiCafe.AI
             foreach (var m in available)
             {
                 if (m == fav) continue;
-                if (fav != null && SharesAnyTag(m, fav)) related.Add(m); else others.Add(m);
+                // 최애가 메뉴판에 없으면(미연구·미해금) 고양이의 선호 맛 계열로 대신 묶는다 — 그래야 계열 단서가 끊기지 않음
+                bool rel = fav != null ? SharesAnyTag(m, fav) : PrefersTag(cat, m);
+                if (rel) related.Add(m); else others.Add(m);
             }
 
             float r = Random.value;
@@ -57,6 +59,13 @@ namespace YeogiCafe.AI
                 result.extra = ChooseSecond(result.primary, available);
 
             return result;
+        }
+
+        static bool PrefersTag(CatData cat, MenuData m)
+        {
+            if (cat.foodPreferredTags == null) return false;
+            foreach (var t in cat.foodPreferredTags) if (m.HasTag(t)) return true;
+            return false;
         }
 
         static bool SharesAnyTag(MenuData a, MenuData b)
