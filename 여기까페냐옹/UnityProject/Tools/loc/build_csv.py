@@ -26,6 +26,7 @@ print('jip-sa', [r[0] for r in out if '집사' in r[1]])
 NEW=load('tr7').NEW
 NEW.update(load('tr8').NEW)
 NEW.update(load('tr9').NEW)
+NEW.update(load('tr10').NEW)
 have={r[0] for r in out}
 for k,v in NEW.items():
     if k in have: print('DUP',k); continue

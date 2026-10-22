@@ -304,6 +304,26 @@ namespace YeogiCafe.UI
             toastText.transform.parent.SetAsLastSibling();
         }
 
+        // 구매·도감 창이 열려 있는 동안은 영업 시간을 멈춘다(고르는 사이 손님이 떠나지 않게).
+        // 다른 정지(설정·배치·포토·시작 화면)가 걸려 있으면 그쪽이 시간을 되돌리게 두고 건드리지 않는다.
+        bool menuPaused; float menuPrevScale = 1f;
+        void UpdateMenuPause()
+        {
+            bool want = (shop != null && shop.IsOpen) || (catalog != null && catalog.IsOpen);
+            if (want)
+            {
+                if (!menuPaused) { menuPaused = true; menuPrevScale = Time.timeScale > 0f ? Time.timeScale : 1f; }
+                Time.timeScale = 0f;      // 창 위에서 설정을 열고 닫아도(설정이 1로 되돌림) 계속 멈춰 있게
+            }
+            else if (!want && menuPaused)
+            {
+                menuPaused = false;
+                bool otherPause = (editMode != null && editMode.IsOn) || PhotoOpen || (settings != null && settings.IsOpen)
+                                  || (title != null && title.IsOpen) || opening != null;
+                if (!otherPause && Time.timeScale == 0f) Time.timeScale = menuPrevScale;
+            }
+        }
+
         void ToggleKitchen()
         {
             shop.Hide(); catalog.Hide(); editMode.Exit();
@@ -379,6 +399,7 @@ namespace YeogiCafe.UI
             closing?.Tick(Time.unscaledDeltaTime);
             settings?.Tick();
             title?.Tick(Time.unscaledDeltaTime);
+            UpdateMenuPause();
             if (photo != null && photo.IsOpen) { photo.Tick(Time.unscaledDeltaTime); return; }   // 포토 모드: 다른 입력·HUD 멈춤
             if (Input.GetKeyDown(KeyCode.Escape) && ShelterOpen) { shelter.Close(); return; }
             if (Input.GetKeyDown(KeyCode.Escape) && opening == null && settings != null && (closing == null || !closing.IsOpen)) settings.Toggle();   // ESC = 설정

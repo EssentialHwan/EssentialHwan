@@ -272,55 +272,20 @@ namespace YeogiCafe.UI
             float k = met.Count > 12 ? 0.8f : 1f;                       // 많아지면 아이콘을 조금 줄인다
             var pos = new Dictionary<string, Vector2>();
             for (int i = 0; i < met.Count; i++) pos[met[i].catId] = Perimeter(i / (float)met.Count, 272f, 128f) + new Vector2(0, 12f);   // 아래 범례 자리를 비워 둔다
-            // 관계 종류(색·이름이 모두 다르게): 앙숙 · 티격태격 · 단짝 · 친구 · 아는 사이
-            // 글자 칸끼리, 그리고 고양이 아이콘·이름과 겹치지 않게 선을 따라 자리를 옮겨 둔다
-            var taken = new List<Rect>();
-            foreach (var kv in pos) { taken.Add(new Rect(kv.Value.x - 40 * k, kv.Value.y - 56 * k, 80 * k, 90 * k)); }   // 아이콘+이름 칸
-            var tags = new List<(Vector2 at, string text, Color col)>();
+            // 관계는 색 선으로만(글자 배지는 선·아이콘을 가려서 뺐다) — 무슨 색이 무슨 관계인지는 아래 범례
+            // 앙숙·단짝은 굵게, 친구·티격태격은 보통, 아는 사이는 가늘고 옅게. 밝은 종이 위에서도 보이게 어두운 테두리를 한 겹 깐다.
             foreach (var r in save.relations)
             {
                 if (!pos.ContainsKey(r.catA) || !pos.ContainsKey(r.catB)) continue;
                 var kind = RelKind(r);
                 if (kind < 0) continue;
                 Color col = RelColor(kind);
-                float th = kind == 0 || kind == 2 ? 6f : kind == 4 ? 2f : 4f;
+                float th = kind == 0 || kind == 2 ? 7f : kind == 4 ? 4f : 5f;
                 Vector2 a = pos[r.catA], b = pos[r.catB], d = b - a;
-                var line = UiFactory.Panel("L", relRoot, kind == 4 ? new Color(col.r, col.g, col.b, 0.55f) : col);
-                line.pivot = new Vector2(0.5f, 0.5f); line.anchorMin = line.anchorMax = new Vector2(0.5f, 0.5f);
-                line.anchoredPosition = (a + b) * 0.5f; line.sizeDelta = new Vector2(Mathf.Max(0f, d.magnitude - 70f), th);
-                line.localEulerAngles = new Vector3(0, 0, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg);
-                line.GetComponent<Image>().raycastTarget = false;
-                // 글자 자리: 가운데부터 양쪽으로 비켜 가며 빈 곳 찾기
-                Vector2 at = (a + b) * 0.5f; var tr = new Rect(at.x - 38, at.y - 11, 76, 22);
-                // 이웃한 두 고양이처럼 선 위에 빈 곳이 없으면 선에서 수직으로 비켜 둔다(판 밖으로는 안 나가게)
-                var nrm = d.sqrMagnitude > 0.01f ? new Vector2(-d.y, d.x).normalized : Vector2.up;
-                if (nrm.y < 0f) nrm = -nrm;
-                var cands = new List<Vector2>();
-                foreach (float t in new[] { 0.5f, 0.38f, 0.62f, 0.3f, 0.7f, 0.44f, 0.56f, 0.25f, 0.75f }) cands.Add(Vector2.Lerp(a, b, t));
-                foreach (float o in new[] { -40f, 40f, -56f, 56f, -72f, 72f }) cands.Add((a + b) * 0.5f + nrm * o);
-                bool found = false;
-                foreach (var c in cands)
-                {
-                    if (Mathf.Abs(c.x) > 290f || Mathf.Abs(c.y) > 185f) continue;
-                    var rr = new Rect(c.x - 38, c.y - 11, 76, 22);
-                    bool hit = false; foreach (var q in taken) if (q.Overlaps(rr)) { hit = true; break; }
-                    if (!hit) { at = c; tr = rr; found = true; break; }
-                }
-                if (!found) { at = (a + b) * 0.5f; tr = new Rect(at.x - 38, at.y - 11, 76, 22); }
-                taken.Add(tr);
-                tags.Add((at, L.Get(RelKey(kind)), col));
-            }
-            // 글자는 선 위에(색 배지 + 흰 글자)
-            foreach (var (at, text, col) in tags)
-            {
-                var pill = UiFactory.Panel("TagBg", relRoot, col);
-                pill.anchorMin = pill.anchorMax = new Vector2(0.5f, 0.5f); pill.pivot = new Vector2(0.5f, 0.5f);
-                pill.anchoredPosition = at; pill.sizeDelta = new Vector2(74, 20);
-                pill.GetComponent<Image>().raycastTarget = false;
-                var t = UiFactory.Label("Tag", pill, text, 13, TextAnchor.MiddleCenter, Color.white);
-                UiFactory.Anchor((RectTransform)t.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-                t.raycastTarget = false;
-                UiFactory.FitOneLine(t, 70, 10);
+                float len = Mathf.Max(0f, d.magnitude - 64f * k);          // 아이콘 안으로 파고들지 않게
+                float ang = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
+                RelLine(relRoot, (a + b) * 0.5f, len + 2f, th + 2f, ang, new Color(0.25f, 0.18f, 0.14f, kind == 4 ? 0.18f : 0.32f));
+                RelLine(relRoot, (a + b) * 0.5f, len, th, ang, kind == 4 ? new Color(col.r, col.g, col.b, 0.8f) : col);
             }
             // 범례(아래쪽)
             {
@@ -330,7 +295,7 @@ namespace YeogiCafe.UI
                 {
                     var sw = UiFactory.Panel("Legend", relRoot, RelColor(kinds[i]));
                     sw.anchorMin = sw.anchorMax = new Vector2(0.5f, 0f); sw.pivot = new Vector2(0.5f, 0.5f);
-                    sw.anchoredPosition = new Vector2(lx + i * 92f - 30f, 10f); sw.sizeDelta = new Vector2(14, 6);
+                    sw.anchoredPosition = new Vector2(lx + i * 92f - 30f, 10f); sw.sizeDelta = new Vector2(18, kinds[i] == 4 ? 4 : kinds[i] == 0 || kinds[i] == 2 ? 7 : 5);
                     var lt = UiFactory.Label("LegendT", relRoot, L.Get(RelKey(kinds[i])), 13, TextAnchor.MiddleLeft, UiFactory.WoodDark);
                     var lrt = (RectTransform)lt.transform; lrt.anchorMin = lrt.anchorMax = new Vector2(0.5f, 0f); lrt.pivot = new Vector2(0f, 0.5f);
                     lrt.anchoredPosition = new Vector2(lx + i * 92f - 20f, 10f); lrt.sizeDelta = new Vector2(70, 18);
@@ -442,6 +407,15 @@ namespace YeogiCafe.UI
             return -1;
         }
         static string RelKey(int k) => k switch { 0 => "ui.rel.rival", 1 => "ui.rel.bicker", 2 => "ui.rel.friend", 3 => "ui.rel.pal", _ => "ui.rel.known" };
+        static void RelLine(RectTransform parent, Vector2 mid, float len, float th, float angle, Color c)
+        {
+            var line = UiFactory.Panel("L", parent, c);
+            line.pivot = new Vector2(0.5f, 0.5f); line.anchorMin = line.anchorMax = new Vector2(0.5f, 0.5f);
+            line.anchoredPosition = mid; line.sizeDelta = new Vector2(len, th);
+            line.localEulerAngles = new Vector3(0, 0, angle);
+            line.GetComponent<Image>().raycastTarget = false;
+        }
+
         static Color RelColor(int k) => k switch
         {
             0 => new Color(0.82f, 0.25f, 0.27f),     // 앙숙: 빨강

@@ -93,6 +93,7 @@ namespace YeogiCafe.Core
         {
             float progress = Mathf.Clamp01((cafeLevel - 1) * 0.34f + discoveredCats * 0.08f);
             float m = Mathf.Lerp(1.6f, 1.0f, progress);   // 초반 넓게 → 후반 촘촘
+            if (day != null && day.CurrentDay <= EarlyDays) m = Mathf.Min(m, 1.1f);   // 1·2일차는 손님 간격을 좁혀 지루하지 않게
             if (save != null) m *= YeogiCafe.Food.ReviewBook.SpawnIntervalMult(YeogiCafe.Food.ReviewBook.Reputation(save))
                                  * YeogiCafe.Food.NyanGuide.SpawnIntervalMult(save.nyanStars);
             return m;
@@ -101,9 +102,20 @@ namespace YeogiCafe.Core
         List<CatData> ResolvePool()
         {
             if (allCats != null && allCats.Count > 0)
-                return UnlockService.UnlockedCats(allCats, save);   // save==null이면 Always만
+            {
+                var list = UnlockService.UnlockedCats(allCats, save);   // save==null이면 Always만
+                // 1·2일차가 썰렁하던 문제(1일차엔 해금 고양이가 1마리뿐): '첫 발견' 조건 고양이를 미리 부른다.
+                // 1일차는 튜토리얼 손님이 먼저 자리 잡도록 점심부터, 2일차는 아침부터.
+                if (save != null && day != null && day.CurrentDay <= EarlyDays && (day.CurrentDay >= 2 || day.Phase != DayPhase.Morning))
+                    foreach (var c in allCats)
+                        if (c != null && !list.Contains(c) && c.unlockCondition != null
+                            && c.unlockCondition.type == UnlockType.DiscoveredCats && c.unlockCondition.value <= 1)
+                            list.Add(c);
+                return list;
+            }
             return fixedQueue;
         }
+        public const int EarlyDays = 2;
 
         void OnEnable()
         {

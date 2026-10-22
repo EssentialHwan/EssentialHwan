@@ -51,11 +51,14 @@ namespace YeogiCafe.UI
             // 오늘 온 고양이가 많으면(13마리) 휠로 내려 본다
             cardsList = WheelList.Create(panel.transform, "Cards", 4f, out cardsContent);
             UiFactory.SetRect(cardsList.view, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f),
-                              new Vector2(0, -28), new Vector2(-48, -250));
+                              new Vector2(0, -6), new Vector2(-48, -294));    // 아래 결과 문구(cardsInfo) 줄과 안 겹치게 끝을 올림
 
             cardsInfo = UiFactory.Label("CardsInfo", panel.transform, "", 20, TextAnchor.LowerCenter, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)cardsInfo.transform, new Vector2(0, 0), new Vector2(1, 0),
                               new Vector2(0.5f, 0), new Vector2(0, 104), new Vector2(-72, 30));    // 테두리에 붙지 않게 가운데 정렬·안쪽 여백
+            cardsInfo.raycastTarget = false;                                                         // 글자가 버튼 클릭을 가로채지 않게
+            cardsInfo.resizeTextForBestFit = true; cardsInfo.resizeTextMinSize = 13; cardsInfo.resizeTextMaxSize = 20;   // 긴 결과 문구는 줄여서 한 칸 안에
+            cardsInfo.verticalOverflow = VerticalWrapMode.Truncate;
 
             var nextBtn = UiFactory.Button("Next", panel.transform, L.Get("ui.settle.next"),
                                            UiFactory.Green, UiFactory.Ink, out _);

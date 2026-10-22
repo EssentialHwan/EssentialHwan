@@ -499,7 +499,7 @@ namespace YeogiCafe.AI
             if (IsInspector) return;
             Obs?.RecordClue(data.catId, ClueType.FacilityUse, FacilityKey(f),
                             isFallback: !pref,
-                            Narrate(NarrationCatalog.FacilityKey(f.Tags)));
+                            Narrate(NarrationCatalog.FacilityKey(f.FacilityId, f.Tags)));
         }
 
         void TickFacility(float dt)
