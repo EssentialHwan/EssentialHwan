@@ -102,6 +102,7 @@ namespace YeogiCafe.UI
                     ShowToast(L.Get("ui.review.toast", ("name", L.Get($"cat.{r.catId}.name")), ("paws", YeogiCafe.Food.ReviewBook.Paws(r.paws)), ("text", r.text)));
             };
             PawCursor.Ensure();
+            YeogiCafe.DevTools.PlaytestLog.Init(L.Current.ToString());
             TextFitGuard.Ensure();                       // 글자 넘침 안전망(모든 UI 글자)
             BuildHud(root.transform);
 
@@ -239,11 +240,13 @@ namespace YeogiCafe.UI
             if (day != null)
             {
                 day.OnPhaseChanged += _ => RefreshHud();
+                day.OnPhaseChanged += p => { if (p == DayPhase.Morning) YeogiCafe.DevTools.PlaytestLog.DayStart(day.CurrentDay); };
             }
             if (flow != null)
             {
                 flow.OnSettlementReady += () =>
                 {
+                    if (economy != null) YeogiCafe.DevTools.PlaytestLog.DayEnd(day != null ? day.CurrentDay : 0, economy.TodayRevenue, economy.TodayCost, economy.Gold);
                     shop.Hide(); catalog.Hide(); CloseKitchen(); editMode.Exit(); questPanel.SetActive(false);
                     // 마감 직전: 마지막 손님과 놀아주기 → 끝나면 밤 정산(도감)
                     var guest = flow.ClosingGuestId != null ? LookupCat(flow.ClosingGuestId) : null;
@@ -304,6 +307,26 @@ namespace YeogiCafe.UI
             var trt = (RectTransform)toastText.transform.parent;          // 긴 알림은 두 줄로 → 높이 맞춤
             trt.sizeDelta = new Vector2(inKitchen ? 600 : 720, Mathf.Max(64f, toastText.preferredHeight + 20f));   // 양손(좌우 끝 ~250)과 안 겹치는 폭
             toastText.transform.parent.SetAsLastSibling();
+        }
+
+        // 플레이테스트 기록: 지금 보고 있는 화면·튜토리얼 단계·시간대가 바뀔 때마다 한 줄
+        void TrackPlaytest()
+        {
+            string scr = title != null && title.IsOpen ? "시작 화면"
+                       : opening != null ? "오프닝"
+                       : PhotoOpen ? "포토 모드"
+                       : settings != null && settings.IsOpen ? "설정"
+                       : ShelterOpen ? "보호소"
+                       : closing != null && closing.IsOpen ? "마감 놀아주기"
+                       : settlement != null && settlement.IsOpen ? "정산"
+                       : shop != null && shop.IsOpen ? "구매"
+                       : catalog != null && catalog.IsOpen ? "도감"
+                       : editMode != null && editMode.IsOn ? "배치"
+                       : kitchen != null && kitchen.IsOpen ? "주방"
+                       : "홀";
+            YeogiCafe.DevTools.PlaytestLog.Track("화면", scr);
+            if (guide != null) YeogiCafe.DevTools.PlaytestLog.Track("튜토리얼 단계", guide.Step.ToString());
+            if (day != null) YeogiCafe.DevTools.PlaytestLog.Track("시간대", day.CurrentDay + "일차 " + day.Phase);
         }
 
         // 구매·도감 창이 열려 있는 동안은 영업 시간을 멈춘다(고르는 사이 손님이 떠나지 않게).
@@ -402,6 +425,7 @@ namespace YeogiCafe.UI
             settings?.Tick();
             title?.Tick(Time.unscaledDeltaTime);
             UpdateMenuPause();
+            TrackPlaytest();
             if (photo != null && photo.IsOpen) { photo.Tick(Time.unscaledDeltaTime); return; }   // 포토 모드: 다른 입력·HUD 멈춤
             if (Input.GetKeyDown(KeyCode.Escape) && ShelterOpen) { shelter.Close(); return; }
             if (Input.GetKeyDown(KeyCode.Escape) && opening == null && settings != null && (closing == null || !closing.IsOpen)) settings.Toggle();   // ESC = 설정

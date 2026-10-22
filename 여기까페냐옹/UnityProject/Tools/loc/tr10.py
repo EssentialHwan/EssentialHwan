@@ -6,6 +6,7 @@ NEW = {
 "opt.quit.confirm": ("한 번 더 누르면 종료", "Click again to quit", "再点一次退出", "もう一度で終了"),
 "opt.quit.warn": ("지금 나가면 오늘 영업은 아침부터 다시 해요.", "If you quit now, today starts over from the morning.", "现在退出的话，今天会从早上重新开始。", "今やめると、今日は朝からやり直しになります。"),
 "opt.lang.busy": ("언어는 시작 화면이나 하루 정산 때 바꿀 수 있어요.", "You can change the language on the title screen or at the end of the day.", "可以在标题画面或每天结算时更改语言。", "言語はタイトル画面か、1日の締めくくりで変更できます。"),
+"title.playtest": ("플레이테스트 빌드 v{v} · 사운드 미적용", "Playtest build v{v} · no sound yet", "测试版 v{v} · 暂无音效", "テスト版 v{v} · サウンド未実装"),
 }
 
 # 게임 제목 확정(2026-10-22): ko 여기카페냐옹 · en Purrsonal Taste · ja ここカフェですかニャ？ · zh 这里是咖啡馆喵？

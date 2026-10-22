@@ -71,7 +71,8 @@ namespace YeogiCafe.Core
         {
             if (save == null) return true;
             visitsToday.TryGetValue(d.catId, out int n);
-            if (n >= (firstMetToday.Contains(d.catId) ? maxVisitsPerDay + 1 : maxVisitsPerDay)) return false;
+            int cap = maxVisitsPerDay + (day != null && day.CurrentDay <= EarlyDays ? 1 : 0);   // 1·2일차는 손님 풀이 3마리뿐이라 한 번씩 더 들르게
+            if (n >= (firstMetToday.Contains(d.catId) ? cap + 1 : cap)) return false;
             return save.GetOrCreateCat(d.catId).visitCount == 0 || comersToday.Contains(d.catId) || firstMetToday.Contains(d.catId);
         }
 
@@ -93,7 +94,7 @@ namespace YeogiCafe.Core
         {
             float progress = Mathf.Clamp01((cafeLevel - 1) * 0.34f + discoveredCats * 0.08f);
             float m = Mathf.Lerp(1.6f, 1.0f, progress);   // 초반 넓게 → 후반 촘촘
-            if (day != null && day.CurrentDay <= EarlyDays) m = Mathf.Min(m, 1.1f);   // 1·2일차는 손님 간격을 좁혀 지루하지 않게
+            if (day != null && day.CurrentDay <= EarlyDays) m = Mathf.Min(m, 0.9f);   // 1·2일차는 손님 간격을 좁혀 지루하지 않게
             if (save != null) m *= YeogiCafe.Food.ReviewBook.SpawnIntervalMult(YeogiCafe.Food.ReviewBook.Reputation(save))
                                  * YeogiCafe.Food.NyanGuide.SpawnIntervalMult(save.nyanStars);
             return m;
