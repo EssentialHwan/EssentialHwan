@@ -222,10 +222,15 @@ namespace YeogiCafe.UI
                 string marks = "";
                 if (cs != null && cs.bossSeen) marks += L.Get("ui.catalog.boss") + " ";
                 if (cs != null && cs.graduated) marks += L.Get("ui.catalog.grad");
+                // 이름(아이콘만으로는 비슷한 무늬끼리 헷갈린다) — 윗줄 이름, 아랫줄 대장·졸업 표시
+                var nm = UiFactory.Label("Name", row.transform, visited ? L.Get($"cat.{data.catId}.name") : "???", 13,
+                                         marks != "" ? TextAnchor.UpperLeft : TextAnchor.MiddleLeft, UiFactory.Ink);
+                UiFactory.SetRect((RectTransform)nm.transform, new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0.5f), new Vector2(50, 0), new Vector2(48, -4));
+                UiFactory.FitOneLine(nm, 46, 9);
                 if (marks != "")
                 {
                     var ml = UiFactory.Label("Marks", row.transform, marks.Trim(), 11, TextAnchor.LowerLeft, UiFactory.PinkDeep);
-                    UiFactory.SetRect((RectTransform)ml.transform, new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0.5f), new Vector2(52, 0), new Vector2(46, -6));
+                    UiFactory.SetRect((RectTransform)ml.transform, new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0.5f), new Vector2(50, 0), new Vector2(48, -4));
                     ml.resizeTextForBestFit = true; ml.resizeTextMinSize = 8; ml.resizeTextMaxSize = 11;
                 }
 
@@ -263,16 +268,14 @@ namespace YeogiCafe.UI
             var met = new List<CatData>();
             foreach (var d in owner.AllCats) if (d != null && save.GetOrCreateCat(d.catId).visitCount > 0) met.Add(d);
             if (met.Count == 0) return;
+            // 타원에 놓으면 좌우 끝에서 세로로 몰려 겹친다 → 둥근 사각형 둘레를 같은 간격으로 나눠 판 전체를 쓴다.
+            float k = met.Count > 12 ? 0.8f : 1f;                       // 많아지면 아이콘을 조금 줄인다
             var pos = new Dictionary<string, Vector2>();
-            for (int i = 0; i < met.Count; i++)
-            {
-                float a = Mathf.PI * 0.5f - i * Mathf.PI * 2f / met.Count;
-                pos[met[i].catId] = new Vector2(Mathf.Cos(a) * 250f, Mathf.Sin(a) * 125f + 10f);   // 아래 범례 자리를 비워 둔다
-            }
+            for (int i = 0; i < met.Count; i++) pos[met[i].catId] = Perimeter(i / (float)met.Count, 272f, 128f) + new Vector2(0, 12f);   // 아래 범례 자리를 비워 둔다
             // 관계 종류(색·이름이 모두 다르게): 앙숙 · 티격태격 · 단짝 · 친구 · 아는 사이
             // 글자 칸끼리, 그리고 고양이 아이콘·이름과 겹치지 않게 선을 따라 자리를 옮겨 둔다
             var taken = new List<Rect>();
-            foreach (var kv in pos) { taken.Add(new Rect(kv.Value.x - 44, kv.Value.y - 56, 88, 92)); }   // 아이콘+이름 칸
+            foreach (var kv in pos) { taken.Add(new Rect(kv.Value.x - 40 * k, kv.Value.y - 56 * k, 80 * k, 90 * k)); }   // 아이콘+이름 칸
             var tags = new List<(Vector2 at, string text, Color col)>();
             foreach (var r in save.relations)
             {
@@ -288,14 +291,22 @@ namespace YeogiCafe.UI
                 line.localEulerAngles = new Vector3(0, 0, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg);
                 line.GetComponent<Image>().raycastTarget = false;
                 // 글자 자리: 가운데부터 양쪽으로 비켜 가며 빈 곳 찾기
-                Vector2 at = (a + b) * 0.5f; var tr = new Rect(at.x - 34, at.y - 11, 68, 22);
-                foreach (float t in new[] { 0.5f, 0.38f, 0.62f, 0.3f, 0.7f, 0.44f, 0.56f, 0.25f, 0.75f })
+                Vector2 at = (a + b) * 0.5f; var tr = new Rect(at.x - 38, at.y - 11, 76, 22);
+                // 이웃한 두 고양이처럼 선 위에 빈 곳이 없으면 선에서 수직으로 비켜 둔다(판 밖으로는 안 나가게)
+                var nrm = d.sqrMagnitude > 0.01f ? new Vector2(-d.y, d.x).normalized : Vector2.up;
+                if (nrm.y < 0f) nrm = -nrm;
+                var cands = new List<Vector2>();
+                foreach (float t in new[] { 0.5f, 0.38f, 0.62f, 0.3f, 0.7f, 0.44f, 0.56f, 0.25f, 0.75f }) cands.Add(Vector2.Lerp(a, b, t));
+                foreach (float o in new[] { -40f, 40f, -56f, 56f, -72f, 72f }) cands.Add((a + b) * 0.5f + nrm * o);
+                bool found = false;
+                foreach (var c in cands)
                 {
-                    var c = Vector2.Lerp(a, b, t); var rr = new Rect(c.x - 34, c.y - 11, 68, 22);
+                    if (Mathf.Abs(c.x) > 290f || Mathf.Abs(c.y) > 185f) continue;
+                    var rr = new Rect(c.x - 38, c.y - 11, 76, 22);
                     bool hit = false; foreach (var q in taken) if (q.Overlaps(rr)) { hit = true; break; }
-                    at = c; tr = rr;
-                    if (!hit) break;
+                    if (!hit) { at = c; tr = rr; found = true; break; }
                 }
+                if (!found) { at = (a + b) * 0.5f; tr = new Rect(at.x - 38, at.y - 11, 76, 22); }
                 taken.Add(tr);
                 tags.Add((at, L.Get(RelKey(kind)), col));
             }
@@ -304,11 +315,12 @@ namespace YeogiCafe.UI
             {
                 var pill = UiFactory.Panel("TagBg", relRoot, col);
                 pill.anchorMin = pill.anchorMax = new Vector2(0.5f, 0.5f); pill.pivot = new Vector2(0.5f, 0.5f);
-                pill.anchoredPosition = at; pill.sizeDelta = new Vector2(64, 20);
+                pill.anchoredPosition = at; pill.sizeDelta = new Vector2(74, 20);
                 pill.GetComponent<Image>().raycastTarget = false;
                 var t = UiFactory.Label("Tag", pill, text, 13, TextAnchor.MiddleCenter, Color.white);
                 UiFactory.Anchor((RectTransform)t.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
                 t.raycastTarget = false;
+                UiFactory.FitOneLine(t, 70, 10);
             }
             // 범례(아래쪽)
             {
@@ -330,10 +342,38 @@ namespace YeogiCafe.UI
                 g.transform.SetParent(relRoot, false);
                 var img = g.GetComponent<Image>(); img.sprite = YeogiCafe.Art.CatSpriteBank.Portrait(d.catId); img.preserveAspect = true; img.raycastTarget = false;
                 var rt = (RectTransform)g.transform; rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
-                rt.anchoredPosition = pos[d.catId]; rt.sizeDelta = new Vector2(84, 70);
+                rt.anchoredPosition = pos[d.catId]; rt.sizeDelta = new Vector2(84, 70) * k;
                 var n = UiFactory.Label("N", relRoot, L.Get($"cat.{d.catId}.name"), 14, TextAnchor.UpperCenter, UiFactory.Ink);
                 var nrt = (RectTransform)n.transform; nrt.anchorMin = nrt.anchorMax = new Vector2(0.5f, 0.5f);
-                nrt.anchoredPosition = pos[d.catId] + new Vector2(0, -44); nrt.sizeDelta = new Vector2(100, 20);
+                nrt.anchoredPosition = pos[d.catId] + new Vector2(0, -44 * k - (k < 1f ? 4f : 0f)); nrt.sizeDelta = new Vector2(96, 20);
+                UiFactory.FitOneLine(n, 96, 11);
+            }
+        }
+
+        // 둥근 사각형(반폭 hw, 반높이 hh) 둘레 위 t(0~1) 지점. 위 가운데에서 시작해 시계 방향. 모서리는 반지름 r로 깎는다.
+        static Vector2 Perimeter(float t, float hw, float hh)
+        {
+            float r = Mathf.Min(hw, hh) * 0.45f;
+            float sw = 2f * (hw - r), sh = 2f * (hh - r), arc = Mathf.PI * 0.5f * r;
+            float total = 2f * sw + 2f * sh + 4f * arc;
+            float d = Mathf.Repeat(t, 1f) * total;
+            // 구간: 위(오른쪽 반) → 우상 모서리 → 오른쪽 → 우하 → 아래 → 좌하 → 왼쪽 → 좌상 → 위(왼쪽 반)
+            float[] len = { sw * 0.5f, arc, sh, arc, sw, arc, sh, arc, sw * 0.5f };
+            int seg = 0; while (seg < len.Length - 1 && d > len[seg]) { d -= len[seg]; seg++; }
+            float u = len[seg] > 0f ? d / len[seg] : 0f;
+            float cx = hw - r, cy = hh - r;
+            Vector2 Corner(float x, float y, float a0) { float a = a0 - u * Mathf.PI * 0.5f; return new Vector2(x + Mathf.Cos(a) * r, y + Mathf.Sin(a) * r); }
+            switch (seg)
+            {
+                case 0: return new Vector2(u * cx, hh);
+                case 1: return Corner(cx, cy, Mathf.PI * 0.5f);
+                case 2: return new Vector2(hw, cy - u * sh);
+                case 3: return Corner(cx, -cy, 0f);
+                case 4: return new Vector2(cx - u * sw, -hh);
+                case 5: return Corner(-cx, -cy, -Mathf.PI * 0.5f);
+                case 6: return new Vector2(-hw, -cy + u * sh);
+                case 7: return Corner(-cx, cy, Mathf.PI);
+                default: return new Vector2(-cx + u * cx, hh);
             }
         }
 
