@@ -18,7 +18,7 @@ namespace YeogiCafe.Visual
             var c = draw();
             var tex = new Texture2D(c.W, c.H, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp, name = key };
             tex.SetPixels32(c.Pixels); tex.Apply();
-            s = Sprite.Create(tex, new Rect(0, 0, c.W, c.H), Vector2.zero, 32f, 0, SpriteMeshType.FullRect);   // 씬 타일과 같은 왼쪽 아래 피벗
+            s = YeogiCafe.Art.LitSprites.Create(tex, new Rect(0, 0, c.W, c.H), Vector2.zero, 32f);   // 씬 타일과 같은 왼쪽 아래 피벗
             cache[key] = s;
             return s;
         }

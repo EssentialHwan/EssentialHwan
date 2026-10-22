@@ -103,6 +103,7 @@ namespace YeogiCafe.UI
             };
             PawCursor.Ensure();
             YeogiCafe.DevTools.PlaytestLog.Init(L.Current.ToString());
+            YeogiCafe.Visual.CafeLighting.Ensure();       // [실험] URP 2D 조명이 켜져 있을 때만
             TextFitGuard.Ensure();                       // 글자 넘침 안전망(모든 UI 글자)
             BuildHud(root.transform);
 

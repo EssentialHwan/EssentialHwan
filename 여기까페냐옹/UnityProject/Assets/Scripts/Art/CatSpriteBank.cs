@@ -56,7 +56,7 @@ namespace YeogiCafe.Art
                 var arr = new Sprite[Count(r)];
                 for (int i = 0; i < arr.Length; i++)
                 {
-                    arr[i] = Sprite.Create(tex, new Rect(i * FW, (rows - 1 - r) * FH, FW, FH), pivot, PPU, 0, SpriteMeshType.FullRect);
+                    arr[i] = LitSprites.Create(tex, new Rect(i * FW, (rows - 1 - r) * FH, FW, FH), pivot, PPU);
                     arr[i].name = $"{catId}_{defs[r].name}{i}";
                 }
                 dict[defs[r].name] = arr;

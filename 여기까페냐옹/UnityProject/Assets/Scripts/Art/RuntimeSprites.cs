@@ -25,7 +25,7 @@ namespace YeogiCafe.Art
                 };
                 tex.SetPixels32(c.Pixels);
                 tex.Apply();
-                s = Sprite.Create(tex, new Rect(0, 0, c.W, c.H), new Vector2(0.5f, 0f), 32f, 0, SpriteMeshType.FullRect);
+                s = LitSprites.Create(tex, new Rect(0, 0, c.W, c.H), new Vector2(0.5f, 0f), 32f);   // 2D 조명이 켜져 있으면 노멀맵도
                 s.name = key;
             }
             cache[key] = s;
