@@ -115,7 +115,7 @@ pers.Introvert,내향적,Shy,内向,人見知り
 pers.Glutton,식탐,Foodie,吃货,食いしんぼう
 pers.Playful,장난꾸러기,Playful,调皮,いたずらっ子
 pers.Fickle,변덕,Fickle,善变,気まぐれ
-tut.step0.narr.01,"당신의 카페, 《여기까페냐옹》에 온 걸 환영해요.","Welcome to your cafe, Yeogi Cafe Nyaong.",欢迎来到你的咖啡馆《这里是喵咖啡》。,あなたのカフェ『ここカフェニャン』へようこそ。
+tut.step0.narr.01,"당신의 카페, 《여기카페냐옹》에 온 걸 환영해요.","Welcome to your cafe, Purrsonal Taste.",欢迎来到你的咖啡馆《这里是咖啡馆喵？》。,あなたのカフェ『ここカフェですかニャ？』へようこそ。
 tut.step0.narr.02,고양이 손님들이 하나둘 찾아올 거예요. 잘 지켜봐 주세요.,Cat guests will start dropping by. Watch them closely.,猫咪客人会陆续上门，好好观察它们吧。,ネコのお客さんが少しずつやってきます。よく見ていてね。
 tut.step3.narr.01,치즈냥이 자꾸 창문 쪽을 보네요… 뭔가 아쉬운 걸까요?,Cheddar keeps glancing at the window… missing something?,芝士喵一直往窗户那边看…是不是缺了点什么？,チーズニャンがずっと窓のほうを見てる…何か足りないのかな？
 tut.step5.narr.01,치즈냥이 창문을 그리워하는 것 같지 않았나요?,Didn't Cheddar seem to miss the window?,芝士喵是不是很想要窗边的位置？,チーズニャン、窓が恋しそうじゃなかった？
@@ -449,7 +449,7 @@ opt.newgame,새 게임,New game,新游戏,はじめから
 opt.newgame.confirm,정말? 한 번 더!,Sure? Click again!,确定吗？再点一次！,本当に？もう一度押して！
 opt.quit,게임 종료,Quit,退出游戏,ゲーム終了
 opt.close,닫기 (ESC),Close (ESC),关闭 (ESC),閉じる (ESC)
-title.logo,여기까페냐옹,Yeogi Cafe Nyaong,这里是喵咖啡,ここカフェニャン
+title.logo,여기카페냐옹,Purrsonal Taste,这里是咖啡馆喵？,ここカフェですかニャ？
 title.sub,고양이 손님을 살피는 작은 카페,A little cafe where cats are the guests,照顾猫咪客人的小咖啡馆,ネコのお客さんを見守る小さなカフェ
 title.start,시작하기,Start,开始游戏,はじめる
 title.day,{n}일차,Day {n},第{n}天,{n}日目

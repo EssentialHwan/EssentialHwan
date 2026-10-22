@@ -7,7 +7,7 @@ using YeogiCafe.Art;
 
 namespace YeogiCafe.EditorTools
 {
-    // 메뉴 "여기까페냐옹/픽셀 아트 생성"으로 고양이·가구·아이콘 PNG를 일괄 생성.
+    // 메뉴 "여기카페냐옹/픽셀 아트 생성"으로 고양이·가구·아이콘 PNG를 일괄 생성.
     // 전부 PixelPalette + PixelCanvas 기반 → 통일된 톤앤매너(한 게임의 리소스).
     // 생성물: Assets/Art/Generated/{cats,furniture,icons}/*.png (Point 필터·무압축 = 크리스프 도트).
     public static class PixelArtGenerator
@@ -19,7 +19,7 @@ namespace YeogiCafe.EditorTools
             "cat_tuxedo","cat_mackerel","cat_siamese","cat_gray"
         };
 
-        [MenuItem("여기까페냐옹/픽셀 아트 생성")]
+        [MenuItem("여기카페냐옹/픽셀 아트 생성")]
         public static void GenerateAll()
         {
             EnsureDir($"{Root}/cats");

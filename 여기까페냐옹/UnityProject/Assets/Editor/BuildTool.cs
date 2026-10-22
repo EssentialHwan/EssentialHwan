@@ -11,7 +11,7 @@ namespace YeogiCafe.EditorTools
     {
         const string ExeName = "YeogiCafe.exe";
 
-        [MenuItem("여기까페냐옹/■ Windows 빌드 (exe)", priority = 200)]
+        [MenuItem("여기카페냐옹/■ Windows 빌드 (exe)", priority = 200)]
         public static void BuildWindows()
         {
             string root = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Build"));
@@ -19,7 +19,7 @@ namespace YeogiCafe.EditorTools
             Directory.CreateDirectory(root);
             if (Directory.Exists(outDir)) Directory.Delete(outDir, true);
 
-            PlayerSettings.productName = "여기까페냐옹";
+            PlayerSettings.productName = "여기카페냐옹";   // 바뀌면 저장 폴더도 바뀜 → SaveManager가 예전 폴더 세이브·사진을 가져옴
             PlayerSettings.companyName = "EssentialHwan";
             PlayerSettings.bundleVersion = "0.9.0";
             PlayerSettings.fullScreenMode = FullScreenMode.Windowed;

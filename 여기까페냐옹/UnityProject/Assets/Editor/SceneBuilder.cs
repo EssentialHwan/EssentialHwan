@@ -10,13 +10,13 @@ using YeogiCafe.Data;
 
 namespace YeogiCafe.EditorTools
 {
-    // 원클릭 씬 배선기. "여기까페냐옹 ▸ M1 플레이 씬 생성"을 누르면
+    // 원클릭 씬 배선기. "여기카페냐옹 ▸ M1 플레이 씬 생성"을 누르면
     // 카메라·바닥·GameRoot(S1Bootstrap)를 만들고, 생성된 SO 에셋을 자동으로 찾아 연결한다.
     // 전제: 먼저 "1.0 콘텐츠 에셋 생성"을 실행해 Assets/Data/에 SO가 있어야 함.
     public static class SceneBuilder
     {
         // 처음 받은 PC에서 한 번에: 콘텐츠 SO → 픽셀 아트 → 씬. (각 단계는 아래 개별 메뉴로도 실행 가능)
-        [MenuItem("여기까페냐옹/★ 전체 셋업 (콘텐츠+아트+씬)", priority = 0)]
+        [MenuItem("여기카페냐옹/★ 전체 셋업 (콘텐츠+아트+씬)", priority = 0)]
         public static void SetupAll()
         {
             ContentGenerator.GenerateAll();
@@ -26,7 +26,7 @@ namespace YeogiCafe.EditorTools
             BuildScene();
         }
 
-        [MenuItem("여기까페냐옹/M1 플레이 씬 생성", priority = 100)]
+        [MenuItem("여기카페냐옹/M1 플레이 씬 생성", priority = 100)]
         public static void BuildScene()
         {
             // ⚠ 새 씬(Single)을 먼저 만든다. NewScene은 이전 씬과 '참조 없는 에셋'을 언로드하므로,
@@ -44,7 +44,7 @@ namespace YeogiCafe.EditorTools
             if (cats.Count == 0 || menus.Count == 0 || furn.Count == 0)
             {
                 EditorUtility.DisplayDialog("콘텐츠 없음",
-                    "먼저 메뉴 '여기까페냐옹 ▸ 1.0 콘텐츠 에셋 생성'을 실행하세요.\n(Assets/Data 에 SO가 있어야 합니다)", "확인");
+                    "먼저 메뉴 '여기카페냐옹 ▸ 1.0 콘텐츠 에셋 생성'을 실행하세요.\n(Assets/Data 에 SO가 있어야 합니다)", "확인");
                 return;
             }
             if (balance == null)

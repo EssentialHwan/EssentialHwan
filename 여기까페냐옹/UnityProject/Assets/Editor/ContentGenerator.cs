@@ -5,7 +5,7 @@ using YeogiCafe.Data;
 
 namespace YeogiCafe.EditorTools
 {
-    // 메뉴 "여기까페냐옹/1.0 콘텐츠 에셋 생성"으로 8마리·8메뉴·18가구 SO를 자동 생성.
+    // 메뉴 "여기카페냐옹/1.0 콘텐츠 에셋 생성"으로 8마리·8메뉴·18가구 SO를 자동 생성.
     // CONTENT_AUTHORING.md 데이터표와 일치. 반복 수작업 제거.
     public static class ContentGenerator
     {
@@ -13,7 +13,7 @@ namespace YeogiCafe.EditorTools
         const string MenuDir = "Assets/Data/Menus";
         const string FurnDir = "Assets/Data/Furniture";
 
-        [MenuItem("여기까페냐옹/1.0 콘텐츠 에셋 생성")]
+        [MenuItem("여기카페냐옹/1.0 콘텐츠 에셋 생성")]
         public static void GenerateAll()
         {
             EnsureDir(CatDir); EnsureDir(MenuDir); EnsureDir(FurnDir);

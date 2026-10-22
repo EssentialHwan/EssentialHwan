@@ -76,7 +76,23 @@ namespace YeogiCafe.Save
                     take = cur == null || cur.currentDay < bestDay;
                 }
                 Directory.CreateDirectory(Application.persistentDataPath);
-                if (take) { File.Copy(best, Path, true); Debug.Log($"[SaveManager] 예전 세이브를 가져왔어요: {best} ({bestDay}일차)"); }
+                if (take)
+                {
+                    File.Copy(best, Path, true);
+                    // 포토 모드 사진도 같이(세이브가 파일 이름으로 가리킨다)
+                    string oldPhotos = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(best), "Photos");
+                    string newPhotos = System.IO.Path.Combine(Application.persistentDataPath, "Photos");
+                    if (Directory.Exists(oldPhotos))
+                    {
+                        Directory.CreateDirectory(newPhotos);
+                        foreach (var f in Directory.GetFiles(oldPhotos))
+                        {
+                            string dst = System.IO.Path.Combine(newPhotos, System.IO.Path.GetFileName(f));
+                            if (!File.Exists(dst)) File.Copy(f, dst);
+                        }
+                    }
+                    Debug.Log($"[SaveManager] 예전 세이브를 가져왔어요: {best} ({bestDay}일차)");
+                }
                 File.WriteAllText(marker, best);
             }
             catch (System.Exception e) { Debug.LogWarning($"[SaveManager] legacy import skipped: {e.Message}"); }

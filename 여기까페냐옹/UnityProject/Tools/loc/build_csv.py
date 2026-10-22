@@ -27,6 +27,10 @@ NEW=load('tr7').NEW
 NEW.update(load('tr8').NEW)
 NEW.update(load('tr9').NEW)
 NEW.update(load('tr10').NEW)
+P10=load('tr10').PATCH
+for r in out:
+    if r[0] in P10:
+        P=P10[r[0]]; r[1]=P.get('ko',r[1]); r[2]=P.get('en',r[2]); r[3]=P.get('zh',r[3]); r[4]=P.get('ja',r[4])
 have={r[0] for r in out}
 for k,v in NEW.items():
     if k in have: print('DUP',k); continue

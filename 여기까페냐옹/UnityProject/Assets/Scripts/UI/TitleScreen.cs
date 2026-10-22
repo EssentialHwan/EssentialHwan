@@ -55,6 +55,7 @@ namespace YeogiCafe.UI
             sign.GetComponent<Image>().sprite = RuntimeSprites.Get("title_sign", TitleDrawing.Sign);
             var logo = UiFactory.Label("Logo", sign, L.Get("title.logo"), 64, TextAnchor.MiddleCenter, UiFactory.Ink);
             logo.fontStyle = FontStyle.Bold;
+            UiFactory.FitOneLine(logo, 500, 34);                       // 일본어·중국어 제목은 길어서 간판 안에 맞게 줄임
             UiFactory.SetRect((RectTransform)logo.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -22), new Vector2(-80, 80));
             var sh = logo.gameObject.AddComponent<Shadow>(); sh.effectColor = new Color(0.86f, 0.6f, 0.62f, 0.9f); sh.effectDistance = new Vector2(3, -3);
             var sub = UiFactory.Label("Sub", sign, L.Get("title.sub"), 19, TextAnchor.MiddleCenter, UiFactory.WoodDark);
