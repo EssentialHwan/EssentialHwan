@@ -68,8 +68,23 @@ def wave(cell, ox, oy):
     pts=[(0,0),(1,1),(1,2),(1,3),(0,4)]
     dots(cell,pts,(120,70,60,255),ox,oy); dots(cell,[(x+3,y-1) for x,y in pts],(120,70,60,255),ox,oy)
 sparkle(cells[7],172,62); sparkle(cells[7],186,98)
-heart(cells[10],150,58)
+heart(cells[10],152,66)
 wave(cells[9],170,84); wave(cells[11],176,78)
+
+# 그루밍·쭙쭙이: 원화 팔뚝이 짧아 잘려 보임 → 손을 위로 올리고 팔뚝 털 띠를 아래로 이어 붙여 길게
+def lengthen(cell, lift, band=18):
+    a=np.array(cell)
+    out=np.zeros_like(a)
+    out[:CH-lift]=a[lift:]                      # 위로 올림
+    src=a[CH-band-4:CH-4]                       # 바닥 바로 위 팔뚝 띠(외곽선 포함)
+    y=CH-lift-4
+    k=0
+    while y<CH:
+        row=src[k%band]
+        out[y]=row; y+=1; k+=1
+    return Image.fromarray(out,'RGBA')
+for i in range(4,8):  cells[i]=lengthen(cells[i], 46)
+for i in range(8,12): cells[i]=lengthen(cells[i], 60)
 
 sheet=Image.new('RGBA',(CW*4,CH*3),(0,0,0,0))
 for i,c in enumerate(cells): sheet.alpha_composite(c,((i%4)*CW,(i//4)*CH))
