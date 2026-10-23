@@ -80,6 +80,7 @@ namespace YeogiCafe.Core
         {
             if (save != null && save.GetOrCreateCat(d.catId).visitCount == 0) firstMetToday.Add(d.catId);
             visitsToday.TryGetValue(d.catId, out int n); visitsToday[d.catId] = n + 1;
+            YeogiCafe.DevTools.PlaytestLog.Count("방문");
         }
         bool firstSpawnDone;   // [버그수정] 아침 시작 시 첫 손님을 즉시 스폰(≈48초 무반응 제거)
 

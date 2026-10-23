@@ -76,6 +76,13 @@ namespace YeogiCafe.DevTools
             Line($"{key}: {value}");
         }
 
+        // 하루 동안 센 숫자(방문·서빙·주문 놓침 등) — 영업 끝 줄에 함께 남는다
+        public static void Count(string key)
+        {
+            if (w == null) return;
+            eventsToday.TryGetValue(key, out int n); eventsToday[key] = n + 1;
+        }
+
         static int startedDay = -1;
         public static void DayStart(int day)
         {

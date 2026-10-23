@@ -282,10 +282,14 @@ namespace YeogiCafe.UI
                 Color col = RelColor(kind);
                 float th = kind == 0 || kind == 2 ? 7f : kind == 4 ? 4f : 5f;
                 Vector2 a = pos[r.catA], b = pos[r.catB], d = b - a;
-                float len = Mathf.Max(0f, d.magnitude - 64f * k);          // 아이콘 안으로 파고들지 않게
+                // 아이콘 안으로 파고들지 않게 양끝을 자르고, 아래쪽(이름표 쪽)으로 들어오는 끝은 이름표까지 더 자른다
+                Vector2 dir = d.sqrMagnitude > 1e-4f ? d.normalized : Vector2.right;
+                float trimA = (32f + 20f * Mathf.Max(0f, -dir.y)) * k, trimB = (32f + 20f * Mathf.Max(0f, dir.y)) * k;
+                Vector2 pa = a + dir * trimA, pb = b - dir * trimB;
+                float len = Mathf.Max(0f, Vector2.Dot(pb - pa, dir));
                 float ang = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
-                RelLine(relRoot, (a + b) * 0.5f, len + 2f, th + 2f, ang, new Color(0.25f, 0.18f, 0.14f, kind == 4 ? 0.18f : 0.32f));
-                RelLine(relRoot, (a + b) * 0.5f, len, th, ang, kind == 4 ? new Color(col.r, col.g, col.b, 0.8f) : col);
+                RelLine(relRoot, (pa + pb) * 0.5f, len + 2f, th + 2f, ang, new Color(0.25f, 0.18f, 0.14f, kind == 4 ? 0.18f : 0.32f));
+                RelLine(relRoot, (pa + pb) * 0.5f, len, th, ang, kind == 4 ? new Color(col.r, col.g, col.b, 0.8f) : col);
             }
             // 범례(아래쪽)
             {

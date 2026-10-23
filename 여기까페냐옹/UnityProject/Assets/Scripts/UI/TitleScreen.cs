@@ -73,12 +73,12 @@ namespace YeogiCafe.UI
             }
 
             // 버튼(창 앞, 가운데 세로로)
-            float y = 120;
+            float y = hasSave ? 120 : 88;                 // 처음이면 버튼 3개 → 가운데로 조금 내린다
             var cont = Btn(ContinueText(day), UiFactory.Green, UiFactory.Ink, ref y, out contLabel);
             cont.onClick.AddListener(Begin);
             var nb = Btn(L.Get("ui.title.new"), UiFactory.Cream, UiFactory.Ink, ref y, out newLabel);
             nb.onClick.AddListener(NewGame);
-            if (!hasSave) nb.gameObject.SetActive(false);
+            if (!hasSave) { nb.gameObject.SetActive(false); y += 64; }    // 빈 칸 없이 아래 버튼을 당긴다
             var sb = Btn(L.Get("ui.title.settings"), UiFactory.Cream, UiFactory.Ink, ref y, out _);
             sb.onClick.AddListener(() => owner.OpenSettings());
             var qb = Btn(L.Get("ui.title.quit"), UiFactory.Wood, UiFactory.Cream, ref y, out _);

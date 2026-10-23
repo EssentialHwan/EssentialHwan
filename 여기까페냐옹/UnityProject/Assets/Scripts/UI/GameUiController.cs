@@ -299,14 +299,17 @@ namespace YeogiCafe.UI
                 UiFactory.Anchor((RectTransform)toastText.transform, Vector2.zero, Vector2.one, new Vector2(20, 8), new Vector2(-20, -8));
             }
             toastText.text = text; toastT = 3.5f; toastCg.alpha = 1f;
-            // 주방에서는 위쪽 주문표를 가리지 않게 화면 아래 양손 사이로, 홀에서는 상단 바 아래
+            // 화면 아래 가운데: 주방에서는 위쪽 주문표를, 홀에서는 천장 조명·창(빛의 출처)을 가리지 않게
             var tbg = (RectTransform)toastText.transform.parent;
             bool inKitchen = kitchen != null && kitchen.IsOpen;
-            tbg.anchorMin = tbg.anchorMax = tbg.pivot = new Vector2(0.5f, inKitchen ? 0f : 1f);
-            tbg.anchoredPosition = new Vector2(0, inKitchen ? 40 : -76);
+            tbg.anchorMin = tbg.anchorMax = tbg.pivot = new Vector2(0.5f, 0f);
+            float ty = inKitchen ? 40 : editMode != null && editMode.IsOn ? 92 : 22;      // 배치 모드는 아래 도구 막대 위로
+            // 왼쪽 아래 안내 카드가 떠 있으면 그 오른쪽 옆으로(위로 올리면 자리에 앉은 고양이를 가린다)
+            bool beside = !inKitchen && guide != null && guide.Visible && !(editMode != null && editMode.IsOn);
+            tbg.anchoredPosition = new Vector2(beside ? 160 : 0, ty);
             YeogiCafe.Audio.SoundManager.Sfx("sfx_boop", 0.35f, 0.04f, "toast", 0.4f);
             var trt = (RectTransform)toastText.transform.parent;          // 긴 알림은 두 줄로 → 높이 맞춤
-            trt.sizeDelta = new Vector2(inKitchen ? 600 : 720, Mathf.Max(64f, toastText.preferredHeight + 20f));   // 양손(좌우 끝 ~250)과 안 겹치는 폭
+            trt.sizeDelta = new Vector2(inKitchen || beside ? 600 : 720, Mathf.Max(64f, toastText.preferredHeight + 20f));   // 양손(좌우 끝 ~250)과 안 겹치는 폭
             toastText.transform.parent.SetAsLastSibling();
         }
 

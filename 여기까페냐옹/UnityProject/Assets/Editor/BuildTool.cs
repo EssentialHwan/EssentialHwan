@@ -21,7 +21,7 @@ namespace YeogiCafe.EditorTools
 
             PlayerSettings.productName = "여기카페냐옹";   // 바뀌면 저장 폴더도 바뀜 → SaveManager가 예전 폴더 세이브·사진을 가져옴
             PlayerSettings.companyName = "EssentialHwan";
-            PlayerSettings.bundleVersion = "0.9.1";   // 친구 플레이테스트 1차
+            PlayerSettings.bundleVersion = "0.9.2";   // 친구 플레이테스트 2차: 2D 조명·햇살·접지 그림자
             PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
             PlayerSettings.defaultScreenWidth = 1600;
             PlayerSettings.defaultScreenHeight = 900;

@@ -20,7 +20,7 @@ namespace YeogiCafe.UI
         {
             this.owner = owner;
             card = UiFactory.Panel("TutorialGuide", parent, new Color(1f, 0.97f, 0.88f, 0.98f));
-            // 왼쪽 아래 구석: 위쪽 알림(리뷰·주문)과 가운데 패널을 가리지 않게
+            // 왼쪽 아래 구석: 가운데 패널을 가리지 않게(알림은 이 카드가 떠 있으면 그 위로 올라간다)
             UiFactory.SetRect(card, new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0), new Vector2(16, 16), new Vector2(470, 96));
             UiFactory.Frame(card, UiFactory.FrameStyle.Paper);
             var tag = UiFactory.Label("Tag", card, L.Get("tut.tag"), 14, TextAnchor.UpperLeft, UiFactory.PinkDeep);
@@ -39,6 +39,7 @@ namespace YeogiCafe.UI
 
         SaveGame Save => owner.Save;
         public int Step => Save != null ? Save.tutorialStep : Done;
+        public bool Visible => card != null && card.gameObject.activeSelf;
 
         // 이어하기: 2일차 이후 세이브는 안내를 건너뛴다
         public void Begin()

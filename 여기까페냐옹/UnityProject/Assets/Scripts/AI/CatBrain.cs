@@ -121,7 +121,7 @@ namespace YeogiCafe.AI
             for (int i = 0; i < seats.Count; i++) if (seats[i].IsFree) { anyFree = true; break; }
             if (anyFree) { waitOutsideTimer = 0; state = CatState.FindSeat; return; }
             // 오래 기다려도 자리 없음 → 귀가
-            if (waitOutsideTimer >= WaitOutsidePatience) state = CatState.LeaveDisappointed;
+            if (waitOutsideTimer >= WaitOutsidePatience) { state = CatState.LeaveDisappointed; YeogiCafe.DevTools.PlaytestLog.Count("자리 없어 귀가"); }
         }
 
         // ── 대장냥이 자리 뺏기 ──
@@ -290,6 +290,7 @@ namespace YeogiCafe.AI
             if (currentTicket.state == YeogiCafe.Order.TicketState.Served)
             {
                 ServedStars = currentTicket.stars; ServeWait = currentTicket.ServeWait;
+                YeogiCafe.DevTools.PlaytestLog.Count("서빙");
                 // 다른 메뉴가 나왔으면 그걸 먹는다(결제는 나온 메뉴 기준, 최애 판정도 나온 메뉴)
                 if (currentTicket.menu != currentTicket.requested)
                 {
@@ -304,6 +305,7 @@ namespace YeogiCafe.AI
             {
                 // 인내심 소진 → 불만 퇴장 (만족도·매출 페널티는 세션결과 orderFailed로)
                 ServedMenu = null;
+                YeogiCafe.DevTools.PlaytestLog.Count("주문 놓침");
                 if (seat != null) { SetOccupant?.Invoke(seat, null); seat.Vacate(); seat = null; }
                 state = CatState.Leave;
             }
