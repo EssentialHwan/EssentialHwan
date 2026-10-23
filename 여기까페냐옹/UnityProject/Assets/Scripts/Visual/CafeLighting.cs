@@ -222,16 +222,16 @@ namespace YeogiCafe.Visual
             {
                 case DayPhase.Lunch:
                     k.g = new Color(1f, 0.99f, 0.96f); k.gi = 0.95f; k.w = new Color(1f, 0.97f, 0.88f); k.wi = 0.45f;
-                    k.b = new Color(1f, 0.95f, 0.8f); k.bi = 0.38f; k.li = 0.1f; break;
+                    k.b = new Color(1f, 0.95f, 0.8f); k.bi = 0.3f; k.li = 0.1f; break;
                 case DayPhase.Evening:
                     k.g = new Color(0.9f, 0.78f, 0.76f); k.gi = 0.66f; k.w = new Color(1f, 0.6f, 0.38f); k.wi = 0.85f;
-                    k.b = new Color(1f, 0.64f, 0.38f); k.bi = 0.55f; k.li = 1.05f; break;
+                    k.b = new Color(1f, 0.64f, 0.38f); k.bi = 0.45f; k.li = 1.05f; break;
                 case DayPhase.Settlement:
                     k.g = new Color(0.6f, 0.65f, 0.92f); k.gi = 0.45f; k.w = new Color(0.55f, 0.62f, 1f); k.wi = 0.3f;
                     k.b = Color.white; k.bi = 0f; k.li = 1.15f; break;
                 default:
                     k.g = new Color(1f, 0.97f, 0.92f); k.gi = 0.9f; k.w = new Color(1f, 0.92f, 0.76f); k.wi = 0.5f;
-                    k.b = new Color(1f, 0.93f, 0.76f); k.bi = 0.4f; k.li = 0.2f; break;
+                    k.b = new Color(1f, 0.93f, 0.76f); k.bi = 0.32f; k.li = 0.2f; break;
             }
             var w = Weather.Current;
             if (w == WeatherKind.Rain)   { k.gi *= 0.86f; k.w = Color.Lerp(k.w, new Color(0.62f, 0.72f, 0.9f), 0.7f); k.wi *= 0.6f; k.li += 0.3f; }
