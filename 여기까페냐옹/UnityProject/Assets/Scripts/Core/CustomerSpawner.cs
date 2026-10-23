@@ -194,6 +194,19 @@ namespace YeogiCafe.Core
         }
 
         // 같은 고양이(개체)가 동시에 두 마리 있을 수 없다 — 이미 카페 안(또는 입장 중)이면 건너뛴다.
+        // 개발용(스크린샷·연출 점검): 해금과 상관없이 아직 안 온 손님 하나를 바로 들여보낸다
+        public bool DebugSpawnAny()
+        {
+            if (allCats == null) return false;
+            var list = new List<CatData>();
+            foreach (var c in allCats)
+                if (c != null && !cats.IsInCafe(c.catId) && !YeogiCafe.Data.ShelterBook.IsShelterCat(c.catId)) list.Add(c);
+            if (list.Count == 0) return false;
+            var d = list[Random.Range(0, list.Count)];
+            CountVisit(d); cats.Spawn(d);
+            return true;
+        }
+
         CatData NextNotInCafe(List<CatData> pool)
         {
             for (int tries = 0; tries < pool.Count; tries++)

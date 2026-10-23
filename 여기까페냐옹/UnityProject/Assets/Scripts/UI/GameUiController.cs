@@ -630,6 +630,41 @@ namespace YeogiCafe.UI
         public bool UiTourRunning { get; private set; }
         public void DebugUiTour() { if (!UiTourRunning) StartCoroutine(UiTour()); }
 
+        // 개발용: 스토어 스크린샷 후보 — 같은 장면을 1920×1080으로 UI 포함/UI 없이 두 장 → Build/store/
+        // (화면 크기와 상관없이 카메라를 1920×1080 텍스처에 다시 그린다. UI는 잠깐 카메라 캔버스로 바꿔 같이 그린다)
+        public void DebugStoreShot() => StartCoroutine(StoreShot());
+        System.Collections.IEnumerator StoreShot()
+        {
+            string dir = System.IO.Path.GetFullPath(System.IO.Path.Combine(Application.dataPath, "..", "Build", "store"));
+            System.IO.Directory.CreateDirectory(dir);
+            string stamp = System.DateTime.Now.ToString("MMdd_HHmmss");
+            var cam = Camera.main; if (cam == null) yield break;
+            yield return null;                                            // 개발 콘솔이 닫힌 뒤
+            var mode = root.renderMode; var wcam = root.worldCamera; float dist = root.planeDistance; int order = root.sortingOrder;
+            root.renderMode = RenderMode.ScreenSpaceCamera; root.worldCamera = cam; root.planeDistance = 1f; root.sortingOrder = 30000;
+            yield return null;
+            Save1080(cam, System.IO.Path.Combine(dir, stamp + "_ui.png"));
+            root.renderMode = mode; root.worldCamera = wcam; root.planeDistance = dist; root.sortingOrder = order;
+            root.enabled = false;
+            yield return null;
+            Save1080(cam, System.IO.Path.Combine(dir, stamp + "_clean.png"));
+            root.enabled = true;
+            Debug.Log("[StoreShot] " + dir + " / " + stamp);
+        }
+
+        static void Save1080(Camera cam, string file)
+        {
+            const int W = 1920, H = 1080;
+            var rt = new RenderTexture(W, H, 24, RenderTextureFormat.ARGB32);
+            var prevT = cam.targetTexture; var prevA = RenderTexture.active;
+            cam.targetTexture = rt; Canvas.ForceUpdateCanvases(); cam.Render(); cam.targetTexture = prevT;
+            RenderTexture.active = rt;
+            var tex = new Texture2D(W, H, TextureFormat.RGB24, false);
+            tex.ReadPixels(new Rect(0, 0, W, H), 0, 0); tex.Apply();
+            RenderTexture.active = prevA; rt.Release(); Object.Destroy(rt);
+            System.IO.File.WriteAllBytes(file, tex.EncodeToPNG()); Object.Destroy(tex);
+        }
+
         System.Collections.IEnumerator UiTour()
         {
             UiTourRunning = true;
