@@ -44,7 +44,8 @@ namespace YeogiCafe.Visual
             if (day.CurrentDay == rolledDay) return;
             rolledDay = day.CurrentDay;
             triggerAt = -1f;
-            if (day.CurrentDay < 2 || Random.value > 0.45f || day.cfg == null) return;
+            bool raid = FirstWeek.MouseRaid(day.CurrentDay) ?? Random.value <= 0.45f;          // 첫 주는 4일차에 꼭
+            if (day.CurrentDay < 2 || !raid || day.cfg == null) return;
             float m = day.cfg.phaseSeconds.x, total = m + day.cfg.phaseSeconds.y + day.cfg.phaseSeconds.z;
             triggerAt = Random.Range(m * 0.9f, total * 0.88f);
         }
@@ -58,7 +59,7 @@ namespace YeogiCafe.Visual
             if (st == St.None)
             {
                 if (triggerAt > 0f && day.DayTimer >= triggerAt && day.Phase != DayPhase.Settlement && !CatInteractionDirector.Suspended
-                    && cats.Active.Count >= 2) { triggerAt = -1f; Spawn(); }
+                    && cats.Active.Count >= (FirstWeek.Active(day.CurrentDay) ? 1 : 2)) { triggerAt = -1f; Spawn(); }   // 첫 주 쥐 소동은 손님 한 마리만 있어도
                 FadeHole(dt);
                 return;
             }

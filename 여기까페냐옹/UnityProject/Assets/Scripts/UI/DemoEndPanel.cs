@@ -26,33 +26,42 @@ namespace YeogiCafe.UI
             scrim.SetAsLastSibling();
 
             var paper = UiFactory.Panel("Letter", scrim, new Color(1f, 0.96f, 0.86f, 1f));
-            UiFactory.SetRect(paper, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(760, 540));
+            UiFactory.SetRect(paper, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(760, 620));
             UiFactory.Frame(paper, UiFactory.FrameStyle.Paper, null, 3f);
 
             var title = UiFactory.Label("Title", paper, L.Get("demo.end.title"), 30, TextAnchor.MiddleCenter, UiFactory.PinkDeep);
             UiFactory.SetRect((RectTransform)title.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -22), new Vector2(-40, 44));
 
-            // 만난 고양이(한 번이라도 온 손님)
-            var met = new List<CatData>();
+            // 만난 고양이(한 번이라도 온 손님) / 아직 못 만난 고양이(여름 미리보기 그림자)
+            var met = new List<CatData>(); CatData unmet = null;
             if (cats != null && save != null)
                 foreach (var c in cats)
-                    if (c != null && !ShelterBook.IsShelterCat(c.catId) && save.GetOrCreateCat(c.catId).visitCount > 0) met.Add(c);
+                {
+                    if (c == null || ShelterBook.IsShelterCat(c.catId)) continue;
+                    if (save.GetOrCreateCat(c.catId).visitCount > 0) met.Add(c);
+                    else if (unmet == null) unmet = c;
+                }
             int prefs = EndingPanel.Progress(save, cats).done;
             var sub = UiFactory.Label("Sub", paper, L.Get("demo.end.sub", ("cats", met.Count.ToString()), ("prefs", prefs.ToString())), 18, TextAnchor.MiddleCenter, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)sub.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -70), new Vector2(-60, 48));
 
-            // 만난 고양이 초상(한 줄 최대 7마리)
-            int perRow = Mathf.Clamp(met.Count, 1, 7);
-            for (int i = 0; i < met.Count && i < 14; i++)
-            {
-                int row = i / perRow, col = i % perRow;
-                int inRow = Mathf.Min(perRow, met.Count - row * perRow);
-                float x = (col - (inRow - 1) * 0.5f) * 96f, y = met.Count > perRow ? 78f - row * 100f : 40f;
-                var g = new GameObject("Cat_" + met[i].catId, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-                g.transform.SetParent(paper, false);
-                var im = g.GetComponent<Image>(); im.sprite = CatSpriteBank.Portrait(met[i].catId); im.preserveAspect = true; im.raycastTarget = false;
-                UiFactory.SetRect((RectTransform)g.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(x, y), new Vector2(104, 104));
-            }
+            // 만난 고양이 초상: 한 줄(최대 9마리)
+            int shown = Mathf.Min(met.Count, 9);
+            for (int i = 0; i < shown; i++)
+                Img(paper, "Cat_" + met[i].catId, CatSpriteBank.Portrait(met[i].catId), new Vector2((i - (shown - 1) * 0.5f) * 76f, 152f), new Vector2(80, 80), Color.white);
+
+            // 여름 미리보기: 여름 한낮 창밖 + 아직 못 만난 손님의 그림자 — "다음 계절엔 누가 올까?"
+            var outside = RuntimeSprites.Get("glass_out_0_1_1", () => GlassWindowDrawing.Outside(0, 1, 1));
+            var frame = RuntimeSprites.Get("glass_frame", GlassWindowDrawing.Frame);
+            const float K = 1.45f;
+            float gw = GlassWindowDrawing.GW * K, gh = GlassWindowDrawing.GH * K;
+            Img(paper, "SummerOutside", outside, new Vector2(0, 30), new Vector2(gw, gh), Color.white);
+            Img(paper, "SummerFrame", frame, new Vector2(0, 30 - 1.5f * K),   // 창틀 안 유리 중심이 창틀 중심보다 1.5px 위
+                new Vector2(GlassWindowDrawing.FW * K, GlassWindowDrawing.FH * K), Color.white);
+            if (unmet != null)
+                Img(paper, "Silhouette", CatSpriteBank.Portrait(unmet.catId), new Vector2(gw * 0.36f, -14), new Vector2(104, 104), new Color(0.16f, 0.12f, 0.14f, 1f));
+            var tease = UiFactory.Label("Tease", paper, L.Get("demo.end.tease"), 18, TextAnchor.MiddleCenter, UiFactory.PinkDeep);
+            UiFactory.SetRect((RectTransform)tease.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -78), new Vector2(680, 28));
 
             var body = UiFactory.Label("Body", paper, L.Get("demo.end.body"), 17, TextAnchor.UpperCenter, UiFactory.Ink);
             body.lineSpacing = 1.15f;
@@ -90,6 +99,14 @@ namespace YeogiCafe.UI
                 btn.onClick.AddListener(() => act());
             }
             YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.7f, 0f);
+        }
+
+        static void Img(RectTransform parent, string name, Sprite sp, Vector2 pos, Vector2 size, Color tint)
+        {
+            var g = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            g.transform.SetParent(parent, false);
+            var im = g.GetComponent<Image>(); im.sprite = sp; im.preserveAspect = true; im.raycastTarget = false; im.color = tint;
+            UiFactory.SetRect((RectTransform)g.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), pos, size);
         }
 
         void Close()

@@ -187,6 +187,7 @@ namespace YeogiCafe.Core
             if (brain.IsDelivery) { HandleDelivery(brain); return; }
             var catSave = save.GetOrCreateCat(data.catId);
             if (brain.State == CatState.Leave && brain.ServedMenu != null && !brain.IsSpecialGuest) lastLeftToday = data.catId;
+            if (!brain.IsSpecialGuest) lastSeenToday = data.catId;      // 음식을 못 받았어도(마감 놀아주기 마지막 후보)
 
             // 만족도 계산 (§3.3). 분위기 승수는 cfg.atmosphereAffectsSatisfaction=true(정식)일 때만 반영.
             var atmo = furniture != null ? furniture.CurrentAtmosphere : default;
@@ -289,7 +290,7 @@ namespace YeogiCafe.Core
                 if (b != null && !b.IsSpecialGuest && (b.State == CatState.Idle || b.State == CatState.FacilityAction || b.State == CatState.Eat || b.State == CatState.WaitFood))
                     cands.Add(b);
             if (cands.Count > 0) ClosingGuestId = cands[Random.Range(0, cands.Count)].data.catId;
-            else ClosingGuestId = lastLeftToday;
+            else ClosingGuestId = lastLeftToday ?? lastSeenToday;     // 마감 놀아주기는 매일 — 오늘 온 손님이 하나라도 있으면
             foreach (var b in remaining) if (b != null) b.ForceLeave();
             if (orderSystem != null) orderSystem.ClearAll();
 
@@ -339,7 +340,7 @@ namespace YeogiCafe.Core
         public void BeginNextDay()
         {
             economy.ResetDaily();
-            LostToMice = 0; lastLeftToday = null;                            // 정산 화면에서 오늘 매출을 다 보여준 뒤 초기화
+            LostToMice = 0; lastLeftToday = null; lastSeenToday = null;                            // 정산 화면에서 오늘 매출을 다 보여준 뒤 초기화
             day.AdvanceToNextDay();
             save.currentDay = day.CurrentDay;
             if (saveManager != null) saveManager.Save(save);
@@ -372,7 +373,7 @@ namespace YeogiCafe.Core
 
         public int LostToMice { get; set; }
         public string ClosingGuestId { get; private set; }   // 마감 직전 놀아줄 마지막 손님
-        string lastLeftToday;                  // 오늘 쥐 소동으로 못 받은 음식값(정산 표시용)
+        string lastLeftToday, lastSeenToday;                  // 오늘 쥐 소동으로 못 받은 음식값(정산 표시용)
         public ObservationManager Observation => obs;
         public SaveGame Save => save;
     }

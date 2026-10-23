@@ -54,16 +54,19 @@ namespace YeogiCafe.Core
             }
             // 냥슐랭 심사원: 오늘 올지 굴린다(평판이 좋을수록 잘 옴)
             inspectorSpawned = false;
-            if (save.inspectorPlanDay != day.CurrentDay && YeogiCafe.Food.NyanGuide.RollVisit(save, day.CurrentDay, YeogiCafe.Food.ReviewBook.InspectorBonus(rep)))
+            bool inspect = FirstWeek.InspectorVisit(day.CurrentDay)                                   // 첫 주는 6일차에 꼭
+                           ?? YeogiCafe.Food.NyanGuide.RollVisit(save, day.CurrentDay, YeogiCafe.Food.ReviewBook.InspectorBonus(rep));
+            if (save.inspectorPlanDay != day.CurrentDay && inspect && save.nyanStars < YeogiCafe.Food.NyanGuide.MaxStars)
                 save.inspectorPlanDay = day.CurrentDay;
             // 배달냥: 2일차부터 하루 0~2번, 점심~저녁 사이 아무 때나
             deliveryAt.Clear();
-            int dv = YeogiCafe.Food.DeliveryCat.RollVisits(day.CurrentDay, save.cafeLevel);
+            int dv = FirstWeek.DeliveryVisits(day.CurrentDay) ?? YeogiCafe.Food.DeliveryCat.RollVisits(day.CurrentDay, save.cafeLevel);   // 첫 주는 5일차에 한 번
             float m = day.cfg.phaseSeconds.x, total = m + day.cfg.phaseSeconds.y + day.cfg.phaseSeconds.z;
             for (int i = 0; i < dv; i++) deliveryAt.Add(Random.Range(m, total * 0.85f));
             deliveryAt.Sort();
-            // 너무 썰렁한 날 방지: 최소 2마리(또는 해금된 전부)
-            for (int guard = 0; comersToday.Count < Mathf.Min(2, pool.Count) && guard < 20; guard++)
+            // 너무 썰렁한 날 방지: 최소 2마리, 첫 주는 3마리(또는 해금된 전부) — 첫인상이 텅 빈 카페가 되지 않게
+            int minComers = FirstWeek.Active(day.CurrentDay) ? 3 : 2;
+            for (int guard = 0; comersToday.Count < Mathf.Min(minComers, pool.Count) && guard < 20; guard++)
                 comersToday.Add(pool[Random.Range(0, pool.Count)].catId);
         }
 
