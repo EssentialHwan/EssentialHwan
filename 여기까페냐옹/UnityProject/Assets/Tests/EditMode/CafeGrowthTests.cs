@@ -6,6 +6,13 @@ namespace YeogiCafe.Tests
     // 사양서 §17 T16 (P3) — 성장 데드락 방지 + 조건 판정(순수 Evaluate).
     public class CafeGrowthTests
     {
+        [SetUp]
+        public void Setup()
+        {
+            YeogiCafe.Loc.L.Load("key,ko,en\ncafe.block.max,최대 레벨,Max level\ncafe.block.gold,골드 부족 ({a}/{b}),Not enough gold\ncafe.block.need,취향을 더 발견하거나(관찰) 새로운 가구를 설치해보세요,Discover more\n");
+            YeogiCafe.Loc.L.Current = YeogiCafe.Loc.Language.Ko;
+        }
+
         static CafeLevelReq Lv2() => new CafeLevelReq {
             level = 2, goldCost = 800,
             minDiscoveredCats = 2, minRecordedAxesTotal = 3, minRegulars = 1,

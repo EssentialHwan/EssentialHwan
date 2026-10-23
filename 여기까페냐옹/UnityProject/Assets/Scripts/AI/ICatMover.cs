@@ -15,7 +15,7 @@ namespace YeogiCafe.AI
     // 실제 빌드는 NavMeshCatMover(별도)로 교체 권장.
     public class SimpleLerpMover : MonoBehaviour, ICatMover
     {
-        public float speed = 2.5f;
+        public float speed = 1.6f;          // 고양이 걸음(걷기 클립 보폭과 맞춤)
         Vector3 target;
         bool moving;
 

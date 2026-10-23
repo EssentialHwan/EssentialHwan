@@ -50,6 +50,26 @@ namespace YeogiCafe.Art
         public void FillRect(int x0, int y0, int x1, int y1, Color32 c)
         { for (int y = y0; y <= y1; y++) HLine(x0, x1, y, c); }
 
+        // 모서리를 깎은 사각형(쿠션·소파 등 부드러운 가구 실루엣용). r=1이면 모서리 1px 제거.
+        public void FillRoundRect(int x0, int y0, int x1, int y1, int r, Color32 c)
+        {
+            for (int y = y0; y <= y1; y++)
+            {
+                int inset = 0;
+                int dy = Mathf.Min(y - y0, y1 - y);
+                if (dy < r) inset = r - dy;
+                HLine(x0 + inset, x1 - inset, y, c);
+            }
+        }
+
+        // 체크 디더(두 색을 격자로 섞음) — 그라데이션·질감용.
+        public void Dither(int x0, int y0, int x1, int y1, Color32 c)
+        {
+            for (int y = y0; y <= y1; y++)
+                for (int x = x0; x <= x1; x++)
+                    if (((x + y) & 1) == 0) Set(x, y, c);
+        }
+
         public void RectOutline(int x0, int y0, int x1, int y1, Color32 c)
         { HLine(x0, x1, y0, c); HLine(x0, x1, y1, c); VLine(x0, y0, y1, c); VLine(x1, y0, y1, c); }
 
