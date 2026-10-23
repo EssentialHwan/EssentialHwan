@@ -27,6 +27,7 @@ NEW=load('tr7').NEW
 NEW.update(load('tr8').NEW)
 NEW.update(load('tr9').NEW)
 NEW.update(load('tr10').NEW)
+NEW.update(load('tr11').NEW)
 P10=load('tr10').PATCH
 for r in out:
     if r[0] in P10:

@@ -12,10 +12,16 @@ namespace YeogiCafe.EditorTools
         const string ExeName = "YeogiCafe.exe";
 
         [MenuItem("여기카페냐옹/■ Windows 빌드 (exe)", priority = 200)]
-        public static void BuildWindows()
+        public static void BuildWindows() => Build(false);
+
+        // 체험판(넥스트 페스트 데모): 봄 1~7일차, 끝나면 위시리스트 안내. 결과는 Build/YeogiCafe_Demo/ (스팀 데모 앱에 그대로 올린다)
+        [MenuItem("여기카페냐옹/■ 체험판 빌드 (데모 exe)", priority = 201)]
+        public static void BuildDemo() => Build(true);
+
+        static void Build(bool demo)
         {
             string root = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Build"));
-            string outDir = Path.Combine(root, "YeogiCafe_Windows");
+            string outDir = Path.Combine(root, demo ? "YeogiCafe_Demo" : "YeogiCafe_Windows");
             Directory.CreateDirectory(root);
             if (Directory.Exists(outDir)) Directory.Delete(outDir, true);
 
@@ -37,6 +43,7 @@ namespace YeogiCafe.EditorTools
                 locationPathName = Path.Combine(outDir, ExeName),
                 target = BuildTarget.StandaloneWindows64,
                 options = BuildOptions.None,
+                extraScriptingDefines = demo ? new[] { "YEOGI_DEMO" } : null,   // Demo.IsDemo = true
             };
             var report = BuildPipeline.BuildPlayer(opts);
             var s = report.summary;
@@ -44,9 +51,11 @@ namespace YeogiCafe.EditorTools
             foreach (var step in report.steps)
                 foreach (var m in step.messages)
                     if (m.type == LogType.Error || m.type == LogType.Exception) log += "ERR: " + m.content + "\n";
-            File.WriteAllText(Path.Combine(root, "build_log.txt"), log);
+            File.WriteAllText(Path.Combine(root, demo ? "build_log_demo.txt" : "build_log.txt"), log);
             Debug.Log("[BuildTool] " + log);
-            if (s.result == BuildResult.Succeeded) PackPlaytest(root, outDir);
+            if (s.result != BuildResult.Succeeded) return;
+            if (demo) EditorUtility.RevealInFinder(Path.Combine(outDir, ExeName));
+            else PackPlaytest(root, outDir);
         }
 
         // 친구 플레이테스트 배포용: 안내문을 넣고 zip 하나로 묶는다(Build/여기카페냐옹_플레이테스트_v버전.zip)

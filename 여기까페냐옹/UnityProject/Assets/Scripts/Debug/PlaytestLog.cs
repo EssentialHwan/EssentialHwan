@@ -10,7 +10,7 @@ namespace YeogiCafe.DevTools
     // 개인 정보는 남기지 않는다(시간·일차·화면 이름·이벤트 수·오류 메시지만).
     public static class PlaytestLog
     {
-        public const bool Enabled = true;             // 정식 출시 빌드에서는 false
+        public static bool Enabled => !YeogiCafe.Core.Demo.IsDemo;   // 친구 테스트용 기록: 체험판 빌드에서는 끈다(정식 출시 때는 여기를 false로)
         static StreamWriter w;
         static float t0;
         static readonly Dictionary<string, string> last = new();

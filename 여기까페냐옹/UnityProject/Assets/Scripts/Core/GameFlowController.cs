@@ -334,6 +334,8 @@ namespace YeogiCafe.Core
         // (정산 중 플레이어의 [기록]·구매가 HandleDayEnd 이후에 일어나므로 여기서 다시 저장해야 유실이 없다.)
         public event System.Action OnSettlementReady;
 
+        public void SaveNow() { if (saveManager != null && save != null) saveManager.Save(save); }
+
         public void BeginNextDay()
         {
             economy.ResetDaily();

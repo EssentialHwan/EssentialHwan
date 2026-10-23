@@ -64,7 +64,14 @@ namespace YeogiCafe.UI
             var era = UiFactory.Label("Era", bg, L.Get("title.era"), 15, TextAnchor.LowerLeft, new Color(0.45f, 0.33f, 0.27f, 0.85f));
             UiFactory.SetRect((RectTransform)era.transform, new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0), new Vector2(16, 8), new Vector2(360, 24));
             era.raycastTarget = false;
-            if (YeogiCafe.DevTools.PlaytestLog.Enabled)
+            if (YeogiCafe.Core.Demo.IsDemo)
+            {
+                // 체험판 표시(오른쪽 위)
+                var dt = UiFactory.Label("Demo", bg, L.Get("title.demo"), 15, TextAnchor.UpperRight, new Color(0.62f, 0.3f, 0.34f, 0.95f));
+                UiFactory.SetRect((RectTransform)dt.transform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1), new Vector2(-16, -10), new Vector2(420, 22));
+                dt.raycastTarget = false;
+            }
+            else if (YeogiCafe.DevTools.PlaytestLog.Enabled)
             {
                 // 친구 테스트 빌드 표시(오른쪽 위) — 버전과 '사운드 미적용'
                 var pt = UiFactory.Label("Playtest", bg, L.Get("title.playtest", ("v", Application.version)), 15, TextAnchor.UpperRight, new Color(0.62f, 0.3f, 0.34f, 0.95f));

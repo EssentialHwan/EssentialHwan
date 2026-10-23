@@ -282,7 +282,7 @@ namespace YeogiCafe.UI
         readonly Queue<string> toastQueue = new();
         // 창(상점·도감·설정·마감 놀아주기·정산)이 떠 있으면 알림은 기다렸다가 닫힌 뒤에 — 창 제목·탭을 가리지 않게
         bool ModalOpen => (shop != null && shop.IsOpen) || (catalog != null && catalog.IsOpen) || (settings != null && settings.IsOpen)
-                          || (closing != null && closing.IsOpen) || (settlement != null && settlement.IsOpen);
+                          || (closing != null && closing.IsOpen) || (settlement != null && settlement.IsOpen) || DemoEndPanel.IsOpen;
 
         public void ShowToast(string text) => ShowToast(text, false);
         // force: 창이 열려 있어도 바로(설정 창 안에서 누른 버튼의 안내 등)
@@ -348,7 +348,7 @@ namespace YeogiCafe.UI
             {
                 menuPaused = false;
                 bool otherPause = (editMode != null && editMode.IsOn) || PhotoOpen || (settings != null && settings.IsOpen)
-                                  || (title != null && title.IsOpen) || opening != null;
+                                  || (title != null && title.IsOpen) || opening != null || DemoEndPanel.IsOpen;
                 if (!otherPause && Time.timeScale == 0f) Time.timeScale = menuPrevScale;
             }
         }
@@ -432,10 +432,10 @@ namespace YeogiCafe.UI
             TrackPlaytest();
             if (photo != null && photo.IsOpen) { photo.Tick(Time.unscaledDeltaTime); return; }   // 포토 모드: 다른 입력·HUD 멈춤
             if (Input.GetKeyDown(KeyCode.Escape) && ShelterOpen) { shelter.Close(); return; }
-            if (Input.GetKeyDown(KeyCode.Escape) && opening == null && settings != null && (closing == null || !closing.IsOpen)) settings.Toggle();   // ESC = 설정
+            if (Input.GetKeyDown(KeyCode.Escape) && opening == null && settings != null && (closing == null || !closing.IsOpen) && !DemoEndPanel.IsOpen) settings.Toggle();   // ESC = 설정
             // 단축키: C 도감 · B 구매 · K 주방 (영업 중 화면에서만)
             bool hotkeysOk = (title == null || !title.IsOpen) && (closing == null || !closing.IsOpen) && (settlement == null || !settlement.IsOpen)
-                             && (settings == null || !settings.IsOpen) && !EndingPanel.IsOpen;
+                             && (settings == null || !settings.IsOpen) && !EndingPanel.IsOpen && !DemoEndPanel.IsOpen;
             if (hotkeysOk && Input.GetKeyDown(KeyCode.C)) { shop.Hide(); catalog.Toggle(); }
             if (hotkeysOk && Input.GetKeyDown(KeyCode.B)) { catalog.Hide(); shop.Toggle(); }
             if (hotkeysOk && Input.GetKeyDown(KeyCode.K)) { shop.Hide(); catalog.Hide(); ToggleKitchen(); }
@@ -446,6 +446,7 @@ namespace YeogiCafe.UI
             if (guide != null)
             {
                 if (!guideBegun && Save != null && (title == null || !title.IsOpen)) { guideBegun = true; guide.Begin(); }
+                if (Demo.Finished(Save) && !DemoEndPanel.IsOpen && (title == null || !title.IsOpen)) ShowDemoEnd();   // 체험판을 다 한 세이브로 이어하기
                 guide.Tick(Time.unscaledDeltaTime);
                 guide.SetCompact(settlement != null && settlement.IsOpen);
                 guide.BringToFront();
@@ -712,6 +713,15 @@ namespace YeogiCafe.UI
 
         public void StartNextDay()
         {
+            // 체험판: 마지막 날(7일차) 정산을 마치면 끝 화면(위시리스트 안내)
+            if (Demo.IsLastDay(Save))
+            {
+                Save.demoFinished = true;
+                if (flow != null) flow.SaveNow();
+                settlement.Hide();
+                ShowDemoEnd();
+                return;
+            }
             // 최종 목표 달성(모두의 취향 기록) → 엔딩 편지 한 번, 닫으면 자유 영업
             if (EndingPanel.Ready(Save, AllCats))
             {
@@ -723,7 +733,12 @@ namespace YeogiCafe.UI
             if (flow != null) flow.BeginNextDay();       // 일차 증가·오토세이브·영업 시작
             else if (day != null) day.StartDay();
             RefreshHud();
+            if (Demo.IsLastDay(Save)) ShowToast(L.Get("demo.lastday"));
         }
+
+        DemoEndPanel demoEnd;
+        void ShowDemoEnd() { if (!DemoEndPanel.IsOpen) demoEnd = new DemoEndPanel(root.transform, Save, AllCats); }
+        public void DebugDemoEnd() => new DemoEndPanel(root.transform, Save, AllCats, preview: true);
 
         // ── 패널이 접근하는 헬퍼 ──
         public SaveGame Save => flow != null ? flow.Save : null;
