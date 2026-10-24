@@ -15,6 +15,7 @@ namespace YeogiCafe.UI
 
         public static PawCursor Ensure()
         {
+            if (Application.isMobilePlatform) return null;      // 휴대폰: 손가락이 커서 — 고양이 손 커서는 띄우지 않는다
             var e = FindObjectOfType<PawCursor>();
             if (e != null) return e;
             var go = new GameObject("[PawCursor]");
