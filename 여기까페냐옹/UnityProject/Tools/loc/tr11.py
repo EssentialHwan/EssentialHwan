@@ -15,3 +15,8 @@ NEW = {
 "demo.end.tease": ("여름엔 누가 찾아올까요?", "Who will drop by in summer?", "夏天会有谁来呢？", "夏には誰がやって来るかな？"),
 "title.demo": ("체험판 · 봄의 첫 7일", "Demo · first 7 days of spring", "试玩版 · 春季前7天", "体験版 · 春の最初の7日間"),
 }
+
+# 설정: '빗소리' → '환경음'(비·여름 매미 등 바깥 소리 전체)
+PATCH = {
+"opt.amb": {"ko": "환경음", "en": "Ambience", "zh": "环境音", "ja": "環境音"},
+}

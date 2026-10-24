@@ -29,6 +29,8 @@ NEW.update(load('tr9').NEW)
 NEW.update(load('tr10').NEW)
 NEW.update(load('tr11').NEW)
 P10=load('tr10').PATCH
+P10.update(load('tr11').PATCH)
+P11=True
 for r in out:
     if r[0] in P10:
         P=P10[r[0]]; r[1]=P.get('ko',r[1]); r[2]=P.get('en',r[2]); r[3]=P.get('zh',r[3]); r[4]=P.get('ja',r[4])

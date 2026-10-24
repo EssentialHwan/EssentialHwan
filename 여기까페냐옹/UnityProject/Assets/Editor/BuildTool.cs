@@ -18,6 +18,52 @@ namespace YeogiCafe.EditorTools
         [MenuItem("여기카페냐옹/■ 체험판 빌드 (데모 exe)", priority = 201)]
         public static void BuildDemo() => Build(true);
 
+        // 휴대폰 테스트 빌드(안드로이드 APK) — PC 빌드와 따로 관리: Build/YeogiCafe_Android/, 앱 ID도 .test 로 따로.
+        // 가로 화면 고정, ARM64(IL2CPP). 끝나면 편집기를 다시 Windows 대상으로 돌려놓는다.
+        [MenuItem("여기카페냐옹/■ 휴대폰 테스트 빌드 (안드로이드 apk)", priority = 202)]
+        public static void BuildAndroid()
+        {
+            if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Android, BuildTarget.Android))
+            {
+                EditorUtility.DisplayDialog("휴대폰 테스트 빌드",
+                    "이 Unity에는 안드로이드 빌드 모듈이 없어요.\nUnity Hub → 설치 → 2022.3.40f1 ⚙ → 모듈 추가 → Android Build Support(OpenJDK, Android SDK & NDK 포함)를 설치한 뒤 다시 눌러 주세요.", "확인");
+                return;
+            }
+            string root = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Build"));
+            string outDir = Path.Combine(root, "YeogiCafe_Android");
+            Directory.CreateDirectory(outDir);
+
+            PlayerSettings.productName = "여기카페냐옹";
+            PlayerSettings.companyName = "EssentialHwan";
+            PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "com.essentialhwan.yeogicafe.test");
+            PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
+            PlayerSettings.allowedAutorotateToPortrait = false;
+            PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
+            PlayerSettings.allowedAutorotateToLandscapeLeft = true;
+            PlayerSettings.allowedAutorotateToLandscapeRight = true;
+            PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+            PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
+            EditorUserBuildSettings.buildAppBundle = false;
+
+            var scenes = EditorBuildSettings.scenes.Where(sc => sc.enabled).Select(sc => sc.path).ToArray();
+            if (scenes.Length == 0) scenes = new[] { "Assets/Scenes/Cafe.unity" };
+            string apk = Path.Combine(outDir, $"YeogiCafe_test_v{PlayerSettings.bundleVersion}.apk");
+            var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+            {
+                scenes = scenes, locationPathName = apk, target = BuildTarget.Android, targetGroup = BuildTargetGroup.Android, options = BuildOptions.None,
+            });
+            var s = report.summary;
+            string log = $"result={s.result}\nerrors={s.totalErrors}\nsizeMB={s.totalSize / 1048576f:0.0}\ntime={s.totalTime}\nout={apk}\n";
+            foreach (var step in report.steps)
+                foreach (var m in step.messages)
+                    if (m.type == LogType.Error || m.type == LogType.Exception) log += "ERR: " + m.content + "\n";
+            File.WriteAllText(Path.Combine(root, "build_log_android.txt"), log);
+            Debug.Log("[BuildTool] " + log);
+            EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows64);   // PC 작업으로 복귀
+            if (s.result == BuildResult.Succeeded) EditorUtility.RevealInFinder(apk);
+        }
+
         static void Build(bool demo)
         {
             string root = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Build"));

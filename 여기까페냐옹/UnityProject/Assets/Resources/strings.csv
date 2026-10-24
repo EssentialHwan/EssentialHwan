@@ -435,7 +435,7 @@ opt.title,설정,Settings,设置,設定
 opt.sound,소리,Sound,声音,サウンド
 opt.bgm,배경음악,Music,背景音乐,BGM
 opt.sfx,효과음,Effects,音效,効果音
-opt.amb,빗소리,Rain ambience,雨声,雨の音
+opt.amb,환경음,Ambience,环境音,環境音
 opt.mute,전체 음소거 (M),Mute all (M),全部静音 (M),すべてミュート (M)
 opt.screen,화면,Display,画面,画面
 opt.full,전체화면,Fullscreen,全屏,フルスクリーン

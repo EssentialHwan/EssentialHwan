@@ -34,6 +34,7 @@ namespace YeogiCafe.Art
             else if (phase == 0) { top = C(150, 200, 236); low = C(250, 226, 196); }
             else if (phase == 2) { top = C(126, 110, 176); low = C(248, 170, 128); }
             else { top = C(110, 178, 232); low = C(190, 226, 244); }
+            if (season == 1 && weather == 0 && phase != 2) { top = C(56, 146, 232); low = C(160, 214, 248); }   // 여름: 쨍하고 진한 파랑
             if (phase == 2 && weather > 0) { top = Mul(top, 0.8f); low = Lerp(low, C(206, 150, 130), 0.4f); }
             for (int y = 0; y < GH; y++)
             {
@@ -53,6 +54,22 @@ namespace YeogiCafe.Art
                 if (phase == 2) Sun(c, 200, 34, 11, C(255, 214, 140), C(255, 236, 190));
                 else if (phase == 0) Sun(c, 38, 55, 8, C(255, 240, 190), C(255, 250, 225));
                 else Sun(c, 150, 53, 7, C(255, 246, 210), C(255, 255, 240));
+            }
+
+            // ── 여름: 집 뒤로 솟은 뭉게구름(적란운) ──
+            if (season == 1 && weather == 0)
+            {
+                var cb = phase == 2 ? C(252, 214, 196) : C(255, 255, 255);
+                var cbs = phase == 2 ? C(226, 176, 170) : C(214, 228, 244);
+                foreach (int cx in new[] { 58, 196 })
+                {
+                    for (int k = 0; k < 5; k++)
+                    {
+                        int r = 13 - k * 2, yy = 30 + k * 8;
+                        c.Disc(cx - 8 + (k % 2) * 4, yy, r, cb); c.Disc(cx + 9 - (k % 2) * 3, yy + 2, r - 1, cb);
+                    }
+                    for (int x = cx - 20; x <= cx + 20; x++) c.Blend(x, 30, new Color32(cbs.r, cbs.g, cbs.b, 160));
+                }
             }
 
             // ── 구름 ──
@@ -113,13 +130,13 @@ namespace YeogiCafe.Art
                 // 가게 차양(줄무늬)
                 if (rng.NextDouble() < 0.5)
                 {
-                    var a1 = C(222, 96, 104); var a2 = C(250, 240, 230);
+                    var a1 = season == 1 ? C(70, 140, 214) : C(222, 96, 104); var a2 = C(250, 240, 230);   // 여름 차양은 시원한 파랑
                     if (weather == 2) { a1 = Mul(a1, 0.75f); a2 = Mul(a2, 0.75f); }
                     for (int x = bx + 2; x < bx + w - 2; x++) { var ac = ((x / 3) % 2 == 0) ? a1 : a2; c.VLine(x, baseY + 2, baseY + 5, ac); }
                 }
                 bx += w + rng.Next(2, 6);
                 // 집 사이 가로수
-                if (rng.NextDouble() < 0.55 && bx < GW) { Tree(c, bx - 2, baseY, weather, phase, season); }
+                if (rng.NextDouble() < (season == 1 ? 0.85 : 0.55) && bx < GW) { Tree(c, bx - 2, baseY, weather, phase, season); }   // 여름은 가로수가 무성
             }
 
             // ── 길·보도 ──
@@ -142,6 +159,15 @@ namespace YeogiCafe.Art
             // ── 계절 소품: 봄 꽃잎 · 가을 낙엽 · 겨울 눈송이 ──
             if (season == 0 && weather != 2)
                 for (int i = 0; i < 26; i++) { int x = rng.Next(0, GW), y = rng.Next(10, GH); c.Set(x, y, C(255, 206, 222)); if (i % 3 == 0) c.Set(x + 1, y, C(248, 180, 200)); }
+            if (season == 1)                                                   // 여름: 보도 화단의 해바라기
+                for (int x = 8; x < GW; x += 14)
+                {
+                    if (x % 96 > 24 && x % 96 < 36) continue;                       // 가로등 자리 비우기
+                    var stem = weather == 2 ? C(70, 110, 70) : C(88, 150, 76);
+                    c.VLine(x, 2, 8, stem); c.Set(x + 1, 5, stem);
+                    var pet = weather == 2 ? C(196, 160, 60) : phase == 2 ? C(250, 180, 70) : C(255, 206, 50);
+                    c.Disc(x, 10, 2, pet); c.Set(x, 10, C(120, 80, 50)); c.Set(x + 1, 10, C(120, 80, 50));
+                }
             if (season == 2)
                 for (int i = 0; i < 22; i++) { int x = rng.Next(0, GW), y = rng.Next(0, 8); c.Set(x, y, i % 2 == 0 ? C(222, 128, 60) : C(200, 92, 54)); }
             if (season == 3 && weather != 2)
@@ -187,11 +213,12 @@ namespace YeogiCafe.Art
             }
             Color32 leaf = season == 0 ? new Color32(244, 186, 204, 255)        // 봄: 벚꽃
                          : season == 2 ? new Color32(224, 134, 66, 255)         // 가을: 단풍
-                         : new Color32(122, 178, 108, 255);
+                         : new Color32(70, 152, 74, 255);                     // 여름: 짙은 초록
             if (weather == 2) leaf = Mul(leaf, 0.72f);
             else if (phase == 2) leaf = Lerp(leaf, new Color32(170, 130, 96, 255), 0.25f);
             var leafL = Mul(leaf, 1.12f);
             c.VLine(x, y, y + 9, trunk);
+            if (season == 1) { c.Disc(x, y + 15, 8, leaf); c.Disc(x - 3, y + 17, 4, leafL); c.Disc(x + 3, y + 12, 3, Mul(leaf, 0.85f)); return; }   // 여름은 더 크고 풍성하게
             c.Disc(x, y + 14, 6, leaf); c.Disc(x - 2, y + 16, 3, leafL);
         }
 

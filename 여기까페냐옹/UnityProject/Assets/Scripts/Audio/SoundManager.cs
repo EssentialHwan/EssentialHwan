@@ -86,11 +86,21 @@ namespace YeogiCafe.Audio
             off.volume = BgmVolume * (1f - xfade);
             if (xfade >= 1f && off.isPlaying) off.Stop();
 
-            // 빗소리: 비 오는 날 영업 중
-            bool rain = Weather.Current == WeatherKind.Rain && day != null && day.Phase != DayPhase.Settlement;
-            if (rain && !amb.isPlaying) { amb.clip = Clip("amb_rain"); if (amb.clip != null) amb.Play(); }
-            amb.volume = Mathf.MoveTowards(amb.volume, rain ? AmbVolume : 0f, Time.unscaledDeltaTime * 0.3f);
-            if (!rain && amb.volume <= 0f && amb.isPlaying) amb.Stop();
+            // 환경음: 비 오는 날 빗소리 / 비 안 오는 여름 낮 매미(살짝, 저녁엔 더 작게). 바뀔 땐 줄였다가 갈아 끼운다.
+            string ambWant = null; float ambVol = 0f;
+            bool open = day != null && day.Phase != DayPhase.Settlement;
+            if (open && Weather.Current == WeatherKind.Rain) { ambWant = "amb_rain"; ambVol = AmbVolume; }
+            else if (open && YeogiCafe.Data.SeasonBook.Season(day.CurrentDay) == 1)
+            { ambWant = "amb_cicada"; ambVol = AmbVolume * (day.Phase == DayPhase.Evening ? 0.15f : 0.35f); }
+            bool swap = amb.clip != null && ambWant != null && amb.clip.name != ambWant;
+            float target = swap ? 0f : ambVol;
+            amb.volume = Mathf.MoveTowards(amb.volume, target, Time.unscaledDeltaTime * 0.3f);
+            if (amb.volume <= 0f && (swap || ambWant == null) && amb.isPlaying) amb.Stop();
+            if (ambWant != null && !amb.isPlaying)
+            {
+                amb.clip = Clip(ambWant);
+                if (amb.clip != null) amb.Play();
+            }
         }
 
         // 효과음. variants>1이면 id_0..id_{n-1} 중 무작위. throttle: 같은 키로 cooldown초 안에 다시 울리지 않음(고양이별 도배 방지).
