@@ -73,7 +73,7 @@ namespace YeogiCafe.EditorTools
 
             PlayerSettings.productName = "여기카페냐옹";   // 바뀌면 저장 폴더도 바뀜 → SaveManager가 예전 폴더 세이브·사진을 가져옴
             PlayerSettings.companyName = "EssentialHwan";
-            PlayerSettings.bundleVersion = "0.9.2";   // 친구 플레이테스트 2차: 2D 조명·햇살·접지 그림자
+            PlayerSettings.bundleVersion = "0.9.3";   // 친구 플레이테스트 2차: 조명·첫 주 연출·여름·환경음
             PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
             PlayerSettings.defaultScreenWidth = 1600;
             PlayerSettings.defaultScreenHeight = 900;
@@ -125,7 +125,7 @@ $@"여기카페냐옹 플레이테스트 (v{v})
 2) 이렇게 해 주세요
    - 설명서 없이 그냥 해 보는 게 테스트예요. 모르는 게 있으면 그게 고칠 점이에요.
    - 최소 1시간, 또는 7일차까지 해 주시면 좋아요. 그 뒤는 자유!
-   - 이번 빌드는 아직 소리가 없어요.
+   - 소리는 아직 임시음이에요(나중에 바뀌어요).
    - 영업 중에 끄면 그날은 아침부터 다시 시작해요. (하루 끝 정산 때 저장돼요)
 
 3) 다 하고 나서 (중요!)

@@ -846,7 +846,7 @@ narr.facility.play,{name}가 놀이 기구에 푹 빠져 있다.,{name} is absor
 opt.quit.confirm,한 번 더 누르면 종료,Click again to quit,再点一次退出,もう一度で終了
 opt.quit.warn,지금 나가면 오늘 영업은 아침부터 다시 해요.,"If you quit now, today starts over from the morning.",现在退出的话，今天会从早上重新开始。,今やめると、今日は朝からやり直しになります。
 opt.lang.busy,언어는 시작 화면이나 하루 정산 때 바꿀 수 있어요.,You can change the language on the title screen or at the end of the day.,可以在标题画面或每天结算时更改语言。,言語はタイトル画面か、1日の締めくくりで変更できます。
-title.playtest,플레이테스트 빌드 v{v} · 사운드 미적용,Playtest build v{v} · no sound yet,测试版 v{v} · 暂无音效,テスト版 v{v} · サウンド未実装
+title.playtest,플레이테스트 빌드 v{v} · 임시 사운드,Playtest build v{v} · placeholder sound,测试版 v{v} · 临时音效,テスト版 v{v} · 仮サウンド
 demo.end.title,체험판은 여기까지예요,That's the end of the demo!,试玩版到此结束啦,体験版はここまでです
 demo.end.sub,"봄의 첫 일주일 동안 고양이 {cats}마리를 만나고, 취향 {prefs}개를 알아냈어요.","In your first week of spring, you met {cats} cats and discovered {prefs} of their tastes.",在春天的第一周，你遇见了{cats}只猫，发现了{prefs}个喜好。,春の最初の一週間で、{cats}匹の猫に出会い、{prefs}個の好みを見つけました。
 demo.end.body,"정식판에서는 여름·가을·겨울과 새 손님, 더 많은 메뉴와 가구가 기다리고 있어요.
