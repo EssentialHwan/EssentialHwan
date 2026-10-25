@@ -34,7 +34,7 @@ namespace YeogiCafe.EditorTools
             Directory.CreateDirectory(outDir);
 
             PlayerSettings.productName = "여기카페냐옹";
-            PlayerSettings.companyName = "EssentialHwan";
+            PlayerSettings.companyName = "Wintery Studio";
             PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "com.essentialhwan.yeogicafe.test");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
             PlayerSettings.allowedAutorotateToPortrait = false;
@@ -72,7 +72,7 @@ namespace YeogiCafe.EditorTools
             if (Directory.Exists(outDir)) Directory.Delete(outDir, true);
 
             PlayerSettings.productName = "여기카페냐옹";   // 바뀌면 저장 폴더도 바뀜 → SaveManager가 예전 폴더 세이브·사진을 가져옴
-            PlayerSettings.companyName = "EssentialHwan";
+            PlayerSettings.companyName = "Wintery Studio";
             PlayerSettings.bundleVersion = "0.9.3";   // 친구 플레이테스트 2차: 조명·첫 주 연출·여름·환경음
             PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
             PlayerSettings.defaultScreenWidth = 1600;

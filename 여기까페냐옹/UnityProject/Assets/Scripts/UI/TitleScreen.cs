@@ -64,6 +64,10 @@ namespace YeogiCafe.UI
             var era = UiFactory.Label("Era", bg, L.Get("title.era"), 15, TextAnchor.LowerLeft, new Color(0.45f, 0.33f, 0.27f, 0.85f));
             UiFactory.SetRect((RectTransform)era.transform, new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0), new Vector2(16, 8), new Vector2(360, 24));
             era.raycastTarget = false;
+            // 만든 곳(왼쪽 위, 작게)
+            var credit = UiFactory.Label("Credit", bg, "© 2026 Wintery Studio", 14, TextAnchor.UpperLeft, new Color(0.45f, 0.33f, 0.27f, 0.7f));
+            UiFactory.SetRect((RectTransform)credit.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(16, -10), new Vector2(300, 22));
+            credit.raycastTarget = false;
             if (YeogiCafe.Core.Demo.IsDemo)
             {
                 // 체험판 표시(오른쪽 위)
