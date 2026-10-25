@@ -53,7 +53,7 @@ for theme in ('light','dark'):
     B=Image.new('RGBA',(art.width,art.height+one.height+4),(0,0,0,0)); B.alpha_composite(art,(0,0)); B.alpha_composite(one,((art.width-one.width)//2,art.height+3))
     B=padded(B.crop(B.getbbox()),3)
     # 아이콘
-    ic=padded(Image.open('clean2_fixed.png').crop(Image.open('clean2_fixed.png').getbbox()),2)
+    ic=padded(Image.open('cat_icon_clean_1x.png').crop(Image.open('cat_icon_clean_1x.png').getbbox()),2)
     if theme=='dark':
         a2=np.array(ic); dk=(a2[...,3]>0)&(a2[...,:3].sum(2)<260); lb,_=label(dk,structure=np.ones((3,3)))
         cm=binary_fill_holes(lb==np.argmax(np.bincount(lb.ravel())[1:])+1)
