@@ -1,7 +1,7 @@
 from PIL import Image, ImageDraw, ImageFont
 F='/home/claude/essentialhwan/essentialhwan/여기까페냐옹/UnityProject/Assets/Resources/Fonts/Galmuri11.ttf'
 INK=(53,61,104,255); BLUE=(148,183,222,255); WHITE=(255,255,255,255); PALE=(210,228,250,255)
-src=Image.open('clean.png'); src=src.crop(src.getbbox())
+src=Image.open('clean_fixed.png'); src=src.crop(src.getbbox())
 def outline(im,col=WHITE):
     o=Image.new('RGBA',im.size,(0,0,0,0)); a=im.split()[3]
     for dx,dy in [(-1,0),(1,0),(0,-1),(0,1)]:
@@ -19,6 +19,8 @@ def block(c1,c2):
     st=st.crop(st.getbbox()); b=Image.new('RGBA',(max(w1.width,st.width),w1.height+3+st.height),(0,0,0,0))
     b.alpha_composite(w1,(0,0)); b.alpha_composite(st,(0,w1.height+3)); return b
 res={}
+import numpy as np
+from scipy.ndimage import label, binary_fill_holes
 for theme in ('light','dark'):
     art=padded(src,2)
     if theme=='dark':   # 어두운 배경: 고양이에만 연한 테두리(발자국·눈은 그대로)
@@ -51,7 +53,12 @@ for theme in ('light','dark'):
     B=Image.new('RGBA',(art.width,art.height+one.height+4),(0,0,0,0)); B.alpha_composite(art,(0,0)); B.alpha_composite(one,((art.width-one.width)//2,art.height+3))
     B=padded(B.crop(B.getbbox()),3)
     # 아이콘
-    cat=art.crop((art.width-84,0,art.width,art.height)); cat=cat.crop(cat.getbbox()); s=max(cat.size)+8
+    ic=padded(Image.open('clean2_fixed.png').crop(Image.open('clean2_fixed.png').getbbox()),2)
+    if theme=='dark':
+        a2=np.array(ic); dk=(a2[...,3]>0)&(a2[...,:3].sum(2)<260); lb,_=label(dk,structure=np.ones((3,3)))
+        cm=binary_fill_holes(lb==np.argmax(np.bincount(lb.ravel())[1:])+1)
+        cc=Image.new('RGBA',ic.size,(0,0,0,0)); cc.paste(ic,(0,0),Image.fromarray((cm*255).astype('uint8'))); ic=ic.copy(); ic.alpha_composite(outline(cc,PALE))
+    cat=ic; s=max(cat.size)+6
     C=Image.new('RGBA',(s,s),(0,0,0,0)); C.alpha_composite(cat,((s-cat.width)//2,(s-cat.height)//2))
     for k,im in (('wide',A),('stacked',B),('icon',C)):
         res[(theme,k)]=im
