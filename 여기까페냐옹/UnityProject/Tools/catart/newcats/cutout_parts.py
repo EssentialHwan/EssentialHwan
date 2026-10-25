@@ -48,8 +48,8 @@ def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, fron
     # 다리 뿌리 위치: 앞다리 = 몸 앞쪽 아래(가슴), 뒷다리 = 몸 뒤쪽 아래(엉덩이)
     m = body[..., 3] > 0; cols = np.where(m.any(0))[0]
     ys_bottom = np.array([belly_y(body, x) for x in cols])
-    low = cols[ys_bottom >= ys_bottom.max() - bh * 0.08]          # 배 아랫선 구간
-    fx = low.max() - bw * 0.10 + bw * front_fwd; hx = low.min() + bw * 0.12
+    low = cols[ys_bottom >= ys_bottom.max() - bh * 0.25]          # 몸통 아랫부분 구간(꼬리·턱 제외) — 고양이마다 일정하게 잡힘
+    fx = low.max() - bw * 0.28 + bw * front_fwd; hx = low.min() + bw * 0.155   # 까망냥에서 맞춘 위치를 기준으로 고정
     legH = max(fl_h, hl_h); pad = int(legH * 1.2)
     ground = ys_bottom.max() + hl_h * (1 - sink)
     H = bh + int(legH * (1 - sink)) + pad; W = bw + pad * 2
