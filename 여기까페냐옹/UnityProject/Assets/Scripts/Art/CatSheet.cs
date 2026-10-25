@@ -53,6 +53,33 @@ namespace YeogiCafe.Art
             ["gaze"] = Seq(0, 0, 0, 0, 0, 0, 0, 0, 3, 0),
         };
 
+        // 리디자인 시트(4칸×13줄 이상): 기본 25칸 + 28번부터 추가 프레임
+        //  28~31 뛰기 · 32~35 앉아 대기(32 꼬리왼 33 꼬리오 34 깜빡 35 갸웃) · 36~39 그루밍 · 40~41 먹기 · 42~43 꾹꾹이
+        //  44~45 잠 숨쉬기 · 46 졸린 식빵 · 47 귀 쫑긋 식빵 · 48~51 덮치기
+        // 걷기는 한 장을 깡총깡총(다리 그림을 AI가 프레임마다 일관되게 못 그려서).
+        static readonly Dictionary<string, K[]> Map2 = new()
+        {
+            ["walk"] = new[] { new K(4), new K(4, 0, 1), new K(4, 0, 2), new K(4, 0, 2), new K(4, 0, 1), new K(4), new K(4), new K(4) },
+            ["sniff"] = new[] { new K(4), new K(4, 1, -1), new K(4), new K(4, 1, -1), new K(4), new K(4) },
+            ["run"] = Seq(28, 29, 30, 31, 28, 29, 30, 31),
+            ["sit"] = Seq(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 34, 0),
+            ["gaze"] = Seq(0, 0, 0, 0, 0, 0, 0, 0, 35, 35),
+            ["groom"] = Seq(36, 37, 37, 38, 38, 37, 36, 39),
+            ["lick"] = Seq(36, 37, 37, 36, 37, 37),
+            ["eat"] = Seq(40, 41, 40, 41, 40, 41),
+            ["knead"] = Seq(42, 43, 42, 43, 42, 43, 42, 43),
+            ["suckle"] = Seq(42, 43, 42, 43, 42, 43, 42, 43),
+            ["sleep"] = Seq(44, 44, 44, 45, 45, 45),
+            ["loaf"] = Seq(8, 8, 8, 8, 46, 46, 8, 47),
+            ["pounce"] = Seq(48, 49, 48, 49, 50, 50, 51, 51),
+        };
+        static bool IsV2(string catId) { var px = Load(catId); return px != null && px.Length / sheetW[catId] >= Cell * 13; }
+        static K[] SeqFor(string catId, string clip)
+        {
+            if (IsV2(catId) && Map2.TryGetValue(clip, out var k2)) return k2;
+            return Map.TryGetValue(clip, out var k) ? k : Map["sit"];
+        }
+
         public static bool Has(string catId) => Load(catId) != null;
 
         static readonly Dictionary<string, Color32[]> sheets = new();
@@ -86,6 +113,7 @@ namespace YeogiCafe.Art
         }
 
         public static int FrameCount(string clip) => Map.TryGetValue(clip, out var k) ? k.Length : 1;
+        public static int FrameCount(string catId, string clip) => SeqFor(catId, clip).Length;
 
         // 클립 i번째 프레임을 w×h 캔버스(바닥 = ground)에 그린다. Unity 텍스처 좌표(아래가 0).
         public static Color32[] Frame(string catId, string clip, int i, int w, int h, int ground)
@@ -93,7 +121,7 @@ namespace YeogiCafe.Art
             var src = Load(catId);
             var o = new Color32[w * h];
             if (src == null) return o;
-            if (!Map.TryGetValue(clip, out var seq)) seq = Map["sit"];
+            var seq = SeqFor(catId, clip);
             var k = seq[i % seq.Length];
             int sw = sheetW[catId], sh = src.Length / sw;
             int cx = (k.f % 4) * Cell, cyTop = (k.f / 4) * Cell;          // 칸 왼쪽 위(이미지 기준)

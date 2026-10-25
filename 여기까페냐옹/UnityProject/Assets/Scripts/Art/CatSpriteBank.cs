@@ -28,7 +28,7 @@ namespace YeogiCafe.Art
 
             var defs = CatClips.All;
             bool sheet = CatSheet.Has(catId);                 // 도트 시트가 있으면 그것으로(없으면 리그)
-            int Count(int r) => sheet ? CatSheet.FrameCount(defs[r].name) : defs[r].frames;
+            int Count(int r) => sheet ? CatSheet.FrameCount(catId, defs[r].name) : defs[r].frames;
             int cols = 0; for (int r = 0; r < defs.Length; r++) cols = Mathf.Max(cols, Count(r));
             int rows = defs.Length;
 
