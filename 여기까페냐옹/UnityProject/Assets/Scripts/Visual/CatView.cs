@@ -136,8 +136,9 @@ namespace YeogiCafe.Visual
             if (k >= 1f) { emoteSr.gameObject.SetActive(false); emoteT = -1f; return; }
             float pop = emoteT < 0.15f ? Mathf.Lerp(0.4f, 1.15f, emoteT / 0.15f) : Mathf.Lerp(1.15f, 1f, Mathf.Clamp01((emoteT - 0.15f) / 0.1f));
             emoteSr.transform.localScale = Vector3.one * pop;
-            float head = rest == Rest.Sleep || clip == "loaf" || clip == "purr" || clip == "rollover" || clip == "flinch" ? 0.75f : 1.15f;
-            emoteSr.transform.localPosition = new Vector3(sr.flipX ? -0.25f : 0.25f, head + k * 0.25f, 0f);
+            float cs = YeogiCafe.Art.CatSpriteBank.Scale;
+            float head = (rest == Rest.Sleep || clip == "loaf" || clip == "purr" || clip == "rollover" || clip == "flinch" ? 0.75f : 1.15f) * cs;
+            emoteSr.transform.localPosition = new Vector3((sr.flipX ? -0.25f : 0.25f) * cs, head + k * 0.25f, 0f);
             emoteSr.color = new Color(1f, 1f, 1f, k > 0.75f ? (1f - k) / 0.25f : 1f);
             emoteSr.sortingOrder = sr.sortingOrder + 2;
         }

@@ -9,7 +9,8 @@ namespace YeogiCafe.Art
     public static class CatSpriteBank
     {
         public const int FW = CatRig.W, FH = CatRig.H;
-        public const float PPU = 40f;          // 서 있는 고양이 몸길이 ≈ 1.1유닛(32px 가구와 비율)
+        public const float PPU = 32f;          // 가구와 같은 픽셀 크기(32px = 1유닛). 예전 40 → 고양이 25% 크게(리디자인 표정이 보이게)
+        public const float Scale = 40f / PPU;  // 예전 크기 대비 배율 — 머리 위 말풍선·감정 아이콘·클릭 범위가 따라 커진다
 
         static readonly Dictionary<string, Dictionary<string, Sprite[]>> bank = new();
 

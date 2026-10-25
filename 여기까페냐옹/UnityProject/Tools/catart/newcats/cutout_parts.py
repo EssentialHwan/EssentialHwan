@@ -58,7 +58,7 @@ def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, fron
         t = 2 * math.pi * i / n
         c = np.zeros((H, W, 4), np.uint8)
         dy = bob * bh * (0.5 - 0.5 * math.cos(2 * t))
-        def leg(img, rx, phase, far):
+        def leg(img, rx, phase, far, target=None):
             lh, lw = img.shape[:2]
             ang = swing * math.sin(t + phase)
             up = max(0.0, math.cos(t + phase)) * lift * lh
@@ -69,19 +69,22 @@ def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, fron
             top = ground - lh                                       # 발끝이 모두 같은 바닥선에(앞·뒤 다리 보이는 길이 같게)
             x = pad + rx - lw * 1.5 + (-bw * 0.05 if far else 0)
             y = top - lw - up + dy * 0 + (-lh * 0.03 if far else 0)
-            paste(c, r, x, y + pad * 0)
+            paste(c if target is None else target, r, x, y + pad * 0)
         # 대각선 짝: LF(가까운 앞)+RH(먼 뒤) 위상 0, RF(먼 앞)+LH(가까운 뒤) 위상 π
         leg(front, fx, math.pi, True)
         leg(hind, hx, 0.0, True)
         paste(c, body, pad, -dy)
-        leg(hind, hx, math.pi, False)
-        leg(front, fx, 0.0, False)
-        # 가까운 다리 윗부분(몸 안쪽)은 몸으로 다시 덮어 어깨·엉덩이 외곽선이 몸 위에 안 보이게
-        bm = np.zeros(c.shape[:2], bool); bh_, bw_ = body.shape[:2]
-        yy, xx = np.nonzero(body[..., 3] > 0); yy = (yy - round(dy)).clip(0, c.shape[0] - 1); xx = xx + pad
-        inner = ndimage.binary_erosion(body[..., 3] > 0, iterations=3); iy, ix = np.nonzero(inner)
-        iy2 = (iy - round(dy)).clip(0, c.shape[0] - 1)
-        c[iy2, ix + pad] = body[iy, ix]
+        # 가까운 쪽 다리: 따로 그린 뒤, 몸통 안쪽(배 외곽선 바로 위까지)에 들어간 부분은 지우고 덮는다
+        # → 배 외곽선이 다리를 가로지르지 않고, 다리가 몸에서 이어져 나온 것처럼 보임
+        L = np.zeros_like(c)
+        leg(hind, hx, math.pi, False, L)
+        leg(front, fx, 0.0, False, L)
+        bodyin = np.zeros(c.shape[:2], bool)
+        inner = ndimage.binary_erosion(body[..., 3] > 0, iterations=max(2, int(bh * 0.02)))
+        iy, ix = np.nonzero(inner); bodyin[(iy - round(dy)).clip(0, c.shape[0] - 1), ix + pad] = True
+        L[bodyin] = 0
+        al = L[..., 3:4] > 0
+        c[:] = np.where(al, L, c)
         frames.append(c)
     return frames
 

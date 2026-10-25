@@ -227,7 +227,7 @@ namespace YeogiCafe.Visual
             {
                 var (go, dto) = giftObjs[i];
                 if (go == null) continue;
-                if ((go.transform.position + new Vector3(0, 0.25f, 0) - w).sqrMagnitude > 0.16f) continue;
+                if ((go.transform.position + new Vector3(0, 0.25f * YeogiCafe.Art.CatSpriteBank.Scale, 0) - w).sqrMagnitude > 0.16f * YeogiCafe.Art.CatSpriteBank.Scale * YeogiCafe.Art.CatSpriteBank.Scale) continue;
                 Destroy(go); giftObjs.RemoveAt(i);
                 save.pendingGifts.Remove(dto);
                 if (!save.giftsCollected.Contains(dto.giftId)) save.giftsCollected.Add(dto.giftId);
