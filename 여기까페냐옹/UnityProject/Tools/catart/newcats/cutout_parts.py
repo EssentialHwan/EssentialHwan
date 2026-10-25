@@ -39,8 +39,11 @@ def belly_y(body, x):
     col = np.where(body[:, int(x), 3] > 0)[0]
     return col.max() if len(col) else body.shape[0]
 
-def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, front_fwd=0.07):
+def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, front_fwd=0.10):
     bh, bw = body.shape[:2]
+    if front.shape[0] != hind.shape[0]:   # 앞다리 길이를 뒷다리 기준으로(폭은 그대로)
+        front = np.array(Image.fromarray(front).resize((front.shape[1], hind.shape[0]), Image.BICUBIC))
+        front[..., 3] = np.where(front[..., 3] > 127, 255, 0)
     fl_h, hl_h = front.shape[0], hind.shape[0]
     # 다리 뿌리 위치: 앞다리 = 몸 앞쪽 아래(가슴), 뒷다리 = 몸 뒤쪽 아래(엉덩이)
     m = body[..., 3] > 0; cols = np.where(m.any(0))[0]
@@ -48,6 +51,7 @@ def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, fron
     low = cols[ys_bottom >= ys_bottom.max() - bh * 0.08]          # 배 아랫선 구간
     fx = low.max() - bw * 0.10 + bw * front_fwd; hx = low.min() + bw * 0.12
     legH = max(fl_h, hl_h); pad = int(legH * 1.2)
+    ground = ys_bottom.max() + hl_h * (1 - sink)
     H = bh + int(legH * (1 - sink)) + pad; W = bw + pad * 2
     frames = []
     for i in range(n):
@@ -62,7 +66,7 @@ def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, fron
             pv = (lw * 1.5, lw + lw * 0.45)                        # 어깨/엉덩이 둥근 윗부분 중심
             r = rot(big, ang, pv)
             if far: r = darken(r)
-            top = belly_y(body, rx) - lh * sink                     # 다리 윗부분을 배 속에 묻음
+            top = ground - lh                                       # 발끝이 모두 같은 바닥선에(앞·뒤 다리 보이는 길이 같게)
             x = pad + rx - lw * 1.5 + (-bw * 0.05 if far else 0)
             y = top - lw - up + dy * 0 + (-lh * 0.03 if far else 0)
             paste(c, r, x, y + pad * 0)
