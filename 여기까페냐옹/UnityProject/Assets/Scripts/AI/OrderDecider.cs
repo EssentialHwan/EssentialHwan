@@ -21,7 +21,9 @@ namespace YeogiCafe.AI
         public static OrderResult Choose(CatData cat, IReadOnlyList<MenuData> available, bool mvpMode = true)
         {
             var result = new OrderResult();
-            if (available == null || available.Count == 0) return result; // 전 품절
+            if (cat == null || available == null || available.Count == 0) return result; // 전 품절
+            if (available.Any(m => m == null)) available = available.Where(m => m != null).ToList();
+            if (available.Count == 0) return result;
 
             MenuData fav = null;
             foreach (var m in available) if (m.menuId == cat.foodFavoriteMenuId) fav = m;

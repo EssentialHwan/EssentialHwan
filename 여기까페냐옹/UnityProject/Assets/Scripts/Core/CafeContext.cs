@@ -21,8 +21,14 @@ namespace YeogiCafe.Core
         public void UnregisterSeat(SeatBehaviour s)   { seats.Remove(s); }
         public void RegisterFacility(FacilityBehaviour f)   { if (!facilities.Contains(f)) facilities.Add(f); }
         public void UnregisterFacility(FacilityBehaviour f) { facilities.Remove(f); }
-        public void SetMenu(IEnumerable<MenuData> menus) { availableMenus.Clear(); availableMenus.AddRange(menus); }
-        public void AddMenu(MenuData m) { if (!availableMenus.Contains(m)) availableMenus.Add(m); }
+        public void SetMenu(IEnumerable<MenuData> menus)
+        {
+            availableMenus.Clear();
+            if (menus == null) return;
+            // 빈 칸(못 찾은 메뉴 에셋)이 섞이면 주문 고르기에서 매 프레임 NullReference → 걸러 낸다
+            foreach (var m in menus) if (m != null && !availableMenus.Contains(m)) availableMenus.Add(m);
+        }
+        public void AddMenu(MenuData m) { if (m != null && !availableMenus.Contains(m)) availableMenus.Add(m); }
 
         // ── 조회 (CatBrain 주입용) ──
         public IReadOnlyList<ISeat> GetSeats() => seats.ConvertAll(s => (ISeat)s);
