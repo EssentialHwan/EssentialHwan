@@ -66,6 +66,7 @@ namespace YeogiCafe.UI
             sc.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             sc.referenceResolution = new Vector2(1280, 720);
             sc.matchWidthOrHeight = 0.5f;
+            go.AddComponent<AspectScaler>();
 
             liveGo = BuildLive(go.transform);
             editGo = Full("Edit", go.transform, new Color(0.08f, 0.06f, 0.1f, 0.82f));

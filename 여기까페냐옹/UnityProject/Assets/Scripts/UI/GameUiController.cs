@@ -81,6 +81,7 @@ namespace YeogiCafe.UI
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1280, 720);
             scaler.matchWidthOrHeight = 0.5f;
+            canvasGo.AddComponent<AspectScaler>();                 // 16:9가 아닌 화면(휴대폰 등)에서 UI가 잘리지 않게
 
             // 이벤트 시스템(입력) — 없으면 버튼 클릭이 안 먹음.
             if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)

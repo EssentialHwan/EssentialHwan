@@ -52,17 +52,20 @@ namespace YeogiCafe.UI
             SliderRow(L.Get("opt.amb"), "opt.amb", 0.35f, v => SoundManager.AmbVolume = v, ref y);
             muteLabel = ButtonRow(L.Get("opt.mute"), "", () => { SoundManager.Muted = !SoundManager.Muted; PlayerPrefs.SetInt("opt.mute", SoundManager.Muted ? 1 : 0); Refresh(); }, ref y);
 
-            Section(L.Get("opt.screen"), ref y);
-            fullLabel = ButtonRow(L.Get("opt.full"), "", () => { Screen.fullScreen = !Screen.fullScreen; Invoke(Refresh); }, ref y);
-            resLabel = ButtonRow(L.Get("opt.res"), "", CycleResolution, ref y);
-            cursorLabel = ButtonRow(L.Get("opt.paw"), "", () =>
+            if (!Application.isMobilePlatform)                     // 휴대폰엔 전체화면·창 크기·고양이 손 커서가 의미 없다
             {
-                var cur = Object.FindObjectOfType<PawCursor>();
-                bool on = PlayerPrefs.GetInt("opt.paw", 1) == 0;
-                PlayerPrefs.SetInt("opt.paw", on ? 1 : 0);
-                if (cur != null) cur.enabled = on;
-                Refresh();
-            }, ref y);
+                Section(L.Get("opt.screen"), ref y);
+                fullLabel = ButtonRow(L.Get("opt.full"), "", () => { Screen.fullScreen = !Screen.fullScreen; Invoke(Refresh); }, ref y);
+                resLabel = ButtonRow(L.Get("opt.res"), "", CycleResolution, ref y);
+                cursorLabel = ButtonRow(L.Get("opt.paw"), "", () =>
+                {
+                    var cur = Object.FindObjectOfType<PawCursor>();
+                    bool on = PlayerPrefs.GetInt("opt.paw", 1) == 0;
+                    PlayerPrefs.SetInt("opt.paw", on ? 1 : 0);
+                    if (cur != null) cur.enabled = on;
+                    Refresh();
+                }, ref y);
+            }
 
             Section(L.Get("opt.game"), ref y);
             speedLabel = ButtonRow(L.Get("opt.speed"), "", () =>
@@ -186,9 +189,9 @@ namespace YeogiCafe.UI
         void Refresh()
         {
             muteLabel.text = L.Get(SoundManager.Muted ? "opt.on" : "opt.off");
-            fullLabel.text = L.Get(Screen.fullScreen ? "opt.on" : "opt.off");
-            resLabel.text = $"{Screen.width} × {Screen.height}";
-            cursorLabel.text = L.Get(PlayerPrefs.GetInt("opt.paw", 1) == 1 ? "opt.on" : "opt.off");
+            if (fullLabel != null) fullLabel.text = L.Get(Screen.fullScreen ? "opt.on" : "opt.off");
+            if (resLabel != null) resLabel.text = $"{Screen.width} × {Screen.height}";
+            if (cursorLabel != null) cursorLabel.text = L.Get(PlayerPrefs.GetInt("opt.paw", 1) == 1 ? "opt.on" : "opt.off");
             var day = owner.Day;
             speedLabel.text = day != null ? L.Get("opt.speedval", ("x", day.speed.ToString("0")), ("m", Mathf.RoundToInt(720f / day.Rate / 60f).ToString())) : "-";
             newGameLabel.text = L.Get("opt.newgame");
