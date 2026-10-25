@@ -30,20 +30,23 @@ def rot(img, ang, pivot):
     return np.array(Image.fromarray(img).rotate(ang, resample=Image.BICUBIC, center=pivot))
 
 def darken(img, k=0.74):
-    o = img.copy(); o[..., :3] = (o[..., :3].astype(float) * k).astype(np.uint8); return o
+    # 먼 쪽 다리: 털만 어둡게, 밝은 발끝(분홍)은 조금만 → 회색 발끝 방지
+    o = img.copy(); rgb = o[..., :3].astype(float); lum = rgb.mean(2)
+    kk = np.where(lum > 150, 0.9, k)[..., None]
+    o[..., :3] = (rgb * kk).astype(np.uint8); return o
 
 def belly_y(body, x):
     col = np.where(body[:, int(x), 3] > 0)[0]
     return col.max() if len(col) else body.shape[0]
 
-def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55):
+def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, front_fwd=0.07):
     bh, bw = body.shape[:2]
     fl_h, hl_h = front.shape[0], hind.shape[0]
     # 다리 뿌리 위치: 앞다리 = 몸 앞쪽 아래(가슴), 뒷다리 = 몸 뒤쪽 아래(엉덩이)
     m = body[..., 3] > 0; cols = np.where(m.any(0))[0]
     ys_bottom = np.array([belly_y(body, x) for x in cols])
     low = cols[ys_bottom >= ys_bottom.max() - bh * 0.08]          # 배 아랫선 구간
-    fx = low.max() - bw * 0.10; hx = low.min() + bw * 0.12
+    fx = low.max() - bw * 0.10 + bw * front_fwd; hx = low.min() + bw * 0.12
     legH = max(fl_h, hl_h); pad = int(legH * 1.2)
     H = bh + int(legH * (1 - sink)) + pad; W = bw + pad * 2
     frames = []
