@@ -51,8 +51,10 @@ def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, fron
     low = cols[ys_bottom >= ys_bottom.max() - bh * 0.25]          # 몸통 아랫부분 구간(꼬리·턱 제외) — 고양이마다 일정하게 잡힘
     fx = low.max() - bw * 0.28 + bw * front_fwd; hx = low.min() + bw * 0.115   # 까망냥에서 맞춘 위치를 기준으로 고정(뒷다리 조금 더 뒤로)
     legH = max(fl_h, hl_h); pad = int(legH * 1.2)
-    ground = ys_bottom.max() + hl_h * (1 - sink)
-    H = bh + int(legH * (1 - sink)) + pad; W = bw + pad * 2
+    # 몸 속에 묻는 길이: 기본 55%, 다리가 짧은 고양이(먼치·아기)는 최소 25%만 묻어 다리가 사라지지 않게
+    hidden = min(hl_h * sink, max(hl_h * 0.25, hl_h - bh * 0.30))
+    ground = ys_bottom.max() + (hl_h - hidden)
+    H = bh + int(hl_h - hidden) + pad; W = bw + pad * 2
     frames = []
     for i in range(n):
         t = 2 * math.pi * i / n
