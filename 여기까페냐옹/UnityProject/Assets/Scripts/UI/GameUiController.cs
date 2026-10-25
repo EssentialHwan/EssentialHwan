@@ -640,16 +640,18 @@ namespace YeogiCafe.UI
             System.IO.Directory.CreateDirectory(dir);
             string stamp = System.DateTime.Now.ToString("MMdd_HHmmss");
             var cam = Camera.main; if (cam == null) yield break;
+            YeogiCafe.DevTools.DevConsole.Capturing = true;
             yield return null;                                            // 개발 콘솔이 닫힌 뒤
-            var mode = root.renderMode; var wcam = root.worldCamera; float dist = root.planeDistance; int order = root.sortingOrder;
-            root.renderMode = RenderMode.ScreenSpaceCamera; root.worldCamera = cam; root.planeDistance = 1f; root.sortingOrder = 30000;
-            yield return null;
-            Save1080(cam, System.IO.Path.Combine(dir, stamp + "_ui.png"));
-            root.renderMode = mode; root.worldCamera = wcam; root.planeDistance = dist; root.sortingOrder = order;
-            root.enabled = false;
-            yield return null;
+            // UI 있는 판: 화면 그대로 읽는다(메인 캔버스 렌더 모드를 바꾸면 이후 버튼 클릭이 먹통이 돼서 건드리지 않음).
+            // 1920x1080으로 받으려면 게임 뷰 해상도를 1920x1080으로 둘 것.
+            yield return new WaitForEndOfFrame();
+            var shot = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+            shot.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0); shot.Apply();
+            System.IO.File.WriteAllBytes(System.IO.Path.Combine(dir, stamp + "_ui.png"), shot.EncodeToPNG()); Destroy(shot);
+            if (Screen.width != 1920 || Screen.height != 1080) Debug.LogWarning($"[StoreShot] 화면이 {Screen.width}x{Screen.height} — 게임 뷰를 1920x1080으로 두면 상점 규격 그대로 나와요");
+            // UI 없는 판: 카메라만 1920x1080으로 렌더(오버레이 UI는 안 찍힘)
             Save1080(cam, System.IO.Path.Combine(dir, stamp + "_clean.png"));
-            root.enabled = true;
+            YeogiCafe.DevTools.DevConsole.Capturing = false;
             Debug.Log("[StoreShot] " + dir + " / " + stamp);
         }
 

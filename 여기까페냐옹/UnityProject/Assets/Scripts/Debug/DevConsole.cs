@@ -15,6 +15,7 @@ namespace YeogiCafe.DevTools
         public GameFlowController flow;
 
         bool show;
+        public static bool Capturing;   // 스토어 스샷 찍는 동안 콘솔·토글 버튼을 숨긴다
 
         void Start()
         {
@@ -30,11 +31,33 @@ namespace YeogiCafe.DevTools
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (Input.GetKeyDown(KeyCode.F1)) show = !show;
 #endif
+#if UNITY_EDITOR
+            // 원격 조작·윈도우 알림 등으로 에디터가 잠깐 포커스를 잃으면 EventSystem이 클릭을 계속 무시한다 → 에디터에서만 되살림
+            var es = UnityEngine.EventSystems.EventSystem.current;
+            if (es != null && !es.isFocused) es.SendMessage("OnApplicationFocus", true, SendMessageOptions.DontRequireReceiver);
+#endif
+        }
+
+        // 클릭이 안 먹을 때 원인 찾기: 마우스 아래 맨 위 UI 오브젝트 이름
+        static string PointerTop()
+        {
+            var es = UnityEngine.EventSystems.EventSystem.current;
+            if (es == null) return "(EventSystem 없음)";
+            var data = new UnityEngine.EventSystems.PointerEventData(es) { position = Input.mousePosition };
+            var hits = new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
+            es.RaycastAll(data, hits);
+            if (hits.Count == 0) return "(없음)";
+            var t = hits[0].gameObject.transform; string path = t.name;
+            for (int i = 0; i < 2 && t.parent != null; i++) { t = t.parent; path = t.name + "/" + path; }
+            return path + (es.enabled ? "" : " [ES 꺼짐]");
         }
 
         void OnGUI()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (Capturing) return;
+            // 마우스로 여닫는 작은 버튼(원격 조작으로 키를 보내면 게임 창 포커스가 풀려 UI 클릭이 먹통이 되는 문제 우회)
+            if (GUI.Button(new Rect(4, Screen.height - 22, 34, 18), show ? "×" : "DEV")) show = !show;
             if (!show) return;
             GUILayout.BeginArea(new Rect(10, 80, 260, 720), GUI.skin.box);
             GUILayout.Label("== DevConsole (F1) ==");
@@ -146,6 +169,7 @@ namespace YeogiCafe.DevTools
 #endif
             }
             GUILayout.Label("(치트는 빌드에서 자동 제외)");
+            GUILayout.Label("마우스 아래 UI: " + PointerTop());
             GUILayout.EndArea();
 #endif
         }
