@@ -15,7 +15,7 @@ namespace YeogiCafe.Core
         //  Lv3: 위로 넓히기(다락) — 3단계 작업 전까지는 Lv2 화면을 쓴다.
         // 카운터는 없앴다(주문은 자리에서 받는다) → 오른쪽 끝까지 손님 공간.
         public static int ViewLevel = 2;                  // 화면에 반영된 레벨(GameUiController가 확장 연출과 함께 바꾼다)
-        public static Vector3 ViewPos(int lv) => lv <= 1 ? new Vector3(7.0f, 3.95f, -10f) : lv == 2 ? new Vector3(7.75f, 4.0f, -10f) : new Vector3(8.6f, 5.0f, -10f);
+        public static Vector3 ViewPos(int lv) => lv <= 1 ? new Vector3(7.0f, 3.95f, -10f) : lv == 2 ? new Vector3(7.75f, 4.0f, -10f) : new Vector3(8.6f, 5.2f, -10f);   // Lv3: 위 메뉴 바에 다락 고양이가 가리지 않게 조금 위로
         public static float ViewSize(int lv) => lv <= 1 ? 3.8f : lv == 2 ? 4.2f : 4.9f;   // Lv3은 위로 넓어져 고양이가 조금 작아짐(약 86%)
         public static Vector3 CameraPos => ViewPos(ViewLevel);
         public static float CameraSize => ViewSize(ViewLevel);
