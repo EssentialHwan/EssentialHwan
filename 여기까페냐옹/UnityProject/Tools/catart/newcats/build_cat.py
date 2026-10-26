@@ -44,6 +44,9 @@ def main():
         cs = sitH * 0.95 / np.median([bbh(c_cells[k]) for k in range(4) if k in c_cells])
         for k in range(16):
             if k in c_cells: put(36 + k, C2.down2(c_a, c_pal, c_cells[k], cs))
+        # 시트 C의 2줄째(먹기·꾹꾹이)가 엉뚱한 포즈로 왔을 때: 기본 그림의 먹기·꾹꾹이로 대신(--c-row2=A)
+        if '--c-row2=A' in sys.argv:
+            for j, k in enumerate((11, 11, 15, 15)): put(40 + j, A[k])
     else:   # 시트 C가 없으면 기본 포즈로 대신
         for j, k in enumerate((10, 10, 10, 10, 11, 11, 15, 15, 9, 9, 8, 8, 12, 12, 13, 12)): put(36 + j, A[k])
     # 부품 → 걷기 8 + 뛰기 4
