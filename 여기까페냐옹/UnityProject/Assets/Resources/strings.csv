@@ -884,3 +884,5 @@ ui.fix.store,보관함에 넣기 (무료로 다시 꺼낼 수 있어요),Store (
 ui.fix.stored,{name} — 보관함에 넣었어요. 상점 '창·조명'에서 다시 꺼낼 수 있어요,"{name} stored. Take it out again from Shop › Windows & Lights.",{name} 已放进仓库。可在商店「窗户·灯」再拿出,{name}を保管したよ。ショップ「窓・照明」から戻せます
 ui.fix.plaque,냥슐랭 명판은 옮기기만 돼요,The plaque can only be moved,铭牌只能移动,看板は動かすだけです
 ui.fix.tabhint,처음부터 있던 창·조명은 빼도 보관함에 남아요. 다시 놓을 땐 무료,"The original windows and lights stay in storage when removed. Placing them again is free.",原有的窗户和灯拿掉后会留在仓库，再次摆放免费,最初からある窓・照明は外しても保管され、置き直しは無料
+narr.facility.loft,{name}가 사다리를 타고 다락에 올라가 아래를 내려다본다.,{name} climbed the ladder to the loft and is looking down.,{name}爬上梯子到了阁楼，正俯视下面。,{name}がはしごで屋根裏に上って、下を見下ろしている。
+ui.cafe.reveal3,카페가 위로 넓어졌어요! 다락과 캣워크가 생겼어요,The cafe grew upward! A loft and catwalk appeared.,咖啡馆向上扩建啦！多了阁楼和猫步道,カフェが上に広がった！屋根裏とキャットウォークができたよ

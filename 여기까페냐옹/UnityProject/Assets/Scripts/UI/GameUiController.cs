@@ -64,6 +64,12 @@ namespace YeogiCafe.UI
 
         // ── 카페 레벨별 화면: 확장하면 다음 화면에서 카메라가 천천히 뒤로 빠지며 새 공간이 드러난다 ──
         int shownLevel = -1; float revealT; Vector3 revealFromPos; float revealFromSize;
+        static void ApplyLevelArt(int lv)
+        {
+            YeogiCafe.Visual.LoftView.Apply(lv);                        // Lv3 다락·캣워크·사다리
+            var fm = YeogiCafe.Cafe.FixtureManager.Instance; if (fm != null) fm.ApplyLevel();   // 조명 높이
+        }
+
         void UpdateHallCamera(float dt)
         {
             var s = Save; if (s == null || !s.initialized) return;
@@ -71,7 +77,7 @@ namespace YeogiCafe.UI
             int lv = Mathf.Clamp(s.cafeLevel, 1, 3);
             if (shownLevel < 0)
             {
-                shownLevel = lv; CafeLayout.ViewLevel = lv;
+                shownLevel = lv; CafeLayout.ViewLevel = lv; ApplyLevelArt(lv);
                 if (!(kitchen != null && kitchen.Busy) && !PhotoOpen) { cam.transform.position = CafeLayout.CameraPos; cam.orthographicSize = CafeLayout.CameraSize; }
                 return;
             }
@@ -81,9 +87,9 @@ namespace YeogiCafe.UI
             {
                 revealFromPos = cam.transform.position; revealFromSize = cam.orthographicSize;
                 bool grew = lv > shownLevel;
-                shownLevel = lv; CafeLayout.ViewLevel = lv;
+                shownLevel = lv; CafeLayout.ViewLevel = lv; ApplyLevelArt(lv);
                 revealT = 0.0001f;
-                if (grew && lv == 2) ShowToast(L.Get("ui.cafe.reveal"));
+                if (grew) ShowToast(L.Get(lv >= 3 ? "ui.cafe.reveal3" : "ui.cafe.reveal"));
             }
             if ((kitchen != null && kitchen.Busy) || PhotoOpen) { revealT = 0f; return; }   // 주방·사진은 닫힐 때 새 화면으로 돌아온다
             if (revealT > 0f)

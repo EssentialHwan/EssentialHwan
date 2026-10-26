@@ -111,6 +111,7 @@ namespace YeogiCafe.DevTools
                 if (GUILayout.Button("→캣휠")) DebugSendTo(YeogiCafe.Data.FacilityTag.Play, "furn_fac_wheel");
                 if (GUILayout.Button("→캣타워")) DebugSendTo(YeogiCafe.Data.FacilityTag.Height, "furn_fac_tower");
                 GUILayout.EndHorizontal();
+                if (GUILayout.Button("→다락(Lv3)")) DebugSendTo(YeogiCafe.Data.FacilityTag.Height, "loft");
                 var raid = YeogiCafe.Visual.MouseRaid.Instance;
                 if (raid != null && GUILayout.Button("쥐 출몰")) raid.Spawn();
                 if (GUILayout.Button("글자 넘침 검사 → 콘솔"))

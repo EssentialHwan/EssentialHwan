@@ -49,7 +49,8 @@ namespace YeogiCafe.UI
                 b.cg.alpha = Mathf.Clamp01(b.life / Fade);
                 if (cam != null)
                 {
-                    Vector3 sp = cam.WorldToScreenPoint(b.target.position + Vector3.up * HeadOffset);
+                    var cv = b.target.GetComponent<YeogiCafe.Visual.CatView>();                               // 올라앉은 고양이(캣타워·다락)는 그만큼 위에
+                    Vector3 sp = cam.WorldToScreenPoint(b.target.position + (cv != null ? cv.VisualOffset : Vector3.zero) + Vector3.up * HeadOffset);
                     RectTransformUtility.ScreenPointToLocalPointInRectangle(root, sp, null, out var lp);
                     b.rt.anchoredPosition = lp;
                 }

@@ -15,13 +15,16 @@ namespace YeogiCafe.Core
         //  Lv3: 위로 넓히기(다락) — 3단계 작업 전까지는 Lv2 화면을 쓴다.
         // 카운터는 없앴다(주문은 자리에서 받는다) → 오른쪽 끝까지 손님 공간.
         public static int ViewLevel = 2;                  // 화면에 반영된 레벨(GameUiController가 확장 연출과 함께 바꾼다)
-        public static Vector3 ViewPos(int lv) => lv <= 1 ? new Vector3(7.0f, 3.95f, -10f) : new Vector3(7.75f, 4.0f, -10f);
-        public static float ViewSize(int lv) => lv <= 1 ? 3.8f : 4.2f;
+        public static Vector3 ViewPos(int lv) => lv <= 1 ? new Vector3(7.0f, 3.95f, -10f) : lv == 2 ? new Vector3(7.75f, 4.0f, -10f) : new Vector3(8.6f, 5.0f, -10f);
+        public static float ViewSize(int lv) => lv <= 1 ? 3.8f : lv == 2 ? 4.2f : 4.9f;   // Lv3은 위로 넓어져 고양이가 조금 작아짐(약 86%)
         public static Vector3 CameraPos => ViewPos(ViewLevel);
         public static float CameraSize => ViewSize(ViewLevel);
         // 고양이가 다니고 가구를 놓을 수 있는 오른쪽 끝(화면 오른쪽 가장자리에서 여유를 둠)
-        public static float FloorMaxX(int lv) => lv <= 1 ? 12.6f : 14.3f;
-        public static float WallMaxX(int lv) => lv <= 1 ? 13.2f : 14.6f;
+        public static float FloorMaxX(int lv) => lv <= 1 ? 12.6f : lv == 2 ? 14.3f : 15.6f;
+        public static float WallMaxX(int lv) => lv <= 1 ? 13.2f : lv == 2 ? 14.6f : 15.9f;
+        // Lv3 다락: 벽 위쪽에 캣워크 선반(가로 전체) + 오른쪽 다락 데크, 사다리로 오른다
+        public const float LoftDeckY = 7.7f, LadderX = 12.4f, DeckLeft = 12.8f, DeckRight = 16.9f;   // 선반은 통유리 창틀 바로 위(상단 메뉴 바에 안 가리게)
+        public static readonly float[] LoftSpotX = { 13.7f, 15.5f, 9.4f, 5.3f };   // 데크 2자리 + 캣워크(창 위 선반) 2자리
         public static float WallMaxY(int lv) => lv <= 1 ? 6.9f : CeilingY - 1.1f;      // Lv1은 화면 위쪽이 좁다
 
         public static readonly Vector3 Door = new Vector3(1.2f, FloorTop, 0f);

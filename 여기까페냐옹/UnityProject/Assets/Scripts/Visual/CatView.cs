@@ -42,6 +42,8 @@ namespace YeogiCafe.Visual
         // 시설(캣타워 등): 걸어가서 → 점프해 올라가 쉬다 → 뛰어내림. 단계는 CatBrain.FacilityPhase가 정한다.
         CatBrain.FacPhase lastFacPhase; float facT;
         const float JumpUpTime = 0.6f, JumpDownTime = 0.55f;
+        bool loftClimb;
+        public Vector3 VisualOffset => visual != null ? visual.localPosition : Vector3.zero;   // 말풍선 높이(올라앉은 만큼)
         bool hopping => brain != null && brain.FacilityPhase != CatBrain.FacPhase.None;
         bool ateShown;
         float soloTimer = 8f;
@@ -288,7 +290,20 @@ namespace YeogiCafe.Visual
             if (fp != lastFacPhase) { lastFacPhase = fp; facT = 0f; OnFacPhase(fp); }
             facT += dt;
             float perch = brain.FacilityPerch;
-            if (!exiting && perch > 0.05f && (fp == CatBrain.FacPhase.Perched || fp == CatBrain.FacPhase.Dismount))
+            var loft = brain.CurrentFacility as LoftSpot;
+            bool loftMoving = false;
+            if (!exiting && loft != null && (fp == CatBrain.FacPhase.Perched || fp == CatBrain.FacPhase.Dismount))
+            {
+                // 다락: 사다리로 기어올라 선반 따라 걸어감(내려올 땐 거꾸로)
+                float tt = facT / loft.ClimbSeconds;
+                float prog = fp == CatBrain.FacPhase.Perched ? tt : 1f - tt;
+                local = loft.PathOffset(prog);
+                loftMoving = tt < 1f;
+                loftClimb = loftMoving && loft.Climbing(prog);
+                if (loftMoving && !loftClimb && Mathf.Abs(loft.Run) > 0.01f) sr.flipX = (loft.Run < 0f) == (fp == CatBrain.FacPhase.Perched);
+                sortY = loft.BaseWorldPos.y - 0.02f;
+            }
+            else if (!exiting && perch > 0.05f && (fp == CatBrain.FacPhase.Perched || fp == CatBrain.FacPhase.Dismount))
             {
                 float y;
                 if (fp == CatBrain.FacPhase.Perched)
@@ -362,6 +377,8 @@ namespace YeogiCafe.Visual
                 if (zoom && clip != "run" && !brain.IsChasing) { ShowEmote(EmoteDrawing.Kind.Exclaim); YeogiCafe.Core.GameEvents.Raise(YeogiCafe.Core.GameEvents.Zoomies, Data != null ? Data.catId : null); }
                 Play(zoom ? "run" : "walk"); idleTimer = 0f; rest = Rest.None;
             }
+            else if (loft != null && loftMoving) Play("walk");                                                // 사다리 오르내리기·선반 걷기
+            else if (loft != null && fp == CatBrain.FacPhase.Perched) { if (clip != "loaf" && clip != "sleep") Play("loaf"); }   // 다락에서 식빵
             else if (fp == CatBrain.FacPhase.Dismount && perch > 0.05f) Play("jumpdown");
             else if (fp == CatBrain.FacPhase.Perched && brain.FacilityWall) Play("gaze");                      // 창밖 구경
             else if (fp == CatBrain.FacPhase.Perched && facT < JumpUpTime + 0.1f && perch > 0.05f) { }           // 점프 클립 재생 중
@@ -420,8 +437,9 @@ namespace YeogiCafe.Visual
             if (fp == CatBrain.FacPhase.Perched)
             {
                 idleTimer = 0f;
-                if (brain.FacilityPerch > 0.05f) { PlayThen("jumpup", "loaf"); rest = Rest.Loaf; }   // 올라가서 식빵 → (느긋하면) 잠
-                if (brain.CurrentFacility is Component c) sr.flipX = c.transform.position.x > CafeCenterX;
+                if (brain.CurrentFacility is LoftSpot) rest = Rest.Loaf;                            // 다락: 사다리로(점프 없이)
+                else if (brain.FacilityPerch > 0.05f) { PlayThen("jumpup", "loaf"); rest = Rest.Loaf; }   // 올라가서 식빵 → (느긋하면) 잠
+                if (brain.CurrentFacility is Component c && !(brain.CurrentFacility is LoftSpot)) sr.flipX = c.transform.position.x > CafeCenterX;
                 if (IsWheel()) sr.flipX = false;                                       // 바퀴는 시계 방향으로 돈다 → 오른쪽 보고 달림
                 if (FacHas(FacilityTag.Box)) S("sfx_box", 0.55f, 1f);                 // 바스락(상자 속으로)
             }

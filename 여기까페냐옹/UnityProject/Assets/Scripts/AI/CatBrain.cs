@@ -489,6 +489,8 @@ namespace YeogiCafe.AI
         void RecordFacilityClue(IFacility f)
         {
             UsedFacilityIds.Add(f.FacilityId.Split('#')[0]);
+            // 다락·캣워크(Lv3): 추리 보기에 없는 공간이라 단서 대신 말풍선만(높은 곳 좋아하는 고양이가 자주 올라간다)
+            if (f is YeogiCafe.Visual.LoftSpot) { Obs?.NarrateOnly(data.catId, Narrate("narr.facility.loft")); return; }
             // 과일 박스·햇볕 자리: 누구나(또는 따뜻한 걸 좋아하는 아무나) 하는 행동이라 추리 단서가 아니다 → 말풍선만
             foreach (var t in f.Tags)
                 if (t == FacilityTag.Box || t == FacilityTag.Warm)
@@ -522,7 +524,8 @@ namespace YeogiCafe.AI
                     break;
                 case FacPhase.Dismount:
                     facTimer += dt;
-                    if (facTimer < (FacilityPerch > 0.05f ? DismountTime : 0.1f)) return;
+                    float down = CurrentFacility is YeogiCafe.Visual.LoftSpot ls ? ls.ClimbSeconds : FacilityPerch > 0.05f ? DismountTime : 0.1f;
+                    if (facTimer < down) return;
                     EndFacility();
                     state = CatState.Idle;
                     decisionTimer = 0f;

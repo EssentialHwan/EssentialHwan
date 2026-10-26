@@ -96,10 +96,25 @@ namespace YeogiCafe.Cafe
 
         float LampY()
         {
-            // 갓 아랫단이 ShadeBottomY에 오도록(그림 기준점이 위쪽이든 아래쪽이든)
-            if (lampSprite == null) return CafeLayout.CeilingY - 1f;
+            // 갓 아랫단이 ShadeBottomY에 오도록(그림 기준점이 위쪽이든 아래쪽이든).
+            // Lv3(천장이 높아짐)은 창 위·캣워크 바로 아래로 올린다 — 낮게 매달려 창을 가리던 문제(피드백)
+            float bottom = CafeLayout.ViewLevel >= 3 ? CafeLayout.LoftDeckY - 0.7f : ShadeBottomY;   // Lv3: 캣워크 선반 아래에 짧게 매달림
+            if (lampSprite == null) return bottom + 1f;
             float bottomFromPivot = -lampSprite.pivot.y / lampSprite.pixelsPerUnit;
-            return ShadeBottomY - bottomFromPivot;
+            return bottom - bottomFromPivot;
+        }
+
+        // 화면 레벨이 바뀌면(확장 연출) 조명 높이를 맞춘다
+        public void ApplyLevel()
+        {
+            float y = LampY();
+            foreach (var f in live)
+            {
+                if (f == null || f.kind != FixtureKind.Lamp) continue;
+                var p = f.transform.position; f.transform.position = new Vector3(p.x, y, 0f);
+                var mv = f.GetComponent<MovableFurniture>(); if (mv != null) mv.lockedY = y;
+                if (f.dto != null) Store(f.dto, f.transform.position);
+            }
         }
 
         void MakeDefaults()
@@ -265,6 +280,7 @@ namespace YeogiCafe.Cafe
             var r = new Rect(p.x - 0.5f, p.y - 0.45f, 1.0f, 0.9f);
             foreach (var b in FixtureRects(null)) if (b.Overlaps(r)) return true;
             var door = DoorRect(); if (door.HasValue && door.Value.Overlaps(r)) return true;
+            foreach (var lr in LoftView.WallRects()) if (lr.Overlaps(r)) return true;      // Lv3 사다리·캣워크
             return false;
         }
 
@@ -287,6 +303,7 @@ namespace YeogiCafe.Cafe
         {
             foreach (var r in FixtureRects(ignore)) yield return r;
             var door = DoorRect(); if (door.HasValue) yield return door.Value;
+            foreach (var lr in LoftView.WallRects()) yield return lr;
             foreach (var mv in FindObjectsOfType<MovableFurniture>())
             {
                 var ig = ignore is Component ic ? ic.gameObject : ignore as GameObject;
