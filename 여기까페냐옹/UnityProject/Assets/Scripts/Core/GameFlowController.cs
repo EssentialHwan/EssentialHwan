@@ -297,10 +297,12 @@ namespace YeogiCafe.Core
 
             obs.OnDayEnd();                                  // 승격
             foreach (var c in save.cats) regular.Evaluate(c); // 단골(→이벤트 큐잉)
-            // 졸업: 세 가지 취향을 다 알아낸 단골 3단계 고양이 → 졸업 편지(이후 가끔만 놀러 옴)
+            // 기억(세 취향을 다 맞힌 고양이의 사연) · 옛 사장님의 노트
+            YeogiCafe.Progression.StoryBook.QueueNight(save);
+            // 졸업: 세 가지 취향을 다 알아낸 단골 3단계 고양이 → 기억을 본 다음 졸업 편지(이후 가끔만 놀러 옴)
             foreach (var c in save.cats)
             {
-                if (c.graduated || c.regularStage < 3 || c.observation.RecordedAxisCount() < 3) continue;
+                if (c.graduated || c.regularStage < 3 || c.observation.RecordedAxisCount() < 3 || !c.memorySeen) continue;
                 c.graduated = true;
                 save.storyQueue.Add(new StoryDTO { catId = c.catId, kind = 9 });
                 YeogiCafe.Core.GameEvents.Raise(YeogiCafe.Core.GameEvents.Graduate, c.catId);

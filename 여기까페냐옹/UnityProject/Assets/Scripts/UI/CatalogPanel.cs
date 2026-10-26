@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using YeogiCafe.Art;
 using YeogiCafe.Data;
 using YeogiCafe.Loc;
 using YeogiCafe.Observation;
@@ -33,8 +34,9 @@ namespace YeogiCafe.UI
         readonly GameObject rootGo;
         Text header;
         RectTransform listContent;
-        RectTransform relRoot; Text tabLabel; bool showRel, showReview;
-        Text reviewTabLabel;
+        RectTransform relRoot; Text tabLabel; bool showRel, showReview, showStory;
+        Text reviewTabLabel, storyTabLabel;
+        GameObject storyCardGo;
 
         public CatalogPanel(GameUiController owner, Transform parent)
         {
@@ -99,12 +101,17 @@ namespace YeogiCafe.UI
             var tab = UiFactory.Button("RelTab", panel.transform, L.Get("ui.catalog.reltab"), UiFactory.Wood, UiFactory.Cream, out tabLabel);
             tabLabel.fontSize = 16;
             UiFactory.SetRect((RectTransform)tab.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(12, -10), new Vector2(110, 40));
-            tab.onClick.AddListener(() => { showRel = !showRel; showReview = false; Render(); });
+            tab.onClick.AddListener(() => { showRel = !showRel; showReview = false; showStory = false; Render(); });
             // 탭: 리뷰(고양이 손님 한 줄 평 · 평판 · 냥슐랭)
             var rtab = UiFactory.Button("ReviewTab", panel.transform, L.Get("ui.catalog.reviewtab"), UiFactory.Wood, UiFactory.Cream, out reviewTabLabel);
             reviewTabLabel.fontSize = 16;
             UiFactory.SetRect((RectTransform)rtab.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(128, -10), new Vector2(96, 40));
-            rtab.onClick.AddListener(() => { showReview = !showReview; showRel = false; Render(); });
+            rtab.onClick.AddListener(() => { showReview = !showReview; showRel = false; showStory = false; Render(); });
+            // 탭: 이야기(지금까지 본 단골 편지·기억·졸업 편지·옛 사장님의 노트 다시 보기) — 오른쪽, 닫기 버튼 옆
+            var stab = UiFactory.Button("StoryTab", panel.transform, L.Get("ui.catalog.storytab"), UiFactory.Wood, UiFactory.Cream, out storyTabLabel);
+            storyTabLabel.fontSize = 16;
+            UiFactory.SetRect((RectTransform)stab.transform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1), new Vector2(-66, -10), new Vector2(96, 40));
+            stab.onClick.AddListener(() => { showStory = !showStory; showRel = false; showReview = false; Render(); });
             var relGo = new GameObject("Relations", typeof(RectTransform));
             relGo.transform.SetParent(panel.transform, false);
             relRoot = (RectTransform)relGo.transform;
@@ -152,6 +159,55 @@ namespace YeogiCafe.UI
             FitList();
         }
 
+        void RenderStories()
+        {
+            listView.gameObject.SetActive(true);
+            relRoot.gameObject.SetActive(false);
+            tabLabel.text = L.Get("ui.catalog.reltab");
+            var s = owner.Save;
+            var all = owner.AllCats;
+            int mem = 0, cats = 0;
+            if (s != null) foreach (var d in all) if (d != null) { cats++; var c = s.cats.Find(x => x != null && x.catId == d.catId); if (c != null && c.memorySeen) mem++; }
+            header.text = L.Get("ui.story.header", ("a", (s != null ? s.notesFound.Count : 0).ToString()), ("b", YeogiCafe.Progression.StoryBook.NoteCount.ToString()),
+                                ("c", mem.ToString()), ("d", cats.ToString()));
+            var list = YeogiCafe.Progression.StoryBook.Seen(s, all);
+            if (list.Count == 0)
+            {
+                var e = UiFactory.Label("Empty", listContent, L.Get("ui.story.empty"), 17, TextAnchor.MiddleCenter, UiFactory.WoodDark);
+                ((RectTransform)e.transform).sizeDelta = new Vector2(0, 60);
+                FitList();
+                return;
+            }
+            var stamp = RuntimeSprites.Get("ui_pawstamp", PawDrawing.Stamp);
+            foreach (var st in list)
+            {
+                bool note = st.kind == YeogiCafe.Progression.StoryBook.KindNote;
+                bool memory = st.kind == YeogiCafe.Progression.StoryBook.KindMemory;
+                Color bg = note ? new Color(0.99f, 0.97f, 0.9f, 1f) : memory ? new Color(0.93f, 0.86f, 0.74f, 1f) : UiFactory.Cream;
+                var row = UiFactory.Panel("Story", listContent, bg);
+                UiFactory.Frame(row, UiFactory.FrameStyle.Card, bg);
+                ((RectTransform)row.transform).sizeDelta = new Vector2(0, 38);
+                if (note) RowIcon(row, RuntimeSprites.Get("ui_note_icon", StoryCard.NoteIcon), 12, 30);
+                else RowIcon(row, YeogiCafe.Art.CatSpriteBank.Portrait(st.catId), 10, 34);
+                string name = st.catId != null ? L.Get($"cat.{st.catId}.name") : "";
+                string t = note ? L.Get("story.title.note", ("n", st.note.ToString()), ("t", YeogiCafe.Progression.StoryBook.NoteCount.ToString()))
+                                : L.Get(YeogiCafe.Progression.StoryBook.TitleKey(st), ("name", name));
+                var lbl = UiFactory.Label("Text", row.transform, t, 16, TextAnchor.MiddleLeft, memory ? new Color(0.45f, 0.32f, 0.22f, 1f) : UiFactory.Ink);
+                lbl.resizeTextForBestFit = true; lbl.resizeTextMinSize = 10; lbl.resizeTextMaxSize = 16;
+                lbl.verticalOverflow = VerticalWrapMode.Truncate;
+                UiFactory.SetRect((RectTransform)lbl.transform, Vector2.zero, Vector2.one, new Vector2(0, 0.5f), new Vector2(56, 0), new Vector2(-72, 0));
+                var btn = row.gameObject.AddComponent<Button>();
+                btn.targetGraphic = row.GetComponent<Image>();
+                var dto = st;
+                btn.onClick.AddListener(() =>
+                {
+                    if (storyCardGo != null) Object.Destroy(storyCardGo);
+                    storyCardGo = StoryCard.Open(rootGo.transform, dto, stamp, () => { Object.Destroy(storyCardGo); storyCardGo = null; }, L.Get("ui.story.close"));
+                });
+            }
+            FitList();
+        }
+
         void ClearRows()
         {
             // 지울 줄은 바로 떼어 낸다(Destroy는 프레임 끝이라 남아 있으면 목록 높이 계산에 섞인다)
@@ -185,6 +241,8 @@ namespace YeogiCafe.UI
             ClearRows();
             listContent.anchoredPosition = Vector2.zero;          // 탭을 바꾸면 맨 위부터
             reviewTabLabel.text = L.Get(showReview ? "ui.catalog.listtab" : "ui.catalog.reviewtab");
+            storyTabLabel.text = L.Get(showStory ? "ui.catalog.listtab" : "ui.catalog.storytab");
+            if (showStory) { RenderStories(); return; }
             if (showReview) { RenderReviews(); return; }
             listView.gameObject.SetActive(!showRel);
             relRoot.gameObject.SetActive(showRel);
@@ -461,7 +519,7 @@ namespace YeogiCafe.UI
             rootGo.SetActive(next);
             if (next) { Render(); rootGo.transform.SetAsLastSibling(); }   // 주방 화면 위로(겹침 방지)
         }
-        public void Hide() => rootGo.SetActive(false);
+        public void Hide() { if (storyCardGo != null) { Object.Destroy(storyCardGo); storyCardGo = null; } rootGo.SetActive(false); }
         public void DebugTab(bool rel, bool review) { if (!IsOpen) Toggle(); showRel = rel; showReview = review; Render(); }
         public bool IsOpen => rootGo != null && rootGo.activeSelf;
     }

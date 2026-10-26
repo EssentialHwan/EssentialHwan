@@ -798,6 +798,8 @@ namespace YeogiCafe.UI
                 settlement.DebugGuess(c0, PrefAxis.Food); yield return Shot("settle_guess"); settlement.DebugCloseGuess();
                 settlement.DebugStory(new StoryDTO { catId = c0.catId, kind = 2 }); yield return Shot("story_lv2"); settlement.DebugCloseStory();
                 settlement.DebugStory(new StoryDTO { catId = c0.catId, kind = 9 }); yield return Shot("story_grad"); settlement.DebugCloseStory();
+                settlement.DebugStory(new StoryDTO { catId = c0.catId, kind = 8 }); yield return Shot("story_memory"); settlement.DebugCloseStory();
+                settlement.DebugStory(new StoryDTO { kind = 7, note = 6 }); yield return Shot("story_note"); settlement.DebugCloseStory();
             }
             settlement.DebugReport(); yield return Shot("settle_report"); settlement.DebugCloseStory();
             settlement.Hide();

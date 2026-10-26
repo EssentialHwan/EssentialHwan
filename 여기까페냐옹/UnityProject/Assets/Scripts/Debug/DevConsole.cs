@@ -88,6 +88,17 @@ namespace YeogiCafe.DevTools
                         f0.Save.storyQueue.Add(new YeogiCafe.Save.StoryDTO { catId = "cat_tortie", kind = 9 });
                     }
                 }
+                if (GUILayout.Button("기억 2장 + 노트 1·6 → 정산"))
+                {
+                    var f1 = FindObjectOfType<GameFlowController>();
+                    if (f1 != null && f1.Save != null)
+                    {
+                        f1.Save.storyQueue.Add(new YeogiCafe.Save.StoryDTO { catId = "cat_cheese", kind = 8 });
+                        f1.Save.storyQueue.Add(new YeogiCafe.Save.StoryDTO { catId = "cat_black", kind = 8 });
+                        f1.Save.storyQueue.Add(new YeogiCafe.Save.StoryDTO { kind = 7, note = 1 });
+                        f1.Save.storyQueue.Add(new YeogiCafe.Save.StoryDTO { kind = 7, note = 6 });
+                    }
+                }
                 if (GUILayout.Button("UI 전체 점검(현재 언어) → Build/uicheck")) { var ui = FindObjectOfType<YeogiCafe.UI.GameUiController>(); if (ui != null) { ui.DebugUiTour(); show = false; } }
                 if (GUILayout.Button("계절 넘기기(+7일)"))
                 {

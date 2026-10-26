@@ -169,44 +169,7 @@ namespace YeogiCafe.UI
 
         void OpenStory(StoryDTO st)
         {
-            var scrim = UiFactory.Panel("StoryScrim", rootGo.transform, new Color(0.08f, 0.07f, 0.12f, 0.55f));
-            storyGo = scrim.gameObject;
-            UiFactory.Anchor(scrim, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            bool grad = st.kind == 9;
-            var paper = UiFactory.Panel("Letter", scrim.transform, grad ? new Color(1f, 0.96f, 0.86f, 1f) : new Color(1f, 0.99f, 0.95f, 1f));
-            UiFactory.SetRect(paper, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(620, 400));
-            UiFactory.Frame(paper, UiFactory.FrameStyle.Paper, null, 3f);
-
-            string name = L.Get($"cat.{st.catId}.name");
-            string titleKey = grad ? "story.title.grad" : st.kind == 3 ? "story.title.r3" : "story.title.r2";
-            var title = UiFactory.Label("Title", paper.transform, L.Get(titleKey, ("name", name)), 24, TextAnchor.MiddleCenter, grad ? UiFactory.PinkDeep : UiFactory.Ink);
-            UiFactory.SetRect((RectTransform)title.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -14), new Vector2(0, 36));
-
-            var pg = new GameObject("Portrait", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            pg.transform.SetParent(paper.transform, false);
-            var pimg = pg.GetComponent<Image>(); pimg.sprite = CatSpriteBank.Portrait(st.catId); pimg.preserveAspect = true; pimg.raycastTarget = false;
-            UiFactory.SetRect((RectTransform)pg.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(24, 10), new Vector2(170, 140));
-
-            string prefix = grad ? "grad" : st.kind == 3 ? "regular3" : "regular2";
-            int lines = grad ? 3 : 2;
-            var sb = new System.Text.StringBuilder();
-            for (int i = 1; i <= lines; i++) sb.Append(L.Get($"ep.{st.catId}.{prefix}.0{i}")).Append("\n\n");
-            var body = UiFactory.Label("Body", paper.transform, sb.ToString(), 19, TextAnchor.MiddleLeft, UiFactory.Ink);
-            UiFactory.SetRect((RectTransform)body.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f), new Vector2(80, 10), new Vector2(-300, -130));
-
-            if (grad)
-            {
-                // 졸업 도장(금빛 손도장)
-                var sg = new GameObject("GradStamp", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-                sg.transform.SetParent(paper.transform, false);
-                var simg = sg.GetComponent<Image>(); simg.sprite = stampSprite; simg.color = new Color(0.95f, 0.75f, 0.3f, 1f); simg.raycastTarget = false;
-                UiFactory.SetRect((RectTransform)sg.transform, new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0), new Vector2(-20, 70), new Vector2(72, 72));
-                sg.transform.localEulerAngles = new Vector3(0, 0, -12f);
-            }
-
-            var next = UiFactory.Button("Next", paper.transform, L.Get("story.next"), UiFactory.Green, UiFactory.Ink, out _);
-            UiFactory.SetRect((RectTransform)next.transform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 16), new Vector2(160, 46));
-            next.onClick.AddListener(() =>
+            storyGo = StoryCard.Open(rootGo.transform, st, stampSprite, () =>
             {
                 if (owner.Save != null && owner.Save.storyQueue.Count > 0)
                 {

@@ -68,6 +68,7 @@ namespace YeogiCafe.Save
             return m;
         }
 
+        public List<int> notesFound = new();               // 찾은 '옛 사장님의 노트' 번호(StoryBook)
         public List<StoryDTO> storyQueue = new();          // 밤 일지에서 보여줄 이야기(단골·졸업)   // 시작 좌석을 옮긴 위치(furnitureId="starter#i")                              // 하루를 마칠 때 도감에 찍은 손도장 수
 
         public RelationSaveData GetOrCreateRelation(string a, string b)
@@ -135,6 +136,7 @@ namespace YeogiCafe.Save
         public int[] touchSeen = new int[5];
         public bool bossSeen;
         public bool graduated;
+        public bool memorySeen;                             // 세 취향을 다 맞혀 '기억'(사연) 카드를 봤는지 — 졸업은 이 다음
         // 마감 놀아주기에서 알아낸 것(관찰 결과만): 좋아한/싫어한 부위 비트(PetZone), 쭙쭙이 버릇을 봤는지
         public int likeZones, hateZones;
         public bool suckleSeen;
@@ -155,7 +157,8 @@ namespace YeogiCafe.Save
     public class StoryDTO
     {
         public string catId;
-        public int kind;           // 2=단골 2단계, 3=단골 3단계, 9=졸업
+        public int kind;           // 2=단골 2단계, 3=단골 3단계, 7=옛 사장님의 노트, 8=기억(사연), 9=졸업 (StoryBook)
+        public int note;           // kind 7일 때 노트 번호(1~)
     }
 
     [Serializable]
