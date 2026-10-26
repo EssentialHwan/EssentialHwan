@@ -863,3 +863,4 @@ opt.totitle,시작 화면,Title screen,标题画面,タイトル画面
 opt.totitle.btn,시작 화면으로,Go to title,返回标题,タイトルへ
 opt.totitle.confirm,한 번 더 누르면 이동,Click again to go,再点一次返回,もう一度で移動
 ui.paused,일시정지 중 — 창을 닫으면 다시 흘러요,Paused — close the window to resume,已暂停 — 关闭窗口后继续,一時停止中 — 閉じると再開します
+ui.cafe.reveal,카페가 넓어졌어요! 오른쪽에 새 공간이 생겼어요,The cafe got bigger! A new space opened up on the right.,咖啡馆变大啦！右边多了新空间,カフェが広くなった！右側に新しいスペースができたよ

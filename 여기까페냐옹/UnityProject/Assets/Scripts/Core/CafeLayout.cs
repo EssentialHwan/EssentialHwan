@@ -10,8 +10,19 @@ namespace YeogiCafe.Core
         public const float FloorTop = 4.2f;               // 바닥/벽 경계(징두리 하단)
         public const float RoomLeft = -5f, RoomRight = 21f;   // 주방 시점(카메라 뒤로 뺌)에서도 벽·바닥이 끊기지 않게 넉넉히
 
-        public static readonly Vector3 CameraPos = new Vector3(7.5f, 4.0f, -10f);
-        public const float CameraSize = 4.2f;             // 세로 8.4유닛 → 16:9에서 가로 ≈ 15유닛
+        // ── 카페 레벨별 화면(확장 = 실제로 보이는 공간이 넓어짐) ──
+        //  Lv1: 확대된 아늑한 가게(문~오른쪽 벽 앞, 가로 ≈ 13.5유닛) · Lv2: 오른쪽 공간이 이어져 드러남(가로 ≈ 15유닛)
+        //  Lv3: 위로 넓히기(다락) — 3단계 작업 전까지는 Lv2 화면을 쓴다.
+        // 카운터는 없앴다(주문은 자리에서 받는다) → 오른쪽 끝까지 손님 공간.
+        public static int ViewLevel = 2;                  // 화면에 반영된 레벨(GameUiController가 확장 연출과 함께 바꾼다)
+        public static Vector3 ViewPos(int lv) => lv <= 1 ? new Vector3(7.0f, 3.95f, -10f) : new Vector3(7.75f, 4.0f, -10f);
+        public static float ViewSize(int lv) => lv <= 1 ? 3.8f : 4.2f;
+        public static Vector3 CameraPos => ViewPos(ViewLevel);
+        public static float CameraSize => ViewSize(ViewLevel);
+        // 고양이가 다니고 가구를 놓을 수 있는 오른쪽 끝(화면 오른쪽 가장자리에서 여유를 둠)
+        public static float FloorMaxX(int lv) => lv <= 1 ? 12.6f : 14.3f;
+        public static float WallMaxX(int lv) => lv <= 1 ? 13.2f : 14.6f;
+        public static float WallMaxY(int lv) => lv <= 1 ? 6.9f : CeilingY - 1.1f;      // Lv1은 화면 위쪽이 좁다
 
         public static readonly Vector3 Door = new Vector3(1.2f, FloorTop, 0f);
         public static readonly Vector3 Entrance = new Vector3(1.2f, 3.9f, 0f);  // 고양이 등장/퇴장 지점(문 앞)
@@ -21,24 +32,16 @@ namespace YeogiCafe.Core
         public const float GlassCenterX = 7.3f, GlassBottom = 5.12f, GlassWidth = 8f, GlassHeight = 70f / 32f;
         public static float GlassLeft => GlassCenterX - GlassWidth * 0.5f;
         public static float GlassRight => GlassCenterX + GlassWidth * 0.5f;
-        public static readonly Vector3 Counter = new Vector3(13.4f, 3.3f, 0f);
         public static readonly Vector3 MenuBoard = new Vector3(13.6f, 6.0f, 0f);
         public static readonly float[] LampX = { 3.2f, 7.3f, 11.6f };
         public const float CeilingY = 8.6f;
         public static readonly Vector3 BigPlant = new Vector3(0.45f, 2.5f, 0f);
 
         // 고양이가 자유롭게 돌아다니는 바닥 영역(카운터 앞은 제외)
-        public const float RoamMinX = 1.6f, RoamMaxX = 12.6f, RoamMinY = 0.45f, RoamMaxY = 3.55f;
-        public static Vector3 RandomFloorPoint()
-        {
-            for (int i = 0; i < 8; i++)
-            {
-                var p = new Vector3(Random.Range(RoamMinX, RoamMaxX), Random.Range(RoamMinY, RoamMaxY), 0f);
-                if (p.x > 11.6f && p.y > 2.5f) continue;          // 카운터
-                return p;
-            }
-            return new Vector3(7f, 1.2f, 0f);
-        }
+        public const float RoamMinX = 1.6f, RoamMinY = 0.45f, RoamMaxY = 3.55f;
+        public static float RoamMaxX => FloorMaxX(ViewLevel);
+        public static Vector3 RandomFloorPoint() =>
+            new Vector3(Random.Range(RoamMinX, RoamMaxX), Random.Range(RoamMinY, RoamMaxY), 0f);
         public static Vector3 ClampFloor(Vector3 p) =>
             new Vector3(Mathf.Clamp(p.x, RoamMinX, RoamMaxX), Mathf.Clamp(p.y, RoamMinY, RoamMaxY), 0f);
 
@@ -63,13 +66,15 @@ namespace YeogiCafe.Core
             new SlotSpec(3.2f, 3.2f, F), new SlotSpec(7.3f, 3.2f, F), new SlotSpec(11.4f, 3.2f, F),
             new SlotSpec(2.2f, 1.9f, F), new SlotSpec(11.0f, 1.9f, F),
             // 벽(시계·액자·창문·커튼) — 통유리 양옆
-            new SlotSpec(2.45f, 6.5f, W), new SlotSpec(12.3f, 6.5f, W), new SlotSpec(2.45f, 7.5f, W),
+            new SlotSpec(2.45f, 6.5f, W), new SlotSpec(12.3f, 6.5f, W),
             // Lv2 — 앞줄
             new SlotSpec(3.3f, 0.6f, F, lv: 2), new SlotSpec(5.5f, 0.6f, F, lv: 2), new SlotSpec(7.7f, 0.6f, F, lv: 2),
             new SlotSpec(9.9f, 0.6f, F, lv: 2), new SlotSpec(12.1f, 0.6f, F, lv: 2),
-            new SlotSpec(12.3f, 7.5f, W, lv: 2),
+            new SlotSpec(12.3f, 7.5f, W, lv: 2), new SlotSpec(2.45f, 7.5f, W, lv: 2),   // 윗줄 벽은 Lv1 화면 밖
+            // Lv2 — 오른쪽에 새로 드러난 공간(옛 카운터 자리)
+            new SlotSpec(13.4f, 3.2f, F, lv: 2), new SlotSpec(13.6f, 1.9f, F, lv: 2), new SlotSpec(14.1f, 0.6f, F, lv: 2),
             // Lv3 — 가장자리
-            new SlotSpec(13.1f, 1.9f, F, lv: 3), new SlotSpec(1.3f, 0.6f, F, lv: 3),
+            new SlotSpec(1.3f, 0.6f, F, lv: 3),
         };
     }
 }

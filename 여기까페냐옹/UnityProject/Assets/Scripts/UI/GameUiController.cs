@@ -51,6 +51,57 @@ namespace YeogiCafe.UI
             BuildUi();
             HookEvents();
             RefreshHud();
+            RemoveCounter();
+        }
+
+        // 카운터는 없앴다(플레이테스트: 오른쪽 '주문하는 곳'이 공간만 차지). 예전에 만든 씬에도 남지 않게 런타임에 지운다.
+        static void RemoveCounter()
+        {
+            var room = GameObject.Find("Room");
+            var c = room != null ? room.transform.Find("Counter") : null;
+            if (c != null) Destroy(c.gameObject);
+        }
+
+        // ── 카페 레벨별 화면: 확장하면 다음 화면에서 카메라가 천천히 뒤로 빠지며 새 공간이 드러난다 ──
+        int shownLevel = -1; float revealT; Vector3 revealFromPos; float revealFromSize;
+        // 칠판: Lv1 화면에서 잘리지 않게 안쪽으로(기본 사물 옮기기 작업 전까지 임시)
+        static void PlaceMenuBoard(int lv)
+        {
+            var room = GameObject.Find("Room");
+            var b = room != null ? room.transform.Find("MenuBoard") : null;
+            if (b != null) b.position = new Vector3(lv <= 1 ? 12.95f : CafeLayout.MenuBoard.x, CafeLayout.MenuBoard.y, 0f);
+        }
+
+        void UpdateHallCamera(float dt)
+        {
+            var s = Save; if (s == null || !s.initialized) return;
+            var cam = Camera.main; if (cam == null) return;
+            int lv = Mathf.Clamp(s.cafeLevel, 1, 3);
+            if (shownLevel < 0)
+            {
+                shownLevel = lv; CafeLayout.ViewLevel = lv; PlaceMenuBoard(lv);
+                if (!(kitchen != null && kitchen.Busy) && !PhotoOpen) { cam.transform.position = CafeLayout.CameraPos; cam.orthographicSize = CafeLayout.CameraSize; }
+                return;
+            }
+            bool blocked = (settlement != null && settlement.IsOpen) || (title != null && title.IsOpen)
+                           || (closing != null && closing.IsOpen) || opening != null || EndingPanel.IsOpen;
+            if (lv != shownLevel && !blocked)
+            {
+                revealFromPos = cam.transform.position; revealFromSize = cam.orthographicSize;
+                bool grew = lv > shownLevel;
+                shownLevel = lv; CafeLayout.ViewLevel = lv; PlaceMenuBoard(lv);
+                revealT = 0.0001f;
+                if (grew && lv == 2) ShowToast(L.Get("ui.cafe.reveal"));
+            }
+            if ((kitchen != null && kitchen.Busy) || PhotoOpen) { revealT = 0f; return; }   // 주방·사진은 닫힐 때 새 화면으로 돌아온다
+            if (revealT > 0f)
+            {
+                revealT = Mathf.Min(1f, revealT + dt / 2.8f);
+                float k = revealT * revealT * (3f - 2f * revealT);
+                cam.transform.position = Vector3.Lerp(revealFromPos, CafeLayout.CameraPos, k);
+                cam.orthographicSize = Mathf.Lerp(revealFromSize, CafeLayout.CameraSize, k);
+                if (revealT >= 1f) revealT = 0f;
+            }
         }
 
         void Resolve()
@@ -457,6 +508,7 @@ namespace YeogiCafe.UI
             title?.Tick(Time.unscaledDeltaTime);
             UpdateMenuPause();
             UpdatePauseBadge();
+            UpdateHallCamera(Time.unscaledDeltaTime);
             TrackPlaytest();
             if (photo != null && photo.IsOpen) { photo.Tick(Time.unscaledDeltaTime); return; }   // 포토 모드: 다른 입력·HUD 멈춤
             if (Input.GetKeyDown(KeyCode.Escape) && ShelterOpen) { shelter.Close(); return; }

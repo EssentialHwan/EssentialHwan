@@ -19,14 +19,13 @@ namespace YeogiCafe.Cafe
             p.x = Mathf.Round(p.x * 10f) / 10f; p.y = Mathf.Round(p.y * 10f) / 10f;   // 0.1유닛 격자
             if (area == Area.Wall)
             {
-                p.x = Mathf.Clamp(p.x, 0.9f, 13.4f);
-                p.y = Mathf.Clamp(p.y, CafeLayout.FloorTop + 1.2f, CafeLayout.CeilingY - 1.1f);
+                p.x = Mathf.Clamp(p.x, 0.9f, CafeLayout.WallMaxX(CafeLayout.ViewLevel));
+                p.y = Mathf.Clamp(p.y, CafeLayout.FloorTop + 1.2f, CafeLayout.WallMaxY(CafeLayout.ViewLevel));
             }
             else
             {
-                p.x = Mathf.Clamp(p.x, 0.9f, 13.2f);
+                p.x = Mathf.Clamp(p.x, 0.9f, CafeLayout.FloorMaxX(CafeLayout.ViewLevel) + 0.4f);   // 레벨별 화면 안
                 p.y = Mathf.Clamp(p.y, 0.3f, CafeLayout.FloorTop - 0.55f);
-                if (p.y > 2.4f && p.x > 11.6f) p.x = 11.6f;                    // 카운터 자리는 비움
             }
             return p;
         }

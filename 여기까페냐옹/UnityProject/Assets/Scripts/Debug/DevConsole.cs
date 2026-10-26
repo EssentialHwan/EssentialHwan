@@ -97,6 +97,9 @@ namespace YeogiCafe.DevTools
                 }
                 if (GUILayout.Button("엔딩 미리보기")) { var ui = FindObjectOfType<YeogiCafe.UI.GameUiController>(); if (ui != null) ui.DebugEnding(); }
                 if (GUILayout.Button("스토어 스샷(UI 있음/없음)")) { var ui = FindObjectOfType<YeogiCafe.UI.GameUiController>(); if (ui != null) { show = false; ui.DebugStoreShot(); } }
+                var fl0 = FindObjectOfType<GameFlowController>();
+                if (fl0 != null && fl0.Save != null && GUILayout.Button($"카페 레벨 바꾸기 (지금 Lv{fl0.Save.cafeLevel})"))
+                    fl0.Save.cafeLevel = fl0.Save.cafeLevel >= 3 ? 1 : fl0.Save.cafeLevel + 1;   // 화면 확장 연출 점검용(조건 무시)
                 if (GUILayout.Button("손님 부르기(아무나)")) { var sp = FindObjectOfType<YeogiCafe.Core.CustomerSpawner>(); if (sp != null) sp.DebugSpawnAny(); }
                 if (GUILayout.Button("체험판 끝 화면 미리보기")) { var ui = FindObjectOfType<YeogiCafe.UI.GameUiController>(); if (ui != null) { ui.DebugDemoEnd(); show = false; } }
                 var flow = FindObjectOfType<GameFlowController>();

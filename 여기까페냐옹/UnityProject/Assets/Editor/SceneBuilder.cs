@@ -197,7 +197,7 @@ namespace YeogiCafe.EditorTools
             return null;
         }
 
-        // ── 공간(배경) 조립: 바닥·징두리·벽 타일 + 문·창·카운터·조명·칠판·큰 화분 ──
+        // ── 공간(배경) 조립: 바닥·징두리·벽 타일 + 문·창·조명·칠판·큰 화분 ──
         static void BuildRoom()
         {
             var room = new GameObject("Room").transform;
@@ -216,7 +216,7 @@ namespace YeogiCafe.EditorTools
             Prop(room, "MenuBoard", LoadArt("bg/menu_board.png"), CafeLayout.MenuBoard, YeogiCafe.Visual.YSort.WallProps);
             foreach (var lx in CafeLayout.LampX)
                 Prop(room, "Lamp", LoadArt("bg/pendant_lamp.png"), new Vector3(lx, CafeLayout.CeilingY, 0), YeogiCafe.Visual.YSort.WallProps + 3);
-            Prop(room, "Counter", LoadArt("bg/counter.png"), CafeLayout.Counter, YeogiCafe.Visual.YSort.Order(CafeLayout.Counter.y));
+            // 카운터는 없앴다(2026-10-26, 플레이테스트) — 주문은 자리에서 받고, 오른쪽 끝까지 손님 공간
             Prop(room, "BigPlant", LoadArt("bg/big_plant.png"), CafeLayout.BigPlant, YeogiCafe.Visual.YSort.Order(CafeLayout.BigPlant.y));
         }
 

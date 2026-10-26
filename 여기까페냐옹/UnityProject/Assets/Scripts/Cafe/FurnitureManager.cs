@@ -279,13 +279,13 @@ namespace YeogiCafe.Cafe
 
         bool Allowed(Vector3 p, SlotKind kind)
         {
-            if (kind == SlotKind.Wall)
-                return p.x < 3.0f || p.x > 11.4f;                                 // 가운데 통유리 창은 비운다
-            if (p.x < 2.4f && p.y > 2.6f) return false;                           // 문 앞 통로
-            if (p.x > 11.6f && p.y > 2.4f) return false;                          // 카운터
             int lv = save != null ? save.cafeLevel : 1;
+            if (kind == SlotKind.Wall)
+                return (p.x < 3.0f || p.x > 11.4f) && p.x <= CafeLayout.WallMaxX(lv);   // 가운데 통유리 창은 비운다
+            if (p.x < 2.4f && p.y > 2.6f) return false;                           // 문 앞 통로
             if (lv < 2 && p.y < 1.3f) return false;                               // 앞줄은 Lv2부터
-            if (lv < 3 && (p.x < 1.6f || p.x > 12.4f)) return false;              // 양 끝은 Lv3부터
+            if (p.x > CafeLayout.FloorMaxX(lv)) return false;                     // 오른쪽 공간은 확장하면 드러난다
+            if (lv < 3 && p.x < 1.6f) return false;                               // 왼쪽 끝은 Lv3부터
             return true;
         }
 
@@ -294,8 +294,9 @@ namespace YeogiCafe.Cafe
         {
             spot = Vector3.zero;
             float x0, x1, y0, y1, sx, sy;
-            if (kind == SlotKind.Wall) { x0 = 1.0f; x1 = 13.2f; y0 = CafeLayout.FloorTop + 1.6f; y1 = CafeLayout.CeilingY - 1.2f; sx = 0.6f; sy = 0.5f; }
-            else { x0 = 1.0f; x1 = 13.0f; y0 = 0.4f; y1 = CafeLayout.FloorTop - 0.7f; sx = 0.5f; sy = 0.4f; }
+            int lvl = save != null ? save.cafeLevel : 1;
+            if (kind == SlotKind.Wall) { x0 = 1.0f; x1 = CafeLayout.WallMaxX(lvl); y0 = CafeLayout.FloorTop + 1.6f; y1 = CafeLayout.WallMaxY(lvl) - 0.1f; sx = 0.6f; sy = 0.5f; }
+            else { x0 = 1.0f; x1 = CafeLayout.FloorMaxX(lvl); y0 = 0.4f; y1 = CafeLayout.FloorTop - 0.7f; sx = 0.5f; sy = 0.4f; }
             float cx = (x0 + x1) * 0.5f;
             for (float y = y1; y >= y0 - 0.001f; y -= sy)
             {
