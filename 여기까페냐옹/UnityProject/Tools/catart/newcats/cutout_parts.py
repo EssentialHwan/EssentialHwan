@@ -39,6 +39,38 @@ def belly_y(body, x):
     col = np.where(body[:, int(x), 3] > 0)[0]
     return col.max() if len(col) else body.shape[0]
 
+def clip_outside(layer, body, pad, dy, ground, visible):
+    # 몸통 옆(엉덩이 뒤·가슴 앞)으로 다리 윗동이 삐져나와 생기던 조각을 지운다: 몸이 없는 칸에서는 보이는 다리 길이 위쪽을 잘라 냄
+    H, W = layer.shape[:2]
+    top = int(ground - visible * 1.02)
+    for x in np.where((layer[..., 3] > 0).any(0))[0]:
+        bx = x - pad
+        has = 0 <= bx < body.shape[1] and (body[:, bx, 3] > 0).any()
+        if not has: layer[:max(0, top), x] = 0
+
+def seam(c, L, body, pad, dy, bh):
+    # 이음매 메우기: 가까운 쪽 다리 둘레(조금 넓힌 영역)에서 실루엣 안쪽에 남은 진한 선(배·엉덩이 외곽선, 다리 윗동 외곽선)을
+    # 주변 털색으로 채운다. 바깥 테두리 선은 그대로 → 다리가 몸에서 이어져 나온 것처럼
+    union = c[..., 3] > 0
+    edge = union & ~ndimage.binary_erosion(union, iterations=max(2, int(bh * 0.014)))
+    lum = c[..., :3].astype(float).mean(2)
+    near = ndimage.binary_dilation(L[..., 3] > 0, iterations=max(2, int(bh * 0.012)))
+    # 다리 윗부분 근처만(발끝·발가락 선은 건드리지 않게): 각 칸에서 몸통 아랫단 ± 띠
+    band = np.zeros_like(near)
+    k = max(4, int(bh * 0.08))
+    for x in np.where(near.any(0))[0]:
+        bx = x - pad
+        if 0 <= bx < body.shape[1] and (body[:, bx, 3] > 0).any():
+            by = int(np.where(body[:, bx, 3] > 0)[0].max() - dy)
+            band[max(0, by - k * 2):by + max(2, int(bh * 0.012)) + 1, x] = True   # 몸통 아랫단까지만(다리 자체 옆선은 남김)
+    rgb = c[..., :3].astype(float); sat = rgb.max(2) - rgb.min(2)
+    M = near & band & union & ~edge & ((lum < 115) | ((sat < 28) & (lum < 215)))   # 진한 선 + 원화 가장자리의 회색 번짐
+    if not M.any(): return
+    src = union & ~M & (lum >= 115) & ~((sat < 28) & (lum < 215)) & (near | ~ndimage.binary_dilation(near, iterations=6))   # 먼 쪽 다리 색(회색빛)은 끌어오지 않게
+    src &= ~((L[..., 3] == 0) & (c[..., :3].astype(float).mean(2) < 160) & near)
+    _, (iy, ix) = ndimage.distance_transform_edt(~src, return_indices=True)
+    c[M, :3] = c[iy[M], ix[M], :3]
+
 def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, front_fwd=0.10):
     bh, bw = body.shape[:2]
     if front.shape[0] != hind.shape[0]:   # 앞다리 길이를 뒷다리 기준으로(폭은 그대로)
@@ -73,8 +105,11 @@ def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, fron
             y = top - lw - up + dy * 0 + (-lh * 0.03 if far else 0)
             paste(c if target is None else target, r, x, y + pad * 0)
         # 대각선 짝: LF(가까운 앞)+RH(먼 뒤) 위상 0, RF(먼 앞)+LH(가까운 뒤) 위상 π
-        leg(front, fx, math.pi, True)
-        leg(hind, hx, 0.0, True)
+        Fl = np.zeros_like(c)
+        leg(front, fx, math.pi, True, Fl)
+        leg(hind, hx, 0.0, True, Fl)
+        clip_outside(Fl, body, pad, dy, ground, hl_h - hidden)
+        c[:] = np.where(Fl[..., 3:4] > 0, Fl, c)
         paste(c, body, pad, -dy)
         # 가까운 쪽 다리: 따로 그린 뒤, 몸통 안쪽(배 외곽선 바로 위까지)에 들어간 부분은 지우고 덮는다
         # → 배 외곽선이 다리를 가로지르지 않고, 다리가 몸에서 이어져 나온 것처럼 보임
@@ -85,8 +120,12 @@ def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, fron
         inner = ndimage.binary_erosion(body[..., 3] > 0, iterations=max(2, int(bh * 0.02)))
         iy, ix = np.nonzero(inner); bodyin[(iy - round(dy)).clip(0, c.shape[0] - 1), ix + pad] = True
         L[bodyin] = 0
+        clip_outside(L, body, pad, dy, ground, hl_h - hidden)
         al = L[..., 3:4] > 0
         c[:] = np.where(al, L, c)
+        # 이음매 메우기: 배 외곽선·다리 윗동 외곽선이 다리와 몸 사이에 선으로 남지 않게,
+        # 실루엣 안쪽에 있는 진한 선 픽셀을 그 다리의 털색으로 칠한다(바깥 테두리 선은 그대로)
+        seam(c, L, body, pad, dy, bh)
         frames.append(c)
     return frames
 

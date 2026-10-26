@@ -48,9 +48,10 @@ def main():
         for j, k in enumerate((10, 10, 10, 10, 11, 11, 15, 15, 9, 9, 8, 8, 12, 12, 13, 12)): put(36 + j, A[k])
     # 부품 → 걷기 8 + 뛰기 4
     pa, body, front, hind = P.parts(srcP)
-    walk = P.to_game(P.make(body, front, hind, 8))
+    ff = next((float(a.split('=')[1]) for a in sys.argv if a.startswith('--front=')), 0.10)   # 앞다리 앞쪽으로(고양이별 조정)
+    walk = P.to_game(P.make(body, front, hind, 8, front_fwd=ff))
     for j, f in enumerate(walk): put(52 + j, f)
-    run_hi = P.make(body, front, hind, 4, swing=32, lift=0.22, bob=0.04)
+    run_hi = P.make(body, front, hind, 4, swing=32, lift=0.22, bob=0.04, front_fwd=ff)
     run = P.to_game(run_hi, width_px=50)
     for j, f in enumerate(run): put(28 + j, f)
     out = f'cat_{cat}_v4.png'; sheet.save(out); print('ok', out, sheet.size)
