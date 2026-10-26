@@ -64,10 +64,15 @@ def seam(c, L, body, pad, dy, bh):
             by = int(np.where(body[:, bx, 3] > 0)[0].max() - dy)
             band[max(0, by - k * 2):by + max(2, int(bh * 0.012)) + 1, x] = True   # 몸통 아랫단까지만(다리 자체 옆선은 남김)
     rgb = c[..., :3].astype(float); sat = rgb.max(2) - rgb.min(2)
-    M = near & band & union & ~edge & ((lum < 115) | ((sat < 28) & (lum < 215)))   # 진한 선 + 원화 가장자리의 회색 번짐
+    # 털이 검은 고양이도 있으니 '선'의 기준은 다리 털 밝기에 맞춘다(털보다 확실히 어두운 것만 선)
+    Lm = L[..., 3] > 0
+    fur_lum = np.median(lum[Lm & (lum > 20)]) if (Lm & (lum > 20)).any() else 200.0
+    dark = min(115.0, fur_lum * 0.6)
+    gray = ((sat < 28) & (lum < 215) & (lum > fur_lum * 1.3)) if fur_lum < 120 else ((sat < 28) & (lum < 215))
+    M = near & band & union & ~edge & ((lum < dark) | gray)   # 진한 선 + 원화 가장자리의 회색 번짐
     if not M.any(): return
-    src = union & ~M & (lum >= 115) & ~((sat < 28) & (lum < 215)) & (near | ~ndimage.binary_dilation(near, iterations=6))   # 먼 쪽 다리 색(회색빛)은 끌어오지 않게
-    src &= ~((L[..., 3] == 0) & (c[..., :3].astype(float).mean(2) < 160) & near)
+    src = union & ~M & (lum >= dark) & ~gray & (near | ~ndimage.binary_dilation(near, iterations=6))   # 먼 쪽 다리 색(회색빛)은 끌어오지 않게
+    src &= ~((L[..., 3] == 0) & (lum < 160) & (lum > dark) & near & (fur_lum > 120))
     _, (iy, ix) = ndimage.distance_transform_edt(~src, return_indices=True)
     c[M, :3] = c[iy[M], ix[M], :3]
 
