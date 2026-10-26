@@ -266,7 +266,10 @@ namespace YeogiCafe.Cafe
                 list.Add(it.go.transform.position);
             }
             if (kind == SlotKind.Floor && !flat)
+            {
                 foreach (var st in starters) if (st.go != null) list.Add(st.go.transform.position);
+                foreach (var f in FixtureManager.All) if (f.kind == FixtureKind.Plant) list.Add(f.transform.position);   // 큰 화분
+            }
             return list;
         }
 
@@ -281,7 +284,7 @@ namespace YeogiCafe.Cafe
         {
             int lv = save != null ? save.cafeLevel : 1;
             if (kind == SlotKind.Wall)
-                return (p.x < 3.0f || p.x > 11.4f) && p.x <= CafeLayout.WallMaxX(lv);   // 가운데 통유리 창은 비운다
+                return !FixtureManager.WallBlockedAt(p) && p.x <= CafeLayout.WallMaxX(lv);   // 통유리·칠판·명판·문 자리는 비운다(옮겨도 따라감)
             if (p.x < 2.4f && p.y > 2.6f) return false;                           // 문 앞 통로
             if (lv < 2 && p.y < 1.3f) return false;                               // 앞줄은 Lv2부터
             if (p.x > CafeLayout.FloorMaxX(lv)) return false;                     // 오른쪽 공간은 확장하면 드러난다
@@ -315,6 +318,9 @@ namespace YeogiCafe.Cafe
             return false;
         }
 
+        // 기본 사물(큰 화분)용: 바닥 빈 곳 하나
+        public bool TryFindFloorSpot(out Vector3 p) => FindFreeSpot(SlotKind.Floor, false, Occupied(SlotKind.Floor, false), out p);
+
         // 상점 표시용: 지금 더 놓을 수 있는 자리 수(겹치지 않게 차례로 채워 본 개수, 최대 20)
         public (int free, int total) SlotCount(SlotKind kind)
         {
@@ -325,7 +331,7 @@ namespace YeogiCafe.Cafe
                 foreach (var s in slots)
                 {
                     if (s.kind != SlotKind.Wall || s.minCafeLevel > CafeLevel) continue;
-                    t++; if (!s.occupied && (s.slot == null || Clear(s.slot.position, wocc, SlotKind.Wall))) f++;
+                    t++; if (!s.occupied && (s.slot == null || (Clear(s.slot.position, wocc, SlotKind.Wall) && Allowed(s.slot.position, SlotKind.Wall)))) f++;
                 }
                 return (f, t);
             }
@@ -361,6 +367,7 @@ namespace YeogiCafe.Cafe
             {
                 if (s.occupied || s.kind != want || s.minCafeLevel > CafeLevel) continue;
                 if (s.slot != null && !Clear(s.slot.position, occ, want)) continue;     // 다른 가구를 그 위로 옮겨 둔 칸
+                if (want == SlotKind.Wall && s.slot != null && !Allowed(s.slot.position, SlotKind.Wall)) continue;   // 창·칠판을 그 앞으로 옮겨 둔 칸
                 if (want == SlotKind.Floor && s.nearWindow != windowSeat) { if (fallback == null) fallback = s; continue; }
                 return s;
             }

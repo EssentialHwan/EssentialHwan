@@ -80,7 +80,8 @@ namespace YeogiCafe.Visual
                 float width = Mathf.Clamp(b.size.x * 0.75f, 0.45f, 2.4f);
 
                 // 빛 위치 → 그림자는 빛 반대쪽으로 기운다(정면 시점이라 가로 방향만 의미 있음)
-                Vector2 light = night ? NearestLamp(foot.x) : new Vector2(CafeLayout.GlassCenterX, CafeLayout.GlassBottom);
+                var glass = YeogiCafe.Cafe.FixtureManager.PrimaryGlass();
+                Vector2 light = night ? NearestLamp(foot.x) : new Vector2(glass != null ? glass.position.x : CafeLayout.CameraPos.x, CafeLayout.GlassBottom);
                 float lean = Mathf.Clamp((foot.x - light.x) * (night ? 0.05f : 0.06f), -0.35f, 0.35f);
                 if (!sunny && !night) lean *= 0.3f;                          // 흐린 날은 거의 바로 아래
                 float stretch = 1f + Mathf.Abs(lean) * (sunny ? 1.4f : 0.8f);
@@ -93,9 +94,10 @@ namespace YeogiCafe.Visual
 
         static Vector2 NearestLamp(float x)
         {
-            float best = CafeLayout.LampX[0];
-            foreach (var lx in CafeLayout.LampX) if (Mathf.Abs(lx - x) < Mathf.Abs(best - x)) best = lx;
-            return new Vector2(best, CafeLayout.CeilingY - 1.6f);
+            float best = x; bool any = false;
+            foreach (var t in YeogiCafe.Cafe.FixtureManager.Lamps())
+                if (!any || Mathf.Abs(t.position.x - x) < Mathf.Abs(best - x)) { best = t.position.x; any = true; }
+            return new Vector2(best, CafeLayout.CeilingY - 1.6f);   // 조명이 없으면 바로 위에서(그림자 똑바로)
         }
 
         void Scan()

@@ -864,3 +864,23 @@ opt.totitle.btn,시작 화면으로,Go to title,返回标题,タイトルへ
 opt.totitle.confirm,한 번 더 누르면 이동,Click again to go,再点一次返回,もう一度で移動
 ui.paused,일시정지 중 — 창을 닫으면 다시 흘러요,Paused — close the window to resume,已暂停 — 关闭窗口后继续,一時停止中 — 閉じると再開します
 ui.cafe.reveal,카페가 넓어졌어요! 오른쪽에 새 공간이 생겼어요,The cafe got bigger! A new space opened up on the right.,咖啡馆变大啦！右边多了新空间,カフェが広くなった！右側に新しいスペースができたよ
+ui.shop.tab.fix,창·조명,Windows & Lights,窗户·灯,窓・照明
+fix.Glass8,가게 통유리,Shop Window,店面落地窗,ショーウィンドウ
+fix.Glass4,큰 통창,Large Window,大窗户,大きな窓
+fix.MenuBoard,칠판,Chalkboard,小黑板,黒板
+fix.Lamp,펜던트 조명,Pendant Lamp,吊灯,ペンダントライト
+fix.Plant,큰 화분,Big Plant,大盆栽,大きな鉢植え
+fix.Plaque,냥슐랭 명판,Nyanchelin Plaque,喵其林铭牌,ニャシュラン看板
+fix.desc.Glass8,바깥 풍경·햇살이 들어오는 넓은 창(8칸),"A wide window for the view and sunlight (8 wide)",能看到街景、照进阳光的宽窗,景色と日差しが入る広い窓
+fix.desc.Glass4,바깥이 보이는 큰 창(4칸),A big window with a view (4 wide),能看到外面的大窗,外が見える大きな窓
+fix.desc.MenuBoard,벽에 거는 메뉴 칠판,A menu board for the wall,挂在墙上的菜单黑板,壁に掛けるメニュー黒板
+fix.desc.Lamp,저녁에 따뜻한 빛을 내려 줘요,Gives off warm light in the evening,傍晚洒下温暖的光,夕方にあたたかい光を灯す
+fix.desc.Plant,바닥에 두는 큰 화분,A big potted plant for the floor,放在地上的大盆栽,床に置く大きな鉢植え
+ui.fix.instore,보관함에 {n}개,{n} in storage,仓库里有 {n} 个,保管中 {n}個
+ui.fix.place,꺼내 놓기 (무료),Place (free),拿出来摆放（免费）,置く（無料）
+ui.fix.placed,{name} — 놓았어요. 배치에서 옮길 수 있어요,"{name} placed. Move it in Arrange mode.",{name} 已摆放。可以在布置中移动,{name}を置いたよ。配置で動かせます
+ui.fix.nospace,놓을 자리가 없어요. 배치에서 자리를 비워 주세요,No room for it. Make space in Arrange mode.,没有地方放。请在布置中腾出位置,置く場所がないよ。配置でスペースを空けてね
+ui.fix.store,보관함에 넣기 (무료로 다시 꺼낼 수 있어요),Store (take it out again for free),放进仓库（可免费再拿出）,保管する（無料で戻せる）
+ui.fix.stored,{name} — 보관함에 넣었어요. 상점 '창·조명'에서 다시 꺼낼 수 있어요,"{name} stored. Take it out again from Shop › Windows & Lights.",{name} 已放进仓库。可在商店「窗户·灯」再拿出,{name}を保管したよ。ショップ「窓・照明」から戻せます
+ui.fix.plaque,냥슐랭 명판은 옮기기만 돼요,The plaque can only be moved,铭牌只能移动,看板は動かすだけです
+ui.fix.tabhint,처음부터 있던 창·조명은 빼도 보관함에 남아요. 다시 놓을 땐 무료,"The original windows and lights stay in storage when removed. Placing them again is free.",原有的窗户和灯拿掉后会留在仓库，再次摆放免费,最初からある窓・照明は外しても保管され、置き直しは無料

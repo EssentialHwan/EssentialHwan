@@ -16,10 +16,10 @@ namespace YeogiCafe.Visual
     public class CafeLighting : MonoBehaviour
     {
         Light2D global, window, beam;
-        readonly Light2D[] lamps = new Light2D[3];
-        readonly Light2D[] pools = new Light2D[3];      // 조명 아래 바닥에 떨어지는 빛 웅덩이
-        readonly SpriteRenderer[] halos = new SpriteRenderer[3];   // 갓 아래 빛 번짐(불 켜진 게 보이게)
-        const float ShadeBottomY = 6.55f;                // 갓 아랫단 높이(상단 메뉴 바 아래로 확실히 보이게)
+        // 천장 조명은 옮기고 빼고 더 살 수 있다(기본 사물) → 조명마다 빛 세트를 붙여 따라가게 한다
+        class LampRig { public Transform lamp; public Light2D light, pool; public SpriteRenderer halo; }
+        readonly List<LampRig> rigs = new();
+        float rigScanT;
         DayManager day;
         Material litMat, unlitMat;
         SpriteRenderer beamSr;           // SunbeamSpot이 그리는 바닥 햇살
@@ -43,47 +43,56 @@ namespace YeogiCafe.Visual
 
             global = Make("Global", Light2D.LightType.Global, Vector3.zero, false);
 
-            // 창빛: 유리 아래쪽 가운데에서 넓고 부드럽게(노멀맵 X — 창 주변이 은은하게 밝아지는 정도)
+            // 창빛: 유리 아래쪽 가운데에서 넓고 부드럽게(노멀맵 X — 창 주변이 은은하게 밝아지는 정도). 가장 큰 창을 따라간다
             window = Make("WindowGlow", Light2D.LightType.Point,
                 new Vector3(CafeLayout.GlassCenterX, CafeLayout.GlassBottom + CafeLayout.GlassHeight * 0.45f, 0f), false);
             window.pointLightInnerRadius = 2.2f; window.pointLightOuterRadius = 7.5f; window.falloffIntensity = 0.7f;
-
-            // 천장 조명: 갓이 상단 메뉴 바에 가려 '빛만 있고 광원이 없는' 상태가 되지 않게 갓을 화면 안으로 내린다
-            var shades = LowerLamps();
-            for (int i = 0; i < lamps.Length; i++)
-            {
-                float lx = CafeLayout.LampX[i];
-                float sy = shades[i] != null ? shades[i].bounds.min.y : CafeLayout.CeilingY - 1.0f;
-                // 노멀맵 O — 고양이·가구 윗면이 위에서 빛을 받는다
-                var l = Make("Lamp" + i, Light2D.LightType.Point, new Vector3(lx, sy - 0.1f, 0f), true);
-                l.pointLightInnerRadius = 0.4f; l.pointLightOuterRadius = 5.2f; l.falloffIntensity = 0.8f;
-                lamps[i] = l;
-                var p = Make("LampPool" + i, Light2D.LightType.Point, new Vector3(lx, 2.9f, 0f), false);
-                p.pointLightInnerRadius = 0.6f; p.pointLightOuterRadius = 2.9f; p.falloffIntensity = 0.6f;
-                pools[i] = p;
-                halos[i] = Halo(new Vector3(lx, sy - 0.05f, 0f), shades[i]);
-            }
+            SyncRigs();
             ContactShadows.Ensure(litMat);
 
             Apply(1f);
             ScanSprites();
         }
 
-        // 씬의 "Lamp"(펜던트 조명 그림)를 갓 아랫단이 ShadeBottomY에 오도록 내린다. 줄 윗부분은 메뉴 바 뒤로 숨는다.
-        SpriteRenderer[] LowerLamps()
+        // 조명(기본 사물 'Lamp')마다 빛·바닥 웅덩이·번짐을 붙이고, 사라진 조명의 것은 치운다. 창빛은 가장 큰 창으로.
+        void SyncRigs()
         {
-            var res = new SpriteRenderer[CafeLayout.LampX.Length];
-            foreach (var sr in FindObjectsOfType<SpriteRenderer>())
+            var lamps = new List<Transform>(YeogiCafe.Cafe.FixtureManager.Lamps());
+            for (int i = rigs.Count - 1; i >= 0; i--)
             {
-                if (sr.gameObject.name != "Lamp") continue;
-                int best = 0;
-                for (int i = 1; i < CafeLayout.LampX.Length; i++)
-                    if (Mathf.Abs(CafeLayout.LampX[i] - sr.transform.position.x) < Mathf.Abs(CafeLayout.LampX[best] - sr.transform.position.x)) best = i;
-                float drop = sr.bounds.min.y - ShadeBottomY;
-                if (drop > 0f) sr.transform.position -= new Vector3(0f, drop, 0f);
-                res[best] = sr;
+                var r = rigs[i];
+                if (r.lamp != null && lamps.Contains(r.lamp)) continue;
+                if (r.light != null) Destroy(r.light.gameObject);
+                if (r.pool != null) Destroy(r.pool.gameObject);
+                if (r.halo != null) Destroy(r.halo.gameObject);
+                rigs.RemoveAt(i);
             }
-            return res;
+            foreach (var t in lamps)
+            {
+                if (rigs.Exists(r => r.lamp == t)) continue;
+                var r = new LampRig { lamp = t };
+                // 노멀맵 O — 고양이·가구 윗면이 위에서 빛을 받는다
+                r.light = Make("LampLight", Light2D.LightType.Point, Vector3.zero, true);
+                r.light.pointLightInnerRadius = 0.4f; r.light.pointLightOuterRadius = 5.2f; r.light.falloffIntensity = 0.8f;
+                r.pool = Make("LampPool", Light2D.LightType.Point, Vector3.zero, false);
+                r.pool.pointLightInnerRadius = 0.6f; r.pool.pointLightOuterRadius = 2.9f; r.pool.falloffIntensity = 0.6f;
+                r.halo = Halo(Vector3.zero, t.GetComponent<SpriteRenderer>());
+                rigs.Add(r);
+            }
+            foreach (var r in rigs)
+            {
+                var sr = r.lamp.GetComponent<SpriteRenderer>();
+                float x = r.lamp.position.x, sy = sr != null ? sr.bounds.min.y : CafeLayout.CeilingY - 1.0f;
+                r.light.transform.position = new Vector3(x, sy - 0.1f, 0f);
+                r.pool.transform.position = new Vector3(x, 2.9f, 0f);
+                r.halo.transform.position = new Vector3(x, sy - 0.05f, 0f);
+            }
+            var g = YeogiCafe.Cafe.FixtureManager.PrimaryGlass();
+            if (window != null)
+            {
+                window.gameObject.SetActive(g != null);
+                if (g != null) window.transform.position = new Vector3(g.position.x, CafeLayout.GlassBottom + CafeLayout.GlassHeight * 0.45f, 0f);
+            }
         }
 
         // 갓 아래 둥근 빛 번짐(도트 3단 원). 조명을 받지 않는 재질 — 스스로 빛나는 쪽
@@ -143,6 +152,8 @@ namespace YeogiCafe.Visual
 
         void Update()
         {
+            rigScanT -= Time.unscaledDeltaTime;
+            if (rigScanT <= 0f) { rigScanT = 0.1f; SyncRigs(); }     // 배치 모드에서 끄는 동안에도 빛이 따라오게
             TrackBeam();
             Apply(Time.unscaledDeltaTime * 1.5f);
             scanT -= Time.unscaledDeltaTime;
@@ -247,11 +258,14 @@ namespace YeogiCafe.Visual
             Tween(global, t.g, t.gi, k);
             Tween(window, t.w, t.wi, k);
             Tween(beam, t.b, t.bi, 1f);                       // 그림 투명도를 이미 천천히 따라가므로 바로 맞춘다
-            foreach (var l in lamps) Tween(l, new Color(1f, 0.78f, 0.5f), t.li, k);
-            foreach (var p in pools) Tween(p, new Color(1f, 0.74f, 0.45f), Mathf.Max(0f, t.li - 0.25f) * 0.45f, k);   // 낮엔 꺼짐, 저녁·밤에만
             float ha = Mathf.Clamp01((t.li - 0.25f) / 0.8f) * 0.9f;        // 불이 켜질수록 번짐이 보인다
-            foreach (var h in halos)
+            foreach (var r in rigs)
+            {
+                Tween(r.light, new Color(1f, 0.78f, 0.5f), t.li, k);
+                Tween(r.pool, new Color(1f, 0.74f, 0.45f), Mathf.Max(0f, t.li - 0.25f) * 0.45f, k);   // 낮엔 꺼짐, 저녁·밤에만
+                var h = r.halo;
                 if (h != null) { var c = h.color; c.a = Mathf.Lerp(c.a, ha, Mathf.Clamp01(k)); h.color = c; }
+            }
         }
 
         static void Tween(Light2D l, Color c, float i, float k)

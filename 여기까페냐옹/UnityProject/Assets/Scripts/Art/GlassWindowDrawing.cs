@@ -223,8 +223,23 @@ namespace YeogiCafe.Art
         }
 
         // 창틀: 원목 테두리 + 세로 문살(4칸) + 가로 상단 띠 + 아래 창턱. 유리는 투명, 반사광만 살짝.
-        public static PixelCanvas Frame()
+        public static PixelCanvas Frame() => Frame(GW);
+
+        // 큰 통창(가로 128px = 4유닛, 2칸) 같은 좁은 창: 같은 풍경의 가운데 부분을 잘라 쓴다
+        public static PixelCanvas OutsidePart(int gw, int weather, int phase, int season)
         {
+            var full = Outside(weather, phase, season);
+            if (gw >= GW) return full;
+            var c = new PixelCanvas(gw, GH);
+            int ox = (GW - gw) / 2;
+            for (int y = 0; y < GH; y++) for (int x = 0; x < gw; x++) c.Set(x, y, full.Get(x + ox, y));
+            return c;
+        }
+
+        // 창틀(유리 가로 gw px). 문살은 64px마다(256 → 4칸, 128 → 2칸)
+        public static PixelCanvas Frame(int gw)
+        {
+            int GW = gw, FW = gw + Border * 2;
             var c = new PixelCanvas(FW, FH);
             var dark = PixelPalette.WoodDeep; var mid = PixelPalette.WoodMid; var light = PixelPalette.WoodLight;
             int gx0 = Border, gy0 = Border + 3, gx1 = Border + GW - 1, gy1 = gy0 + GH - 1;
@@ -234,10 +249,11 @@ namespace YeogiCafe.Art
             c.RectOutline(0, 3, FW - 1, FH - 1, dark);
             c.RectOutline(gx0 - 1, gy0 - 1, gx1 + 1, gy1 + 1, dark);
             c.HLine(1, FW - 2, FH - 2, light);                                   // 위쪽 하이라이트
-            // 문살(세로 3줄 → 4칸)
-            for (int i = 1; i < 4; i++)
+            // 문살(64px마다)
+            int panes = Mathf.Max(1, GW / 64);
+            for (int i = 1; i < panes; i++)
             {
-                int mx = gx0 + GW * i / 4;
+                int mx = gx0 + GW * i / panes;
                 c.FillRect(mx - 1, gy0, mx + 1, gy1, mid);
                 c.VLine(mx - 1, gy0, gy1, light); c.VLine(mx + 1, gy0, gy1, dark);
             }
@@ -247,9 +263,9 @@ namespace YeogiCafe.Art
             // 창턱(아래로 살짝 튀어나옴)
             c.FillRect(0, 0, FW - 1, 4, light); c.HLine(0, FW - 1, 0, dark); c.HLine(0, FW - 1, 4, dark);
             // 유리 반사광(사선, 반투명)
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < panes; i++)
             {
-                int px = gx0 + 10 + GW * i / 4;
+                int px = gx0 + 10 + GW * i / panes;
                 for (int k = 0; k < 14; k++)
                 {
                     c.Set(px + k, gy1 - 6 - k, new Color32(255, 255, 255, 70));

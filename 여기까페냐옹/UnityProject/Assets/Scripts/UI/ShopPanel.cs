@@ -71,8 +71,8 @@ namespace YeogiCafe.UI
             lg.cellSize = new Vector2(374, 76); lg.spacing = new Vector2(10, 6);
             lg.constraint = GridLayoutGroup.Constraint.FixedColumnCount; lg.constraintCount = 2;
 
-            string[] tabKeys = { "ui.shop.tab.furn", "ui.shop.tab.tool", "ui.shop.tab.recipe", "ui.shop.tab.furnup", "ui.shop.tab.theme" };
-            const float tabW = 132, tabGap = 6;
+            string[] tabKeys = { "ui.shop.tab.furn", "ui.shop.tab.fix", "ui.shop.tab.tool", "ui.shop.tab.recipe", "ui.shop.tab.furnup", "ui.shop.tab.theme" };
+            const float tabW = 116, tabGap = 5;
             float tabsW = tabKeys.Length * tabW + (tabKeys.Length - 1) * tabGap;
             for (int i = 0; i < tabKeys.Length; i++)
             {
@@ -138,10 +138,11 @@ namespace YeogiCafe.UI
             for (int i = 0; i < tabs.Count; i++)
                 tabs[i].GetComponent<Image>().color = i == mode ? UiFactory.PinkDeep : UiFactory.Wood;
             for (int i = listRoot.childCount - 1; i >= 0; i--) Object.Destroy(listRoot.GetChild(i).gameObject);
-            if (mode == 1) BuildTools();
-            else if (mode == 2) BuildRecipes();
-            else if (mode == 3) BuildFurnUpgrades();
-            else if (mode == 4) BuildThemes();
+            if (mode == 1) BuildFixtures();
+            else if (mode == 2) BuildTools();
+            else if (mode == 3) BuildRecipes();
+            else if (mode == 4) BuildFurnUpgrades();
+            else if (mode == 5) BuildThemes();
             RefreshAffordability();
         }
 
@@ -169,6 +170,37 @@ namespace YeogiCafe.UI
             btn.interactable = btnOn;
             return btn;
         }
+
+        // 창·조명(기본 사물): 보관함에 넣어 둔 것은 무료로 꺼내 놓고, 더 필요하면 산다
+        void BuildFixtures()
+        {
+            var mgr = YeogiCafe.Cafe.FixtureManager.Instance; if (mgr == null) return;
+            int gold = owner.Economy != null ? owner.Economy.Gold : 0;
+            foreach (var k in YeogiCafe.Cafe.FixtureManager.ForSale)
+            {
+                var kind = k;
+                string name = L.Get("fix." + k);
+                int stored = mgr.StoredCount(k), price = YeogiCafe.Cafe.FixtureManager.Price(k);
+                if (stored > 0)
+                {
+                    var tb = Card(mgr.Icon(k), name, L.Get("fix.desc." + k), L.Get("ui.fix.instore", ("n", stored.ToString())),
+                                  L.Get("ui.fix.place"), true, UiFactory.Green);
+                    tb.onClick.AddListener(() => { var r = mgr.TakeOut(kind); Render(); feedback.text = Msg(r, name); });
+                }
+                var bb = Card(mgr.Icon(k), name, L.Get("fix.desc." + k), "", L.Get("ui.recipe.buy", ("g", price.ToString())),
+                              gold >= price, UiFactory.PinkDeep);
+                bb.onClick.AddListener(() => { var r = mgr.Buy(kind); Render(); feedback.text = Msg(r, name); owner.RefreshHud(); });
+            }
+            feedback.text = L.Get("ui.fix.tabhint");
+        }
+
+        static string Msg(YeogiCafe.Cafe.FixtureManager.PlaceResult r, string name) => r switch
+        {
+            YeogiCafe.Cafe.FixtureManager.PlaceResult.Ok => L.Get("ui.fix.placed", ("name", name)),
+            YeogiCafe.Cafe.FixtureManager.PlaceResult.NoSpace => L.Get("ui.fix.nospace"),
+            YeogiCafe.Cafe.FixtureManager.PlaceResult.NoGold => L.Get("ui.shop.insufficient"),
+            _ => "",
+        };
 
         // 주방 기구: 기구 하나 = 메뉴 2개. 카페 레벨이 되면 산다.
         void BuildTools()

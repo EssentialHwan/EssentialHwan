@@ -20,6 +20,8 @@ namespace YeogiCafe.Save
         public int currentDay = 1;
         public int cafeLevel = 1;
         public List<PlacedFurnitureDTO> placedFurniture = new();
+        public List<FixtureDTO> fixtures = new();           // 기본 사물(통유리·칠판·조명·명판·큰 화분) — 옮기기·보관·추가 구매
+        public bool fixturesInit;                           // 기본 사물을 처음 세이브에 옮겨 적었는지
         public List<PhotoDTO> photos = new();                // 포토 모드 앨범(파일은 persistentDataPath/Photos)
         public List<string> photoFrames = new();             // 산 사진 프레임(폴라로이드는 기본)
         public int albumCap = 12;                            // 앨범 칸 수(골드로 늘림)
@@ -84,6 +86,15 @@ namespace YeogiCafe.Save
             if (c == null) { c = new CatSaveData { catId = catId }; cats.Add(c); }
             return c;
         }
+    }
+
+    [Serializable]
+    public class FixtureDTO
+    {
+        public string kind;               // FixtureKind 이름(Glass8, Glass4, MenuBoard, Lamp, Plaque, Plant)
+        public int x, y;                  // 1/100 유닛
+        public bool stored;               // 보관함에 들어가 있음(화면에 없음)
+        public bool bought;               // 상점에서 산 것(팔 수 있음). 아니면 기본 제공(무료 보관·꺼내기)
     }
 
     [Serializable]

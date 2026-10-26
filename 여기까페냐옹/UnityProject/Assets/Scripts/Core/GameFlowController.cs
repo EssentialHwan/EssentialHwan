@@ -87,6 +87,7 @@ namespace YeogiCafe.Core
             allMenus.RemoveAll(m => m == null || m.seasonal);   // 한정 메뉴는 SyncMenus가 계절마다 따로 붙인다
             YeogiCafe.Food.RecipeBook.Migrate(save);
             YeogiCafe.Visual.NyanPlaque.Ensure(save);           // 문 위 냥슐랭 명판
+            YeogiCafe.Cafe.FixtureManager.Ensure(save, economy, furniture);   // 기본 사물(통유리·칠판·조명·명판·큰 화분) — 옮기기·보관
             SyncMenus();
             YeogiCafe.Order.OrderSystem.MenuLevel = id => save.GetMenuStat(id).level;
             GameEvents.OnEvent += (id, _) =>

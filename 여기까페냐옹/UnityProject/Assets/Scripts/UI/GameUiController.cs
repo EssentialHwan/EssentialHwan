@@ -64,14 +64,6 @@ namespace YeogiCafe.UI
 
         // ── 카페 레벨별 화면: 확장하면 다음 화면에서 카메라가 천천히 뒤로 빠지며 새 공간이 드러난다 ──
         int shownLevel = -1; float revealT; Vector3 revealFromPos; float revealFromSize;
-        // 칠판: Lv1 화면에서 잘리지 않게 안쪽으로(기본 사물 옮기기 작업 전까지 임시)
-        static void PlaceMenuBoard(int lv)
-        {
-            var room = GameObject.Find("Room");
-            var b = room != null ? room.transform.Find("MenuBoard") : null;
-            if (b != null) b.position = new Vector3(lv <= 1 ? 12.95f : CafeLayout.MenuBoard.x, CafeLayout.MenuBoard.y, 0f);
-        }
-
         void UpdateHallCamera(float dt)
         {
             var s = Save; if (s == null || !s.initialized) return;
@@ -79,7 +71,7 @@ namespace YeogiCafe.UI
             int lv = Mathf.Clamp(s.cafeLevel, 1, 3);
             if (shownLevel < 0)
             {
-                shownLevel = lv; CafeLayout.ViewLevel = lv; PlaceMenuBoard(lv);
+                shownLevel = lv; CafeLayout.ViewLevel = lv;
                 if (!(kitchen != null && kitchen.Busy) && !PhotoOpen) { cam.transform.position = CafeLayout.CameraPos; cam.orthographicSize = CafeLayout.CameraSize; }
                 return;
             }
@@ -89,7 +81,7 @@ namespace YeogiCafe.UI
             {
                 revealFromPos = cam.transform.position; revealFromSize = cam.orthographicSize;
                 bool grew = lv > shownLevel;
-                shownLevel = lv; CafeLayout.ViewLevel = lv; PlaceMenuBoard(lv);
+                shownLevel = lv; CafeLayout.ViewLevel = lv;
                 revealT = 0.0001f;
                 if (grew && lv == 2) ShowToast(L.Get("ui.cafe.reveal"));
             }
@@ -783,7 +775,7 @@ namespace YeogiCafe.UI
             CloseAll();
             yield return Shot("hud");
             ToggleQuests(); yield return Shot("quests"); questPanel.SetActive(false);
-            for (int m = 0; m < 5; m++) { shop.DebugTab(m); yield return Shot("shop" + m); }
+            for (int m = 0; m < 6; m++) { shop.DebugTab(m); yield return Shot("shop" + m); }
             shop.Hide();
             catalog.DebugTab(false, false); yield return Shot("catalog_list");
             catalog.DebugTab(true, false); yield return Shot("catalog_rel");

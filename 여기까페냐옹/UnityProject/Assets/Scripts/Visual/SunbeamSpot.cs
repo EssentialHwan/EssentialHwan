@@ -13,6 +13,7 @@ namespace YeogiCafe.Visual
     {
         FacilityBehaviour fac; CafeContext cafe; DayManager day;
         SpriteRenderer sr; bool registered; float alpha; int shownPhase = -1;
+        float glassX = CafeLayout.GlassCenterX, glassW = CafeLayout.GlassWidth;
 
         void Start()
         {
@@ -38,15 +39,18 @@ namespace YeogiCafe.Visual
         void Update()
         {
             if (fac == null || cafe == null) return;
-            bool sunny = Weather.Current == WeatherKind.Sunny && day != null && day.Phase != DayPhase.Settlement;
+            // 햇살은 가장 큰 통유리 창을 따라간다(창을 옮기면 햇살도, 창을 빼면 햇살도 없음)
+            var glass = YeogiCafe.Cafe.FixtureManager.PrimaryGlass();
+            bool sunny = glass != null && Weather.Current == WeatherKind.Sunny && day != null && day.Phase != DayPhase.Settlement;
             int ph = Phase();
+            float gx = glass != null ? glass.position.x : glassX, gw = YeogiCafe.Cafe.FixtureManager.PrimaryGlassWidth();
             // 자리 이동은 아무도 안 쓰고 있을 때만
-            if (ph != shownPhase && fac.IsFree)
+            if ((ph != shownPhase || Mathf.Abs(gx - glassX) > 0.01f || Mathf.Abs(gw - glassW) > 0.01f) && fac.IsFree)
             {
-                shownPhase = ph;
-                var g = Geo(ph);
+                shownPhase = ph; glassX = gx; glassW = gw;
+                var g = Geo(ph, glassX, glassW);
                 fac.transform.position = new Vector3(g.spotX, g.spotY, 0f);
-                sr.sprite = BeamSprite(ph);
+                sr.sprite = BeamSprite(ph, glassW);
             }
             float want = sunny ? (ph == 2 ? 0.75f : 1f) : 0f;
             alpha = Mathf.MoveTowards(alpha, want, Time.deltaTime * 0.5f);
@@ -60,8 +64,9 @@ namespace YeogiCafe.Visual
         // 해가 낮은 아침·저녁은 길고 비스듬하게, 해가 높은 점심은 짧고 곧게 벽 가까이.
         struct BeamGeo { public float nearY, depth, shift, skew, widen, spotX, spotY; }
 
-        static BeamGeo Geo(int ph)
+        static BeamGeo Geo(int ph, float glassCenterX, float glassWidth)
         {
+            float k = glassWidth / CafeLayout.GlassWidth;                     // 좁은 창은 햇살도 좁고 덜 기울게
             var g = new BeamGeo();
             switch (ph)
             {
@@ -71,19 +76,23 @@ namespace YeogiCafe.Visual
             }
             g.widen = 0.08f;                                     // 화면 앞쪽(먼 쪽)일수록 살짝 넓게 — 원근감
             // 고양이가 찾아가는 자리: 햇살 한가운데(돌아다니는 범위 안으로)
-            g.spotX = CafeLayout.GlassCenterX + g.shift + g.skew * 0.5f;
+            g.shift *= k; g.skew *= k;
+            g.spotX = glassCenterX + g.shift + g.skew * 0.5f;
             g.spotY = Mathf.Clamp(g.nearY - g.depth * 0.5f, CafeLayout.RoamMinY + 0.3f, CafeLayout.RoamMaxY - 0.1f);
             return g;
         }
 
         static readonly System.Collections.Generic.Dictionary<int, Sprite> beams = new();
 
-        static Sprite BeamSprite(int ph)
+        // 그림은 창 위치와 상관없이 같다(기준점 = 햇살 자리) → 창 너비·시간대별로만 만든다
+        static Sprite BeamSprite(int ph, float glassWidth)
         {
-            if (beams.TryGetValue(ph, out var s) && s != null) return s;
-            var g = Geo(ph);
+            int key = ph * 1000 + Mathf.RoundToInt(glassWidth * 10f);
+            if (beams.TryGetValue(key, out var s) && s != null) return s;
+            var g = Geo(ph, CafeLayout.GlassCenterX, glassWidth);
             const float PPU = 32f;
-            float gl = CafeLayout.GlassLeft, gw = CafeLayout.GlassWidth;
+            float gw = glassWidth, gl = CafeLayout.GlassCenterX - gw * 0.5f;
+            int panes = Mathf.Max(1, Mathf.RoundToInt(gw / 2f));
             // 네 귀퉁이로 월드 영역 구하기
             float xMin = Mathf.Min(gl + g.shift, gl + g.shift + g.skew - gw * g.widen * 0.5f);
             float xMax = Mathf.Max(gl + gw + g.shift, gl + gw + g.shift + g.skew + gw * g.widen * 0.5f);
@@ -94,7 +103,7 @@ namespace YeogiCafe.Visual
             var edge = ph == 2 ? new Color32(255, 214, 150, 92) : new Color32(255, 246, 200, 80);
             const int GW = GlassWindowDrawing.GW, GH = GlassWindowDrawing.GH;
             int transom = GH - 13;                                   // 창틀 그림과 같은 위치의 가로 띠
-            float bar = 1.6f / GW;                                   // 문살 반폭(유리 비율)
+            float bar = 1.6f / (gw * 32f);                          // 문살 반폭(유리 비율)
 
             var tex = new Texture2D(W, H, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp, name = "sunbeam_" + ph };
             var px = new Color32[W * H];
@@ -109,14 +118,14 @@ namespace YeogiCafe.Visual
                     float u = (wx - (cx - half)) / (half * 2f);                 // 유리 가로 비율 0~1
                     if (u < 0f || u > 1f) continue;
                     bool mullion = false;
-                    for (int i = 1; i < 4; i++) if (Mathf.Abs(u - i / 4f) < bar) mullion = true;
+                    for (int i = 1; i < panes; i++) if (Mathf.Abs(u - i / (float)panes) < bar) mullion = true;
                     float gyPx = f * GH;                                        // 유리 세로 위치(px)
                     if (Mathf.Abs(gyPx - transom) < 1.5f) mullion = true;
                     if (mullion) continue;
                     // 칸 가장자리 한 줄은 조금 밝게(빛 경계)
                     float du = 1.2f / (half * 2f * PPU), dv = 1.2f / (g.depth * PPU);
                     bool rim = u < du || u > 1f - du || f < dv || f > 1f - dv;
-                    for (int i = 1; i < 4; i++) if (Mathf.Abs(u - i / 4f) < bar + du) rim = true;
+                    for (int i = 1; i < panes; i++) if (Mathf.Abs(u - i / (float)panes) < bar + du) rim = true;
                     if (Mathf.Abs(gyPx - transom) < 1.5f + dv * GH) rim = true;
                     px[y * W + x] = rim ? edge : col;
                 }
@@ -124,7 +133,7 @@ namespace YeogiCafe.Visual
             var pivot = new Vector2((g.spotX - xMin) * PPU / W, (g.spotY - yMin) * PPU / H);   // 시설 자리 = 스프라이트 기준점
             s = Sprite.Create(tex, new Rect(0, 0, W, H), pivot, PPU, 0, SpriteMeshType.FullRect);
             s.name = "sunbeam_" + ph;
-            beams[ph] = s;
+            beams[key] = s;
             return s;
         }
     }

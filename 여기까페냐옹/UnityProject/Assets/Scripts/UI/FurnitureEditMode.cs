@@ -61,6 +61,18 @@ namespace YeogiCafe.UI
         void Select(MovableFurniture m)
         {
             selected = m; sellArmed = false;
+            // 기본 사물(통유리·칠판·조명·명판·큰 화분): 기본 제공은 '보관함에 넣기'(무료), 산 것은 팔기, 명판은 옮기기만
+            var fx = m != null ? m.GetComponent<YeogiCafe.Cafe.Fixture>() : null;
+            if (fx != null)
+            {
+                sellBtn.gameObject.SetActive(true);
+                string nm = L.Get("fix." + fx.kind);
+                if (!fx.CanStore) { sellLabel.text = L.Get("ui.fix.plaque"); sellBtn.interactable = false; return; }
+                sellBtn.interactable = true;
+                sellLabel.text = fx.Bought ? L.Get("ui.edit.sell", ("name", nm), ("g", YeogiCafe.Cafe.FixtureManager.SellPrice(fx.kind).ToString()))
+                                           : L.Get("ui.fix.store", ("name", nm));
+                return;
+            }
             var fm = owner.Furniture;
             var d = m != null && fm != null ? fm.DataOf(m.gameObject) : null;
             sellBtn.gameObject.SetActive(m != null);
@@ -80,6 +92,26 @@ namespace YeogiCafe.UI
         void OnSell()
         {
             if (selected == null) return;
+            var fx = selected.GetComponent<YeogiCafe.Cafe.Fixture>();
+            if (fx != null)
+            {
+                var mgr = YeogiCafe.Cafe.FixtureManager.Instance; if (mgr == null) return;
+                string nm = L.Get("fix." + fx.kind);
+                if (fx.Bought)
+                {
+                    if (!sellArmed) { sellArmed = true; sellLabel.text = L.Get("ui.edit.sellconfirm", ("g", YeogiCafe.Cafe.FixtureManager.SellPrice(fx.kind).ToString())); return; }
+                    if (mgr.SellBought(fx, out int g))
+                    {
+                        hintText.text = L.Get("ui.edit.sold", ("name", nm), ("g", g.ToString()));
+                        YeogiCafe.Audio.SoundManager.Sfx("sfx_coin", 0.5f, 0.02f);
+                        owner.RefreshHud();
+                    }
+                }
+                else if (mgr.StoreAway(fx)) hintText.text = L.Get("ui.fix.stored", ("name", nm));
+                all.Remove(selected);
+                Select(null);
+                return;
+            }
             var fm = owner.Furniture; if (fm == null) return;
             var d = fm.DataOf(selected.gameObject);
             bool starter = d == null && fm.IsStarter(selected.gameObject);
@@ -232,6 +264,14 @@ namespace YeogiCafe.UI
         bool Overlaps(MovableFurniture m)
         {
             if (m.area == MovableFurniture.Area.FloorFlat) return false;
+            if (m.area == MovableFurniture.Area.Wall && m.Renderer != null)
+                return !YeogiCafe.Cafe.FixtureManager.WallRectFree(WallBounds(m), m);      // 벽: 그림 크기로(넓은 통유리도)
+            if (m.area == MovableFurniture.Area.Ceiling)
+            {
+                foreach (var o in all)
+                    if (o != null && o != m && o.area == MovableFurniture.Area.Ceiling && Mathf.Abs(o.transform.position.x - m.transform.position.x) < 1.2f) return true;
+                return false;
+            }
             foreach (var o in all)
             {
                 if (o == null || o == m || o.area != m.area) continue;
@@ -239,6 +279,15 @@ namespace YeogiCafe.UI
                 if (Mathf.Abs(d.x) < 0.75f && Mathf.Abs(d.y) < (m.area == MovableFurniture.Area.Wall ? 0.9f : 0.45f)) return true;
             }
             return false;
+        }
+
+        static Bounds WallBounds(MovableFurniture m)
+        {
+            var b = m.Renderer.bounds;
+            var gv = m.GetComponent<YeogiCafe.Visual.GlassWindowView>();
+            if (gv != null) b.Encapsulate(new Vector3(b.center.x, m.transform.position.y + YeogiCafe.Visual.GlassWindowView.Height, 0f));
+            b.extents = new Vector3(b.extents.x / 1.05f, b.extents.y / 1.05f, b.extents.z);   // 끄는 동안 1.05배로 커진 것 되돌림
+            return b;
         }
 
         static bool OverUi()
