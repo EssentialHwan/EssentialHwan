@@ -51,6 +51,13 @@ namespace YeogiCafe.UI
         Distract distract; RectTransform distractPaw; float distractT, nextDistract = 20f;
         const float DistractSeconds = 2.4f;
         float DistractLen => distract == Distract.Groom ? 3.0f : distract == Distract.Suckle ? 3.2f : DistractSeconds;
+        bool HasWaitingOrder()
+        {
+            if (orders == null) return false;
+            foreach (var tk in orders.Tickets) if (tk.state == TicketState.Queued || tk.state == TicketState.Ready) return true;
+            return false;
+        }
+
         public bool PawBusy(bool left) => distract != Distract.None && distractPaw == (left ? pawL : pawR);
 
         public bool IsOpen => open;
@@ -290,6 +297,7 @@ namespace YeogiCafe.UI
                 if (pawPunch != null) return;
                 nextDistract -= dt;
                 if (nextDistract > 0f) return;
+                if (HasWaitingOrder()) { nextDistract = 4f; return; }   // 밀린 주문이 있으면 딴짓 안 함(한가할 때만)
                 float r = Random.value;
                 distract = r < 0.4f ? Distract.Knead : r < 0.75f ? Distract.Groom : Distract.Suckle;
                 distractPaw = Random.value < 0.5f ? pawL : pawR;
@@ -300,7 +308,7 @@ namespace YeogiCafe.UI
             distractT += dt;
             if (distractT < DistractLen) return;
             tongue.localScale = new Vector3(1f, 0f, 1f);
-            distract = Distract.None; nextDistract = Random.Range(18f, 34f);
+            distract = Distract.None; nextDistract = Random.Range(28f, 48f);
             distractPaw.localEulerAngles = Vector3.zero; distractPaw.localScale = Vector3.one;
             bool left = distractPaw == pawL;
             distractPaw.GetComponent<Image>().sprite = PawSprite(PawArt.Idle, left);
@@ -438,11 +446,8 @@ namespace YeogiCafe.UI
         void OnToolPressed(string id, ToolWidget w)
         {
             if (orders == null) return;
-            if (PawBusy(w.rt.anchorMin.x < 0.5f))
-            {
-                hint.text = L.Get(distract == Distract.Knead ? "ui.kitchen.busyknead" : distract == Distract.Groom ? "ui.kitchen.busygroom" : "ui.kitchen.busysuckle");
-                return;
-            }
+            // 딴짓 중인 앞발 쪽 기구를 누르면 정신 차리고 바로 일한다(플레이테스트: 막히니 짜증) — 귀여운 모션만 남기고 방해는 없앰
+            if (PawBusy(w.rt.anchorMin.x < 0.5f)) { distractT = DistractLen; TickDistract(0f); }
             // 아직 안 산 기구: 상점 안내
             if (!YeogiCafe.Food.RecipeBook.ToolOwned(owner.Save, id))
             {
@@ -645,11 +650,8 @@ namespace YeogiCafe.UI
         void StartChosen(string toolId, ToolWidget w, YeogiCafe.Data.MenuData m)
         {
             ClosePicker();
-            if (PawBusy(w.rt.anchorMin.x < 0.5f))
-            {
-                hint.text = L.Get(distract == Distract.Knead ? "ui.kitchen.busyknead" : distract == Distract.Groom ? "ui.kitchen.busygroom" : "ui.kitchen.busysuckle");
-                return;
-            }
+            // 딴짓 중인 앞발 쪽 기구를 누르면 정신 차리고 바로 일한다(플레이테스트: 막히니 짜증) — 귀여운 모션만 남기고 방해는 없앰
+            if (PawBusy(w.rt.anchorMin.x < 0.5f)) { distractT = DistractLen; TickDistract(0f); }
             var tk = orders.StartMenuAt(toolId, m);
             if (tk == null)
             {

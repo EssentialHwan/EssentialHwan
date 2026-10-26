@@ -253,6 +253,7 @@ namespace YeogiCafe.Visual
             brain.enabled = false;
             exitMover = GetComponent<ICatMover>();
             exitDoor = door;
+            exitMover?.Stop();                      // 걷던 중이면 먼저 멈춘다 → 제자리에서 기지개 → 출발(기지개 자세로 미끄러지던 문제)
             stretchLeft = 1.3f;                     // 기지개 한 번 켜고 출발(stretch 클립 길이)
         }
 
@@ -347,7 +348,8 @@ namespace YeogiCafe.Visual
 
             // ── 클립 선택 ──
             bool moving = walking;
-            if (exiting && stretchLeft > 0f)
+            if (exiting && stretchLeft > 0f && walking) Play("walk");          // 아직 밀려가는 중이면 걷는 모습(기지개는 멈춘 뒤에)
+            else if (exiting && stretchLeft > 0f)
             {
                 if (clip != "stretch") Play("stretch");
                 stretchLeft -= dt;

@@ -187,6 +187,9 @@ namespace YeogiCafe.Core
 
             timer += Time.deltaTime * day.Rate;
             if (timer < day.SpawnInterval * IntervalMultiplier()) return;
+            // 주문을 기다리는 손님이 이미 많으면 잠깐 보류 — 한꺼번에 몰려 주문만 처리하다 관찰을 못 하던 문제(플레이테스트).
+            // 타이머는 그대로 두어서, 하나 내주면 바로 다음 손님이 들어온다.
+            if (WaitingForFood() >= MaxWaitingOrders) return;
             timer = 0;
 
             // P7: 여유 좌석이 없으면 스폰 보류(만석 강요 방지)
@@ -194,6 +197,15 @@ namespace YeogiCafe.Core
 
             var data = NextNotInCafe(pool);
             if (data != null) { CountVisit(data); cats.Spawn(data); }
+        }
+
+        public const int MaxWaitingOrders = 3;
+        int WaitingForFood()
+        {
+            int n = 0;
+            foreach (var b in cats.Active)
+                if (b != null && (b.State == CatState.DecideOrder || b.State == CatState.Order || b.State == CatState.WaitFood)) n++;
+            return n;
         }
 
         // 같은 고양이(개체)가 동시에 두 마리 있을 수 없다 — 이미 카페 안(또는 입장 중)이면 건너뛴다.

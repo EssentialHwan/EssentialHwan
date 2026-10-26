@@ -53,8 +53,7 @@ namespace YeogiCafe.UI
             prevTimeScale = Time.timeScale; Time.timeScale = 0f;              // 배치 중엔 시간 정지
             YeogiCafe.Visual.CatInteractionDirector.Suspended = true;
             bannerGo.SetActive(true); bannerGo.transform.SetAsLastSibling();
-            all.Clear();
-            all.AddRange(Object.FindObjectsOfType<MovableFurniture>());
+            RefreshAll();
             Select(null);
             hintText.text = L.Get("ui.edit.hint");
         }
@@ -137,10 +136,12 @@ namespace YeogiCafe.UI
             {
                 if (Input.GetMouseButtonDown(0) && !OverUi())
                 {
+                    RefreshAll();                       // 배치 중에 구매 창에서 산 가구도 바로 집을 수 있게(플레이테스트 버그)
                     var hit = Pick(w);
                     if (hit != null)
                     {
                         dragging = hit; startPos = hit.transform.position; grabOffset = startPos - w;
+                        GrabRiders(hit);
                         startOrder = hit.Renderer != null ? hit.Renderer.sortingOrder : 0;
                         if (hit.Renderer != null) hit.Renderer.sortingOrder = 30000;
                     }
@@ -153,7 +154,7 @@ namespace YeogiCafe.UI
             var p = dragging.Clamp(w + grabOffset);
             Vector3 delta = p - dragging.transform.position;
             dragging.transform.position = p;
-            CarryCats(dragging.transform.position - delta, delta);
+            CarryCats(delta);
             overlapping = Overlaps(dragging);
             if (dragging.Renderer != null)
             {
@@ -175,24 +176,42 @@ namespace YeogiCafe.UI
             {
                 // 겹치면 원래 자리로
                 Vector3 back = startPos - m.transform.position;
-                CarryCats(m.transform.position, back);
+                CarryCats(back);
                 m.transform.position = startPos;
             }
             else m.onMoved?.Invoke(m.transform.position);
             m.RefreshVisual();
             overlapping = false;
+            riders.Clear();
         }
 
-        // 가구 위(근처)에 있던 고양이를 같이 옮긴다
-        void CarryCats(Vector3 oldPos, Vector3 delta)
+        // 가구 위에 앉아/올라가 있던 고양이만 같이 옮긴다.
+        // 집는 순간 한 번만 정한다 — 끄는 동안 지나치는 고양이까지 붙잡혀 끌려가던 문제(플레이테스트) 수정.
+        readonly List<Transform> riders = new();
+        void GrabRiders(MovableFurniture m)
         {
-            if (delta.sqrMagnitude < 1e-8f || owner.Cats == null) return;
+            riders.Clear();
+            if (owner.Cats == null) return;
+            Vector3 at = m.transform.position;
             foreach (var b in owner.Cats.Active)
             {
                 if (b == null) continue;
-                var bp = b.transform.position;
-                if ((bp - oldPos).sqrMagnitude < 0.04f) b.transform.position = bp + delta;
+                bool onIt = (b.CurrentSeat is Component sc && sc != null && sc.transform.IsChildOf(m.transform))
+                         || (b.CurrentFacility is Component fc && fc != null && fc.transform.IsChildOf(m.transform));
+                if (onIt || ((b.transform.position - at).sqrMagnitude < 0.04f && b.AtSeat)) riders.Add(b.transform);
             }
+        }
+
+        void CarryCats(Vector3 delta)
+        {
+            if (delta.sqrMagnitude < 1e-8f) return;
+            foreach (var t in riders) if (t != null) t.position += delta;
+        }
+
+        void RefreshAll()
+        {
+            all.Clear();
+            all.AddRange(Object.FindObjectsOfType<MovableFurniture>());
         }
 
         MovableFurniture Pick(Vector3 w)

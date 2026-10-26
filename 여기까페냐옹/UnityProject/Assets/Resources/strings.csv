@@ -859,3 +859,7 @@ demo.end.title_btn,시작 화면으로,Back to Title,返回标题画面,タイ�
 demo.lastday,체험판 마지막 날이에요! 오늘 영업을 마치면 체험판이 끝나요.,Last day of the demo! It ends after today's closing.,今天是试玩版的最后一天！打烊后试玩就结束了。,体験版の最終日です！今日の営業が終わると体験版は終了します。
 demo.end.tease,여름엔 누가 찾아올까요?,Who will drop by in summer?,夏天会有谁来呢？,夏には誰がやって来るかな？
 title.demo,체험판 · 봄의 첫 7일,Demo · first 7 days of spring,试玩版 · 春季前7天,体験版 · 春の最初の7日間
+opt.totitle,시작 화면,Title screen,标题画面,タイトル画面
+opt.totitle.btn,시작 화면으로,Go to title,返回标题,タイトルへ
+opt.totitle.confirm,한 번 더 누르면 이동,Click again to go,再点一次返回,もう一度で移動
+ui.paused,일시정지 중 — 창을 닫으면 다시 흘러요,Paused — close the window to resume,已暂停 — 关闭窗口后继续,一時停止中 — 閉じると再開します

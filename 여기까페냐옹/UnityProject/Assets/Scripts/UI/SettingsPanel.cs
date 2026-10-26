@@ -15,8 +15,8 @@ namespace YeogiCafe.UI
         readonly GameUiController owner;
         readonly GameObject rootGo;
         readonly RectTransform box;
-        Text fullLabel, resLabel, speedLabel, cursorLabel, muteLabel, newGameLabel, quitLabel, langLabel;
-        float prevTimeScale = 1f; bool confirmNew, confirmQuit;
+        Text fullLabel, resLabel, speedLabel, cursorLabel, muteLabel, newGameLabel, quitLabel, langLabel, titleLabel;
+        float prevTimeScale = 1f; bool confirmNew, confirmQuit, confirmTitle;
 
         static readonly Vector2Int[] Resolutions = { new(1280, 720), new(1600, 900), new(1920, 1080) };
 
@@ -41,7 +41,7 @@ namespace YeogiCafe.UI
             rootGo = scrim.gameObject;
             UiFactory.Anchor(scrim, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             box = UiFactory.Panel("Settings", scrim, UiFactory.PanelBg);
-            UiFactory.SetRect(box, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(560, 640));
+            UiFactory.SetRect(box, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(560, 680));
             UiFactory.Frame(box, UiFactory.FrameStyle.Window);
             UiFactory.TitleTab(box, L.Get("opt.title"), 200);
 
@@ -77,6 +77,8 @@ namespace YeogiCafe.UI
             }, ref y);
             ButtonRow(L.Get("opt.opening"), L.Get("opt.opening.btn"), () => owner.PlayOpening(), ref y);
             langLabel = ButtonRow(L.Get("opt.lang"), L.Get("lang.name"), CycleLanguage, ref y);
+            // 시작 화면으로(플레이테스트: 나갔다 다시 하려면 껐다 켜야 했음). 영업 중이면 한 번 더 눌러 확인.
+            titleLabel = ButtonRow(L.Get("opt.totitle"), L.Get("opt.totitle.btn"), GoTitle, ref y);
 
             // 아래 버튼: 새 게임 / 게임 종료 / 닫기
             var newBtn = UiFactory.Button("NewGame", box, L.Get("opt.newgame"), UiFactory.Pink, UiFactory.Cream, out newGameLabel);
@@ -177,6 +179,21 @@ namespace YeogiCafe.UI
             UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
         }
 
+        void GoTitle()
+        {
+            var fl = Object.FindObjectOfType<YeogiCafe.Core.GameFlowController>();
+            if (fl != null && fl.HasProgressToday && !confirmTitle)
+            {
+                confirmTitle = true;
+                titleLabel.text = L.Get("opt.totitle.confirm"); UiFactory.FitOneLine(titleLabel, 180, 11);
+                owner.ShowToast(L.Get("opt.quit.warn"), true);
+                return;
+            }
+            if (fl != null) fl.SaveOnQuit();             // 영업 중이면 오늘은 아침부터(종료와 같은 규칙), 정산 뒤면 그대로 저장
+            Time.timeScale = 1f;
+            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
+        }
+
         void NewGame()
         {
             if (!confirmNew) { confirmNew = true; newGameLabel.text = L.Get("opt.newgame.confirm"); return; }
@@ -201,7 +218,8 @@ namespace YeogiCafe.UI
 
         public void Show()
         {
-            confirmNew = false; confirmQuit = false;
+            confirmNew = false; confirmQuit = false; confirmTitle = false;
+            if (titleLabel != null) { titleLabel.text = L.Get("opt.totitle.btn"); titleLabel.fontSize = 16; }
             if (quitLabel != null) { quitLabel.text = L.Get("opt.quit"); quitLabel.fontSize = 17; }
             prevTimeScale = Time.timeScale > 0f ? Time.timeScale : 1f;
             Time.timeScale = 0f;                       // 설정 중엔 영업 일시정지

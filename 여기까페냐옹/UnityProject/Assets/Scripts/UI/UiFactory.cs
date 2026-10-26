@@ -73,6 +73,8 @@ namespace YeogiCafe.UI
             // 기본은 줄바꿈(Wrap): 긴 문장이 칸 밖으로 새어 나가지 않게. 한 줄 고정이 필요한 곳만 Overflow로 바꾼다.
             t.horizontalOverflow = HorizontalWrapMode.Wrap;
             t.verticalOverflow = VerticalWrapMode.Overflow;
+            // 글자는 클릭을 받지 않는다 — 넘친 글자·투명한 라벨 칸이 버튼·고양이 클릭을 가로채 "4~5번 눌러야 먹던" 문제(플레이테스트)
+            t.raycastTarget = false;
             return t;
         }
 

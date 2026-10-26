@@ -119,6 +119,7 @@ namespace YeogiCafe.UI
             guide = new TutorialGuide(this, root.transform);
             photo = new PhotoMode(this);
             shelter = new ShelterPanel(this, root.transform);
+            BuildPauseBadge(root.transform);
 
             quests = new YeogiCafe.Progression.QuestBoard(() => Save,
                 () => Save != null ? (IReadOnlyList<CatData>)UnlockService.UnlockedCats(AllCats, Save) : AllCats);
@@ -354,6 +355,31 @@ namespace YeogiCafe.UI
             }
         }
 
+        // 구매·도감·배치 창이 시간을 멈춰도 주방 앞발·조명·커서는 계속 움직여서 '안 멈춘다'고 느꼈다(플레이테스트)
+        // → 멈춰 있는 동안 화면 위에 '일시정지 중' 표시.
+        GameObject pauseBadge;
+        void BuildPauseBadge(Transform parent)
+        {
+            var b = UiFactory.Panel("PauseBadge", parent, new Color(0.29f, 0.21f, 0.18f, 0.9f));
+            UiFactory.Frame(b, UiFactory.FrameStyle.Card, new Color(0.29f, 0.21f, 0.18f, 0.9f));
+            UiFactory.SetRect(b, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -6), new Vector2(460, 38));
+            b.GetComponent<Image>().raycastTarget = false;
+            var t = UiFactory.Label("T", b.transform, L.Get("ui.paused"), 18, TextAnchor.MiddleCenter, UiFactory.Cream);
+            UiFactory.Anchor((RectTransform)t.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            foreach (var g in b.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;   // 표시만, 클릭은 통과
+            pauseBadge = b.gameObject;
+            pauseBadge.SetActive(false);
+        }
+
+        void UpdatePauseBadge()
+        {
+            if (pauseBadge == null) return;
+            bool show = Time.timeScale == 0f && flow != null && flow.InBusiness
+                        && ((shop != null && shop.IsOpen) || (catalog != null && catalog.IsOpen) || (editMode != null && editMode.IsOn))
+                        && !(settings != null && settings.IsOpen) && !(title != null && title.IsOpen);
+            if (show != pauseBadge.activeSelf) { pauseBadge.SetActive(show); if (show) pauseBadge.transform.SetAsLastSibling(); }
+        }
+
         void ToggleKitchen()
         {
             shop.Hide(); catalog.Hide(); editMode.Exit();
@@ -430,6 +456,7 @@ namespace YeogiCafe.UI
             settings?.Tick();
             title?.Tick(Time.unscaledDeltaTime);
             UpdateMenuPause();
+            UpdatePauseBadge();
             TrackPlaytest();
             if (photo != null && photo.IsOpen) { photo.Tick(Time.unscaledDeltaTime); return; }   // 포토 모드: 다른 입력·HUD 멈춤
             if (Input.GetKeyDown(KeyCode.Escape) && ShelterOpen) { shelter.Close(); return; }
