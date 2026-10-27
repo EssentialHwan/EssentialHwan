@@ -32,6 +32,7 @@ namespace YeogiCafe.Visual
         public Transform BubbleAnchor => visual;     // 말풍선이 따라갈 지점
 
         CatBrain brain;
+        SimpleLerpMover mover;              // 걷기 방향(목적지 쪽) 판단용
         Transform visual;
         SpriteRenderer sr;
         Vector3 lastPos;
@@ -148,6 +149,7 @@ namespace YeogiCafe.Visual
         void Awake()
         {
             brain = GetComponent<CatBrain>();
+            mover = GetComponent<SimpleLerpMover>();
             visual = new GameObject("Visual").transform;
             visual.SetParent(transform, false);
             sr = visual.gameObject.AddComponent<SpriteRenderer>();
@@ -156,6 +158,10 @@ namespace YeogiCafe.Visual
         public void Init(CatData data)
         {
             Data = data;
+            // 성격별 걸음 빠르기(걷기 그림은 거리로 넘어가서 발걸음 박자가 저절로 맞는다): 느긋 0.82 · 활발/장난 1.12
+            if (mover != null && data != null)
+                mover.speed *= data.HasPersonality(PersonalityTag.Relaxed) ? 0.82f
+                             : (data.HasPersonality(PersonalityTag.Active) || data.HasPersonality(PersonalityTag.Playful)) ? 1.12f : 1f;
             Play("sit");
             brain.OnFacilityUse += HandleFacilityUse;
             lastPos = transform.position;
@@ -229,10 +235,17 @@ namespace YeogiCafe.Visual
             Play(once); queued = next;
         }
 
+        // 걷기 v2(10/28): 걷기 그림은 시간 대신 '걸은 거리'로 넘긴다 → 짚은 발이 바닥에 붙어 있음(미끄러짐 없음).
+        // 시트의 걷기 칸(52~59)은 짚은 발이 한 프레임에 3.2px(=0.1유닛) 뒤로 밀리게 만들었다(Tools/catart/newcats/rewalk2.py).
+        public const float WalkStepUnits = 3.2f / 32f;
+        float movedThisFrame;
+        bool DistanceDriven => clip == "walk" && Data != null && CatSheet.HasCutoutWalk(Data.catId);
+
         void Tick(float dt)
         {
             if (clipFrames == null || clipFrames.Length == 0) return;
-            clipT += dt;
+            if (DistanceDriven) clipT += Mathf.Min(movedThisFrame, 0.3f) / (WalkStepUnits * Mathf.Max(1f, clipDef.fps));
+            else clipT += dt;
             int i = (int)(clipT * clipDef.fps);
             if (!clipDef.loop && i >= clipFrames.Length)
             {
@@ -265,7 +278,13 @@ namespace YeogiCafe.Visual
             Vector3 pos = transform.position;
             Vector3 delta = pos - lastPos; lastPos = pos;
             bool walking = delta.sqrMagnitude > 1e-7f;
-            if (Mathf.Abs(delta.x) > 1e-4f) sr.flipX = delta.x < 0f;
+            // 바라보는 방향: 가는 목적지 쪽으로 한 번에(아주 작은 좌우 흔들림에 깜빡 뒤집히지 않게). 거의 세로로 걸으면 방향 유지.
+            if (mover != null && mover.IsMoving && (exiting ? stretchLeft <= 0f : true))
+            {
+                float tx = mover.Target.x - pos.x;
+                if (Mathf.Abs(tx) > 0.12f) sr.flipX = tx < 0f;
+            }
+            else if (Mathf.Abs(delta.x) > 0.004f) sr.flipX = delta.x < 0f;
             else if (!walking && brain.AtSeat && brain.CurrentSeat is Component seatC && delta.sqrMagnitude < 1e-9f && clip == "walk")
                 sr.flipX = seatC.transform.position.x > CafeCenterX;    // 자리에 앉으면 카페 가운데를 바라본다
 
@@ -281,9 +300,10 @@ namespace YeogiCafe.Visual
             if (acting && (exiting || walking || hopping)) { acting = false; steps.Clear(); }
             if (acting) seated = true;
             float sitH = seated && brain.AtSeat ? SitHeight() : 0f;   // 의자 위에서만 앉은 높이
+            float lift = SeatHop(sitH, dt);                             // 의자에 폴짝 올라앉고 폴짝 내려온다(순간이동 X)
 
             // ── 위치(표현 오프셋) ──
-            Vector3 local = new Vector3(0f, sitH, 0f);
+            Vector3 local = new Vector3(0f, lift, 0f);
             float sortY = pos.y;
             // 시설: 점프로 올라가고(포물선) 위에서 쉬다가 뛰어내림
             var fp = brain.FacilityPhase;
@@ -360,6 +380,9 @@ namespace YeogiCafe.Visual
             if (hop) { memeT += dt; local.y += Bounce(memeT); visual.localScale = Squash(memeT); }
             else if (visual.localScale != Vector3.one) visual.localScale = Vector3.one;
             visual.localPosition = local;
+            Vector3 vp = transform.position + local;
+            movedThisFrame = hasLastVis ? Vector2.Distance(vp, lastVis) : 0f;
+            lastVis = vp; hasLastVis = true;
 
             // ── 클립 선택 ──
             bool moving = walking;
@@ -431,6 +454,19 @@ namespace YeogiCafe.Visual
         }
 
         const float CafeCenterX = 7.5f;
+        Vector3 lastVis; bool hasLastVis;
+
+        // 의자 높이 변화를 0.32초 포물선 점프로(올라갈 때·내려올 때 모두)
+        float liftNow, liftFrom, liftTo, liftT = 1f;
+        const float SeatHopTime = 0.32f;
+        float SeatHop(float target, float dt)
+        {
+            if (Mathf.Abs(target - liftTo) > 0.005f) { liftFrom = liftNow; liftTo = target; liftT = 0f; }
+            liftT = Mathf.Min(1f, liftT + dt / SeatHopTime);
+            float arc = Mathf.Abs(liftTo - liftFrom) > 0.08f ? Mathf.Sin(liftT * Mathf.PI) * 0.16f : 0f;
+            liftNow = Mathf.Lerp(liftFrom, liftTo, Smooth(liftT));
+            return liftNow + arc;
+        }
 
         void OnFacPhase(CatBrain.FacPhase fp)
         {

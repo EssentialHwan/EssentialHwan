@@ -76,7 +76,18 @@ def seam(c, L, body, pad, dy, bh):
     _, (iy, ix) = ndimage.distance_transform_edt(~src, return_indices=True)
     c[M, :3] = c[iy[M], ix[M], :3]
 
-def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, front_fwd=0.10):
+def gait_angle(u, swing, lift, lh, R):
+    # 걷기 v2(10/28): 땅 짚은 동안(stance)은 각도가 '일정한 속도로' 줄어 발이 바닥에 붙은 채 뒤로 밀리고,
+    # 공중(swing)에서는 부드럽게 앞으로 돌아오며 발을 든다. 짚는 동안 회전으로 발끝이 뜨는 만큼(R(1-cos)) 내려서 바닥에 붙인다.
+    u %= 1.0
+    if 0.25 <= u < 0.75:
+        ang = swing * (1 - 4 * (u - 0.25)); up = -R * (1 - math.cos(math.radians(ang)))
+    else:
+        w = ((u - 0.75) % 1.0) * 2
+        ang = -swing * math.cos(math.pi * w); up = math.sin(math.pi * w) * lift * lh - R * (1 - math.cos(math.radians(ang)))
+    return ang, up
+
+def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, front_fwd=0.10, gait=False):
     bh, bw = body.shape[:2]
     if front.shape[0] != hind.shape[0]:   # 앞다리 길이를 뒷다리 기준으로(폭은 그대로)
         front = np.array(Image.fromarray(front).resize((front.shape[1], hind.shape[0]), Image.BICUBIC))
@@ -96,11 +107,14 @@ def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, fron
     for i in range(n):
         t = 2 * math.pi * i / n
         c = np.zeros((H, W, 4), np.uint8)
-        dy = bob * bh * (0.5 - 0.5 * math.cos(2 * t))
+        dy = bob * bh * ((0.5 + 0.5 * math.cos(2 * t)) if gait else (0.5 - 0.5 * math.cos(2 * t)))   # gait: 다리가 수직(짚은 가운데)일 때 몸이 가장 높다
         def leg(img, rx, phase, far, target=None):
             lh, lw = img.shape[:2]
-            ang = swing * math.sin(t + phase)
-            up = max(0.0, math.cos(t + phase)) * lift * lh
+            if gait:
+                ang, up = gait_angle((t + phase) / (2 * math.pi), swing, lift, lh, lh - lw * 0.45)
+            else:
+                ang = swing * math.sin(t + phase)
+                up = max(0.0, math.cos(t + phase)) * lift * lh
             big = np.zeros((lh + 2 * lw, lw * 3, 4), np.uint8); big[lw:lw + lh, lw:2 * lw] = img
             pv = (lw * 1.5, lw + lw * 0.45)                        # 어깨/엉덩이 둥근 윗부분 중심
             r = rot(big, ang, pv)
@@ -134,7 +148,7 @@ def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, fron
         frames.append(c)
     return frames
 
-def to_game(hi, width_px=48):
+def to_game(hi, width_px=48, scale=None):
     allpx = np.vstack([f[f[..., 3] > 0][:, :3] for f in hi]).astype(np.uint8)
     q = Image.fromarray(allpx.reshape(1, -1, 3)).quantize(colors=64, method=Image.Quantize.MEDIANCUT)
     pal = np.array(q.getpalette()[:192]).reshape(-1, 3)
@@ -144,6 +158,12 @@ def to_game(hi, width_px=48):
     for f in hi: union |= f[..., 3] > 0
     ys, xs = np.nonzero(union); y0, y1, x0, x1 = ys.min(), ys.max() + 1, xs.min(), xs.max() + 1
     s = width_px / (x1 - x0)
+    if scale is not None:   # 기준(옛 걷기) 배율 고정: 다리를 크게 흔들어 bbox가 넓어져도 고양이 크기는 그대로
+        s = scale
+    return _down(hi, pal, (y0, y1, x0, x1), s)
+
+def _down(hi, pal, box, s):
+    y0, y1, x0, x1 = box
     out = []
     for f in hi:
         g = f[y0:y1, x0:x1]; m = g[..., 3] > 0

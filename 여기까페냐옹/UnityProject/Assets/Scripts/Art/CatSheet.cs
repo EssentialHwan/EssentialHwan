@@ -82,6 +82,7 @@ namespace YeogiCafe.Art
         }
 
         public static bool Has(string catId) => Load(catId) != null;
+        public static bool HasCutoutWalk(string catId) => Load(catId) != null && IsV2(catId);   // 걷기 52~59(컷아웃, 보폭 3.2px/프레임)
 
         static readonly Dictionary<string, Color32[]> sheets = new();
         static readonly Dictionary<string, int> sheetW = new();
