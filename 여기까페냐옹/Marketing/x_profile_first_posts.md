@@ -57,7 +57,7 @@ Solo dev · Wintery Studio · Steam 2027
 |---|---|---|---|---|
 | 1 | 1주 화 | `post01_hello.gif` | 영어 타이틀 화면(Purrsonal Taste) 앞에 새 그림 고양이들, 8초 | ✅ |
 | 2 | 1주 목 | `post02_window.gif` | 눈 오는 겨울 아침, 치즈냥이 창가 자리에 앉아 있음 | ✅ |
-| 3 | 1주 토 | `post03_new_cats.gif` | 새 그림 고양이 8마리가 이름표 달고 제자리 걷기 | ✅ |
+| 3 | 1주 토 | `post03_new_cats.gif` | 고양이 손님 8마리가 이름표 달고 제자리 걷기 | ✅ |
 | 4 | 2주 화 | `post04_closing.gif` | 마감 놀아주기: 치즈냥을 쓰다듬으면 하트·"Eyes go soft" | ✅ |
 | 5 | 2주 목 | `post05_kitchen.gif` | 1인칭 주방: 앞발로 푸딩 굽기 → 별점 달고 나감 | ✅ |
 | 6 | 2주 토 | `post06_rain.gif` | 비 오는 저녁 통창 + 밥 기다리는 치즈냥 | ✅ |
@@ -83,10 +83,10 @@ Why does this guest always pick the window seat?
 #indiedev #pixelart #インディーゲーム
 ```
 
-**3. 새 그림 고양이들** — 첨부: `x_assets/post03_new_cats.gif`
+**3. 손님 소개** — 첨부: `x_assets/post03_new_cats.gif`
 ```
-Redrawing every cat guest one by one — 8 done, 8 to go 🐾 Who's your favorite?
-お客さんの猫を一匹ずつ描き直しています。8匹完成、あと8匹🐾 推しはどの子？
+Some of the regulars at our café 🐾 Who's your favorite?
+うちのカフェの常連さんたち🐾 推しはどの子？
 
 #indiedev #pixelart #インディーゲーム
 ```

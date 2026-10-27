@@ -11,7 +11,6 @@ PC: `Desktop\YeogiCafe\IG_reels\` · 저장소: `Marketing/ig_assets/`
 | 1 | 1주 수 | `reel01_hello.mp4` | 8초 | 고양이 손님들은 좋아하던 걸 잊어버렸어요 | 아침 BGM + 야옹·트릴 |
 | 2 | 1주 토 | `reel02_closing.mp4` | 10.6초 | 마감 전, 마지막 손님이랑 놀아 주기 | 저녁 BGM + 골골 + 작은 야옹 |
 | 3 | 2주 수 | `reel03_kitchen.mp4` | 8초 | 바리스타도 고양이라서 앞발로 만들어요 | 점심 BGM + 지글지글 + 조르는 야옹 |
-| 4 | 2주 토 | `reel04_newcats.mp4` | 8초 | 고양이 손님 8마리, 새로 그렸어요 | 아침 BGM + 야옹 2번 + 트릴 |
 
 - 다시 만들기: `python3 Marketing/ig_assets/make_reel.py <클립|newcats> <출력> <초> "<한국어 / 줄바꿈>" "<English>" <효과음@초,...> [bgm]`
 - 소리는 게임 안 소리(합성음, 골골은 BigSoundBank CC0) — 저작권 문제 없음. 출시 전 소리를 바꾸면 릴스도 다시 뽑기.
@@ -61,18 +60,8 @@ Sometimes the paws get distracted.
 #인디게임 #고양이게임 #도트 #게임개발 #cozygames #cozygamer #pixelart #indiegame #catgame
 ```
 
-**4. 새 고양이 8마리**
-```
-고양이 손님 16마리를 한 마리씩 새로 그리고 있어요. 지금 8마리 완성!
-제일 마음에 드는 손님은 누구예요? 🐾
-
-Redrawing all 16 cat guests one by one — 8 done!
-Who's your favorite? 🐾
-
-#인디게임 #고양이게임 #도트 #픽셀아트 #cozygames #cozygamer #pixelart #indiegame #catgame
-```
-
 ## 4. 지킬 것
+- 리디자인(새로 그림) 얘기는 하지 않는다 — 보는 사람은 옛 그림을 모르니 의미가 없다
 - 새 그림 고양이만 나오는 장면으로(옛 그림 고양이가 보이는 카페 전체 화면은 리디자인 끝난 뒤)
 - 댓글엔 전부 답하기(한국어 댓글은 한국어로)
 - 아늑한 게임 소개 계정(#cozygamer 큰 계정들)을 팔로우해 두고, 상점 페이지 열리면 데모 키 연락
