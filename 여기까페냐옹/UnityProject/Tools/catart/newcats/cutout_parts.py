@@ -82,12 +82,50 @@ def gait_angle(u, swing, lift, lh, R):
     u %= 1.0
     if 0.25 <= u < 0.75:
         ang = swing * (1 - 4 * (u - 0.25)); up = -R * (1 - math.cos(math.radians(ang)))
+        return ang, up, -1.0
     else:
         w = ((u - 0.75) % 1.0) * 2
         ang = -swing * math.cos(math.pi * w); up = math.sin(math.pi * w) * lift * lh - R * (1 - math.cos(math.radians(ang)))
-    return ang, up
+    return ang, up, w
 
-def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, front_fwd=0.10, gait=False):
+# ── 걷기 v3(10/28): '다리만 움직이는 인형' 느낌을 없애는 몸의 반응 ──
+# 1) 어깨·엉덩이 근육: 그 쪽 다리가 몸 밑에서 짚고 설 때(짚은 가운데) 어깨뼈/골반이 솟고, 다리가 떠 있을 때 내려앉는다.
+#    → 등선이 앞·뒤 번갈아 물결친다(앞뒤 반 박자 차이). 몸통 세로 열을 가우스 모양으로 살짝 밀어 올림.
+# 2) 꼬리: 한 걸음 주기에 맞춰 끝이 좌우로 살랑(뿌리는 고정, 끝으로 갈수록 크게 = 휘어짐).
+# 3) 관절: 다리를 공중에서 앞으로 가져올 때 무릎/손목이 접혀 발끝이 뒤로 끌리다가 착지 직전에 펴진다.
+def warp_body(body, t, fx, hx, low_min, bottom, roll, tail_amp):
+    bh, bw = body.shape[:2]
+    out = np.zeros_like(body)
+    sig = bw * 0.13
+    uF = (t / (2 * math.pi)) % 1.0; uH = ((t + math.pi) / (2 * math.pi)) % 1.0   # 가까운 앞다리 위상 0, 가까운 뒷다리 위상 π
+    sF = math.cos(2 * math.pi * (uF - 0.5)); sH = math.cos(2 * math.pi * (uH - 0.5))
+    # 머리·가슴은 어깨와 한 덩어리로, 엉덩이·꼬리는 골반과 한 덩어리로 움직이고 그 사이 등은 부드럽게 이어진다
+    # (열마다 따로 밀면 얼굴이 찢어져서, 앞/뒤를 통째로 + 사이만 보간 = 몸이 앞뒤로 살짝 끄덕이는 '피치')
+    xs = np.arange(bw)
+    kF, kH = roll * sF, roll * sH
+    u = np.clip((xs - hx) / max(1.0, fx - hx), 0, 1); u = u * u * (3 - 2 * u)
+    k = np.round(kH + (kF - kH) * u).astype(int)
+    for x in range(bw):
+        sh = k[x]
+        if sh > 0: out[:bh - sh, x] = body[sh:, x]
+        elif sh < 0: out[-sh:, x] = body[:bh + sh, x]
+        else: out[:, x] = body[:, x]
+    if tail_amp > 0:   # 꼬리: 뿌리를 축으로 통째로 살짝 흔든다(옆에서 보면 좌우 살랑 = 앞뒤로 까딱)
+        base_y = bottom - bh * 0.25 - kH; tx = low_min + bw * 0.02
+        m = out[..., 3] > 0
+        yy, xx = np.nonzero(m)
+        sel = (xx < tx) & (yy < base_y)
+        if sel.any():
+            tl = np.zeros_like(out); tl[yy[sel], xx[sel]] = out[yy[sel], xx[sel]]
+            mv = sel & (yy < base_y - bh * 0.07)          # 뿌리 쪽 토막은 제자리에 남겨 이음매가 안 벌어지게
+            out[yy[mv], xx[mv]] = 0
+            r = rot(tl, tail_amp * math.sin(t), (tx, base_y))
+            r[..., 3] = np.where(r[..., 3] > 127, 255, 0)
+            al = r[..., 3:4] > 0
+            out[:] = np.where(al, r, out)
+    return out
+
+def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, front_fwd=0.10, gait=False, roll=0.0, tail=0.0, flex=0.0):
     bh, bw = body.shape[:2]
     if front.shape[0] != hind.shape[0]:   # 앞다리 길이를 뒷다리 기준으로(폭은 그대로)
         front = np.array(Image.fromarray(front).resize((front.shape[1], hind.shape[0]), Image.BICUBIC))
@@ -104,19 +142,28 @@ def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, fron
     ground = ys_bottom.max() + (hl_h - hidden)
     H = bh + int(hl_h - hidden) + pad; W = bw + pad * 2
     frames = []
+    body0 = body
     for i in range(n):
         t = 2 * math.pi * i / n
         c = np.zeros((H, W, 4), np.uint8)
         dy = bob * bh * ((0.5 + 0.5 * math.cos(2 * t)) if gait else (0.5 - 0.5 * math.cos(2 * t)))   # gait: 다리가 수직(짚은 가운데)일 때 몸이 가장 높다
         def leg(img, rx, phase, far, target=None):
             lh, lw = img.shape[:2]
+            w = -1.0
             if gait:
-                ang, up = gait_angle((t + phase) / (2 * math.pi), swing, lift, lh, lh - lw * 0.45)
+                ang, up, w = gait_angle((t + phase) / (2 * math.pi), swing, lift, lh, lh - lw * 0.45)
             else:
                 ang = swing * math.sin(t + phase)
                 up = max(0.0, math.cos(t + phase)) * lift * lh
             big = np.zeros((lh + 2 * lw, lw * 3, 4), np.uint8); big[lw:lw + lh, lw:2 * lw] = img
             pv = (lw * 1.5, lw + lw * 0.45)                        # 어깨/엉덩이 둥근 윗부분 중심
+            if flex > 0 and w >= 0:                                 # 관절 접기: 아랫마디(55%~)를 무릎/손목 축으로 뒤로
+                kr = int(lh * 0.55); ex = -flex * math.sin(math.pi * min(1.0, w * 1.15))
+                if abs(ex) > 0.5:
+                    lower = np.zeros_like(big); lower[lw + kr:] = big[lw + kr:]
+                    upper = big.copy(); upper[lw + kr:] = 0
+                    lower = rot(lower, ex, (lw * 1.5, lw + kr))
+                    big = np.where(upper[..., 3:4] > 0, upper, lower)
             r = rot(big, ang, pv)
             if far: r = darken(r)
             top = ground - lh                                       # 발끝이 모두 같은 바닥선에(앞·뒤 다리 보이는 길이 같게)
@@ -124,6 +171,8 @@ def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, fron
             y = top - lw - up + dy * 0 + (-lh * 0.03 if far else 0)
             paste(c if target is None else target, r, x, y + pad * 0)
         # 대각선 짝: LF(가까운 앞)+RH(먼 뒤) 위상 0, RF(먼 앞)+LH(가까운 뒤) 위상 π
+        if roll > 0 or tail > 0:
+            body = warp_body(body0, t, fx, hx, low.min(), ys_bottom.max(), roll * bh, tail)
         Fl = np.zeros_like(c)
         leg(front, fx, math.pi, True, Fl)
         leg(hind, hx, 0.0, True, Fl)

@@ -27,7 +27,11 @@ for ff in (0.10, 0.16):
     if best is None or err < best[0]: best = (err, ff, s)
 err, ff, s = best
 print(cat, 'front', ff, 'scale', round(s, 4), 'inst_w', inst_w)
-hi = P.make(body, front, hind, 8, swing=swing, lift=0.16, bob=0.03, front_fwd=ff, gait=True)
+def opt(k, d):
+    return next((float(x.split('=')[1]) for x in sys.argv if x.startswith('--' + k + '=')), d)
+# 걷기 v3 몸 반응(기본 켬): 어깨·엉덩이 솟음(roll, 몸높이 비), 꼬리 살랑(tail, 도), 무릎·손목 접기(flex, 도)
+hi = P.make(body, front, hind, 8, swing=swing, lift=opt('lift', 0.16), bob=opt('bob', 0.03), front_fwd=ff, gait=True,
+            roll=opt('roll', 0.04), tail=opt('tail', 7), flex=opt('flex', 20))
 walk = P.to_game(hi, scale=s)
 lh = hind.shape[0]; lw = hind.shape[1]; R = (lh - lw * 0.45) * s
 print('  stride px/frame ≈', round(2 * R * math.sin(math.radians(swing)) / 4, 2), ' frame', walk[0].shape[1], 'x', walk[0].shape[0])
@@ -37,11 +41,12 @@ for j, f in enumerate(walk):
     c = Image.new('RGBA', (F, F), (0, 0, 0, 0)); c.alpha_composite(Image.fromarray(f), ((F - w) // 2, 55 - h))
     x, y = ((52 + j) % 4) * F, ((52 + j) // 4) * F
     sheet.paste(Image.new('RGBA', (F, F), (0, 0, 0, 0)), (x, y)); sheet.alpha_composite(c, (x, y))
-out = f'cat_{cat}_walk2.png'; sheet.save(out)
+tag = next((x.split('=')[1] for x in sys.argv if x.startswith('--tag=')), 'walk2')
+out = f'cat_{cat}_{tag}.png'; sheet.save(out)
 ims = []
 for j in range(8):
     k = 52 + j; fr = sheet.crop(((k % 4) * F, (k // 4) * F, (k % 4) * F + F, (k // 4) * F + F))
     bg = Image.new('RGBA', (F, F), (214, 190, 150, 255)); bg.alpha_composite(fr)
     ims.append(bg.resize((F * 5, F * 5), Image.NEAREST).convert('P', palette=Image.ADAPTIVE))
-ims[0].save(f'cat_{cat}_walk2.gif', save_all=True, append_images=ims[1:], duration=80, loop=0)
+ims[0].save(f'cat_{cat}_{tag}.gif', save_all=True, append_images=ims[1:], duration=80, loop=0)
 if '--install' in sys.argv: shutil.copy(out, sheet_p); print('  installed')
