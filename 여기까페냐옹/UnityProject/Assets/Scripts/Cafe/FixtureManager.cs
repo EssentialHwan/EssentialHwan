@@ -347,10 +347,23 @@ namespace YeogiCafe.Cafe
             FixtureKind.Glass8 => RuntimeSprites.Get("glass_frame", GlassWindowDrawing.Frame),
             FixtureKind.Glass4 => RuntimeSprites.Get("glass_frame_128", () => GlassWindowDrawing.Frame(128)),
             FixtureKind.MenuBoard => boardSprite,
-            FixtureKind.Lamp => lampSprite,
+            FixtureKind.Lamp => LampIcon(),
             FixtureKind.Plant => plantSprite,
             _ => null,
         };
+
+        // 상점 아이콘용 조명: 긴 천장 줄은 빼고 갓 부분만(그대로 쓰면 가는 막대처럼 왼쪽에 붙어 보였다 — 피드백)
+        Sprite lampIcon;
+        Sprite LampIcon()
+        {
+            if (lampIcon != null) return lampIcon;
+            if (lampSprite == null) return null;
+            var r = lampSprite.rect;
+            float h = Mathf.Min(r.height, Mathf.Round(r.width * 1.15f));
+            lampIcon = Sprite.Create(lampSprite.texture, new Rect(r.x, r.y, r.width, h), new Vector2(0.5f, 0.5f), lampSprite.pixelsPerUnit);
+            lampIcon.name = "lamp_icon";
+            return lampIcon;
+        }
 
         void OnDestroy() { if (Instance == this) Instance = null; }
     }

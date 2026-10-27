@@ -12,7 +12,7 @@ namespace YeogiCafe.Visual
     public class LoftView : MonoBehaviour
     {
         static LoftView inst;
-        const float CatwalkLeft = 3.0f;                 // 선반은 통유리 위쪽만(왼쪽 벽걸이 자리는 비워 둠)
+        public const float CatwalkLeft = 3.0f;                 // 선반은 통유리 위쪽만(왼쪽 벽걸이 자리는 비워 둠)
         readonly List<GameObject> parts = new();
         readonly List<LoftSpot> spots = new();
         CafeContext cafe;

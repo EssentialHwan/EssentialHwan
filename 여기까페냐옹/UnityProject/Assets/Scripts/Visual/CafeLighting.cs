@@ -17,7 +17,7 @@ namespace YeogiCafe.Visual
     {
         Light2D global, window, beam;
         // 천장 조명은 옮기고 빼고 더 살 수 있다(기본 사물) → 조명마다 빛 세트를 붙여 따라가게 한다
-        class LampRig { public Transform lamp; public Light2D light, pool; public SpriteRenderer halo; }
+        class LampRig { public Transform lamp; public Light2D light, pool; public SpriteRenderer halo, cord; }
         readonly List<LampRig> rigs = new();
         float rigScanT;
         DayManager day;
@@ -65,6 +65,7 @@ namespace YeogiCafe.Visual
                 if (r.light != null) Destroy(r.light.gameObject);
                 if (r.pool != null) Destroy(r.pool.gameObject);
                 if (r.halo != null) Destroy(r.halo.gameObject);
+                if (r.cord != null) Destroy(r.cord.gameObject);
                 rigs.RemoveAt(i);
             }
             foreach (var t in lamps)
@@ -77,6 +78,7 @@ namespace YeogiCafe.Visual
                 r.pool = Make("LampPool", Light2D.LightType.Point, Vector3.zero, false);
                 r.pool.pointLightInnerRadius = 0.6f; r.pool.pointLightOuterRadius = 2.9f; r.pool.falloffIntensity = 0.6f;
                 r.halo = Halo(Vector3.zero, t.GetComponent<SpriteRenderer>());
+                r.cord = Cord(t.GetComponent<SpriteRenderer>());
                 rigs.Add(r);
             }
             foreach (var r in rigs)
@@ -86,6 +88,19 @@ namespace YeogiCafe.Visual
                 r.light.transform.position = new Vector3(x, sy - 0.1f, 0f);
                 r.pool.transform.position = new Vector3(x, 2.9f, 0f);
                 r.halo.transform.position = new Vector3(x, sy - 0.05f, 0f);
+                // Lv3(위로 넓힘): 캣워크·다락 아래가 아니면 매달 데가 없어 갓이 허공에 떠 보였다 → 화면 위 천장까지 줄을 늘인다
+                bool hangsFree = CafeLayout.ViewLevel >= 3 && sr != null
+                                 && (x < YeogiCafe.Visual.LoftView.CatwalkLeft || x > CafeLayout.DeckRight);
+                r.cord.enabled = hangsFree;
+                if (hangsFree)
+                {
+                    var cam = Camera.main;
+                    float top = cam != null ? cam.transform.position.y + cam.orthographicSize + 0.5f : CafeLayout.CeilingY + 3f;
+                    float from = sr.bounds.max.y - 0.05f;
+                    r.cord.transform.position = new Vector3(x + 0.5f / 32f, from, 0f);   // 그림 속 줄(16px 중 8번째 칸)과 같은 x
+                    r.cord.transform.localScale = new Vector3(1f, Mathf.Max(0f, top - from) * 32f, 1f);
+                    r.cord.sortingOrder = sr.sortingOrder - 1;
+                }
             }
             var g = YeogiCafe.Cafe.FixtureManager.PrimaryGlass();
             if (window != null)
@@ -94,6 +109,24 @@ namespace YeogiCafe.Visual
                 if (g != null) window.transform.position = new Vector3(g.position.x, CafeLayout.GlassBottom + CafeLayout.GlassHeight * 0.45f, 0f);
             }
         }
+
+        // 천장 줄: 조명 그림 속 줄과 같은 색 1px 세로선(아래 끝이 기준점 — 위로 늘인다)
+        SpriteRenderer Cord(SpriteRenderer shade)
+        {
+            var go = new GameObject("LampCord"); go.transform.SetParent(transform, false);
+            var sr = go.AddComponent<SpriteRenderer>();
+            if (cordSprite == null)
+            {
+                // 조명 그림 속 줄과 같은 모양: 테두리-갈색-테두리 3px
+                var tex = new Texture2D(3, 1, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp, name = "lamp_cord" };
+                tex.SetPixels32(new Color32[] { YeogiCafe.Art.PixelPalette.Outline, YeogiCafe.Art.PixelPalette.WoodDeep, YeogiCafe.Art.PixelPalette.Outline }); tex.Apply();
+                cordSprite = Sprite.Create(tex, new Rect(0, 0, 3, 1), new Vector2(0.5f, 0f), 32f);
+            }
+            sr.sprite = cordSprite;
+            sr.enabled = false;
+            return sr;
+        }
+        static Sprite cordSprite;
 
         // 갓 아래 둥근 빛 번짐(도트 3단 원). 조명을 받지 않는 재질 — 스스로 빛나는 쪽
         SpriteRenderer Halo(Vector3 pos, SpriteRenderer shade)

@@ -65,6 +65,7 @@ namespace YeogiCafe.Visual
             var w = Weather.Current;
             bool sunny = w == WeatherKind.Sunny && !night;
             float baseA = night ? 0.6f : sunny ? 0.52f : 0.38f;
+            bool sunOk = w == WeatherKind.Sunny && ph != DayPhase.Settlement;   // 저녁에도 햇살 자리엔 해 그림자
 
             for (int i = list.Count - 1; i >= 0; i--)
             {
@@ -78,18 +79,50 @@ namespace YeogiCafe.Visual
                 var b = e.src.bounds;
                 Vector3 foot = new Vector3(b.center.x, e.target.position.y, 0f);
                 float width = Mathf.Clamp(b.size.x * 0.75f, 0.45f, 2.4f);
+                float a = baseA;
 
-                // 빛 위치 → 그림자는 빛 반대쪽으로 기운다(정면 시점이라 가로 방향만 의미 있음)
-                var glass = YeogiCafe.Cafe.FixtureManager.PrimaryGlass();
-                Vector2 light = night ? NearestLamp(foot.x) : new Vector2(glass != null ? glass.position.x : CafeLayout.CameraPos.x, CafeLayout.GlassBottom);
-                float lean = Mathf.Clamp((foot.x - light.x) * (night ? 0.05f : 0.06f), -0.35f, 0.35f);
-                if (!sunny && !night) lean *= 0.3f;                          // 흐린 날은 거의 바로 아래
-                float stretch = 1f + Mathf.Abs(lean) * (sunny ? 1.4f : 0.8f);
-
-                e.sh.transform.position = foot + new Vector3(lean * width * 0.6f, -0.03f, 0f);
-                e.sh.transform.localScale = new Vector3(width * stretch, Mathf.Max(0.55f, width * 0.55f), 1f);
-                e.sh.color = new Color(ShadowColor.r, ShadowColor.g, ShadowColor.b, baseA);
+                if (sunOk && InBeam(foot))
+                {
+                    // 햇살 안: 해는 하나라 그림자 방향도 하나 — 바닥 햇살이 기운 쪽(아침 왼쪽 앞, 점심 바로 앞, 저녁 오른쪽 앞)으로
+                    //  창이 뒷벽에 있으니 그림자는 화면 앞쪽(아래)으로 조금 내려오고, 키가 클수록 길다
+                    float slope = SunSlope(day != null ? day.Phase : DayPhase.Morning);
+                    float h = Mathf.Clamp(b.size.y, 0.4f, 2.2f);
+                    float len = h * 0.35f;
+                    e.sh.transform.position = foot + new Vector3(slope * len, -0.06f - len * 0.25f, 0f);
+                    e.sh.transform.localScale = new Vector3(width * (1f + Mathf.Abs(slope) * len * 1.2f), Mathf.Max(0.6f, width * 0.6f), 1f);
+                    a = 0.55f;
+                }
+                else if (night)
+                {
+                    // 밤: 가장 가까운 천장 조명 반대쪽으로 살짝(조명 바로 아래면 똑바로 짧게)
+                    Vector2 lamp = NearestLamp(foot.x);
+                    float lean = Mathf.Clamp((foot.x - lamp.x) * 0.05f, -0.35f, 0.35f);
+                    e.sh.transform.position = foot + new Vector3(lean * width * 0.6f, -0.03f, 0f);
+                    e.sh.transform.localScale = new Vector3(width * (1f + Mathf.Abs(lean) * 0.8f), Mathf.Max(0.55f, width * 0.55f), 1f);
+                }
+                else
+                {
+                    // 햇살 밖·흐린 날: 방 전체의 은은한 빛 → 발밑에 동그랗고 연하게
+                    e.sh.transform.position = foot + new Vector3(0f, -0.03f, 0f);
+                    e.sh.transform.localScale = new Vector3(width, Mathf.Max(0.55f, width * 0.55f), 1f);
+                    a = sunny ? 0.34f : 0.38f;
+                }
+                e.sh.color = new Color(ShadowColor.r, ShadowColor.g, ShadowColor.b, a);
             }
+        }
+
+        // 바닥 햇살(SunbeamSpot)과 같은 기울기: 아침 -1.6/2.3, 점심 0, 저녁 +1.9/2.5
+        static float SunSlope(DayPhase ph) =>
+            ph == DayPhase.Lunch ? 0f : (ph == DayPhase.Evening ? 0.76f : -0.7f);
+
+        SpriteRenderer beamSr;
+        // 발밑이 바닥 햇살 안에 있나(보일 때만). 햇살 그림의 투명 칸(창살 틈)까지는 안 따지고 둘레 상자로 본다
+        bool InBeam(Vector3 foot)
+        {
+            if (beamSr == null) { var go = GameObject.Find("Sunbeam"); if (go != null) beamSr = go.GetComponent<SpriteRenderer>(); }
+            if (beamSr == null || beamSr.sprite == null || beamSr.color.a < 0.3f) return false;
+            var bb = beamSr.bounds; bb.Expand(new Vector3(0.2f, 0.25f, 10f));
+            return bb.Contains(new Vector3(foot.x, foot.y, bb.center.z));
         }
 
         static Vector2 NearestLamp(float x)

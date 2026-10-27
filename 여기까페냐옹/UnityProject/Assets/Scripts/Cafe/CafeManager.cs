@@ -36,6 +36,8 @@ namespace YeogiCafe.Cafe
 
         public event Action<int> OnCafeUpgraded;
 
+        public bool AtMaxLevel => NextReq() == null;   // 더 넓힐 단계가 없음(정산 화면 버튼 비활성화용)
+
         public bool CanUpgrade(out string blockedHint)
         {
             blockedHint = null;

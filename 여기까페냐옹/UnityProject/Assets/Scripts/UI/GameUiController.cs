@@ -973,6 +973,7 @@ namespace YeogiCafe.UI
             if (ok) RefreshHud();
             return ok;
         }
+        public bool CafeAtMax => bootstrap != null && bootstrap.cafeManager != null && bootstrap.cafeManager.save != null && bootstrap.cafeManager.AtMaxLevel;
         public int CafeLevel => bootstrap != null && bootstrap.cafeManager != null && bootstrap.cafeManager.save != null
                                 ? bootstrap.cafeManager.save.cafeLevel : 1;
 

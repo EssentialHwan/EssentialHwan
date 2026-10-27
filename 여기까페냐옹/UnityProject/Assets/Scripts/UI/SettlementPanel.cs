@@ -17,7 +17,7 @@ namespace YeogiCafe.UI
         readonly GameUiController owner;
         readonly GameObject rootGo;
         Text revenueText, cardsInfo, levelText, expandInfo;
-        Button expandBtn, shelterBtn;
+        Button expandBtn, shelterBtn; Text expandLbl;
         RectTransform cardsContent;
         WheelList cardsList;
 
@@ -70,7 +70,8 @@ namespace YeogiCafe.UI
 
             // 카페 넓히기(성장) — 관찰 성과 또는 가구 수로 열리는 같은 방 확장(P3 OR 경로)
             expandBtn = UiFactory.Button("Expand", panel.transform, L.Get("ui.settle.expand"),
-                                         UiFactory.Wood, UiFactory.Cream, out _);
+                                         UiFactory.Wood, UiFactory.Cream, out expandLbl);
+            expandLbl.resizeTextForBestFit = true; expandLbl.resizeTextMinSize = 14; expandLbl.resizeTextMaxSize = 22;
             UiFactory.SetRect((RectTransform)expandBtn.transform, new Vector2(0, 0), new Vector2(0, 0),
                               new Vector2(0, 0), new Vector2(24, 20), new Vector2(180, 52));
             expandBtn.onClick.AddListener(() =>
@@ -285,6 +286,15 @@ namespace YeogiCafe.UI
         void RenderLevel()
         {
             if (shelterBtn != null) shelterBtn.gameObject.SetActive(owner.CafeLevel >= 2);
+            // 최대 레벨이면 [카페 넓히기] 대신 '최대 레벨' 표시 + 눌리지 않게(회색)
+            bool max = owner.CafeAtMax;
+            if (expandBtn != null)
+            {
+                expandBtn.interactable = !max;
+                expandBtn.GetComponent<Image>().color = max ? UiFactory.CreamDim : UiFactory.Wood;
+                expandLbl.text = L.Get(max ? "cafe.block.max" : "ui.settle.expand");
+                expandLbl.color = max ? UiFactory.WoodDark : UiFactory.Cream;
+            }
             levelText.text = L.Get("ui.settle.cafelevel", ("n", owner.CafeLevel.ToString()));
         }
         public void Hide() => rootGo.SetActive(false);
