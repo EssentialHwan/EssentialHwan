@@ -25,6 +25,28 @@ def eye_accents(a, fg):
         out += list(np.array(q.getpalette()[:12]).reshape(-1, 3))
     return np.array(out, np.float32) if out else np.zeros((0, 3), np.float32)
 
+def keep_highlights(a, m, f):
+    # 눈 반짝이(흰 점)가 줄이면서 뭉개져 눈이 '흰자 없는 검은 구멍'처럼 보이던 문제(10/28 형 피드백: 젖소·턱시도).
+    # 원화에서 '어두운 눈 속에 박힌 흰 점'만 골라, 줄인 그림의 같은 자리에 선명한 흰색으로 다시 찍는다.
+    from scipy import ndimage
+    ys, xs = np.nonzero(m); y0, y1, x0, x1 = ys.min(), ys.max() + 1, xs.min(), xs.max() + 1
+    c = a[y0:y1, x0:x1].astype(int); mm = m[y0:y1, x0:x1]
+    lum = (c[..., 0] * 3 + c[..., 1] * 6 + c[..., 2]) / 10; sat = c.max(-1) - c.min(-1)
+    bright = mm & (lum > 222) & (sat < 40)
+    dark = mm & ((lum < 110) | ((c[..., 0] - c[..., 2] > 70) & (lum < 190)))      # 눈동자·홍채
+    lab, n = ndimage.label(bright)
+    hl = np.zeros_like(bright)
+    for i, sl in enumerate(ndimage.find_objects(lab), 1):
+        comp = lab == i; sz = comp[sl].sum()
+        if sz < 4 or sz > mm.sum() * 0.004: continue                                 # 털의 흰 부분(큰 덩어리) 제외
+        ring = ndimage.binary_dilation(comp, iterations=3) & ~comp
+        if ring.sum() and (dark & ring).sum() / ring.sum() > 0.7: hl |= comp
+    H, W = f.shape[:2]
+    if (y1 - y0) == 0: return
+    sm = np.array(Image.fromarray((hl * 255).astype(np.uint8)).resize((W, H), Image.BOX)) > 70
+    sm &= f[..., 3] > 0
+    f[sm, :3] = (255, 253, 248)
+
 def make(cat, src, mult, pose=8):
     a, cells = C.poses(src)
     s = B.fit_scale(cells)                          # 인게임 56px 칸 기준 배율
@@ -32,6 +54,7 @@ def make(cat, src, mult, pose=8):
     pal, _ = C.quantize(a, m, 96)                   # 이 포즈 한 장만 96색 → 더 섬세하게
     pal = np.vstack([pal, eye_accents(a, m)]).astype(np.float32)
     f = clean(C2.down2(a, pal, m, s * mult))
+    keep_highlights(a, m, f)
     W, H, G = round(168 * mult / 3), round(128 * mult / 3), round(8 * mult / 3)
     can = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     im = Image.fromarray(f); w, h = im.size
