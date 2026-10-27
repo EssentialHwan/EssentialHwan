@@ -354,7 +354,7 @@ ep.cat_tuxedo.grad.03,어른 되면 커피 마시러 올게냥. — 턱시도냥
 ep.cat_mackerel.regular2.01,…또 왔어냥. 배고파서는 아니고냥.,…Back again. Not because I'm hungry.,…又来了喵。才不是因为肚子饿喵。,…また来たニャ。おなかがすいたからじゃないニャ。
 ep.cat_mackerel.regular2.02,소파가 딱 내 몸에 맞아냥.,The sofa fits me just right.,这个沙发刚好合我的身形喵。,このソファ、ぼくの体にぴったりだニャ。
 ep.cat_mackerel.grad.01,"나 데려간 집, 생선을 잘 굽는대냥. 근데 새우꼬치는 없겠지냥.","My new home grills fish well. But no shrimp skewers there, probably.",带我走的那家，听说很会烤鱼喵。不过应该没有虾串吧喵。,ぼくを迎えるおうち、魚を焼くのが上手なんだってニャ。でもエビ串はないだろうニャ。
-ep.cat_mackerel.grad.02,"따끈한 데서 녹아내리는 게 행복이라는 거, 여기서 배웠어냥.",Here I learned that melting on something warm is happiness.,在暖乎乎的地方瘫着就是幸福——这是在这里学到的喵。,あったかいところでとろけるのが幸せだって、ここで覚えたニャ。
+ep.cat_mackerel.grad.02,"따끈한 데서 녹아내리는 게 행복이라는 거, 여기서 다시 알았어냥.",Here I remembered that melting on something warm is happiness.,在暖乎乎的地方瘫着就是幸福——是在这里想起来的喵。,あったかいところでとろけるのが幸せだって、ここで思い出したニャ。
 ep.cat_mackerel.grad.03,온열방석 내 자리는 따뜻하게 남겨 둬냥. — 고등어냥,Keep my spot on the heat pad warm for me. — Tabby,暖垫上的位置，帮我留着喵。— 狸花喵,ホットマットの場所、取っといてニャ。— サバトラニャン
 ep.cat_siamese.regular2.01,"흠, 오늘은 기분이 나쁘지 않아냥.","Hmm, I'm not in a bad mood today.",哼，今天心情还不坏喵。,ふむ、今日は機嫌が悪くないニャ。
 ep.cat_siamese.regular2.02,"바 자리, 내 거로 해 줄 수 있냥?",Could the bar seat be mine?,吧台的位置，可以算我的吗喵？,バーの席、わたしのにしてくれるニャ？
@@ -570,14 +570,14 @@ ui.rel.known,아는 사이,Familiar,认识,顔見知り
 ending.title,모두의 단골집,Everyone's Favorite Spot,大家的老地方,みんなの行きつけ
 ending.sub,{day}일 만에 모든 손님의 마음을 알아냈어요,You learned every guest's heart in {day} days,用了{day}天，读懂了所有客人的心,{day}日で、すべてのお客さんの心がわかりました
 ending.body,"뉴로냐는 고양이들에게 똑똑한 머리를 줬지만,
-좋아하는 걸 찾아 준 건 이 작은 카페였어요.
-내일도 출근해요. 다른 고양이들을 위해.","NeuroNya gave cats clever minds,
-but it was this little cafe that helped them find what they love.
-See you tomorrow. For the other cats.","NeuroNya给了猫咪们聪明的头脑，
-但帮它们找到喜欢的东西的，是这家小小的咖啡馆。
-明天也要上班哦。为了其他的猫咪。","NeuroNyaはネコたちにかしこい頭をくれたけど、
-好きなものを見つけてあげたのは、この小さなカフェでした。
-明日も出勤します。ほかのネコたちのために。"
+좋아하는 걸 되찾아 준 건 이 작은 카페였어요.
+내일도 문을 열어요. 다른 고양이들을 위해.","NeuroNya gave cats clever minds,
+but it was this little cafe that helped them find what they love again.
+Tomorrow, the doors open again. For the other cats.","NeuroNya给了猫咪们聪明的头脑，
+但帮它们找回喜欢的东西的，是这家小小的咖啡馆。
+明天也会开门。为了其他的猫咪。","NeuroNyaはネコたちにかしこい頭をくれたけど、
+好きなものを思い出させてあげたのは、この小さなカフェでした。
+明日も扉を開けます。ほかのネコたちのために。"
 ending.continue,계속 영업하기,Keep the cafe open,继续营业,営業をつづける
 tut.tag,처음 오셨나요?,First day tips,第一次来吗？,はじめてですか？
 tut.welcome,곧 고양이 손님이 와요. 어디에 앉고 무엇을 하는지 지켜보세요 — 모두 취향의 단서예요.,A cat guest is coming. Watch where it sits and what it does — every move is a clue.,猫咪客人马上就到。看看它坐在哪里、做些什么——这些都是喜好的线索。,もうすぐネコのお客さんが来るよ。どこに座って何をするか見ていてね──ぜんぶ好みの手がかりです。
@@ -631,14 +631,14 @@ Cats call that virus 'NeuroNya'.","只有猫咪平安无事。不，它们反而
 猫咪们把那种病毒叫作「NeuroNya（喵脑）」。","ネコだけは無事でした。いいえ、むしろかしこくなったのです。
 ネコたちはそのウイルスを「NeuroNya（ニューロニャ）」と呼んでいます。"
 opening.4,"이제 고양이들은 말도 하고 가게도 열어요.
-그런데… 자기가 뭘 좋아하는지는 아직 잘 모른대요.","Now cats talk and run shops.
-But… they still don't quite know what they like.","如今猫咪们会说话，也会开店。
-可是…听说它们还不太清楚自己喜欢什么。","いまではネコたちはおしゃべりも、お店もできます。
-でも…自分が何を好きなのかは、まだよくわからないそうです。"
-opening.5,"그래서 오늘도 나는 카페에 출근해요.
-다른 고양이들을 위해.","So today, again, I head to the cafe.
-For the other cats.","所以今天，我也去咖啡馆上班。
-为了其他的猫咪。","だから今日も、わたしはカフェに出勤します。
+그런데… 그 전의 기억이 흐릿해서, 자기가 뭘 좋아하는지 잘 모른대요.","Now cats talk and run shops.
+But… their memories of before have gone hazy, so they don't quite know what they like.","如今猫咪们会说话，也会开店。
+可是…以前的记忆变得模糊，它们不太清楚自己喜欢什么。","いまではネコたちはおしゃべりも、お店もできます。
+でも…前の記憶がぼんやりして、自分が何を好きなのか、よくわからないそうです。"
+opening.5,"그래서 오늘, 나는 이 카페의 문을 열어요.
+다른 고양이들을 위해.","So today, I open the doors of this cafe.
+For the other cats.","所以今天，我打开了这家咖啡馆的门。
+为了其他的猫咪。","だから今日、わたしはこのカフェの扉を開けます。
 ほかのネコたちのために。"
 opening.skip,건너뛰기 ▶▶,Skip ▶▶,跳过 ▶▶,スキップ ▶▶
 opening.hint,클릭해서 넘기기,Click to continue,点击继续,クリックで進む
@@ -894,8 +894,8 @@ ui.story.header,노트 {a}/{b} · 기억 {c}/{d},Notes {a}/{b} · Memories {c}/{
 ui.story.empty,아직 본 이야기가 없어요. 단골이 생기면 여기에 모여요.,No stories yet. They'll collect here as cats become regulars.,还没有故事。有了熟客后会收集在这里。,まだおはなしはありません。常連ができるとここに集まります。
 ui.story.close,닫기,Close,关闭,閉じる
 ep.cat_cheese.memory.01,{name}는 시장 생선가게의 고양이였어요.,{name} used to be the cat of a fish shop in the market.,{name}以前是市场里鱼店的猫。,{name}は、市場の魚屋さんのネコでした。
-ep.cat_cheese.memory.02,"오후엔 진열창 앞 햇볕 아래, 주인 할머니가 깔아 준 폭신한 방석에서 낮잠을 잤죠. 할머니는 팔다 남은 생선케이크를 작게 잘라 주곤 했어요.","Afternoons were spent napping in the sun by the shop window, on a soft cushion the old shopkeeper laid out. She'd cut leftover fish cake into little bites.",下午总在橱窗前的阳光里，睡在老奶奶铺的软垫上。老奶奶常把卖剩的鱼肉蛋糕切成小块喂它。,午後はショーウィンドウの日なたで、おばあさんが敷いてくれたふかふかの座布団でお昼寝。売れ残りのおさかなケーキを、小さく切ってもらっていました。
-ep.cat_cheese.memory.03,"할머니가 사라진 뒤로 잊고 지냈던 그 냄새를, 이 카페 창가에서 다시 찾았어요.","After she was gone, that smell was forgotten — until {name} found it again at this cafe's window.",老奶奶不见之后，那股味道就被遗忘了——直到在这家咖啡馆的窗边，又重新找到了。,おばあさんがいなくなってから忘れていたあのにおいを、このカフェの窓ぎわでまた見つけたのです。
+ep.cat_cheese.memory.02,"오후엔 진열창 앞 햇볕 아래, 주인 아주머니가 깔아 준 폭신한 방석에서 낮잠을 잤죠. 아주머니는 팔다 남은 생선케이크를 작게 잘라 주곤 했어요.","Afternoons were spent napping in the sun by the shop window, on a soft cushion the shopkeeper laid out. She'd cut leftover fish cake into little bites.",下午总在橱窗前的阳光里，睡在老板娘铺的软垫上。老板娘常把卖剩的鱼肉蛋糕切成小块喂它。,午後はショーウィンドウの日なたで、おかみさんが敷いてくれたふかふかの座布団でお昼寝。売れ残りのおさかなケーキを、小さく切ってもらっていました。
+ep.cat_cheese.memory.03,"아주머니가 사라진 뒤로 잊고 지냈던 그 냄새를, 이 카페 창가에서 다시 찾았어요.","After she was gone, that smell was forgotten — until {name} found it again at this cafe's window.",老板娘不见之后，那股味道就被遗忘了——直到在这家咖啡馆的窗边，又重新找到了。,おかみさんがいなくなってから忘れていたあのにおいを、このカフェの窓ぎわでまた見つけたのです。
 ep.cat_calico.memory.01,{name}는 아이가 셋인 시끌벅적한 집에서 살았어요.,{name} lived in a noisy house with three kids.,{name}以前住在一个有三个孩子的热闹人家。,{name}は、子どもが三人いるにぎやかな家で暮らしていました。
 ep.cat_calico.memory.02,"장난감이 가득한 방 구석이 {name}의 비밀 기지였고, 생일마다 아이들은 딸기파르페의 딸기를 몰래 하나씩 나눠 줬죠.","The corner of the toy-filled playroom was {name}'s secret base, and on every birthday the kids would sneak over a strawberry from their parfait.",堆满玩具的房间角落是{name}的秘密基地。每逢生日，孩子们都会偷偷分给它一颗草莓芭菲上的草莓。,おもちゃだらけの部屋のすみっこが{name}の秘密基地。誕生日のたびに、子どもたちはいちごパフェのいちごをこっそり分けてくれました。
 ep.cat_calico.memory.03,"매일 뭔가 바뀌던 그 집처럼, 이 카페도 올 때마다 새로워요. 그래서 자꾸 오게 돼요.","Like that house, where something changed every day, this cafe is new every visit. That's why {name} keeps coming back.",就像那个每天都有新变化的家一样，这家咖啡馆每次来都很新鲜。所以才总是忍不住过来。,毎日なにかが変わっていたあの家のように、このカフェも来るたびに新しい。だから、つい来てしまうのです。
@@ -932,9 +932,9 @@ ep.cat_persian.memory.03,까다로운 게 아니에요. 그때의 '보통'이 �
 ep.cat_tortie.memory.01,{name}는 바닷가 마을 어부 부부의 고양이였어요.,{name} belonged to a fisherman couple in a seaside village.,{name}以前是海边小村一对渔夫夫妻的猫。,{name}は、海辺の村の漁師夫婦のネコでした。
 ep.cat_tortie.memory.02,"두 사람 사이에 비집고 앉아 구운 생선을 받아먹고, 남는 시간엔 그물 끈을 붙잡고 하루 종일 놀았죠.","{name} squeezed in between the two of them for grilled fish, and spent the rest of the day batting at loose net ropes.",它总挤在两人中间吃烤鱼，剩下的时间就抓着渔网绳玩一整天。,ふたりのあいだに割りこんで焼き魚をもらい、あとは一日じゅう網のひもにじゃれていました。
 ep.cat_tortie.memory.03,"2인석을 혼자 넓게 쓰는 건, 원래 그 자리가 셋이 앉던 자리라서예요.",{name} sprawls across the two-seater because that seat used to hold three.,一个人占满双人座，是因为那里本来是三个一起坐的位置。,ふたりがけをひとりで広く使うのは、もともとそこが三人で座る席だったから。
-ep.cat_sphynx.memory.01,{name}는 털 없는 고양이를 아끼던 할아버지와 살았어요.,{name} lived with an old man who adored hairless cats.,{name}以前和一位疼爱无毛猫的老爷爷一起生活。,{name}は、毛のないネコをかわいがるおじいさんと暮らしていました。
-ep.cat_sphynx.memory.02,"할아버지는 손뜨개 스웨터를 입혀 주고, 해 드는 창가에서 따뜻한 우유를 나눠 마셨죠.","He knitted sweaters for {name}, and they shared warm milk together by the sunny window.",老爷爷给它穿手织毛衣，两个一起在洒满阳光的窗边分喝热牛奶。,おじいさんは手編みのセーターを着せてくれて、日の当たる窓ぎわで、あたたかいミルクを分けあいました。
-ep.cat_sphynx.memory.03,"할아버지가 사라진 뒤 보호소의 겨울은 길었지만, 이 카페 창가는 그때만큼 따뜻해요.","After he was gone, winters at the shelter were long. But this cafe's window is as warm as back then.",老爷爷不见后，救助站的冬天很漫长。但这家咖啡馆的窗边，和那时一样温暖。,おじいさんがいなくなってから保護センターの冬は長かったけれど、このカフェの窓ぎわは、あのころと同じくらいあたたかい。
+ep.cat_sphynx.memory.01,{name}는 뜨개 공방을 하던 선생님과 살았어요.,{name} lived with a teacher who ran a knitting studio.,{name}以前和一位开编织工作室的老师一起生活。,{name}は、編みもの教室の先生と暮らしていました。
+ep.cat_sphynx.memory.02,"선생님은 털 없는 {name}에게 손뜨개 스웨터를 떠 입히고, 해 드는 창가에서 따뜻한 우유를 나눠 마셨죠.","She knitted sweaters for hairless little {name}, and they shared warm milk by the sunny window.",老师给没有毛的{name}织毛衣穿，两个一起在洒满阳光的窗边分喝热牛奶。,先生は毛のない{name}に手編みのセーターを編んでくれて、日の当たる窓ぎわで、あたたかいミルクを分けあいました。
+ep.cat_sphynx.memory.03,"선생님이 사라진 뒤 보호소는 늘 추웠지만, 이 카페 창가는 그때만큼 따뜻해요.","After she was gone, the shelter always felt cold. But this cafe's window is as warm as back then.",老师不见后，救助站总是冷冰冰的。但这家咖啡馆的窗边，和那时一样温暖。,先生がいなくなってから、保護センターはいつも寒かったけれど、このカフェの窓ぎわは、あのころと同じくらいあたたかい。
 ep.cat_kitten.memory.01,"{name}는 뉴로냐 이후에 보호소에서 태어나, 사람을 한 번도 본 적이 없어요.","{name} was born at the shelter after NeuroNya, and has never seen a human.",{name}是NeuroNya之后在救助站出生的，从没见过人类。,{name}はNeuroNyaのあとに保護センターで生まれ、人間を一度も見たことがありません。
 ep.cat_kitten.memory.02,보호소 언니 오빠들은 '사람들은 참치샌드위치를 반으로 갈라 나눠 줬단다' 같은 옛날이야기를 해 주곤 했죠.,"The older cats there told old stories, like how people used to split tuna sandwiches in half to share.",救助站的哥哥姐姐们常讲老故事，比如“人类会把金枪鱼三明治掰成两半分给我们”。,センターのお兄さんお姉さんネコたちは、「人間はツナサンドを半分こしてくれたんだよ」なんて昔話をしてくれました。
 ep.cat_kitten.memory.03,"그래서 {name}에게 이 카페는 이야기 속 세상이에요. 아무 의자에나 앉고, 마음껏 뛰어도 되는 곳.","So to {name}, this cafe is a world from those stories. Sit on any chair, run as much as you like.",所以对{name}来说，这家咖啡馆就是故事里的世界。随便坐哪张椅子，想怎么跑就怎么跑。,だから{name}にとって、このカフェはおはなしの中の世界。どのイスに座っても、思いきり走ってもいい場所。
@@ -946,16 +946,16 @@ note.1.01,2026년 4월 3일. 오늘 손님은 셋. 그래도 창가에 햇볕이
 note.1.02,뒷문에 작은 고양이가 또 왔다. 내가 요리하는 걸 한참 구경하더니 휙 사라졌다.,"That little cat came to the back door again. Watched me cook for ages, then vanished.",后门那只小猫又来了。盯着我做饭看了好久，然后一溜烟不见了。,裏口にまた小さいネコが来た。料理するのをじっと見ていて、ふっといなくなった。
 note.1.03,이름을 지어 줄까 하다가 그만뒀다. 정 들면 곤란하니까.,"Thought about giving it a name, then didn't. Wouldn't want to get attached.",本想给它起个名字，还是算了。有了感情就麻烦了。,名前をつけようかと思って、やめた。情がうつると困るから。
 note.2.where,"옆 공간을 트다가, 벽 틈에 끼어 있던 한 장을 찾았어요.","While opening up the side room, a page turned up wedged in the wall.",打通隔壁空间时，在墙缝里找到了一页。,となりのスペースをひろげていたら、壁のすきまにはさまった一枚が見つかりました。
-note.2.01,2026년 7월 19일. 창고를 터서 자리를 넓혔다. 손님이 늘 거라는 보장은 없지만.,"July 19, 2026. Knocked through the storeroom to make more space. No guarantee more customers will come, though.",2026年7月19日。把仓库打通，扩大了店面。虽然不能保证客人会变多。,2026年7月19日。倉庫をぶちぬいて席を広げた。お客さんが増える保証はないけれど。
-note.2.02,"동네 고양이들 취향을 적어 두기 시작했다. 누구는 창가, 누구는 구석. 다들 좋아하는 게 확실히 있다.","Started writing down what the neighborhood cats like. One likes the window, another the corner. Every one of them has something.",开始记下附近猫咪们的喜好。有的喜欢窗边，有的喜欢角落。每只都有明确喜欢的东西。,近所のネコたちの好みを書きとめはじめた。窓ぎわが好きな子、すみっこが好きな子。みんな、好きなものがちゃんとある。
+note.2.01,"2026년 7월 19일. 창고를 터서 자리를 넓히고 싶은데, 돈이 없다. 언젠가.","July 19, 2026. I want to knock through the storeroom for more seats, but there's no money. Someday.",2026年7月19日。想把仓库打通多摆些座位，可是没钱。总有一天吧。,2026年7月19日。倉庫をぶちぬいて席を広げたいけど、お金がない。いつか。
+note.2.02,"동네 고양이들 취향을 맞혀 보는 게 요즘 낙이다. 누구는 창가, 누구는 구석. 다들 좋아하는 게 확실히 있다.","Guessing what the neighborhood cats like is my little joy these days. One likes the window, another the corner. Every one of them has something.",最近的乐趣是猜附近猫咪们的喜好。有的喜欢窗边，有的喜欢角落。每只都有明确喜欢的东西。,近所のネコたちの好みを当てるのが、最近の楽しみ。窓ぎわが好きな子、すみっこが好きな子。みんな、好きなものがちゃんとある。
 note.2.03,뒷문 녀석은 오늘도 왔다. 생선 굽는 동안 꼬리를 바짝 세우고 있었다.,The back-door kid came again today. Tail straight up the whole time the fish was grilling.,后门那家伙今天也来了。烤鱼的时候，尾巴一直竖得笔直。,裏口のやつは今日も来た。魚を焼いているあいだ、しっぽをぴんと立てていた。
-note.3.where,"기억을 들은 날 밤, 메뉴판 뒤에서 한 장이 떨어졌어요.","The night after hearing a memory, a page slipped out from behind the menu board.",听完回忆的那天夜里，菜单板后面掉出了一页。,思い出を聞いた夜、メニューボードの裏から一枚落ちてきました。
+note.3.where,"고양이의 기억을 들은 뒤, 메뉴판 뒤에서 한 장이 떨어졌어요.","After hearing a cat's memory, a page slipped out from behind the menu board.",听完猫咪的回忆后，菜单板后面掉出了一页。,ネコの思い出を聞いたあと、メニューボードの裏から一枚落ちてきました。
 note.3.01,날짜 없음. 고양이도 추억으로 산다고 생각한다.,No date. I think cats live on memories too.,没有日期。我觉得猫也是靠回忆活着的。,日付なし。ネコも思い出で生きているんだと思う。
 note.3.02,"좋아하는 자리, 좋아하는 냄새, 좋아하는 놀이. 그건 다 누군가와 함께했던 기억이다.","A favorite seat, a favorite smell, a favorite game. Each one is a memory of being with someone.",喜欢的位置、喜欢的味道、喜欢的游戏。那些都是和某个人在一起的回忆。,好きな席、好きなにおい、好きな遊び。それはぜんぶ、だれかと一緒だった記憶だ。
 note.3.03,"그러니 취향을 맞혀 주는 건, 그 기억을 다시 꺼내 주는 일인지도 모른다.",So maybe guessing what a cat likes is really helping it find that memory again.,所以，猜中它们的喜好，也许就是帮它们把那段回忆找回来。,だから好みを当ててあげるのは、その記憶をもう一度取りだしてあげることなのかもしれない。
-note.4.where,다락을 치우다 상자 속에서 한 장을 찾았어요.,"Clearing out the loft, a page turned up in a box.",整理阁楼时，在箱子里找到了一页。,屋根裏を片づけていたら、箱の中から一枚出てきました。
+note.4.where,"다락을 손보다가, 상자 속에서 한 장을 찾았어요.","While fixing up the loft, a page turned up in a box.",修整阁楼时，在箱子里找到了一页。,屋根裏を手入れしていたら、箱の中から一枚出てきました。
 note.4.01,2027년 2월 11일. 뉴스는 혜성 얘기뿐이다. 손님들도 다들 하늘만 본다.,"February 11, 2027. The news is all about the comet. Every customer keeps looking at the sky.",2027年2月11日。新闻里全是彗星的事。客人们也都只顾着看天。,2027年2月11日。ニュースはほうき星の話ばかり。お客さんもみんな空ばかり見ている。
-note.4.02,다락에 캣워크를 달았다. 높은 데 좋아하는 녀석들이 많아서.,Put a catwalk up in the loft. Plenty of them like high places.,在阁楼装了猫步道。喜欢高处的家伙挺多的。,屋根裏にキャットウォークをつけた。高いところが好きなやつが多いから。
+note.4.02,다락에 캣워크를 달고 싶다. 높은 데 좋아하는 녀석들이 많으니까. 이것도 언젠가.,"I'd like to put a catwalk up in the loft. Plenty of them like high places. Someday, this too.",想在阁楼装个猫步道。喜欢高处的家伙挺多的。这个也是，总有一天。,屋根裏にキャットウォークをつけたい。高いところが好きなやつが多いから。これも、いつか。
 note.4.03,뒷문 녀석이 처음으로 가게 안까지 들어왔다. 주방 바닥에 앉아 내 손을 오래 봤다.,The back-door kid came all the way inside for the first time. Sat on the kitchen floor and watched my hands for a long time.,后门那家伙第一次走进了店里。坐在厨房地板上，久久地看着我的手。,裏口のやつが、はじめて店の中まで入ってきた。台所の床に座って、わたしの手をずっと見ていた。
 note.5.where,"보호소에서 온 감사 편지 상자에, 사장님의 노트 한 장이 섞여 있었어요.",Mixed in with the shelter's thank-you letters was a page from the old owner's notebook.,救助站寄来的感谢信箱里，夹着一页老店长的笔记。,保護センターからのお礼の手紙の箱に、前の店長のノートが一枚まじっていました。
 note.5.01,2027년 2월 25일. 혜성 소동 통에 버려진 고양이가 늘었다. 보호소에 사료를 보내기 시작했다.,"February 25, 2027. With all the comet panic, more cats are being abandoned. Started sending food to the shelter.",2027年2月25日。彗星引起的骚动中，被遗弃的猫变多了。开始给救助站送猫粮。,2027年2月25日。ほうき星さわぎで、捨てられるネコが増えた。保護センターにごはんを送りはじめた。
@@ -965,3 +965,5 @@ note.6.where,"주방 맨 위 선반, 레시피 상자 맨 아래에 마지막 �
 note.6.01,2027년 3월 9일. 혜성이 온다는 날이 내일이다. 가게는 평소처럼 열었다.,"March 9, 2027. The comet comes tomorrow. Opened the cafe as usual.",2027年3月9日。明天就是彗星要来的日子。店照常开了。,2027年3月9日。ほうき星が来るのは明日だという。店はいつもどおり開けた。
 note.6.02,"혹시 내가 없어지면, 뒷문 녀석아. 주방은 네 거다. 맨날 구경했으니 앞발로도 할 수 있을 거야.","If I'm not here anymore, back-door kid — the kitchen is yours. You watched every day. You can do it with paws.",要是我不在了，后门的小家伙——厨房就归你了。你天天在看，用爪子也一定做得到。,もしわたしがいなくなったら、裏口のおまえ。台所はおまえのものだ。毎日見ていたんだから、前足でもできるさ。
 note.6.03,다른 고양이들이 좋아하는 걸 찾아 주렴. 내가 너희한테 그랬던 것처럼.,Help the other cats find what they love. The way I tried to for all of you.,帮其他猫咪找到它们喜欢的东西吧。就像我为你们做的那样。,ほかのネコたちの好きなものを、見つけてあげておくれ。わたしがおまえたちにしてきたように。
+ep.cat_kitten.memory.sub,뉴로냐 이후에 태어난 아이 · 보호소에서 들은 옛날이야기,Born after NeuroNya · old tales from the shelter,NeuroNya之后出生 · 在救助站听来的老故事,NeuroNya以後に生まれた子・保護センターで聞いた昔話
+note.6.after,"…주방 바닥에서 그 손을 올려다보던 기억이, 이제야 났어요. 뒷문 고양이는 나였어요.",…Now I remember looking up at those hands from the kitchen floor. The back-door cat was me.,…现在才想起来，那时在厨房地板上仰望那双手。后门的那只猫，就是我。,…台所の床からあの手を見上げていたことを、やっと思い出しました。裏口のネコは、わたしだったのです。

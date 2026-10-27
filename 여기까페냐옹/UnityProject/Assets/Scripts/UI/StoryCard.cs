@@ -38,7 +38,8 @@ namespace YeogiCafe.UI
             if (memory || note)
             {
                 // 부제: 기억 = '뉴로냐 이전', 노트 = 어디서 찾았는지
-                string sub = memory ? L.Get("story.memory.sub") : L.Get($"note.{st.note}.where");
+                // 기억 부제는 고양이별로 바꿀 수 있다(꼬물냥은 뉴로냐 이후에 태어나 '사람이 있던 시절'이 없다)
+                string sub = memory ? (Opt($"ep.{st.catId}.memory.sub") ?? L.Get("story.memory.sub")) : L.Get($"note.{st.note}.where");
                 var sl = UiFactory.Label("Sub", paper.transform, sub, 15, TextAnchor.MiddleCenter, UiFactory.WoodDark);
                 sl.fontStyle = FontStyle.Italic;
                 UiFactory.SetRect((RectTransform)sl.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -50), new Vector2(-60, 24));
@@ -72,6 +73,9 @@ namespace YeogiCafe.UI
                 if (sb.Length > 0) sb.Append("\n\n");
                 sb.Append(L.Get(k, ("name", name)));
             }
+            // 노트 뒤에 붙는 '나'의 한 줄(마지막 장: 뒷문 고양이가 누구였는지)
+            string after = note ? Opt($"note.{st.note}.after") : null;
+            if (after != null) sb.Append("\n\n<i><color=#9A5B44>").Append(after).Append("</color></i>");
             var body = UiFactory.Label("Body", paper.transform, sb.ToString(), note ? 18 : 19, TextAnchor.MiddleLeft, UiFactory.Ink);
             body.resizeTextForBestFit = true; body.resizeTextMinSize = 12; body.resizeTextMaxSize = note ? 18 : 19;
             if (note) body.alignment = TextAnchor.UpperLeft;
@@ -97,6 +101,9 @@ namespace YeogiCafe.UI
             if (memory || note) YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.45f, 0.02f);
             return go;
         }
+
+        // 없는 키면 null(L.Get은 없는 키를 그대로 돌려준다)
+        static string Opt(string key) => L.Has(key) ? L.Get(key) : null;
 
         // 도감 목록용 작은 노트 아이콘(16×18)
         public static PixelCanvas NoteIcon()

@@ -94,7 +94,7 @@ namespace YeogiCafe.DevTools
                     if (f1 != null && f1.Save != null)
                     {
                         f1.Save.storyQueue.Add(new YeogiCafe.Save.StoryDTO { catId = "cat_cheese", kind = 8 });
-                        f1.Save.storyQueue.Add(new YeogiCafe.Save.StoryDTO { catId = "cat_black", kind = 8 });
+                        f1.Save.storyQueue.Add(new YeogiCafe.Save.StoryDTO { catId = "cat_kitten", kind = 8 });
                         f1.Save.storyQueue.Add(new YeogiCafe.Save.StoryDTO { kind = 7, note = 1 });
                         f1.Save.storyQueue.Add(new YeogiCafe.Save.StoryDTO { kind = 7, note = 6 });
                     }
