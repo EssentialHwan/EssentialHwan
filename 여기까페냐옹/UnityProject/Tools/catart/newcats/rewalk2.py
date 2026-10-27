@@ -29,9 +29,9 @@ err, ff, s = best
 print(cat, 'front', ff, 'scale', round(s, 4), 'inst_w', inst_w)
 def opt(k, d):
     return next((float(x.split('=')[1]) for x in sys.argv if x.startswith('--' + k + '=')), d)
-# 걷기 v3 몸 반응(기본 켬): 어깨·엉덩이 솟음(roll, 몸높이 비), 꼬리 살랑(tail, 도), 무릎·손목 접기(flex, 도)
+# 걷기 v3 몸 반응(기본 끔 — 10/28 형 판단: 덜컹거려서 v2 유지. 예: --roll=0.04 --tail=7 --flex=20): 어깨·엉덩이 솟음(roll, 몸높이 비), 꼬리 살랑(tail, 도), 무릎·손목 접기(flex, 도)
 hi = P.make(body, front, hind, 8, swing=swing, lift=opt('lift', 0.16), bob=opt('bob', 0.03), front_fwd=ff, gait=True,
-            roll=opt('roll', 0.04), tail=opt('tail', 7), flex=opt('flex', 20))
+            roll=opt('roll', 0), tail=opt('tail', 0), flex=opt('flex', 0))
 walk = P.to_game(hi, scale=s)
 lh = hind.shape[0]; lw = hind.shape[1]; R = (lh - lw * 0.45) * s
 print('  stride px/frame ≈', round(2 * R * math.sin(math.radians(swing)) / 4, 2), ' frame', walk[0].shape[1], 'x', walk[0].shape[0])
