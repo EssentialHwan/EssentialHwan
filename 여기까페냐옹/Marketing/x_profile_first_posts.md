@@ -55,15 +55,17 @@ Solo dev · Wintery Studio · Steam 2027
 
 | # | 올리는 날 | 첨부할 파일 (`Marketing/x_assets/`) | 무엇이 보이나 | 상태 |
 |---|---|---|---|---|
-| 1 | 1주 화 | `post01_hello.gif` | 새 그림 고양이 4마리가 타이틀 화면을 걸어다님 | ⏳ |
-| 2 | 1주 목 | `post02_window.gif` | 치즈냥이 들어와 창가석을 골라 앉음 | ⏳ |
-| 3 | 1주 토 | `post03_before_after.png` | 까망냥 옛 그림(왼쪽) → 새 그림(오른쪽) | ⏳ |
-| 4 | 2주 화 | `post04_closing.gif` | 마감 놀아주기: 쓰다듬기 → 싫은 곳 만지면 "흥" | ⏳ |
-| 5 | 2주 목 | `post05_kitchen.gif` | 주방 1인칭 앞발이 요리하다 딴짓 | ⏳ |
-| 6 | 2주 토 | `post06_rain.gif` | 비 오는 통창 앞에서 조는 고양이 | ⏳ |
+| 1 | 1주 화 | `post01_hello.gif` | 영어 타이틀 화면(Purrsonal Taste) 앞에 새 그림 고양이들, 8초 | ✅ |
+| 2 | 1주 목 | `post02_window.gif` | 눈 오는 겨울 아침, 치즈냥이 창가 자리에 앉아 있음 | ✅ |
+| 3 | 1주 토 | `post03_new_cats.gif` | 새 그림 고양이 8마리가 이름표 달고 제자리 걷기 | ✅ |
+| 4 | 2주 화 | `post04_closing.gif` | 마감 놀아주기: 치즈냥을 쓰다듬으면 하트·"Eyes go soft" | ✅ |
+| 5 | 2주 목 | `post05_kitchen.gif` | 1인칭 주방: 앞발로 푸딩 굽기 → 별점 달고 나감 | ✅ |
+| 6 | 2주 토 | `post06_rain.gif` | 비 오는 저녁 통창 + 밥 기다리는 치즈냥 | ✅ |
 
 - 첨부 방법: 글쓰기 창 아래 **사진 아이콘(🖼)** → 파일 선택. GIF는 GIF 그대로 올리면 자동 재생된다(한 글에 GIF는 1개만).
-- 모든 GIF는 새 그림 고양이만 나오게 찍는다. 옛 그림 고양이는 화면에 넣지 않는다.
+- 모든 GIF는 게임 영어 화면에서, 새 그림 고양이만 나오게 찍었다. 옛 그림 고양이는 화면에 넣지 않는다.
+- `post03_before_after.png`(옛 그림 → 새 그림 정지 이미지)도 있지만, 정지 한 장으로는 차이가 약해서(옛 그림이 더 또렷해 보이기도 함) 걷는 GIF 쪽을 추천.
+- GIF 다시 찍기: 에디터 플레이 중 **F9 = 4초 · F10 = 8초** 녹화 → `Build/gif/` 폴더 → `Build/gif/makegif.py`로 자르기·GIF 변환.
 
 **1. 인사** — 첨부: `x_assets/post01_hello.gif`
 ```
@@ -81,10 +83,10 @@ Why does this guest always pick the window seat?
 #indiedev #pixelart #インディーゲーム
 ```
 
-**3. 리디자인 전 → 후** (가장 잘 퍼질 글) — 첨부: `x_assets/post03_before_after.png`
+**3. 새 그림 고양이들** — 첨부: `x_assets/post03_new_cats.gif`
 ```
-Before → after. Redrawing all the cat guests one by one 🐈‍⬛
-リデザイン前 → 後。お客さんの猫を一匹ずつ描き直しています🐈‍⬛
+Redrawing every cat guest one by one — 8 done, 8 to go 🐾 Who's your favorite?
+お客さんの猫を一匹ずつ描き直しています。8匹完成、あと8匹🐾 推しはどの子？
 
 #indiedev #pixelart #インディーゲーム
 ```
@@ -99,16 +101,16 @@ Before closing, you get to play with the last guest. Just… don't touch the wro
 
 **5. 주방 앞발** — 첨부: `x_assets/post05_kitchen.gif`
 ```
-The barista is a cat too. Sometimes it gets distracted.
-バリスタも猫なので、ときどき気が散ります。
+The barista is a cat too. Paws only. Pudding coming right up 🍮
+バリスタも猫なので、前足だけで作ります。プリンおまちどう🍮
 
 #indiedev #pixelart #インディーゲーム
 ```
 
 **6. 비 오는 날 (토요일)** — 첨부: `x_assets/post06_rain.gif`
 ```
-Rainy days make everyone sleepy ☔
-雨の日は、みんな早めにうとうと☔
+Rainy evening at the café ☔ Someone's still waiting for dinner.
+雨の夕方のカフェ☔ まだごはんを待っている子がいます。
 
 #ScreenshotSaturday #indiedev #インディーゲーム
 ```

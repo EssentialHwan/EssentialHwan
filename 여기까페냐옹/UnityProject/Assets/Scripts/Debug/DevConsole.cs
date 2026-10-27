@@ -30,6 +30,9 @@ namespace YeogiCafe.DevTools
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (Input.GetKeyDown(KeyCode.F1)) show = !show;
+            // 홍보 GIF 녹화: F9 = 4초 · F10 = 8초 (Build/gif/)
+            if (Input.GetKeyDown(KeyCode.F9)) GifRecorder.Record("gif4", 4f);
+            if (Input.GetKeyDown(KeyCode.F10)) GifRecorder.Record("gif8", 8f);
 #endif
 #if UNITY_EDITOR
             // 원격 조작·윈도우 알림 등으로 에디터가 잠깐 포커스를 잃으면 EventSystem이 클릭을 계속 무시한다 → 에디터에서만 되살림
@@ -88,6 +91,7 @@ namespace YeogiCafe.DevTools
                         f0.Save.storyQueue.Add(new YeogiCafe.Save.StoryDTO { catId = "cat_tortie", kind = 9 });
                     }
                 }
+                if (GUILayout.Button(GifRecorder.Busy ? "GIF 녹화 중…" : "GIF 녹화 4초 (F9) · 8초는 F10")) { show = false; GifRecorder.Record("gif4", 4f); }
                 if (GUILayout.Button("기억 2장 + 노트 1·6 → 정산"))
                 {
                     var f1 = FindObjectOfType<GameFlowController>();

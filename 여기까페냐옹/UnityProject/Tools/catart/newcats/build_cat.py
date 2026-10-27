@@ -56,10 +56,16 @@ def main():
     # 부품 → 걷기 8 + 뛰기 4
     pa, body, front, hind = P.parts(srcP)
     ff = next((float(a.split('=')[1]) for a in sys.argv if a.startswith('--front=')), 0.10)   # 앞다리 앞쪽으로(고양이별 조정)
-    walk = P.to_game(P.make(body, front, hind, 8, front_fwd=ff))
+    walk_hi = P.make(body, front, hind, 8, front_fwd=ff)
+    walk = P.to_game(walk_hi)
+    # 몸이 짧고 꼬리가 높은 고양이는 폭 48로 맞추면 키가 커진다(회색냥 45px) → 키가 41px 넘으면 폭을 줄여 다른 고양이와 크기 맞춤
+    wh = max(f.shape[0] for f in walk)
+    if wh > 41: walk = P.to_game(walk_hi, width_px=round(48 * 40 / wh)); print('  walk 키', wh, '->', max(f.shape[0] for f in walk))
     for j, f in enumerate(walk): put(52 + j, f)
     run_hi = P.make(body, front, hind, 4, swing=32, lift=0.22, bob=0.04, front_fwd=ff)
     run = P.to_game(run_hi, width_px=50)
+    rh = max(f.shape[0] for f in run)
+    if rh > 42: run = P.to_game(run_hi, width_px=round(50 * 41 / rh)); print('  run 키', rh, '->', max(f.shape[0] for f in run))
     for j, f in enumerate(run): put(28 + j, f)
     out = f'cat_{cat}_v4.png'; sheet.save(out); print('ok', out, sheet.size)
     # 확인용 미리보기(4배)

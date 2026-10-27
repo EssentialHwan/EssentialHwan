@@ -411,10 +411,12 @@ namespace YeogiCafe.UI
         {
             var b = UiFactory.Panel("PauseBadge", parent, new Color(0.29f, 0.21f, 0.18f, 0.9f));
             UiFactory.Frame(b, UiFactory.FrameStyle.Card, new Color(0.29f, 0.21f, 0.18f, 0.9f));
-            UiFactory.SetRect(b, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -6), new Vector2(460, 38));
+            // 윗줄 가운데(날짜·시간대 글자 자리)만 덮는다 — 넓으면 '메뉴'·'배치' 버튼까지 가려졌다(영어 점검)
+            UiFactory.SetRect(b, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -12), new Vector2(360, 40));
             b.GetComponent<Image>().raycastTarget = false;
-            var t = UiFactory.Label("T", b.transform, L.Get("ui.paused"), 18, TextAnchor.MiddleCenter, UiFactory.Cream);
-            UiFactory.Anchor((RectTransform)t.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            var t = UiFactory.Label("T", b.transform, L.Get("ui.paused"), 17, TextAnchor.MiddleCenter, UiFactory.Cream);
+            UiFactory.Anchor((RectTransform)t.transform, Vector2.zero, Vector2.one, new Vector2(10, 0), new Vector2(-10, 0));
+            t.resizeTextForBestFit = true; t.resizeTextMinSize = 11; t.resizeTextMaxSize = 17;
             foreach (var g in b.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;   // 표시만, 클릭은 통과
             pauseBadge = b.gameObject;
             pauseBadge.SetActive(false);

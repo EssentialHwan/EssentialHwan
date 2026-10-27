@@ -37,6 +37,7 @@ namespace YeogiCafe.UI
                                        TextAnchor.MiddleCenter, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)feedback.transform, new Vector2(0, 0), new Vector2(1, 0),
                               new Vector2(0.5f, 0), new Vector2(130, 14), new Vector2(-320, 30));
+            feedback.resizeTextForBestFit = true; feedback.resizeTextMinSize = 11; feedback.resizeTextMaxSize = 18;   // 긴 안내(영어)가 두 줄로 넘쳐 잘리던 것
             // 남은 칸(바닥·벽) — 사기 전에 자리가 있는지 보이게
             slotLabel = UiFactory.Label("Slots", panel.transform, "", 16, TextAnchor.MiddleLeft, UiFactory.Ink);
             UiFactory.SetRect((RectTransform)slotLabel.transform, new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0), new Vector2(28, 14), new Vector2(260, 30));
