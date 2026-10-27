@@ -25,27 +25,35 @@ def wrap(d, text, font, maxw):
         else: cur = t
     lines.append(cur); return lines
 
-# 클립 크기
+# 안전 영역: 프로필 격자(3:4로 위아래가 잘림)와 릴스 화면(위 계정 이름·아래 캡션·오른쪽 버튼)에 안 가리게
+#   가로 120~960(840px) · 세로 330~1440 안에 글·클립·게임 이름을 전부 넣는다
+SAFE_X0, SAFE_W, SAFE_Y0, SAFE_Y1 = 120, 840, 330, 1440
+bg = Image.new('RGB', (W, H), CREAM); d = ImageDraw.Draw(bg)
+fk = ImageFont.truetype(FONT, 58); fe = ImageFont.truetype(FONT, 34); fs = ImageFont.truetype(FONT, 40); fx = ImageFont.truetype(FONT, 30)
+ko_l, en_l = wrap(d, ko, fk, SAFE_W), wrap(d, en, fe, SAFE_W)
+text_h = len(ko_l) * 74 + 12 + len(en_l) * 46
+brand_h = 56 + 44
+gap = 36
 if src == 'newcats':
-    clip_w, clip_h = 1000, 584
+    cw, ch = 1000, 584
 else:
     probe = subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', src], capture_output=True, text=True).stdout.strip().split(',')
-    cw, ch = map(int, probe); clip_w, clip_h = 1000, round(ch * 1000 / cw) // 2 * 2
-cy = 1000 - clip_h // 2                     # 클립 위치(가운데보다 살짝 아래)
-
-# 바탕(문구·테두리)
-bg = Image.new('RGB', (W, H), CREAM); d = ImageDraw.Draw(bg)
-fk = ImageFont.truetype(FONT, 66); fe = ImageFont.truetype(FONT, 40); fs = ImageFont.truetype(FONT, 44); fx = ImageFont.truetype(FONT, 34)
-y = max(150, cy - 330)
-for ln in wrap(d, ko, fk, 960):
-    w = d.textlength(ln, font=fk); d.text(((W - w) / 2, y), ln, font=fk, fill=INK); y += 86
-y += 10
-for ln in wrap(d, en, fe, 960):
-    w = d.textlength(ln, font=fe); d.text(((W - w) / 2, y), ln, font=fe, fill=SOFT); y += 54
-d.rounded_rectangle((40 - 8, cy - 8, 40 + clip_w + 8, cy + clip_h + 8), radius=18, fill=INK)
-yb = cy + clip_h + 70
+    cw, ch = map(int, probe)
+room = (SAFE_Y1 - SAFE_Y0) - text_h - brand_h - gap * 2
+clip_w = min(SAFE_W, int(cw * room / ch)); clip_w -= clip_w % 2
+clip_h = round(ch * clip_w / cw) // 2 * 2
+total = text_h + gap + clip_h + gap + brand_h
+y = SAFE_Y0 + ((SAFE_Y1 - SAFE_Y0) - total) // 2
+for ln in ko_l:
+    w = d.textlength(ln, font=fk); d.text(((W - w) / 2, y), ln, font=fk, fill=INK); y += 74
+y += 12
+for ln in en_l:
+    w = d.textlength(ln, font=fe); d.text(((W - w) / 2, y), ln, font=fe, fill=SOFT); y += 46
+cy = y + gap; cx = (W - clip_w) // 2
+d.rounded_rectangle((cx - 8, cy - 8, cx + clip_w + 8, cy + clip_h + 8), radius=18, fill=INK)
+yb = cy + clip_h + gap
 for t, f, c in (('Purrsonal Taste · 여기카페냐옹', fs, PINK), ('Steam 2027 · @winterystudio', fx, SOFT)):
-    w = d.textlength(t, font=f); d.text(((W - w) / 2, yb), t, font=f, fill=c); yb += 62
+    w = d.textlength(t, font=f); d.text(((W - w) / 2, yb), t, font=f, fill=c); yb += 56
 bgp = os.path.join(tmp, 'bg.png'); bg.save(bgp)
 
 # 새 고양이 8마리: 시트에서 걷기 칸으로 직접 클립 만들기
@@ -57,7 +65,7 @@ if src == 'newcats':
     sheets = {c: Image.open(f'{ROOT}/CatSheets/cat_{c}.bytes').convert('RGBA') for c in cats}
     fn = ImageFont.truetype(FONT, 30)
     for t in range(8):
-        can = Image.new('RGBA', (clip_w, clip_h), (255, 248, 236, 255)); dd = ImageDraw.Draw(can)
+        can = Image.new('RGBA', (1000, 584), (255, 248, 236, 255)); dd = ImageDraw.Draw(can)
         for j, c in enumerate(cats):
             cell = 52 + t
             img = sheets[c].crop(((cell % 4) * F, (cell // 4) * F, (cell % 4 + 1) * F, (cell // 4 + 1) * F)).resize((F * k, F * k), Image.NEAREST)
@@ -73,7 +81,7 @@ if src == 'newcats':
 
 # 소리
 inputs = ['-loop', '1', '-i', bgp, '-stream_loop', '-1', '-i', src, '-stream_loop', '-1', '-i', f'{AUD}/{bgm}.ogg']
-fc = [f'[1:v]scale={clip_w}:{clip_h}:flags=neighbor[c]', f'[0:v][c]overlay=40:{cy}:shortest=0,fps=30,format=yuv420p[v]',
+fc = [f'[1:v]scale={clip_w}:{clip_h}:flags=lanczos[c]', f'[0:v][c]overlay={cx}:{cy}:shortest=0,fps=30,format=yuv420p[v]',
       f'[2:a]volume=0.35,afade=t=in:d=0.6,afade=t=out:st={secs - 1.2}:d=1.2[a0]']
 mix = ['[a0]']
 for i, item in enumerate([s for s in sfx.split(',') if s and s != '-']):
