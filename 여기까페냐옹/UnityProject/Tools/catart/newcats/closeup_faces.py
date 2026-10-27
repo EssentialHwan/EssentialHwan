@@ -1,3 +1,4 @@
+# ※ 폐기(10/28): 덧그린 표정이 부자연·무섭다는 피드백 → closeup_poses.py(원화 포즈 고해상도)로 교체. 참고용으로만 남김.
 # 마감 클로즈업 표정 6개: 고해상도 식빵 그림(closeup.py) 위에서 눈·입만 다시 그린다 → 자세가 절대 안 바뀜.
 #   python3 closeup_faces.py <closeup_<cat>_4.5.png> <catId> [out_dir]
 # 표정: open(기본) · happy(^ ^) · closed(눈 감음) · angry(화남 💢) · wide(놀람 o) · half(시큰둥)
