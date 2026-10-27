@@ -72,3 +72,15 @@ Please be patient with me, meow 🍮
 - 댓글엔 전부 답하기(한국어 댓글은 한국어로)
 - 아늑한 게임 소개 계정(#cozygamer 큰 계정들)을 팔로우해 두고, 상점 페이지 열리면 데모 키 연락
 - 위시리스트 부탁은 상점 페이지 열린 뒤부터(프로필 링크 칸에 스팀 주소)
+
+## 5. 유튜브 쇼츠 (같은 릴스 재활용)
+채널: **Wintery Studio · Purrsonal Taste** (@WinteryStudio) — 10/27 개설. 긴 영상은 상점 페이지·트레일러 나온 뒤.
+- 설정: 아동용 **아님**(형이 직접 체크) · 연령 제한 없음 · 공개
+- 설명란 = 인스타 캡션 + `Solo dev · Wintery Studio · Steam 2027`
+- 하루 1개씩
+
+| # | 파일 | 제목 | 상태 |
+|---|---|---|---|
+| 1 | `v2_reel01_hello.mp4` | Your cat guests forgot what they love 🐾 Purrsonal Taste (여기카페냐옹) #indiegame #cozygames | ✅ 10/27 youtube.com/shorts/iDOK5v2_yAg |
+| 2 | `v2_reel02_closing.mp4` | Closing time with the last guest 🐈 Don't touch the wrong spot… #cozygames #pixelart | ⏳ |
+| 3 | `v2_reel03_kitchen.mp4` | The barista is a cat… paws only 🍮 #indiegame #pixelart | ⏳ |
