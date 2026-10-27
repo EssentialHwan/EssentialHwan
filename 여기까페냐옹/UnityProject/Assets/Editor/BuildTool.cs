@@ -73,7 +73,7 @@ namespace YeogiCafe.EditorTools
 
             PlayerSettings.productName = "여기카페냐옹";   // 바뀌면 저장 폴더도 바뀜 → SaveManager가 예전 폴더 세이브·사진을 가져옴
             PlayerSettings.companyName = "Wintery Studio";
-            PlayerSettings.bundleVersion = "0.9.4";   // 친구 플레이테스트 3차: 카페 확장·사물 옮기기·피드백 수정·이야기·새 고양이 그림
+            PlayerSettings.bundleVersion = "0.9.5";   // 친구 플레이테스트 3차: 카페 확장·사물 옮기기·피드백 수정·이야기·새 고양이 그림 + 새 배경 음악
             PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
             PlayerSettings.defaultScreenWidth = 1600;
             PlayerSettings.defaultScreenHeight = 900;
@@ -125,10 +125,12 @@ $@"여기카페냐옹 플레이테스트 (v{v})
 2) 이렇게 해 주세요
    - 설명서 없이 그냥 해 보는 게 테스트예요. 모르는 게 있으면 그게 고칠 점이에요.
    - 최소 1시간, 또는 7일차까지 해 주시면 좋아요. 그 뒤는 자유!
-   - 소리는 아직 임시음이에요(나중에 바뀌어요).
+   - 배경 음악·몇몇 효과음은 새로 만든 거예요. 고양이 울음 등 나머지는 아직 임시음이에요.
    - 영업 중에 끄면 그날은 아침부터 다시 시작해요. (하루 끝 정산 때 저장돼요)
 
-★ 이번 버전(v0.9.4)에서 바뀐 것 — 지난번 설문 고마워요!
+★ 이번 버전(v0.9.5)에서 바뀐 것 — 지난번 설문 고마워요!
+   - 배경 음악을 새로 만들었어요: 카페 주제곡 하나를 아침·점심·저녁·밤, 날씨마다 다르게 편곡
+   - 문 종(딸랑딸랑)·결제·버튼·알림·요리 완성 소리도 새로
    - 카페 넓히기가 눈에 보여요: 레벨 1은 가까이, 2는 옆 공간, 3은 다락·캣워크까지
    - 창·칠판·조명·화분을 옮기거나 빼고, 큰 통창을 새로 살 수 있어요(배치 모드)
    - 오른쪽 주문대를 없앴어요 · 메뉴 창을 열면 시간이 멈춘다는 표시가 떠요

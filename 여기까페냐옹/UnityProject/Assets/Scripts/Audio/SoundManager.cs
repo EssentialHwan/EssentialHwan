@@ -72,10 +72,15 @@ namespace YeogiCafe.Audio
                 var clip = Clip(want);
                 if (clip != null)
                 {
+                    var from = aActive ? bgmA : bgmB;
+                    bool sameSong = bgmKey != null && want.Length == bgmKey.Length && want.StartsWith(bgmKey.Substring(0, bgmKey.Length - 1));
                     bgmKey = want;
                     aActive = !aActive;
                     var to = aActive ? bgmA : bgmB;
-                    to.clip = clip; to.volume = 0f; to.Play();
+                    to.clip = clip; to.volume = 0f;
+                    // 같은 시간대에서 날씨만 바뀌면(bgm_1_0 → bgm_1_2) 같은 노래의 다른 편곡이라 길이가 같다 → 듣던 자리에서 이어 튼다
+                    to.Play();
+                    if (sameSong && from.isPlaying && from.clip != null && from.clip.samples == clip.samples) to.timeSamples = from.timeSamples;
                     xfade = 0f;
                 }
                 else bgmKey = want;
