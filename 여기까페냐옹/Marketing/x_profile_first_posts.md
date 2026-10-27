@@ -10,9 +10,15 @@
 ## 1. 처음 한 번 세팅 (20분)
 - **이름:** `Wintery Studio · Purrsonal Taste`
 - **아이디:** `@winterystudio` (이미 있으면 `@wintery_studio`)
-- **프로필 사진:** 스튜디오 로고(눈 위를 걷는 흰 고양이)
-- **헤더:** 캡슐 그림(글자 있는 것)
-- **링크 칸:** 상점 페이지 전엔 비워 두거나 디스코드 → 공개되면 스팀 페이지
+> 이미지는 모두 `Marketing/x_assets/` 폴더에 있다. ✅ = 이미 만들어 둠 · ⏳ = Claude가 만들 예정
+
+| X 화면의 자리 | 넣을 파일 | 크기 | 상태 |
+|---|---|---|---|
+| 프로필 → **프로필 사진**(동그라미) | `x_assets/profile_400x400.png` (눈 위를 걷는 흰 고양이 로고) | 400×400 | ✅ |
+| 프로필 → **헤더 사진**(맨 위 가로 배너) | `x_assets/header_1500x500.png` (햇살 드는 카페 그림) | 1500×500 | ✅ |
+
+- 넣는 곳: X 왼쪽 메뉴 **프로필 → 프로필 수정** → 위쪽 배너 칸 카메라 아이콘 = 헤더, 동그라미 카메라 아이콘 = 프로필 사진
+- **링크 칸:** 상점 페이지 전엔 비워 두기 → 공개되면 스팀 페이지 주소
 - **소개(bio):**
 ```
 A cozy cat café where you deduce what your feline guests secretly love 🐾
@@ -47,7 +53,19 @@ Solo dev · Wintery Studio · Steam 2027
 
 ## 5. 첫 2주 글 6개 (화·목·토)
 
-**1. 인사** — GIF: 새 그림 고양이들이 타이틀 화면을 걸어다니는 장면
+| # | 올리는 날 | 첨부할 파일 (`Marketing/x_assets/`) | 무엇이 보이나 | 상태 |
+|---|---|---|---|---|
+| 1 | 1주 화 | `post01_hello.gif` | 새 그림 고양이 4마리가 타이틀 화면을 걸어다님 | ⏳ |
+| 2 | 1주 목 | `post02_window.gif` | 치즈냥이 들어와 창가석을 골라 앉음 | ⏳ |
+| 3 | 1주 토 | `post03_before_after.png` | 까망냥 옛 그림(왼쪽) → 새 그림(오른쪽) | ⏳ |
+| 4 | 2주 화 | `post04_closing.gif` | 마감 놀아주기: 쓰다듬기 → 싫은 곳 만지면 "흥" | ⏳ |
+| 5 | 2주 목 | `post05_kitchen.gif` | 주방 1인칭 앞발이 요리하다 딴짓 | ⏳ |
+| 6 | 2주 토 | `post06_rain.gif` | 비 오는 통창 앞에서 조는 고양이 | ⏳ |
+
+- 첨부 방법: 글쓰기 창 아래 **사진 아이콘(🖼)** → 파일 선택. GIF는 GIF 그대로 올리면 자동 재생된다(한 글에 GIF는 1개만).
+- 모든 GIF는 새 그림 고양이만 나오게 찍는다. 옛 그림 고양이는 화면에 넣지 않는다.
+
+**1. 인사** — 첨부: `x_assets/post01_hello.gif`
 ```
 Hi! I'm making a cozy cat café game solo — your guests are cats, and you have to figure out what they secretly love 🐾
 はじめまして！猫がお客さんのカフェゲームをひとりで作っています。猫たちの「好き」を当ててあげてください🐾
@@ -55,7 +73,7 @@ Hi! I'm making a cozy cat café game solo — your guests are cats, and you have
 #indiedev #pixelart #インディーゲーム
 ```
 
-**2. 창가 손님** — GIF: 손님이 들어와 자리를 고르는 장면
+**2. 창가 손님** — 첨부: `x_assets/post02_window.gif`
 ```
 Why does this guest always pick the window seat?
 このお客さん、どうしていつも窓ぎわなんだろう？
@@ -63,7 +81,7 @@ Why does this guest always pick the window seat?
 #indiedev #pixelart #インディーゲーム
 ```
 
-**3. 리디자인 전 → 후** (가장 잘 퍼질 글) — 이미지: 같은 고양이 옛 그림 / 새 그림 나란히
+**3. 리디자인 전 → 후** (가장 잘 퍼질 글) — 첨부: `x_assets/post03_before_after.png`
 ```
 Before → after. Redrawing all the cat guests one by one 🐈‍⬛
 リデザイン前 → 後。お客さんの猫を一匹ずつ描き直しています🐈‍⬛
@@ -71,7 +89,7 @@ Before → after. Redrawing all the cat guests one by one 🐈‍⬛
 #indiedev #pixelart #インディーゲーム
 ```
 
-**4. 마감 놀아주기** — GIF: 쓰다듬기 → 싫어하는 곳을 만지면 "흥"
+**4. 마감 놀아주기** — 첨부: `x_assets/post04_closing.gif`
 ```
 Before closing, you get to play with the last guest. Just… don't touch the wrong spot.
 閉店前は、最後のお客さんと遊べます。…さわる場所には気をつけて。
@@ -79,7 +97,7 @@ Before closing, you get to play with the last guest. Just… don't touch the wro
 #indiedev #pixelart #インディーゲーム
 ```
 
-**5. 주방 앞발** — GIF: 1인칭 앞발 꾹꾹이·딴짓
+**5. 주방 앞발** — 첨부: `x_assets/post05_kitchen.gif`
 ```
 The barista is a cat too. Sometimes it gets distracted.
 バリスタも猫なので、ときどき気が散ります。
@@ -87,7 +105,7 @@ The barista is a cat too. Sometimes it gets distracted.
 #indiedev #pixelart #インディーゲーム
 ```
 
-**6. 비 오는 날 (토요일)** — GIF: 비 오는 통창 + 조는 고양이
+**6. 비 오는 날 (토요일)** — 첨부: `x_assets/post06_rain.gif`
 ```
 Rainy days make everyone sleepy ☔
 雨の日は、みんな早めにうとうと☔
@@ -105,7 +123,8 @@ Watch where they sit, what they leave, where they nap — and help them find it 
 Wishlist on Steam ↓ (링크는 첫 답글)
 #indiedev #cozygames #インディーゲーム
 ```
-(GIF: 손님 입장 → 자리 고르기 → 일지에 단서 → 정답 하트)
+첨부: `x_assets/pinned_loop.gif` ⏳ (손님 입장 → 자리 고르기 → 일지에 단서 → 정답 하트, 10초 안)
+- 고정 방법: 글 오른쪽 위 **⋯ → 프로필에 고정하기**
 - 세계관 정본(기획/15)에 맞춰 "모른다"를 "**잊었다 → 되찾는다**"로 바꿨다.
 
 ---
