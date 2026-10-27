@@ -101,6 +101,34 @@ namespace YeogiCafe.Art
             return !(neg && pos);
         }
 
+        // ── 고해상도 클로즈업(원화에서 바로 4.5배로 뽑은 식빵 그림 + 표정 6개) ──
+        //  Resources/CatCloseups/close_<cat>_<표정>.bytes(내용은 PNG). 있으면 이걸 쓰고, 없으면 아래 시트 3배 그림.
+        //  같은 식빵 자세에서 눈·입만 바뀌므로 표정이 바뀌어도 고양이가 '휙' 바뀌지 않는다. 화면 크기·판정 좌표는 그대로(W×H 기준).
+        static readonly System.Collections.Generic.Dictionary<string, Sprite> hires = new();
+        public static string FaceKey(State s) =>
+            s.eyes == Eyes.Angry ? "angry" : (s.mouthOpen || s.eyes == Eyes.Wide) ? "wide" :
+            s.eyes == Eyes.Happy ? "happy" : s.eyes == Eyes.Closed ? "closed" : s.eyes == Eyes.Half ? "half" : "open";
+        public static Sprite HiRes(string id, State s)
+        {
+            string key = $"close_{id}_{FaceKey(s)}";
+            if (hires.TryGetValue(key, out var sp)) return sp;
+            sp = null;
+            var ta = Resources.Load<TextAsset>("CatCloseups/" + key);
+            if (ta != null)
+            {
+                var t = new Texture2D(2, 2, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp, name = key };
+                if (t.LoadImage(ta.bytes))
+                {
+                    t.filterMode = FilterMode.Point;
+                    sp = Sprite.Create(t, new Rect(0, 0, t.width, t.height), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect);
+                }
+            }
+            hires[key] = sp;
+            return sp;
+        }
+        public static bool HasHiRes(string id) => HiRes(id, new State()) != null;
+        public static void UseSheetZones(string id) => sheetMode = CatSheet.Has(id);
+
         // ── 도트 시트 고양이(홀의 그 고양이 그림을 3배로) ── 시트가 있으면 이쪽으로 그린다.
         static bool sheetMode;
         const int SheetScale = 3;

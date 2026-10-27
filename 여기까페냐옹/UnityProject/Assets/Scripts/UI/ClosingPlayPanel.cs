@@ -29,7 +29,7 @@ namespace YeogiCafe.UI
 
         CatData cat; CatSaveData cs; TouchStyle style;
         System.Action onDone;
-        float mood, timeLeft, t, blinkAt, faceHold, shake;
+        float mood, timeLeft, t, blinkAt, faceHold, shake, leanX;
         int strikes; bool open, finale; float finaleT; bool suckle;
         CatCloseup.State face, baseFace;
         readonly Dictionary<PetZone, int> zoneCount = new();
@@ -140,7 +140,9 @@ namespace YeogiCafe.UI
         void ApplyFace()
         {
             string id = cat.catId; var s = face;
-            catImg.sprite = RuntimeSprites.Get($"close_{id}_{s.Key}", () => CatCloseup.Draw(id, s));
+            var hi = CatCloseup.HiRes(id, s);
+            if (hi != null) { catImg.sprite = hi; leanX = s.lean * 3f * Scale; CatCloseup.UseSheetZones(id); }   // 고해상도도 시트와 같은 식빵 구도 → 같은 판정
+            else { catImg.sprite = RuntimeSprites.Get($"close_{id}_{s.Key}", () => CatCloseup.Draw(id, s)); leanX = 0f; }
         }
 
         public void Tick(float dt)
@@ -173,7 +175,7 @@ namespace YeogiCafe.UI
             float br = 1f + Mathf.Sin(t * 2.4f) * 0.012f;
             catRt.localScale = new Vector3(1f, br, 1f);
             shake = Mathf.Max(0f, shake - dt);
-            catRt.anchoredPosition = new Vector2(shake > 0f ? Mathf.Sin(t * 70f) * 6f * shake / 0.4f : 0f, 100f);
+            catRt.anchoredPosition = new Vector2(leanX + (shake > 0f ? Mathf.Sin(t * 70f) * 6f * shake / 0.4f : 0f), 100f);
             gaugeFill.anchorMax = new Vector2(Mathf.Clamp01(mood / 100f), 1f);
         }
 
