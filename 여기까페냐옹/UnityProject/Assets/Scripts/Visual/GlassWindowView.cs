@@ -24,7 +24,7 @@ namespace YeogiCafe.Visual
         void Awake()
         {
             var o = new GameObject("GlassOutside"); o.transform.SetParent(transform, false);
-            outside = o.AddComponent<SpriteRenderer>(); outside.sortingOrder = YSort.WallProps;
+            outside = o.AddComponent<SpriteRenderer>(); outside.sortingOrder = YSort.WallProps - 3;   // 그 위에 거리 움직임(StreetLife) -2~0
             var f = new GameObject("GlassFrame"); f.transform.SetParent(transform, false);
             f.transform.localPosition = new Vector3(0f, -(GlassWindowDrawing.Border + 3) / 32f, 0f);
             frame = f.AddComponent<SpriteRenderer>(); frame.sortingOrder = YSort.WallProps + 2;
@@ -33,6 +33,8 @@ namespace YeogiCafe.Visual
         void Start()
         {
             int gw = glassPx;
+            var life = gameObject.AddComponent<StreetLife>();          // 창밖 행인·차(10/29)
+            life.widthPx = gw; life.outside = outside;
             frame.sprite = gw == GlassWindowDrawing.GW ? RuntimeSprites.Get("glass_frame", GlassWindowDrawing.Frame)
                                                        : RuntimeSprites.Get("glass_frame_" + gw, () => GlassWindowDrawing.Frame(gw));
         }

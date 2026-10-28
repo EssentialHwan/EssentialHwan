@@ -83,6 +83,29 @@ namespace YeogiCafe.Art
                 Cloud(c, cx, cy, s, cl, cs);
             }
 
+            // ── 먼 시내(10/29): 집 줄 뒤로 옅은 빌딩·교회 첨탑·언덕 — 하늘색에 섞어 거리감 ──
+            {
+                var haze = Lerp(low, C(120, 130, 156), weather == 2 ? 0.45f : 0.32f);
+                if (phase == 2 && weather == 0) haze = Lerp(low, C(150, 110, 140), 0.35f);
+                var hazeD = Mul(haze, 0.94f);
+                var frng = new System.Random(11);
+                bool lightsF = phase == 2 || weather == 2;
+                for (int x = 0; x < GW; x++) { int hy = 30 + (int)(4 * Mathf.Sin(x * 0.045f) + 2 * Mathf.Sin(x * 0.13f + 1f)); c.VLine(x, 22, hy, Lerp(haze, low, 0.35f)); }   // 언덕
+                int fx = -4;
+                while (fx < GW)
+                {
+                    int fw = 10 + frng.Next(0, 16), fh = 16 + frng.Next(0, 20);
+                    c.FillRect(fx, 22, fx + fw - 1, 22 + fh, haze);
+                    for (int wy = 26; wy < 20 + fh; wy += 4)
+                        for (int wx = fx + 2; wx < fx + fw - 2; wx += 3)
+                            c.Set(wx, wy, lightsF && frng.NextDouble() < 0.5 ? C(250, 220, 150) : hazeD);
+                    if (frng.NextDouble() < 0.15) { c.VLine(fx + fw / 2, 23 + fh, 30 + fh, haze); c.Set(fx + fw / 2, 31 + fh, lightsF ? C(255, 120, 110) : hazeD); }   // 안테나
+                    fx += fw + frng.Next(4, 14);
+                }
+                // 교회 첨탑 하나
+                c.FillRect(178, 22, 186, 44, haze); for (int k = 0; k < 6; k++) c.HLine(178 + k, 186 - k, 45 + k, haze); c.VLine(182, 51, 54, hazeD); c.HLine(181, 183, 53, hazeD);
+            }
+
             // ── 건너편 거리: 집·가게 줄 ──
             int baseY = 22;
             bool lights = phase == 2 || weather == 2;
@@ -118,22 +141,49 @@ namespace YeogiCafe.Art
                         for (int x = bx; x < bx + w; x += 5) c.Set(x, baseY + h + 1, snow);   // 처마에 매달린 눈
                     }
                 }
+                // 1층 가게(10/29): 쇼윈도 + 문 + 차양 + 간판 그림(빵·꽃·생선·책·커피·실타래). 높은 집만
+                bool shop = h >= 19 && rng.NextDouble() < 0.75;
+                int firstWin = baseY + 6;
+                if (shop)
+                {
+                    int kind = rng.Next(0, 6);
+                    var dark = Mul(wall, 0.55f);
+                    var glassC = lights ? C(255, 222, 150) : weather == 2 ? C(120, 134, 156) : C(196, 222, 236);
+                    c.FillRect(bx + 2, baseY, bx + w - 9, baseY + 5, glassC);                      // 쇼윈도
+                    c.RectOutline(bx + 1, baseY, bx + w - 8, baseY + 6, dark);
+                    for (int ix = bx + 4; ix < bx + w - 10; ix += 4) c.Set(ix, baseY + 1, ShopItem(kind, ix));   // 진열된 물건
+                    c.FillRect(bx + w - 6, baseY, bx + w - 3, baseY + 6, Mul(wall, 0.45f));       // 문
+                    c.Set(bx + w - 4, baseY + 3, C(240, 210, 120));                                 // 손잡이
+                    var a1 = ShopColor(kind, season); var a2 = C(250, 240, 230);
+                    if (weather == 2) { a1 = Mul(a1, 0.75f); a2 = Mul(a2, 0.75f); }
+                    for (int x = bx + 1; x < bx + w - 1; x++) { var ac = ((x / 3) % 2 == 0) ? a1 : a2; c.VLine(x, baseY + 7, baseY + 9, ac); c.Set(x, baseY + 7, (x % 3 == 1) ? Mul(ac, 0.8f) : ac); }   // 차양
+                    int sx = bx + w / 2 - 4;                                                         // 간판
+                    c.FillRect(sx, baseY + 10, sx + 8, baseY + 14, C(250, 244, 230)); c.RectOutline(sx, baseY + 10, sx + 8, baseY + 14, Mul(a1, 0.8f));
+                    SignIcon(c, sx + 2, baseY + 11, kind);
+                    firstWin = baseY + 17;
+                }
                 // 창문들
-                for (int wy = baseY + 6; wy < baseY + h - 4; wy += 9)
+                for (int wy = firstWin; wy < baseY + h - 4; wy += 9)
                     for (int wx = bx + 4; wx < bx + w - 6; wx += 9)
                     {
                         bool lit = lights && rng.NextDouble() < 0.6;
                         var glass = lit ? C(255, 220, 140) : weather == 2 ? C(110, 124, 146) : C(170, 206, 230);
                         c.FillRect(wx, wy, wx + 4, wy + 4, glass);
                         c.HLine(wx, wx + 4, wy + 2, Mul(glass, 0.85f));
+                        if (season != 3 && rng.NextDouble() < 0.3)                                   // 창가 화분(꽃)
+                        {
+                            c.HLine(wx - 1, wx + 5, wy - 1, C(150, 96, 70));
+                            var fl = season == 2 ? C(236, 150, 70) : (wx % 2 == 0 ? C(240, 110, 140) : C(250, 210, 90));
+                            c.Set(wx, wy, fl); c.Set(wx + 2, wy, C(96, 160, 90)); c.Set(wx + 4, wy, fl);
+                        }
                     }
-                // 가게 차양(줄무늬)
-                if (rng.NextDouble() < 0.5)
+                if (!shop && rng.NextDouble() < 0.5)                                                  // 가게 아닌 집: 작은 차양만
                 {
                     var a1 = season == 1 ? C(70, 140, 214) : C(222, 96, 104); var a2 = C(250, 240, 230);   // 여름 차양은 시원한 파랑
                     if (weather == 2) { a1 = Mul(a1, 0.75f); a2 = Mul(a2, 0.75f); }
                     for (int x = bx + 2; x < bx + w - 2; x++) { var ac = ((x / 3) % 2 == 0) ? a1 : a2; c.VLine(x, baseY + 2, baseY + 5, ac); }
                 }
+                if (hi % 3 == 1 && season != 3) { int chx = bx + w - 7; c.FillRect(chx, baseY + h + 2, chx + 2, baseY + h + 7, C(150, 90, 80)); }   // 굴뚝
                 bx += w + rng.Next(2, 6);
                 // 집 사이 가로수
                 if (rng.NextDouble() < (season == 1 ? 0.85 : 0.55) && bx < GW) { Tree(c, bx - 2, baseY, weather, phase, season); }   // 여름은 가로수가 무성
@@ -143,10 +193,25 @@ namespace YeogiCafe.Art
             var road = weather == 2 ? C(70, 74, 86) : C(128, 126, 132);
             var walk = weather == 2 ? C(120, 122, 134) : season == 3 ? C(232, 236, 244) : C(206, 196, 184);
             c.FillRect(0, 9, GW - 1, baseY - 1, road);
-            for (int x = 6; x < GW; x += 22) c.HLine(x, x + 9, 15, weather == 2 ? C(170, 170, 160) : C(240, 232, 200));   // 차선
+            var paint = weather == 2 ? C(170, 170, 160) : C(240, 232, 200);
+            for (int x = 6; x < GW; x += 22) if (x + 9 < 98 || x > 124) c.HLine(x, x + 9, 15, paint);   // 차선(횡단보도 자리는 비움)
+            for (int y = 10; y <= 20; y += 2) c.HLine(100, 122, y, weather == 2 ? C(150, 152, 156) : C(232, 230, 222));   // 횡단보도
             c.FillRect(0, 0, GW - 1, 8, walk);
             c.HLine(0, GW - 1, 8, Mul(walk, 0.8f));                                   // 연석
             for (int x = 0; x < GW; x += 12) c.VLine(x, 0, 7, Mul(walk, 0.9f));        // 보도블록
+            c.HLine(0, GW - 1, 21, Mul(walk, 0.85f));                                 // 건너편 보도 턱
+            // 거리 소품(10/29): 우체통 · 버스 정류장 · 벤치 · 자전거 거치대
+            {
+                var ink = C(60, 52, 58);
+                c.FillRect(66, 1, 70, 7, C(214, 66, 66)); c.HLine(66, 70, 7, C(170, 44, 52)); c.HLine(67, 69, 5, ink); c.VLine(68, 0, 1, ink);   // 우체통
+                c.VLine(160, 1, 15, C(90, 96, 110)); c.Disc(160, 15, 2, C(70, 130, 210)); c.Set(160, 15, C(250, 250, 250));                     // 정류장 표지판
+                c.FillRect(164, 1, 186, 1, C(150, 156, 168)); c.VLine(164, 1, 12, C(150, 156, 168)); c.VLine(186, 1, 12, C(150, 156, 168));
+                c.FillRect(162, 12, 188, 13, C(110, 120, 140));                                                                              // 정류장 지붕
+                for (int y = 2; y < 12; y++) c.Blend(165, y, C(200, 226, 240, 90));
+                c.FillRect(168, 3, 182, 4, C(170, 110, 76)); c.VLine(169, 1, 3, ink); c.VLine(181, 1, 3, ink);                              // 정류장 벤치
+                c.FillRect(206, 3, 220, 4, C(170, 110, 76)); c.HLine(206, 220, 6, C(170, 110, 76)); c.VLine(207, 1, 6, ink); c.VLine(219, 1, 6, ink);   // 벤치
+                for (int x = 236; x < 250; x += 4) { c.VLine(x, 1, 4, C(150, 156, 168)); c.Set(x + 1, 4, C(150, 156, 168)); }                 // 자전거 거치대
+            }
             // 가로등
             for (int x = 30; x < GW; x += 96)
             {
@@ -187,6 +252,29 @@ namespace YeogiCafe.Art
             else if (weather == 1)
                 for (int y = 30; y < GH; y++) for (int x = 0; x < GW; x++) c.Blend(x, y, C(220, 224, 230, 24));
             return c;
+        }
+
+        // 가게 종류: 0 빵 1 꽃 2 생선 3 책 4 커피 5 실타래
+        static Color32 ShopColor(int k, int season) => k switch
+        {
+            0 => C(222, 150, 80), 1 => C(236, 120, 160), 2 => C(80, 150, 210), 3 => C(110, 150, 100), 4 => C(150, 100, 80), _ => C(170, 120, 200)
+        };
+        static Color32 ShopItem(int k, int x) => k switch
+        {
+            0 => x % 8 == 0 ? C(210, 150, 80) : C(240, 200, 120), 1 => x % 8 == 0 ? C(240, 110, 140) : C(250, 210, 90), 2 => C(120, 170, 220),
+            3 => x % 8 == 0 ? C(200, 80, 80) : C(80, 120, 190), 4 => C(250, 250, 245), _ => x % 8 == 0 ? C(230, 120, 170) : C(140, 180, 230)
+        };
+        static void SignIcon(PixelCanvas c, int x, int y, int k)
+        {
+            switch (k)
+            {
+                case 0: c.HLine(x, x + 4, y, C(200, 130, 60)); c.HLine(x + 1, x + 3, y + 1, C(230, 170, 90)); c.Set(x + 2, y + 2, C(230, 170, 90)); break;   // 빵
+                case 1: c.Set(x + 2, y, C(90, 150, 80)); c.Set(x + 2, y + 1, C(90, 150, 80)); c.Set(x + 1, y + 2, C(236, 110, 150)); c.Set(x + 3, y + 2, C(236, 110, 150)); c.Set(x + 2, y + 2, C(250, 210, 90)); c.Set(x + 2, y + 3, C(236, 110, 150)); break;   // 꽃
+                case 2: c.HLine(x, x + 3, y + 1, C(80, 140, 200)); c.Set(x + 4, y, C(80, 140, 200)); c.Set(x + 4, y + 2, C(80, 140, 200)); c.Set(x + 1, y + 1, C(30, 30, 40)); break;   // 생선
+                case 3: c.HLine(x, x + 4, y, C(200, 80, 80)); c.HLine(x, x + 4, y + 1, C(80, 120, 190)); c.HLine(x + 1, x + 4, y + 2, C(110, 160, 100)); break;   // 책
+                case 4: c.FillRect(x + 1, y, x + 3, y + 2, C(140, 90, 70)); c.Set(x + 4, y + 1, C(140, 90, 70)); c.Set(x + 2, y + 3, C(200, 200, 210)); break;   // 커피
+                default: c.Disc(x + 2, y + 1, 1, C(200, 120, 200)); c.Set(x + 4, y, C(200, 120, 200)); break;   // 실타래
+            }
         }
 
         static void Sun(PixelCanvas c, int x, int y, int r, Color32 core, Color32 glow)
