@@ -30,9 +30,10 @@ namespace YeogiCafe.DevTools
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (Input.GetKeyDown(KeyCode.F1)) show = !show;
-            // 홍보 GIF 녹화: F9 = 4초 · F10 = 8초 (Build/gif/)
+            // 홍보 영상 녹화(30fps): F9 = 4초 · F10 = 8초 · F11 = 시작/끝 (Build/gif/)
             if (Input.GetKeyDown(KeyCode.F9)) GifRecorder.Record("gif4", 4f);
             if (Input.GetKeyDown(KeyCode.F10)) GifRecorder.Record("gif8", 8f);
+            if (Input.GetKeyDown(KeyCode.F11)) GifRecorder.Toggle();          // 시작/끝(최대 40초, 30fps)
 #endif
 #if UNITY_EDITOR
             // 원격 조작·윈도우 알림 등으로 에디터가 잠깐 포커스를 잃으면 EventSystem이 클릭을 계속 무시한다 → 에디터에서만 되살림
@@ -91,7 +92,7 @@ namespace YeogiCafe.DevTools
                         f0.Save.storyQueue.Add(new YeogiCafe.Save.StoryDTO { catId = "cat_tortie", kind = 9 });
                     }
                 }
-                if (GUILayout.Button(GifRecorder.Busy ? "GIF 녹화 중…" : "GIF 녹화 4초 (F9) · 8초는 F10")) { show = false; GifRecorder.Record("gif4", 4f); }
+                if (GUILayout.Button(GifRecorder.Busy ? "GIF 녹화 중…" : "녹화 4초 F9 · 8초 F10 · 시작/끝 F11")) { show = false; GifRecorder.Record("gif4", 4f); }
                 if (GUILayout.Button("기억 2장 + 노트 1·6 → 정산"))
                 {
                     var f1 = FindObjectOfType<GameFlowController>();
@@ -115,6 +116,7 @@ namespace YeogiCafe.DevTools
                 var fl0 = FindObjectOfType<GameFlowController>();
                 if (fl0 != null && fl0.Save != null && GUILayout.Button($"카페 레벨 바꾸기 (지금 Lv{fl0.Save.cafeLevel})"))
                     fl0.Save.cafeLevel = fl0.Save.cafeLevel >= 3 ? 1 : fl0.Save.cafeLevel + 1;   // 화면 확장 연출 점검용(조건 무시)
+                if (GUILayout.Button("추리 준비: 카페 안 고양이 단서 채우기")) DebugPrepGuess();   // 홍보 영상(추리 장면) 연출용
                 if (GUILayout.Button("손님 부르기(아무나)")) { var sp = FindObjectOfType<YeogiCafe.Core.CustomerSpawner>(); if (sp != null) sp.DebugSpawnAny(); }
                 if (GUILayout.Button("체험판 끝 화면 미리보기")) { var ui = FindObjectOfType<YeogiCafe.UI.GameUiController>(); if (ui != null) { ui.DebugDemoEnd(); show = false; } }
                 var flow = FindObjectOfType<GameFlowController>();
@@ -194,6 +196,29 @@ namespace YeogiCafe.DevTools
         }
 
         // 개발용: 아무 고양이나 해당 태그 시설로 보낸다
+        // 홍보 영상 연출용: 지금 카페에 있는 고양이들의 음식·자리·시설 단서를 '거의 확실'까지 채운다(이미 맞힌 칸은 그대로).
+        // → 영업 종료 후 관찰 일지에서 세 칸 모두 추리 → '모두 정답' 장면을 찍을 수 있다. (세이브에 남으니 테스트 세이브에서만)
+        void DebugPrepGuess()
+        {
+            var cm = FindObjectOfType<CatManager>(); var save = flow != null ? flow.Save : null;
+            if (cm == null || save == null) return;
+            foreach (var b in cm.Active)
+            {
+                if (b == null || b.data == null) continue;
+                var obs = save.GetOrCreateCat(b.data.catId).observation;
+                foreach (PrefAxis axis in System.Enum.GetValues(typeof(PrefAxis)))
+                {
+                    var r = obs.Get(axis);
+                    if (r.state == ObsState.Recorded) continue;
+                    string target = axis == PrefAxis.Food ? b.data.foodFavoriteMenuId
+                                  : axis == PrefAxis.Seat ? b.data.seatPreference.ToString() : b.data.facilityPreference.ToString();
+                    var t = r.GetOrCreate(target); t.total = Mathf.Max(t.total, 20f);
+                    r.state = ObsState.Confirmable; r.lastGuessDay = -1; r.wrongGuesses.Clear(); r.pendingGuess = null;
+                }
+                Debug.Log("[Dev] 추리 준비: " + b.data.catId);
+            }
+        }
+
         void DebugSendTo(YeogiCafe.Data.FacilityTag tag, string idPrefix = null)
         {
             var cafe = FindObjectOfType<CafeContext>(); var cm = FindObjectOfType<CatManager>();

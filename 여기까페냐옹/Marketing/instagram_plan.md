@@ -11,7 +11,12 @@ PC: `Desktop\YeogiCafe\IG_reels\` · 저장소: `Marketing/ig_assets/`
 | 1 | 1주 수 | `reel01_hello.mp4` | 8초 | 고양이 손님들은 좋아하던 걸 잊어버렸어요 | 아침 BGM + 야옹·트릴 |
 | 2 | 1주 토 | `reel02_closing.mp4` | 10.6초 | 마감 전, 마지막 손님이랑 놀아 주기 | 저녁 BGM + 골골 + 작은 야옹 |
 | 3 | 2주 수 | `reel03_kitchen.mp4` | 8초 | 바리스타도 고양이라서 앞발로 만들어요 | 점심 BGM + 지글지글 + 조르는 야옹 |
-| 4 | 2주 토 | `reel04_parade.mp4` | 10초 | 새 손님들이 카페로 걸어와요 (8마리 산책, 걷기 v2) | 아침 BGM + 문 종·트릴·야옹 |
+| 4 | 2주 토 | `reel04_observe.mp4` | 9초 | 이 손님은 뭘 좋아할까? (관찰: 샴냥이 사다리 타고 다락 캣워크로) | 아침 BGM + 오르는 소리·트릴 |
+| 5 | 3주 수 | `reel05_guess.mp4` | 16초 | 오늘 본 단서로 취향을 맞혀 보세요 (추리: 턱시도냥 음식·자리·시설 → 모두 정답) | 밤 BGM + 클릭·완성 차임 |
+| 6 | 3주 토 | `reel06_memory.mp4` | 13초 | 세 가지를 다 맞히면 잊었던 기억이 돌아와요 (기억: 턱시도냥의 기억) | 밤 BGM + 차임·알림·골골 |
+
+> 4~6 = "이 카페 사용법" 3부작(관찰 → 추리 → 기억). 게임 화면은 개발 콘솔 F11(30fps 녹화)로 찍음 — 예전 15fps GIF처럼 끊기지 않게.
+> 옛 사장님 노트의 반전(뒷문 고양이)은 절대 보여주지 않는다.
 
 - 다시 만들기: `python3 Marketing/ig_assets/make_reel.py <클립|newcats> <출력> <초> "<한국어 / 줄바꿈>" "<English>" <효과음@초,...> [bgm]`
 - 소리는 게임 안 소리(합성음, 골골은 BigSoundBank CC0) — 저작권 문제 없음. 출시 전 소리를 바꾸면 릴스도 다시 뽑기.
@@ -53,17 +58,45 @@ Every guest likes something different, so remember well, meow.
 #인디게임 #고양이게임 #카페게임 #도트 #indiegame #indiedev #cozygames #cozygamer #pixelart #catgame
 ```
 
-**4. 손님 산책** (`reel04_parade.mp4`)
+**4. 관찰** (`reel04_observe.mp4`)
 ```
-오늘도 손님들이 하나둘 걸어온다냥 🐾
-치즈냥, 삼색냥, 젖소냥, 까망냥… 다들 좋아하던 걸 잊어버린 손님들이다냥.
-너라면 누구부터 맞이할 거냥?
+손님들은 자기가 뭘 좋아하는지 잊어버렸다냥.
+그래도 몸은 기억한다냥 — 어디에 앉는지, 어디로 올라가는지 잘 보라냥 👀
+샴냥은 오늘도 제일 높은 곳으로 갔다냥. 왜일까냥?
 
-Here come today's guests 🐾
-Every one of them forgot what they love.
-Who would you greet first, meow?
+My guests forgot what they love.
+But their paws remember — watch where they sit, where they climb 👀
+The Siamese went straight for the highest spot again. Why, meow?
 
 #인디게임 #고양이게임 #카페게임 #도트 #indiegame #indiedev #cozygames #cozygamer #pixelart #catgame
+```
+
+**5. 추리** (`reel05_guess.mp4`)
+```
+영업이 끝나면 관찰 일지를 펼친다냥 📒
+오늘 본 단서로 음식·자리·시설을 하나씩 골라 보라냥.
+턱시도냥은 아메리카노, 소파, 캣휠… 다 맞혔다냥!
+너라면 첫 손님 취향, 며칠 만에 맞힐 것 같냥?
+
+After closing, I open my observation journal 📒
+Pick their food, seat and favorite spot from today's clues.
+Tuxedo: americano, sofa, cat wheel… all correct!
+How many days would it take you, meow?
+
+#인디게임 #고양이게임 #카페게임 #추리게임 #도트 #indiegame #indiedev #cozygames #cozygamer #pixelart #catgame
+```
+
+**6. 기억** (`reel06_memory.mp4`)
+```
+세 가지를 다 맞혀 주면, 잊었던 기억이 하나 돌아온다냥.
+턱시도냥이 쓴 커피를 좋아하는 이유… 이제 알겠냥? ☕
+좋아하는 건, 다 누군가와 함께했던 기억이다냥.
+
+Get all three right, and a lost memory comes back.
+Now you know why Tuxedo loves bitter coffee ☕
+Every favorite thing is a memory of someone, meow.
+
+#인디게임 #고양이게임 #카페게임 #스토리게임 #도트 #indiegame #indiedev #cozygames #cozygamer #pixelart #catgame
 ```
 
 **3. 주방 앞발** (`v2_reel03_kitchen.mp4`)
