@@ -124,6 +124,24 @@ namespace YeogiCafe.Visual
         //  S = B + R(tilt)·(Δx, −h·squash)  — 위아래로 뒤집어(−) 납작하게(squash) 눌러 B에 매단 뒤 B를 축으로 기울인다.
         //  squash = 그림자 길이/키(해가 낮을수록 길다), tilt = 빛 반대 방향(도, +면 오른쪽 아래로).
         static readonly Dictionary<Sprite, float> bottomCache = new();
+        // 가구 PNG처럼 '읽기 불가'로 들여온 그림도 픽셀을 읽는다(GPU에서 복사). 실패하면 바닥 계산이 칸 아래 변으로 밀려 그림자가 떠 보였다
+        static readonly Dictionary<Texture2D, Color32[]> pxCache = new();
+        static Color32[] Pixels(Texture2D t)
+        {
+            if (pxCache.TryGetValue(t, out var c)) return c;
+            if (t.isReadable) c = t.GetPixels32();
+            else
+            {
+                var rt = RenderTexture.GetTemporary(t.width, t.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+                var prev = RenderTexture.active;
+                Graphics.Blit(t, rt); RenderTexture.active = rt;
+                var cp = new Texture2D(t.width, t.height, TextureFormat.RGBA32, false);
+                cp.ReadPixels(new Rect(0, 0, t.width, t.height), 0, 0); cp.Apply();
+                RenderTexture.active = prev; RenderTexture.ReleaseTemporary(rt);
+                c = cp.GetPixels32(); Object.Destroy(cp);
+            }
+            pxCache[t] = c; return c;
+        }
         // 스프라이트 기준점에서 가장 아래 불투명 줄까지의 거리(스프라이트 단위). 그림 칸 아래 투명 여백만큼 그림자가 떠 보이던 원인
         static float BottomY(Sprite sp)
         {
@@ -131,7 +149,7 @@ namespace YeogiCafe.Visual
             var r = sp.textureRect; int row = 0;
             try
             {
-                var px = sp.texture.GetPixels32();
+                var px = Pixels(sp.texture);
                 int W = sp.texture.width; bool found = false;
                 for (int y = 0; y < (int)r.height && !found; y++)
                     for (int x = 0; x < (int)r.width; x++)
@@ -140,6 +158,34 @@ namespace YeogiCafe.Visual
             catch { row = 0; }                                       // 읽을 수 없는 그림이면 칸 아래 변
             v = (row - sp.pivot.y) / sp.pixelsPerUnit;
             bottomCache[sp] = v; return v;
+        }
+
+        // 그림자용 '꽉 찬 실루엣': 열마다 맨 위 불투명 칸부터 바닥 줄까지 채운다.
+        //  의자 다리 사이·고양이 배 밑 빈칸까지 채워서, 눌러 놓은 그림자가 바닥 줄 전체로 물체와 이어진다(다리만 가늘게 붙고 덩어리가 떠 보이던 것 해결)
+        static readonly Dictionary<Sprite, Sprite> solidCache = new();
+        static Sprite Solid(Sprite sp)
+        {
+            if (solidCache.TryGetValue(sp, out var v) && v != null) return v;
+            var r = sp.textureRect; int W = (int)r.width, H = (int)r.height;
+            var outPx = new Color32[W * H];
+            try
+            {
+                var px = Pixels(sp.texture); int TW = sp.texture.width;
+                int baseRow = H;
+                for (int y = 0; y < H && baseRow == H; y++)
+                    for (int x = 0; x < W; x++) if (px[((int)r.y + y) * TW + (int)r.x + x].a > 8) { baseRow = y; break; }
+                for (int x = 0; x < W; x++)
+                {
+                    int top = -1;
+                    for (int y = H - 1; y >= 0; y--) if (px[((int)r.y + y) * TW + (int)r.x + x].a > 8) { top = y; break; }
+                    for (int y = baseRow; y <= top; y++) outPx[y * W + x] = new Color32(255, 255, 255, 255);
+                }
+            }
+            catch { return sp; }
+            var tex = new Texture2D(W, H, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp, name = "shadow_solid" };
+            tex.SetPixels32(outPx); tex.Apply();
+            v = Sprite.Create(tex, new Rect(0, 0, W, H), new Vector2(sp.pivot.x / W, sp.pivot.y / H), sp.pixelsPerUnit, 0, SpriteMeshType.FullRect);
+            solidCache[sp] = v; return v;
         }
 
         // 반환: 그렸으면 true(공중에 뜬 순간 등엔 false → 타원만)
@@ -155,7 +201,7 @@ namespace YeogiCafe.Visual
             pivot.position = B;
             pivot.rotation = Quaternion.Euler(0f, 0f, tilt);
             c.enabled = true;
-            c.sprite = sp; c.flipX = e.src.flipX;
+            c.sprite = Solid(sp); c.flipX = e.src.flipX;
             float sy = Mathf.Abs(ls.y) * squash;
             c.transform.localScale = new Vector3(ls.x, -sy, 1f);
             c.transform.localPosition = new Vector3(0f, yb * sy, 0f);     // 뒤집힌 그림의 발바닥 줄이 정확히 B에 오게
