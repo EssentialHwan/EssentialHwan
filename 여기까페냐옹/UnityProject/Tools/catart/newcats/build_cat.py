@@ -47,6 +47,8 @@ def main():
         # 시트 C의 2줄째(먹기·꾹꾹이)가 엉뚱한 포즈로 왔을 때: 기본 그림의 먹기·꾹꾹이로 대신(--c-row2=A)
         if '--c-row2=A' in sys.argv:
             for j, k in enumerate((11, 11, 15, 15)): put(40 + j, A[k])
+        if '--c-row3=A' in sys.argv:    # 시트 C 3줄째(잠·졸린 식빵)가 엉뚱하게 왔을 때(먼치냥) → 기본 그림 잠·식빵
+            for j, k in enumerate((9, 9, 8, 8)): put(44 + j, A[k])
         elif '--c-row1-only' in sys.argv:   # 시트 C가 1줄(그루밍)만 새로 오고 2~4줄은 기본 그림 복사로 왔을 때 → 2~4줄은 기본 포즈로
             for j, k in enumerate((11, 11, 15, 15, 9, 9, 8, 8, 12, 12, 13, 12)): put(40 + j, A[k])
         elif '--c-knead=A' in sys.argv:     # 꾹꾹이 두 칸만 잘못 왔을 때

@@ -210,7 +210,27 @@ def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, fron
                 fur = la & ~keep & (lum > np.percentile(lum[la], 40))
                 fc = np.median(rgb[fur], axis=0) if fur.any() else np.median(rgb[la], axis=0)
                 dark = la & keep & (lum < max(60.0, fc.mean() * 0.62))
-                L[dark, :3] = (fc * 0.82).astype(np.uint8)             # 살 윤곽: 털보다 조금 어두운 그늘
+                # 살 윤곽: 그 자리 몸통 색의 그늘(다리 털색 기준이면 흰 발 때문에 밝은 줄이 생김 — 회색냥)
+                under = c[..., :3].astype(float)
+                L[dark, :3] = (under[dark] * 0.84).astype(np.uint8)
+                # 얼룩 방지: 몸에 겹친 다리 살 색이 그 자리 몸통 색과 밝기가 크게 다르면(흰 배 위 검은 다리 윗동 등)
+                # 몸통 색을 그대로 쓰고, 다리 윤곽만 얇은 그늘선으로 남긴다
+                ov = la & keep
+                body_rgb = c[..., :3].astype(float)
+                blum = body_rgb.mean(2)
+                diff = (np.abs(rgb.mean(2) - blum) > 85) & (c[..., 3] > 0)
+                # 다리 하나(겹친 덩어리)마다 통째로 정한다 — 칸마다 정하면 털 무늬처럼 점점이 얼룩이 생김(치즈냥)
+                lab_ov, nov = ndimage.label(ov)
+                swap = np.zeros_like(ov)
+                for k in range(1, nov + 1):
+                    cm = lab_ov == k
+                    if diff[cm].mean() > 0.5: swap |= cm
+                L[swap, :3] = c[swap, :3]
+                # 통째로 안 바꾼 다리도, 몸통 색과 크게 다른 점(흰 발등·다른 무늬 조각)은 몸통 색으로 → 자잘한 얼룩 제거
+                spot = ov & ~swap & diff
+                L[spot, :3] = c[spot, :3]
+                edge_ov = ov & ~ndimage.binary_erosion(la, iterations=1)
+                L[edge_ov & swap, :3] = (body_rgb[edge_ov & swap] * 0.86).astype(np.uint8)
         else:
             L[bodyin] = 0
         clip_outside(L, body, pad, dy, ground, hl_h - hidden)

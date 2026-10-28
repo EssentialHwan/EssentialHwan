@@ -27,6 +27,8 @@ for ff in (FF or [0.10, 0.16]):
     err = sum(np.abs(pad(B.clean(g[j]))[..., 3].astype(int) - cell(52 + j)[..., 3].astype(int)).sum() for j in range(8))
     if best is None or err < best[0]: best = (err, ff, s)
 err, ff, s = best
+SC = [float(x.split('=')[1]) for x in sys.argv if x.startswith('--scale=')]
+if SC: s = SC[0]   # 다시 뽑을 때 크기가 조금씩 변하지 않게 고정(회색냥 0.0613)
 print(cat, 'front', ff, 'scale', round(s, 4), 'inst_w', inst_w)
 def opt(k, d):
     return next((float(x.split('=')[1]) for x in sys.argv if x.startswith('--' + k + '=')), d)
