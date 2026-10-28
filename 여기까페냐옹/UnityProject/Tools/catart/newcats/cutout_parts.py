@@ -12,6 +12,10 @@ def parts(src):
     for i, sl in enumerate(ndimage.find_objects(lab), 1):
         m = (lab[sl] == i) & fg[sl]
         if m.sum() < 1500: continue
+        # 흰 털(달냥): 털 안쪽이 배경색과 같아서 외곽선 틈으로 '배경'으로 새어 나가 속이 빈 부품이 된다
+        # → 외곽선을 닫은 뒤 안쪽 구멍을 채운다(어두운 털 고양이는 원래 구멍이 없어 결과 같음)
+        mp = np.pad(m, 10)
+        m = ndimage.binary_fill_holes(ndimage.binary_closing(mp, iterations=8))[10:-10, 10:-10] | m
         rgba = np.zeros(m.shape + (4,), np.uint8); rgba[..., :3] = a[sl]; rgba[..., 3] = m * 255
         objs.append((sl[1].start, rgba))
     objs.sort(key=lambda o: o[0])
@@ -217,7 +221,13 @@ def _down(hi, pal, box, s):
     for f in hi:
         g = f[y0:y1, x0:x1]; m = g[..., 3] > 0
         full = np.ones(m.shape, bool)
-        d = C2.down2(g[..., :3], pal, full, s, sharpen=True)
+        # 투명한 칸의 색(검정)이 줄일 때 가장자리에 섞여 들어가면 가는 다리가 거뭇해진다(흰 고양이 달냥에서 드러남, 10/28)
+        # → 투명 칸을 가장 가까운 불투명 칸 색으로 채운 뒤 줄인다(알파는 따로 계산하므로 모양은 그대로)
+        rgb = g[..., :3].copy()
+        if (~m).any() and m.any():
+            _, (iy, ix) = ndimage.distance_transform_edt(~m, return_indices=True)
+            rgb = rgb[iy, ix]
+        d = C2.down2(rgb, pal, full, s, sharpen=True)
         al = np.array(Image.fromarray((m * 255).astype(np.uint8)).resize((d.shape[1], d.shape[0]), Image.BOX)) > 110
         d[~al] = 0
         # 외곽선 다시: 알파 경계
