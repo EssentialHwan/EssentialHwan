@@ -31,7 +31,7 @@ namespace YeogiCafe.UI
             UiFactory.Frame(bar, UiFactory.FrameStyle.Window);
             UiFactory.SetRect(bar, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 16), new Vector2(820, 64));
             var t = UiFactory.Label("Hint", bar.transform, L.Get("ui.edit.hint"), 18, TextAnchor.MiddleLeft, UiFactory.Ink);
-            UiFactory.SetRect((RectTransform)t.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 0.5f), new Vector2(30, 0), new Vector2(-390, 0));   // 테두리에 붙지 않게 안쪽 여백
+            UiFactory.SetRect((RectTransform)t.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 0.5f), new Vector2(30, 0), new Vector2(-390, -16));   // 테두리에 붙지 않게 안쪽 여백(위아래 8px)
             t.verticalOverflow = VerticalWrapMode.Truncate; t.resizeTextForBestFit = true; t.resizeTextMinSize = 12; t.resizeTextMaxSize = 18;
             hintText = t;
             sellBtn = UiFactory.Button("Sell", bar.transform, "", UiFactory.Pink, UiFactory.Cream, out sellLabel);
@@ -107,7 +107,7 @@ namespace YeogiCafe.UI
                         owner.RefreshHud();
                     }
                 }
-                else if (mgr.StoreAway(fx)) hintText.text = L.Get("ui.fix.stored", ("name", nm));
+                else if (mgr.StoreAway(fx)) hintText.text = L.Get("ui.fix.stored", ("name", nm)).Replace(". ", ".\n");   // 문장 단위로 줄바꿈(단어 중간 끊김 방지)
                 all.Remove(selected);
                 Select(null);
                 return;

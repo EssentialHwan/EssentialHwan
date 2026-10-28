@@ -44,9 +44,12 @@ namespace YeogiCafe.Visual
             global = Make("Global", Light2D.LightType.Global, Vector3.zero, false);
 
             // 창빛: 유리 아래쪽 가운데에서 넓고 부드럽게(노멀맵 X — 창 주변이 은은하게 밝아지는 정도). 가장 큰 창을 따라간다
+            // 10/28: 창 가운데서 사방으로 퍼지면 창 '위' 벽까지 동그랗게 밝아져 어색 → 창 윗변에서 아래(방 안)로만 비추는 부채꼴
             window = Make("WindowGlow", Light2D.LightType.Point,
-                new Vector3(CafeLayout.GlassCenterX, CafeLayout.GlassBottom + CafeLayout.GlassHeight * 0.45f, 0f), false);
+                new Vector3(CafeLayout.GlassCenterX, CafeLayout.GlassBottom + CafeLayout.GlassHeight, 0f), false);
             window.pointLightInnerRadius = 2.2f; window.pointLightOuterRadius = 7.5f; window.falloffIntensity = 0.7f;
+            window.pointLightInnerAngle = 110f; window.pointLightOuterAngle = 175f;
+            window.transform.rotation = Quaternion.Euler(0f, 0f, 180f);   // 아래쪽을 향하게
             SyncRigs();
             ContactShadows.Ensure(litMat);
 
@@ -106,7 +109,7 @@ namespace YeogiCafe.Visual
             if (window != null)
             {
                 window.gameObject.SetActive(g != null);
-                if (g != null) window.transform.position = new Vector3(g.position.x, CafeLayout.GlassBottom + CafeLayout.GlassHeight * 0.45f, 0f);
+                if (g != null) window.transform.position = new Vector3(g.position.x, CafeLayout.GlassBottom + CafeLayout.GlassHeight, 0f);
             }
         }
 

@@ -15,7 +15,7 @@ namespace YeogiCafe.Visual
     // URP 2D 그림자(벽에 세워지는 다각형)는 이 정면 시점 도트에 어울리지 않아 쓰지 않는다.
     public class ContactShadows : MonoBehaviour
     {
-        class Entry { public Transform target; public SpriteRenderer src, sh; public CatBrain cat; }
+        class Entry { public Transform target; public SpriteRenderer src, sh, cast; public CatBrain cat; }
 
         readonly List<Entry> list = new();
         readonly HashSet<Transform> known = new();
@@ -70,11 +70,11 @@ namespace YeogiCafe.Visual
             for (int i = list.Count - 1; i >= 0; i--)
             {
                 var e = list[i];
-                if (e.target == null || e.src == null) { if (e.sh != null) Destroy(e.sh.gameObject); list.RemoveAt(i); continue; }
+                if (e.target == null || e.src == null) { if (e.sh != null) Destroy(e.sh.gameObject); if (e.cast != null) Destroy(e.cast.gameObject); list.RemoveAt(i); continue; }
                 bool hide = !e.src.enabled || e.src.sprite == null || !e.target.gameObject.activeInHierarchy
                             || (e.cat != null && (e.cat.CurrentSeat != null || e.cat.CurrentFacility != null));
-                if (hide) { e.sh.enabled = false; continue; }
-                e.sh.enabled = true;
+                if (hide) { e.sh.enabled = false; e.cast.enabled = false; continue; }
+                e.sh.enabled = true; e.cast.enabled = false;
 
                 var b = e.src.bounds;
                 Vector3 foot = new Vector3(b.center.x, e.target.position.y, 0f);
@@ -88,17 +88,20 @@ namespace YeogiCafe.Visual
                     float slope = SunSlope(day != null ? day.Phase : DayPhase.Morning);
                     float h = Mathf.Clamp(b.size.y, 0.4f, 2.2f);
                     float len = h * 0.35f;
-                    e.sh.transform.position = foot + new Vector3(slope * len, -0.06f - len * 0.25f, 0f);
-                    e.sh.transform.localScale = new Vector3(width * (1f + Mathf.Abs(slope) * len * 1.2f), Mathf.Max(0.6f, width * 0.6f), 1f);
-                    a = 0.55f;
+                    // 10/28: 동그란 타원 대신 '자기 모양' 그림자 — 실루엣을 바닥에 눕혀(뒤집고 납작하게) 해 반대쪽으로 기울인다
+                    Cast(e, foot, 0.34f, slope * 22f, 0.3f);
+                    e.sh.transform.position = foot + new Vector3(0f, -0.02f, 0f);       // 발밑 접지(짧고 진하게)
+                    e.sh.transform.localScale = new Vector3(width * 0.8f, Mathf.Max(0.45f, width * 0.4f), 1f);
+                    a = 0.42f;
                 }
                 else if (night)
                 {
                     // 밤: 가장 가까운 천장 조명 반대쪽으로 살짝(조명 바로 아래면 똑바로 짧게)
                     Vector2 lamp = NearestLamp(foot.x);
                     float lean = Mathf.Clamp((foot.x - lamp.x) * 0.05f, -0.35f, 0.35f);
-                    e.sh.transform.position = foot + new Vector3(lean * width * 0.6f, -0.03f, 0f);
-                    e.sh.transform.localScale = new Vector3(width * (1f + Mathf.Abs(lean) * 0.8f), Mathf.Max(0.55f, width * 0.55f), 1f);
+                    Cast(e, foot, 0.22f, lean * 50f, 0.24f);                               // 조명 아래: 짧은 자기 모양 그림자
+                    e.sh.transform.position = foot + new Vector3(0f, -0.03f, 0f);
+                    e.sh.transform.localScale = new Vector3(width * 0.85f, Mathf.Max(0.5f, width * 0.45f), 1f);
                 }
                 else
                 {
@@ -109,6 +112,22 @@ namespace YeogiCafe.Visual
                 }
                 e.sh.color = new Color(ShadowColor.r, ShadowColor.g, ShadowColor.b, a);
             }
+        }
+
+        // 자기 모양 그림자: 지금 그림(스프라이트)을 위아래로 뒤집어 납작하게 눌러 발밑에서 화면 앞쪽(아래)으로 눕힌다.
+        //  squash = 키 대비 그림자 길이, tilt = 기울기(도, +면 오른쪽 아래로), alpha = 진하기
+        void Cast(Entry e, Vector3 foot, float squash, float tilt, float alpha)
+        {
+            var c = e.cast;
+            c.enabled = true;
+            c.sprite = e.src.sprite; c.flipX = e.src.flipX;
+            var ls = e.src.transform.lossyScale;
+            c.transform.rotation = Quaternion.Euler(0f, 0f, tilt);
+            c.transform.localScale = new Vector3(ls.x, -Mathf.Abs(ls.y) * squash, 1f);
+            c.transform.position = foot;
+            var bb = c.bounds;                                          // 뒤집힌 그림의 윗변(=발)이 발 위치에 오게
+            c.transform.position += new Vector3(foot.x - bb.center.x + Mathf.Sin(tilt * Mathf.Deg2Rad) * bb.size.y * 0.5f, foot.y - bb.max.y + 0.02f, 0f);
+            c.color = new Color(ShadowColor.r * 0.6f, ShadowColor.g * 0.6f, ShadowColor.b * 0.6f, alpha);
         }
 
         // 바닥 햇살(SunbeamSpot)과 같은 기울기: 아침 -1.6/2.3, 점심 0, 저녁 +1.9/2.5
@@ -159,8 +178,13 @@ namespace YeogiCafe.Visual
             var sh = go.AddComponent<SpriteRenderer>();
             sh.sprite = Blob();
             if (mat != null) sh.sharedMaterial = mat;                       // 조명을 받아 저녁엔 그림자도 같이 어두워진다
-            sh.sortingOrder = YSort.FlatOnFloor + 5;                         // 러그·햇살 위, 모든 물건 아래
-            list.Add(new Entry { target = t, src = src, sh = sh, cat = cat });
+            sh.sortingOrder = YSort.FlatOnFloor + 6;                         // 러그·햇살 위, 모든 물건 아래
+            var cgo = new GameObject("CastShadow");
+            cgo.transform.SetParent(transform, false);
+            var cast = cgo.AddComponent<SpriteRenderer>();
+            if (mat != null) cast.sharedMaterial = mat;
+            cast.sortingOrder = YSort.FlatOnFloor + 5; cast.enabled = false;
+            list.Add(new Entry { target = t, src = src, sh = sh, cast = cast, cat = cat });
         }
     }
 }

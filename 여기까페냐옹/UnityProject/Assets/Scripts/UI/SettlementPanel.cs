@@ -542,13 +542,13 @@ namespace YeogiCafe.UI
             var box = UiFactory.Panel("GuessBox", scrim.transform, UiFactory.PanelBg);
             int rows = Mathf.Max(1, (options.Count + 3) / 4);
             UiFactory.SetRect(box, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                              new Vector2(0, 10), new Vector2(640, 180 + rows * 112));
+                              new Vector2(0, 10), new Vector2(640, 192 + rows * 112));
             UiFactory.Frame(box, UiFactory.FrameStyle.Window);
 
             string catName = L.Get($"cat.{cat.catId}.name");
             var title = UiFactory.Label("Title", box.transform, L.Get("ui.guess.title", ("name", catName), ("axis", AxisLabel(axis))),
                                         22, TextAnchor.MiddleCenter, UiFactory.Ink);
-            UiFactory.SetRect((RectTransform)title.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -12), new Vector2(0, 36));
+            UiFactory.SetRect((RectTransform)title.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -24), new Vector2(-40, 36));   // 위 테두리와 겹치지 않게(10/28)
 
             guessMsg = UiFactory.Label("Msg", box.transform, options.Count == 0 ? L.Get("ui.guess.none") : "", 17, TextAnchor.MiddleCenter, UiFactory.PinkDeep);
             UiFactory.SetRect((RectTransform)guessMsg.transform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 58), new Vector2(-40, 28));
@@ -561,8 +561,9 @@ namespace YeogiCafe.UI
                 var b = UiFactory.Button("Opt_" + opt.id, box.transform, "", wrongBefore ? UiFactory.Wood : UiFactory.Cream, UiFactory.Ink, out var bl);
                 var brt = (RectTransform)b.transform;
                 UiFactory.SetRect(brt, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1),
-                                  new Vector2(-222 + c * 148, -60 - r * 112), new Vector2(136, 104));
+                                  new Vector2(-222 + c * 148, -72 - r * 112), new Vector2(136, 104));
                 bl.text = opt.name; bl.fontSize = 15; bl.alignment = TextAnchor.LowerCenter;
+                { var blr = (RectTransform)bl.transform; blr.anchorMin = Vector2.zero; blr.anchorMax = Vector2.one; blr.offsetMin = new Vector2(4, 13); blr.offsetMax = new Vector2(-4, 0); }   // 이름이 버튼 아래 테두리에 겹치지 않게(10/28)
                 var ic = new GameObject("Icon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
                 ic.transform.SetParent(b.transform, false);
                 var icImg = ic.GetComponent<Image>(); icImg.sprite = opt.icon; icImg.preserveAspect = true; icImg.raycastTarget = false;
