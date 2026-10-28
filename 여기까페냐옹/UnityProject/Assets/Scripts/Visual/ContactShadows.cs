@@ -186,10 +186,13 @@ namespace YeogiCafe.Visual
 
         // 그림자용 '꽉 찬 실루엣': 열마다 맨 위 불투명 칸부터 바닥 줄까지 채운다.
         //  의자 다리 사이·고양이 배 밑 빈칸까지 채워서, 눌러 놓은 그림자가 바닥 줄 전체로 물체와 이어진다(다리만 가늘게 붙고 덩어리가 떠 보이던 것 해결)
-        static readonly Dictionary<Sprite, Sprite> solidCache = new();
-        static Sprite Solid(Sprite sp)
+        static readonly Dictionary<Sprite, Sprite> solidCache = new(), shapeCache = new();
+        // shape=true(고양이, 10/28): 열을 바닥까지 채우지 않고 그림 윤곽 그대로 — 귀·꼬리·다리 사이가 살아 있는 고양이 모양 그림자.
+        //  다리가 바닥 줄에 닿아 있으니 몸통 그림자는 다리 그림자를 통해 붙어 있다. 가구는 네모 다리 사이가 비면 떠 보여서 채운다.
+        static Sprite Solid(Sprite sp, bool shape = false)
         {
-            if (solidCache.TryGetValue(sp, out var v) && v != null) return v;
+            var cache = shape ? shapeCache : solidCache;
+            if (cache.TryGetValue(sp, out var v) && v != null) return v;
             var r = sp.textureRect; int W = (int)r.width, H = (int)r.height;
             var outPx = new Color32[W * H];
             try
@@ -202,14 +205,15 @@ namespace YeogiCafe.Visual
                 {
                     int top = -1;
                     for (int y = H - 1; y >= 0; y--) if (px[((int)r.y + y) * TW + (int)r.x + x].a > 8) { top = y; break; }
-                    for (int y = baseRow; y <= top; y++) outPx[y * W + x] = new Color32(255, 255, 255, 255);
+                    for (int y = baseRow; y <= top; y++)
+                        if (!shape || px[((int)r.y + y) * TW + (int)r.x + x].a > 8) outPx[y * W + x] = new Color32(255, 255, 255, 255);
                 }
             }
             catch { return sp; }
             var tex = new Texture2D(W, H, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp, name = "shadow_solid" };
             tex.SetPixels32(outPx); tex.Apply();
             v = Sprite.Create(tex, new Rect(0, 0, W, H), new Vector2(sp.pivot.x / W, sp.pivot.y / H), sp.pixelsPerUnit, 0, SpriteMeshType.FullRect);
-            solidCache[sp] = v; return v;
+            cache[sp] = v; return v;
         }
 
         // 반환: 그렸으면 true(공중에 뜬 순간 등엔 false → 타원만)
@@ -226,7 +230,7 @@ namespace YeogiCafe.Visual
             float baseY = pos.y + yb * ls.y;
             if (baseOverride.HasValue) baseY = baseOverride.Value;                     // 가구 위: 가구 바닥이 땅
             else if (baseY - groundFoot.y > 0.12f) { c.enabled = false; return false; }   // 점프 중: 그림자를 띄우지 않는다
-            var solid = Solid(sp);
+            var solid = Solid(sp, e.cat != null);
             var r = sp.textureRect; float ppu = sp.pixelsPerUnit;
             float x0 = -sp.pivot.x / ppu, x1 = (r.width - sp.pivot.x) / ppu;
             float y0 = -sp.pivot.y / ppu, y1 = (r.height - sp.pivot.y) / ppu;
