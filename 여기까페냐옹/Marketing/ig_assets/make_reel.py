@@ -34,7 +34,7 @@ ko_l, en_l = wrap(d, ko, fk, SAFE_W), wrap(d, en, fe, SAFE_W)
 text_h = len(ko_l) * 74 + 12 + len(en_l) * 46
 brand_h = 56 + 44
 gap = 36
-if src == 'newcats':
+if src in ('newcats', 'parade'):
     cw, ch = 1000, 584
 else:
     probe = subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', src], capture_output=True, text=True).stdout.strip().split(',')
@@ -77,6 +77,37 @@ if src == 'newcats':
         can.convert('RGB').save(os.path.join(tmp, f'n{t}.png'))
     src = os.path.join(tmp, 'newcats.mp4')
     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-framerate', '9', '-i', os.path.join(tmp, 'n%d.png'),
+                    '-c:v', 'libx264', '-crf', '12', '-pix_fmt', 'yuv420p', src], check=True)
+
+# 새 고양이 8마리 산책: 걷기 v2(짚은 발 3.2px/프레임)를 같은 보폭으로 실제로 이동시킨다 → 발이 바닥에 붙어 걷는 게 보임
+#   두 줄 × 4마리, 끝에서 사라지면 반대편에서 다시 나와 이음매 없이 반복(한 바퀴 = 1168px / 9.6px = 약 122프레임)
+if src == 'parade':
+    import csv
+    F, k, FPS = 56, 4, 12
+    step = 3.2 * k
+    cats = ['cheese', 'calico', 'cow', 'black', 'tuxedo', 'mackerel', 'siamese', 'gray']
+    names = {r[0]: r[1] for r in csv.reader(open(f'{ROOT}/strings.csv', encoding='utf-8')) if r and r[0].startswith('cat.cat_') and r[0].endswith('.name')}
+    sheets = {c: Image.open(f'{ROOT}/CatSheets/cat_{c}.bytes').convert('RGBA') for c in cats}
+    fn = ImageFont.truetype(FONT, 30)
+    span = 1000 + F * k
+    N = int(round(span / step))
+    for t in range(N):
+        can = Image.new('RGBA', (1000, 584), (255, 248, 236, 255)); dd = ImageDraw.Draw(can)
+        for row in range(2):
+            gy = 236 + row * 284                                    # 바닥선
+            dd.line((0, gy + 2, 1000, gy + 2), fill=(232, 214, 190, 255), width=4)
+        for j, c in enumerate(cats):
+            row, idx = j // 4, j % 4
+            cell = 52 + (t + j * 3) % 8
+            img = sheets[c].crop(((cell % 4) * F, (cell // 4) * F, (cell % 4 + 1) * F, (cell // 4 + 1) * F)).resize((F * k, F * k), Image.NEAREST)
+            x = (t * step + idx * span / 4 + row * span / 8) % span - F * k
+            gy = 236 + row * 284
+            can.alpha_composite(img, (int(round(x)), gy - F * k + 3 * k))
+            n = names.get(f'cat.cat_{c}.name', c); w = dd.textlength(n, font=fn)
+            dd.text((x + F * k / 2 - w / 2, gy + 10), n, font=fn, fill=INK)
+        can.convert('RGB').save(os.path.join(tmp, f'n{t}.png'))
+    src = os.path.join(tmp, 'parade.mp4')
+    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-framerate', str(FPS), '-i', os.path.join(tmp, 'n%d.png'),
                     '-c:v', 'libx264', '-crf', '12', '-pix_fmt', 'yuv420p', src], check=True)
 
 # 소리

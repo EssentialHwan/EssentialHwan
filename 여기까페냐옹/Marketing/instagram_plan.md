@@ -11,6 +11,7 @@ PC: `Desktop\YeogiCafe\IG_reels\` · 저장소: `Marketing/ig_assets/`
 | 1 | 1주 수 | `reel01_hello.mp4` | 8초 | 고양이 손님들은 좋아하던 걸 잊어버렸어요 | 아침 BGM + 야옹·트릴 |
 | 2 | 1주 토 | `reel02_closing.mp4` | 10.6초 | 마감 전, 마지막 손님이랑 놀아 주기 | 저녁 BGM + 골골 + 작은 야옹 |
 | 3 | 2주 수 | `reel03_kitchen.mp4` | 8초 | 바리스타도 고양이라서 앞발로 만들어요 | 점심 BGM + 지글지글 + 조르는 야옹 |
+| 4 | 2주 토 | `reel04_parade.mp4` | 10초 | 새 손님들이 카페로 걸어와요 (8마리 산책, 걷기 v2) | 아침 BGM + 문 종·트릴·야옹 |
 
 - 다시 만들기: `python3 Marketing/ig_assets/make_reel.py <클립|newcats> <출력> <초> "<한국어 / 줄바꿈>" "<English>" <효과음@초,...> [bgm]`
 - 소리는 게임 안 소리(합성음, 골골은 BigSoundBank CC0) — 저작권 문제 없음. 출시 전 소리를 바꾸면 릴스도 다시 뽑기.
@@ -48,6 +49,19 @@ Watch where they sit, what they leave, where they nap — and help them remember
 Closing time — I get to play with the last guest 🐈
 Pet the right spot and hearts pop out. The wrong spot… hmph.
 Every guest likes something different, so remember well, meow.
+
+#인디게임 #고양이게임 #카페게임 #도트 #indiegame #indiedev #cozygames #cozygamer #pixelart #catgame
+```
+
+**4. 손님 산책** (`reel04_parade.mp4`)
+```
+오늘도 손님들이 하나둘 걸어온다냥 🐾
+치즈냥, 삼색냥, 젖소냥, 까망냥… 다들 좋아하던 걸 잊어버린 손님들이다냥.
+너라면 누구부터 맞이할 거냥?
+
+Here come today's guests 🐾
+Every one of them forgot what they love.
+Who would you greet first, meow?
 
 #인디게임 #고양이게임 #카페게임 #도트 #indiegame #indiedev #cozygames #cozygamer #pixelart #catgame
 ```
