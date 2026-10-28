@@ -25,8 +25,8 @@ namespace YeogiCafe.Visual
         DayManager day;
         static Sprite white;
 
-        // 그리기 순서(GlassWindowView: 바깥 풍경 = WallProps-3, 빗줄기 +1, 창틀 +2)
-        const int OrdSky = YSort.WallProps - 2, OrdFar = YSort.WallProps - 2, OrdRoad = YSort.WallProps - 1, OrdNear = YSort.WallProps;
+        // 그리기 순서(GlassWindowView: 바깥 풍경 = WallProps-4, 보도 소품 -1, 빗줄기 +1, 창틀 +2)
+        const int OrdSky = YSort.WallProps - 3, OrdFar = YSort.WallProps - 3, OrdRoad = YSort.WallProps - 2, OrdNear = YSort.WallProps;   // -1 = 보도 소품(GlassWindowView)
 
         void Start()
         {

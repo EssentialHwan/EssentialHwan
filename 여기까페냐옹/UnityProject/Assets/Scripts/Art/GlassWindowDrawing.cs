@@ -200,26 +200,7 @@ namespace YeogiCafe.Art
             c.HLine(0, GW - 1, 8, Mul(walk, 0.8f));                                   // 연석
             for (int x = 0; x < GW; x += 12) c.VLine(x, 0, 7, Mul(walk, 0.9f));        // 보도블록
             c.HLine(0, GW - 1, 21, Mul(walk, 0.85f));                                 // 건너편 보도 턱
-            // 거리 소품(10/29): 우체통 · 버스 정류장 · 벤치 · 자전거 거치대
-            {
-                var ink = C(60, 52, 58);
-                c.FillRect(66, 1, 70, 7, C(214, 66, 66)); c.HLine(66, 70, 7, C(170, 44, 52)); c.HLine(67, 69, 5, ink); c.VLine(68, 0, 1, ink);   // 우체통
-                c.VLine(160, 1, 15, C(90, 96, 110)); c.Disc(160, 15, 2, C(70, 130, 210)); c.Set(160, 15, C(250, 250, 250));                     // 정류장 표지판
-                c.FillRect(164, 1, 186, 1, C(150, 156, 168)); c.VLine(164, 1, 12, C(150, 156, 168)); c.VLine(186, 1, 12, C(150, 156, 168));
-                c.FillRect(162, 12, 188, 13, C(110, 120, 140));                                                                              // 정류장 지붕
-                for (int y = 2; y < 12; y++) c.Blend(165, y, C(200, 226, 240, 90));
-                c.FillRect(168, 3, 182, 4, C(170, 110, 76)); c.VLine(169, 1, 3, ink); c.VLine(181, 1, 3, ink);                              // 정류장 벤치
-                c.FillRect(206, 3, 220, 4, C(170, 110, 76)); c.HLine(206, 220, 6, C(170, 110, 76)); c.VLine(207, 1, 6, ink); c.VLine(219, 1, 6, ink);   // 벤치
-                for (int x = 236; x < 250; x += 4) { c.VLine(x, 1, 4, C(150, 156, 168)); c.Set(x + 1, 4, C(150, 156, 168)); }                 // 자전거 거치대
-            }
-            // 가로등
-            for (int x = 30; x < GW; x += 96)
-            {
-                c.VLine(x, 1, 30, C(70, 72, 80)); c.HLine(x - 2, x + 2, 30, C(70, 72, 80));
-                var lamp = lights ? C(255, 226, 150) : C(220, 226, 230);
-                c.FillRect(x - 2, 31, x + 2, 33, lamp);
-                if (lights) for (int r = 1; r < 6; r++) { c.Blend(x - r, 32, C(255, 226, 150, 60)); c.Blend(x + r, 32, C(255, 226, 150, 60)); }
-            }
+            // 보도 소품·가로등은 NearProps로 따로 그린다(10/29): 지나가는 차보다 앞에 보여야 해서 StreetLife가 차 위·행인 아래에 깐다
 
             // ── 계절 소품: 봄 꽃잎 · 가을 낙엽 · 겨울 눈송이 ──
             if (season == 0 && weather != 2)
@@ -314,6 +295,37 @@ namespace YeogiCafe.Art
         public static PixelCanvas Frame() => Frame(GW);
 
         // 큰 통창(가로 128px = 4유닛, 2칸) 같은 좁은 창: 같은 풍경의 가운데 부분을 잘라 쓴다
+        // 가까운 보도의 세로로 선 것들(가로등·정류장·우체통·벤치·거치대) — 투명 바탕. 길의 차보다 앞, 보도 행인보다 뒤에 그린다.
+        public static PixelCanvas NearProps(int gw, int weather, int phase, int season)
+        {
+            var c = new PixelCanvas(GW, GH);
+            bool lights = phase == 2 || weather == 2;
+            // 거리 소품(10/29): 우체통 · 버스 정류장 · 벤치 · 자전거 거치대
+            {
+                var ink = C(60, 52, 58);
+                c.FillRect(66, 1, 70, 7, C(214, 66, 66)); c.HLine(66, 70, 7, C(170, 44, 52)); c.HLine(67, 69, 5, ink); c.VLine(68, 0, 1, ink);   // 우체통
+                c.VLine(160, 1, 15, C(90, 96, 110)); c.Disc(160, 15, 2, C(70, 130, 210)); c.Set(160, 15, C(250, 250, 250));                     // 정류장 표지판
+                c.FillRect(164, 1, 186, 1, C(150, 156, 168)); c.VLine(164, 1, 12, C(150, 156, 168)); c.VLine(186, 1, 12, C(150, 156, 168));
+                c.FillRect(162, 12, 188, 13, C(110, 120, 140));                                                                              // 정류장 지붕
+                for (int y = 2; y < 12; y++) c.Blend(165, y, C(200, 226, 240, 90));
+                c.FillRect(168, 3, 182, 4, C(170, 110, 76)); c.VLine(169, 1, 3, ink); c.VLine(181, 1, 3, ink);                              // 정류장 벤치
+                c.FillRect(206, 3, 220, 4, C(170, 110, 76)); c.HLine(206, 220, 6, C(170, 110, 76)); c.VLine(207, 1, 6, ink); c.VLine(219, 1, 6, ink);   // 벤치
+                for (int x = 236; x < 250; x += 4) { c.VLine(x, 1, 4, C(150, 156, 168)); c.Set(x + 1, 4, C(150, 156, 168)); }                 // 자전거 거치대
+            }
+            // 가로등
+            for (int x = 30; x < GW; x += 96)
+            {
+                c.VLine(x, 1, 30, C(70, 72, 80)); c.HLine(x - 2, x + 2, 30, C(70, 72, 80));
+                var lamp = lights ? C(255, 226, 150) : C(220, 226, 230);
+                c.FillRect(x - 2, 31, x + 2, 33, lamp);
+                if (lights) for (int r = 1; r < 6; r++) { c.Blend(x - r, 32, C(255, 226, 150, 60)); c.Blend(x + r, 32, C(255, 226, 150, 60)); }
+            }
+            if (gw >= GW) return c;
+            var part = new PixelCanvas(gw, GH); int ox = (GW - gw) / 2;
+            for (int y = 0; y < GH; y++) for (int x = 0; x < gw; x++) part.Set(x, y, c.Get(x + ox, y));
+            return part;
+        }
+
         public static PixelCanvas OutsidePart(int gw, int weather, int phase, int season)
         {
             var full = Outside(weather, phase, season);

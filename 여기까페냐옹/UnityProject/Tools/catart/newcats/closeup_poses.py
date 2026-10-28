@@ -7,7 +7,7 @@ import closeup as CU, eye_rim as ER, numpy as np
 from PIL import Image
 RIM = {'cow', 'tuxedo'}   # 검은 털이 눈에 닿는 고양이: 눈 둘레 크림색 띠(eye_rim.py)
 EXPR = {'open': 8, 'happy': 2, 'closed': 2, 'angry': 14, 'wide': 3, 'half': 8}
-CATS = ['cheese', 'calico', 'cow', 'gray', 'mackerel', 'siamese', 'tuxedo', 'moon', 'fold', 'munchkin', 'persian', 'tortie']
+CATS = ['cheese', 'calico', 'cow', 'gray', 'mackerel', 'siamese', 'tuxedo', 'moon', 'fold', 'munchkin', 'persian', 'tortie', 'black']
 if __name__ == '__main__':
     out = sys.argv[1]; mult = float(sys.argv[2]) if len(sys.argv) > 2 else 4.5
     os.makedirs(out, exist_ok=True)

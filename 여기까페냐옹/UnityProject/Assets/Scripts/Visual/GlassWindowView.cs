@@ -13,7 +13,7 @@ namespace YeogiCafe.Visual
         public float Width => glassPx / 32f;
         public const float Height = GlassWindowDrawing.GH / 32f;
 
-        SpriteRenderer outside, frame;
+        SpriteRenderer outside, frame, props;
         readonly List<Transform> drops = new();
         int shownKey = -1; WeatherKind shownWeather = (WeatherKind)(-1);
         DayManager day;
@@ -24,7 +24,9 @@ namespace YeogiCafe.Visual
         void Awake()
         {
             var o = new GameObject("GlassOutside"); o.transform.SetParent(transform, false);
-            outside = o.AddComponent<SpriteRenderer>(); outside.sortingOrder = YSort.WallProps - 3;   // 그 위에 거리 움직임(StreetLife) -2~0
+            outside = o.AddComponent<SpriteRenderer>(); outside.sortingOrder = YSort.WallProps - 4;   // 그 위에 거리 움직임(StreetLife) -3~0
+            var pr = new GameObject("GlassOutside"); pr.transform.SetParent(transform, false);   // 보도 소품(가로등·정류장) — 이름을 같게 해 조명도 같게
+            props = pr.AddComponent<SpriteRenderer>(); props.sortingOrder = YSort.WallProps - 1;   // 차(-2) 앞, 보도 행인(0) 뒤
             var f = new GameObject("GlassFrame"); f.transform.SetParent(transform, false);
             f.transform.localPosition = new Vector3(0f, -(GlassWindowDrawing.Border + 3) / 32f, 0f);
             frame = f.AddComponent<SpriteRenderer>(); frame.sortingOrder = YSort.WallProps + 2;
@@ -64,6 +66,7 @@ namespace YeogiCafe.Visual
                 outside.sprite = gw == GlassWindowDrawing.GW
                     ? RuntimeSprites.Get($"glass_out_{w}_{p}_{season}", () => GlassWindowDrawing.Outside(w, p, season))
                     : RuntimeSprites.Get($"glass_out_{gw}_{w}_{p}_{season}", () => GlassWindowDrawing.OutsidePart(gw, w, p, season));
+                props.sprite = RuntimeSprites.Get($"glass_props_{gw}_{w}_{p}_{season}", () => GlassWindowDrawing.NearProps(gw, w, p, season));
             }
             if (Weather.Current != shownWeather) Rain(Weather.Current == WeatherKind.Rain);
             if (drops.Count == 0) return;
