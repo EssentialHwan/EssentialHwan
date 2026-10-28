@@ -105,6 +105,7 @@ namespace YeogiCafe.Visual
                 //  루트 y를 땅으로 쓰면 걷는 동안 그림자가 떨어져 있다가 돌아오면서 슬슬 붙었다 → 그림이 옮겨 간 만큼 땅도 같이 옮긴다.
                 float groundY = e.target.position.y + (e.view != null ? e.view.VisualOffset.y : 0f);
                 Vector3 foot = new Vector3(b.center.x, groundY, 0f);
+                if (groundY > CafeLayout.FloorTop + 0.2f) { e.sh.enabled = false; e.cast.enabled = false; continue; }   // 다락·벽 선반 위: 그림자가 벽에 떠 보여서 끈다(10/29)
                 Vector3 ground = foot;                                           // 바닥(점프 판정용)
                 {   // 발밑 타원도 그림의 실제 발바닥 줄에 붙인다(칸 아래 투명 여백만큼 떠 보이던 것 보정)
                     float baseY = e.src.transform.position.y + BottomY(e.src.sprite) * e.src.transform.lossyScale.y;

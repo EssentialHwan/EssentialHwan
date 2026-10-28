@@ -11,7 +11,7 @@ PC: `Desktop\YeogiCafe\IG_reels\` · 저장소: `Marketing/ig_assets/`
 | 1 | 1주 수 | `reel01_hello.mp4` | 8초 | 고양이 손님들은 좋아하던 걸 잊어버렸어요 | 아침 BGM + 야옹·트릴 |
 | 2 | 1주 토 | `reel02_closing.mp4` | 10.6초 | 마감 전, 마지막 손님이랑 놀아 주기 | 저녁 BGM + 골골 + 작은 야옹 |
 | 3 | 2주 수 | `reel03_kitchen.mp4` | 8초 | 바리스타도 고양이라서 앞발로 만들어요 | 점심 BGM + 지글지글 + 조르는 야옹 |
-| 4 | 2주 토 | `reel04_observe.mp4` | 9초 | 이 손님은 뭘 좋아할까? (관찰: 샴냥이 사다리 타고 다락 캣워크로) | 아침 BGM + 오르는 소리·트릴 |
+| 4 | 2주 토 | `reel04_observe.mp4` | 9초 | 이 손님은 뭘 좋아할까? (관찰: 달냥이 벽 선반 점프로 다락에 · 10/29 재촬영) | 아침 BGM + 오르는 소리·트릴 |
 | 5 | 3주 수 | `reel05_guess.mp4` | 16초 | 오늘 본 단서로 취향을 맞혀 보세요 (추리: 턱시도냥 음식·자리·시설 → 모두 정답) | 밤 BGM + 클릭·완성 차임 |
 | 6 | 3주 토 | `reel06_memory.mp4` | 13초 | 세 가지를 다 맞히면 잊었던 기억이 돌아와요 (기억: 턱시도냥의 기억) | 밤 BGM + 차임·알림·골골 |
 
@@ -63,11 +63,11 @@ Every guest likes something different, so remember well, meow.
 ```
 손님들은 자기가 뭘 좋아하는지 잊어버렸다냥.
 그래도 몸은 기억한다냥 — 어디에 앉는지, 어디로 올라가는지 잘 보라냥 👀
-샴냥은 오늘도 제일 높은 곳으로 갔다냥. 왜일까냥?
+달냥은 오늘도 벽 선반을 밟고 제일 높은 곳으로 갔다냥. 왜일까냥?
 
 My guests forgot what they love.
 But their paws remember — watch where they sit, where they climb 👀
-The Siamese went straight for the highest spot again. Why, meow?
+Luna hopped up the wall shelves to the highest spot again. Why, meow?
 
 #인디게임 #고양이게임 #카페게임 #도트 #indiegame #indiedev #cozygames #cozygamer #pixelart #catgame
 ```
