@@ -79,7 +79,16 @@ namespace YeogiCafe.Visual
                     var comp = (e.cat.CurrentSeat as Component) ?? (e.cat.CurrentFacility as Component);
                     var csr = comp != null ? comp.GetComponent<SpriteRenderer>() : null;
                     if (csr == null || csr.sprite == null || e.cat.FacilityWall || comp.transform.position.y > CafeLayout.FloorTop + 0.2f) hide = true;   // 벽 선반·다락 위는 바닥에 안 비친다
-                    else seatBase = csr.transform.position.y + BottomY(csr.sprite) * csr.transform.lossyScale.y;
+                    else
+                    {
+                        // 10/28 v6: 러그·방석·온열패드처럼 납작한 데 앉으면 고양이는 '바닥에' 있다 → 자기 발바닥이 땅.
+                        //  가구 바닥 줄을 땅으로 삼으면 고양이가 러그 한가운데(화면상 더 위)에 있어서 그림자가 몸에서 떨어져 떴다.
+                        //  높은 자리(의자·소파·캣타워 단)만 가구 바닥을 땅으로 → 고양이 그림자가 가구 그림자 끝에 이어진다.
+                        float compBase = csr.transform.position.y + BottomY(csr.sprite) * csr.transform.lossyScale.y;
+                        float ownBase = e.src.transform.position.y + BottomY(e.src.sprite) * e.src.transform.lossyScale.y;
+                        bool flat = csr.bounds.size.y < 0.5f || (e.cat.CurrentSeat == null && e.cat.FacilityPerch < 0.05f);
+                        seatBase = flat ? ownBase : Mathf.Min(compBase, ownBase);
+                    }
                 }
                 if (hide) { e.sh.enabled = false; e.cast.enabled = false; continue; }
                 e.cast.enabled = false;
