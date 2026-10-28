@@ -131,3 +131,12 @@ Please be patient with me, meow 🍮
 | 1 | `v2_reel01_hello.mp4` | Your cat guests forgot what they love 🐾 Purrsonal Taste (여기카페냐옹) #indiegame #cozygames | ✅ 10/27 youtube.com/shorts/iDOK5v2_yAg |
 | 2 | `v2_reel02_closing.mp4` | Closing time with the last guest 🐈 Don't touch the wrong spot… #cozygames #pixelart | ✅ 10/28 (인스타·X·레딧 같은 날) |
 | 3 | `v2_reel03_kitchen.mp4` | The barista is a cat… paws only 🍮 #indiegame #pixelart | ⏳ |
+
+## 현황 (10/28 21시 확인)
+| 채널 | 올린 것 | 조회 |
+|---|---|---|
+| 인스타 (팔로워 1) | 주방 124 · 마감 106 · 추리(5번) 75 · 인사 26 | 합 331 |
+| 유튜브 쇼츠 | 마감 105 · 인사 68 | 합 173 |
+| X (팔로워 0) | 인사(GIF) 조회 26·좋아요 2 · 마감(영상) 조회 4 | |
+| 레딧 | 브라우저 접근 제한으로 확인 못 함 | |
+- 인스타는 계획과 순서가 달라짐: 주방·추리가 이미 나감 → 남은 것 = 관찰(4번, 벽 선반으로 재촬영 필요)·기억(6번)
