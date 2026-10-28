@@ -89,7 +89,12 @@ namespace YeogiCafe.Visual
                         float compBase = csr.transform.position.y + BottomY(csr.sprite) * csr.transform.lossyScale.y;
                         float ownBase = e.src.transform.position.y + BottomY(e.src.sprite) * e.src.transform.lossyScale.y;
                         bool flat = csr.bounds.size.y < 0.5f || (e.cat.CurrentSeat == null && e.cat.FacilityPerch < 0.05f);
-                        seatBase = flat ? ownBase : Mathf.Min(compBase, ownBase);
+                        // v8: 자리로 '걸어가는 중'에도 CurrentSeat/Facility가 잡혀 있어서, 멀리 있는 가구 바닥을 땅으로 써 그림자가 엉뚱한 데 떴다.
+                        //  → 실제로 그 가구 위에 올라가 있을 때만(고양이 발바닥이 가구 그림 안 높이·가로 범위에 있을 때) 가구 바닥을 쓴다.
+                        var cb = csr.bounds; var ob = e.src.bounds;
+                        bool onIt = ownBase > compBase + 0.04f && ownBase < cb.max.y + 0.05f
+                                    && ob.center.x > cb.min.x - 0.1f && ob.center.x < cb.max.x + 0.1f;
+                        seatBase = (flat || !onIt) ? ownBase : compBase;
                     }
                 }
                 if (hide) { e.sh.enabled = false; e.cast.enabled = false; continue; }
