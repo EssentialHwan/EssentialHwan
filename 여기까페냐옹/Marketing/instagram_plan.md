@@ -129,5 +129,5 @@ Please be patient with me, meow 🍮
 | # | 파일 | 제목 | 상태 |
 |---|---|---|---|
 | 1 | `v2_reel01_hello.mp4` | Your cat guests forgot what they love 🐾 Purrsonal Taste (여기카페냐옹) #indiegame #cozygames | ✅ 10/27 youtube.com/shorts/iDOK5v2_yAg |
-| 2 | `v2_reel02_closing.mp4` | Closing time with the last guest 🐈 Don't touch the wrong spot… #cozygames #pixelart | ⏳ |
+| 2 | `v2_reel02_closing.mp4` | Closing time with the last guest 🐈 Don't touch the wrong spot… #cozygames #pixelart | ✅ 10/28 (인스타·X·레딧 같은 날) |
 | 3 | `v2_reel03_kitchen.mp4` | The barista is a cat… paws only 🍮 #indiegame #pixelart | ⏳ |
