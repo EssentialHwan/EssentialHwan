@@ -16,6 +16,16 @@ namespace YeogiCafe.Tests
         public void Setup() { L.Load(Csv); L.Current = Language.Ko; }
 
         [Test]
+        public void FixJosa_PicksParticleByFinalConsonant()
+        {
+            // 받침 있음(냥) → 이/은/을, 받침 없음(치즈) → 가/는/를
+            Assert.AreEqual("젖소냥이 앉았다", L.FixJosa("{name}가 앉았다", "{name}", "젖소냥"));
+            Assert.AreEqual("치즈가 앉았다", L.FixJosa("{name}가 앉았다", "{name}", "치즈"));
+            Assert.AreEqual("까망냥은 조용", L.FixJosa("{name}는 조용", "{name}", "까망냥"));
+            Assert.AreEqual("Tux sat", L.FixJosa("Tux sat", "{name}", "Tux"));   // 영문은 그대로
+        }
+
+        [Test]
         public void Get_ReturnsKoByDefault()
         {
             Assert.AreEqual("안녕", L.Get("ui.hello"));

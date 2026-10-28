@@ -1,8 +1,15 @@
 {
     "name": "YeogiCafe.Editor",
     "rootNamespace": "YeogiCafe.EditorTools",
-    "references": [ "YeogiCafe.Runtime" ],
-    "includePlatforms": [ "Editor" ],
+    "references": [
+        "YeogiCafe.Runtime",
+        "Unity.2D.Sprite.Editor",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

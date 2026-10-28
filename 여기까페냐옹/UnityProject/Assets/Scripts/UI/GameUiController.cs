@@ -29,9 +29,21 @@ namespace YeogiCafe.UI
         // ── 패널 컨트롤러 ──
         ShopPanel shop;
         SettlementPanel settlement;
+        ClosingPlayPanel closing;
+        TutorialGuide guide;
+        bool guideBegun;
+        SettingsPanel settings;
         CatalogPanel catalog;
+        BubbleLayer bubbles;
+        KitchenView kitchen;
+        YeogiCafe.Progression.QuestBoard quests;
+        GameObject questPanel; Text questList, questBtnLabel;
+        FurnitureEditMode editMode;
+        Text kitchenBtnLabel;
 
-        float narrationTimer;
+        float narrationTimer, hudTimer;
+        TitleScreen title;
+        public void OpenSettings() { settings?.Show(); }
 
         void Start()
         {
@@ -39,6 +51,55 @@ namespace YeogiCafe.UI
             BuildUi();
             HookEvents();
             RefreshHud();
+            RemoveCounter();
+        }
+
+        // 카운터는 없앴다(플레이테스트: 오른쪽 '주문하는 곳'이 공간만 차지). 예전에 만든 씬에도 남지 않게 런타임에 지운다.
+        static void RemoveCounter()
+        {
+            var room = GameObject.Find("Room");
+            var c = room != null ? room.transform.Find("Counter") : null;
+            if (c != null) Destroy(c.gameObject);
+        }
+
+        // ── 카페 레벨별 화면: 확장하면 다음 화면에서 카메라가 천천히 뒤로 빠지며 새 공간이 드러난다 ──
+        int shownLevel = -1; float revealT; Vector3 revealFromPos; float revealFromSize;
+        static void ApplyLevelArt(int lv)
+        {
+            YeogiCafe.Visual.LoftView.Apply(lv);                        // Lv3 다락·캣워크·사다리
+            var fm = YeogiCafe.Cafe.FixtureManager.Instance; if (fm != null) fm.ApplyLevel();   // 조명 높이
+        }
+
+        void UpdateHallCamera(float dt)
+        {
+            var s = Save; if (s == null || !s.initialized) return;
+            var cam = Camera.main; if (cam == null) return;
+            int lv = Mathf.Clamp(s.cafeLevel, 1, 3);
+            if (shownLevel < 0)
+            {
+                shownLevel = lv; CafeLayout.ViewLevel = lv; ApplyLevelArt(lv);
+                if (!(kitchen != null && kitchen.Busy) && !PhotoOpen) { cam.transform.position = CafeLayout.CameraPos; cam.orthographicSize = CafeLayout.CameraSize; }
+                return;
+            }
+            bool blocked = (settlement != null && settlement.IsOpen) || (title != null && title.IsOpen)
+                           || (closing != null && closing.IsOpen) || opening != null || EndingPanel.IsOpen;
+            if (lv != shownLevel && !blocked)
+            {
+                revealFromPos = cam.transform.position; revealFromSize = cam.orthographicSize;
+                bool grew = lv > shownLevel;
+                shownLevel = lv; CafeLayout.ViewLevel = lv; ApplyLevelArt(lv);
+                revealT = 0.0001f;
+                if (grew) ShowToast(L.Get(lv >= 3 ? "ui.cafe.reveal3" : "ui.cafe.reveal"));
+            }
+            if ((kitchen != null && kitchen.Busy) || PhotoOpen) { revealT = 0f; return; }   // 주방·사진은 닫힐 때 새 화면으로 돌아온다
+            if (revealT > 0f)
+            {
+                revealT = Mathf.Min(1f, revealT + dt / 2.8f);
+                float k = revealT * revealT * (3f - 2f * revealT);
+                cam.transform.position = Vector3.Lerp(revealFromPos, CafeLayout.CameraPos, k);
+                cam.orthographicSize = Mathf.Lerp(revealFromSize, CafeLayout.CameraSize, k);
+                if (revealT >= 1f) revealT = 0f;
+            }
         }
 
         void Resolve()
@@ -46,15 +107,15 @@ namespace YeogiCafe.UI
             if (bootstrap == null) bootstrap = FindObjectOfType<S1Bootstrap>();
             if (bootstrap != null)
             {
-                flow ??= bootstrap.flow;
-                economy ??= bootstrap.economy;
-                day ??= bootstrap.day;
-                cafe ??= bootstrap.cafe;
+                if (flow == null) flow = bootstrap.flow;
+                if (economy == null) economy = bootstrap.economy;
+                if (day == null) day = bootstrap.day;
+                if (cafe == null) cafe = bootstrap.cafe;
             }
-            flow ??= FindObjectOfType<GameFlowController>();
-            economy ??= FindObjectOfType<EconomyManager>();
-            day ??= FindObjectOfType<DayManager>();
-            cafe ??= FindObjectOfType<CafeContext>();
+            if (flow == null) flow = FindObjectOfType<GameFlowController>();
+            if (economy == null) economy = FindObjectOfType<EconomyManager>();
+            if (day == null) day = FindObjectOfType<DayManager>();
+            if (cafe == null) cafe = FindObjectOfType<CafeContext>();
         }
 
         Canvas root;
@@ -69,6 +130,7 @@ namespace YeogiCafe.UI
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1280, 720);
             scaler.matchWidthOrHeight = 0.5f;
+            canvasGo.AddComponent<AspectScaler>();                 // 16:9가 아닌 화면(휴대폰 등)에서 UI가 잘리지 않게
 
             // 이벤트 시스템(입력) — 없으면 버튼 클릭이 안 먹음.
             if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
@@ -78,80 +140,412 @@ namespace YeogiCafe.UI
                 es.transform.SetParent(transform, false);
             }
 
+            bubbles = new BubbleLayer(root.transform);
+            if (bootstrap != null && bootstrap.interactions != null)
+            { bootstrap.interactions.say = ShowCatBubble; bootstrap.interactions.toast = ShowToast; }
+            YeogiCafe.Visual.MouseRaid.Toast = ShowToast;
+            CustomerSpawner.Toast = ShowToast;
+            if (flow != null) flow.OnReview += r =>
+            {
+                var c = LookupCat(r.catId);
+                if (c != null && (r.paws >= 5 || r.paws <= 1))      // 아주 좋거나 아주 나쁜 리뷰만 알림
+                    ShowToast(L.Get("ui.review.toast", ("name", L.Get($"cat.{r.catId}.name")), ("paws", YeogiCafe.Food.ReviewBook.Paws(r.paws)), ("text", r.text)));
+            };
+            PawCursor.Ensure();
+            YeogiCafe.DevTools.PlaytestLog.Init(L.Current.ToString());
+            YeogiCafe.Visual.CafeLighting.Ensure();       // [실험] URP 2D 조명이 켜져 있을 때만
+            TextFitGuard.Ensure();                       // 글자 넘침 안전망(모든 UI 글자)
             BuildHud(root.transform);
 
+            kitchen = new KitchenView(this, root.transform, bootstrap != null ? bootstrap.orderSystem : null);
             shop = new ShopPanel(this, root.transform);
             settlement = new SettlementPanel(this, root.transform);
+            closing = new ClosingPlayPanel(this, root.transform);
+            settings = new SettingsPanel(this, root.transform);
+            SettingsPanel.ApplySaved(day);
             catalog = new CatalogPanel(this, root.transform);
+            editMode = new FurnitureEditMode(this, root.transform);
+            guide = new TutorialGuide(this, root.transform);
+            photo = new PhotoMode(this);
+            shelter = new ShelterPanel(this, root.transform);
+            BuildPauseBadge(root.transform);
+
+            quests = new YeogiCafe.Progression.QuestBoard(() => Save,
+                () => Save != null ? (IReadOnlyList<CatData>)UnlockService.UnlockedCats(AllCats, Save) : AllCats);
+            quests.addGold = g => { if (economy != null) economy.AddGold(g); RefreshHud(); };
+            quests.toast = ShowToast;
+            quests.OnChanged += RefreshQuests;
+            var qp = UiFactory.Panel("QuestPanel", root.transform, new Color(1f, 0.97f, 0.88f, 0.97f));
+            UiFactory.SetRect(qp, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(300, -74), new Vector2(480, 170));
+            UiFactory.Frame(qp, UiFactory.FrameStyle.Paper);
+            questPanel = qp.gameObject;
+            var qt = UiFactory.Label("T", qp.transform, L.Get("ui.quest.title"), 18, TextAnchor.UpperLeft, UiFactory.WoodDark);
+            UiFactory.SetRect((RectTransform)qt.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(18, -12), new Vector2(-36, 24));
+            // 의뢰 문장이 길어도 칸 안에서 줄바꿈 → 패널 높이를 글 길이에 맞춘다(RefreshQuests)
+            questList = UiFactory.Label("L", qp.transform, "", 16, TextAnchor.UpperLeft, UiFactory.Ink);
+            questList.lineSpacing = 1.15f;
+            UiFactory.SetRect((RectTransform)questList.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(18, -42), new Vector2(-36, 100));
+            questPanel.SetActive(false);
+
+            // 시작 화면(맨 위). 세이브가 있으면 '이어하기 · N일차'
+            var sm = FindObjectOfType<YeogiCafe.Save.SaveManager>();
+            title = new TitleScreen(this, root.transform, sm != null && sm.HasSave(), day != null ? day.CurrentDay : 1);
+            // 시작 화면의 '새 게임'으로 다시 불러온 직후: 오프닝부터
+            if (OpeningPanel.Pending) { OpeningPanel.Pending = false; PlayOpening(); }
         }
 
         void BuildHud(Transform parent)
         {
-            // 상단 바
+            // 상단 바 하나에 정보+버튼을 모아 카페 화면(바닥 앞줄)을 가리지 않게 한다.
             var bar = UiFactory.Panel("HUD_Top", parent, UiFactory.CreamDim);
             UiFactory.SetRect(bar, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1),
-                              new Vector2(0, -36), new Vector2(0, 72));
+                              Vector2.zero, new Vector2(0, 64));
+            UiFactory.Frame(bar, UiFactory.FrameStyle.Plank);
 
-            goldText = UiFactory.Label("Gold", bar.transform, "💰 0G", 26, TextAnchor.MiddleLeft, UiFactory.Ink);
+            goldText = UiFactory.Label("Gold", bar.transform, "0G", 26, TextAnchor.MiddleLeft, UiFactory.Ink);
             UiFactory.SetRect((RectTransform)goldText.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-                              new Vector2(0, 0.5f), new Vector2(20, 0), new Vector2(220, 60));
+                              new Vector2(0, 0.5f), new Vector2(20, 0), new Vector2(140, 56));
+            goldText.horizontalOverflow = HorizontalWrapMode.Overflow;
 
-            phaseText = UiFactory.Label("Phase", bar.transform, "준비", 26, TextAnchor.MiddleCenter, UiFactory.Ink);
+            // 손님 수: 판자 나뭇결 선 위에 글자가 겹치지 않게 작은 종이 배지 위에
+            var guestPill = UiFactory.Panel("GuestPill", bar.transform, UiFactory.Cream);
+            UiFactory.Frame(guestPill, UiFactory.FrameStyle.Card, UiFactory.Cream);
+            UiFactory.SetRect(guestPill, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(160, 0), new Vector2(110, 40));
+            guestText = UiFactory.Label("Guests", guestPill.transform, "", 19, TextAnchor.MiddleCenter, UiFactory.Ink);
+            UiFactory.Anchor((RectTransform)guestText.transform, Vector2.zero, Vector2.one, new Vector2(6, 0), new Vector2(-6, 0));
+
+            phaseText = UiFactory.Label("Phase", bar.transform, "", 24, TextAnchor.MiddleCenter, UiFactory.Ink);
+            phaseText.horizontalOverflow = HorizontalWrapMode.Overflow;   // 한 줄 — 칸보다 길면 TextFitGuard가 줄인다
             UiFactory.SetRect((RectTransform)phaseText.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                              new Vector2(0.5f, 0.5f), new Vector2(0, 0), new Vector2(220, 60));
+                              new Vector2(0.5f, 0.5f), new Vector2(4, 8), new Vector2(330, 36));      // 왼쪽 묶음(~452)과 오른쪽 버튼(~834) 사이
 
-            guestText = UiFactory.Label("Guests", bar.transform, "", 22, TextAnchor.MiddleRight, UiFactory.Ink);
-            UiFactory.SetRect((RectTransform)guestText.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f),
-                              new Vector2(1, 0.5f), new Vector2(-260, 0), new Vector2(180, 60));
-
-            // 시간 진행바
+            // 하루 진행 바(시간대 텍스트 바로 아래)
             var barBg = UiFactory.Panel("TimeBarBg", bar.transform, UiFactory.Wood);
-            UiFactory.SetRect(barBg, new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(1, 0.5f),
-                              new Vector2(-20, 0), new Vector2(220, 16));
+            UiFactory.SetRect(barBg, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                              new Vector2(0, -18), new Vector2(240, 10));
             timeBarFill = UiFactory.Panel("TimeBarFill", barBg.transform, UiFactory.Green).GetComponent<Image>();
             timeBarFill.type = Image.Type.Filled;
             timeBarFill.fillMethod = Image.FillMethod.Horizontal;
             timeBarFill.fillAmount = 0f;
-            var frt = (RectTransform)timeBarFill.transform;
-            UiFactory.Anchor(frt, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            UiFactory.Anchor((RectTransform)timeBarFill.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            // Filled 타입은 sprite가 있어야 채움이 보인다 → 흰 1px 스프라이트 사용
+            timeBarFill.sprite = UiFactory.WhiteSprite;
 
-            // 하단 서술(말풍선) 영역 + 상점/도감 버튼
-            narrationText = UiFactory.Label("Narration", parent, "", 22, TextAnchor.LowerLeft, UiFactory.Ink);
-            UiFactory.SetRect((RectTransform)narrationText.transform, new Vector2(0, 0), new Vector2(1, 0),
-                              new Vector2(0.5f, 0), new Vector2(0, 60), new Vector2(-40, 40));
+            var shopBtn = UiFactory.Button("ShopBtn", bar.transform, L.Get("ui.shop.buy"),
+                                           UiFactory.Wood, UiFactory.Cream, out var shopLbl);
+            shopLbl.horizontalOverflow = HorizontalWrapMode.Overflow;     // 한 줄 유지 — 길면 TextFitGuard가 줄인다(언어별 길이 차)
+            UiFactory.SetRect((RectTransform)shopBtn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f),
+                              new Vector2(1, 0.5f), new Vector2(-12, 0), new Vector2(104, 48));
+            shopBtn.onClick.AddListener(() => { catalog.Hide(); shop.Toggle(); });
 
-            var shopBtn = UiFactory.Button("ShopBtn", parent, "🛒 " + L.Get("ui.shop.buy"),
-                                           UiFactory.Wood, UiFactory.Cream, out _);
-            UiFactory.SetRect((RectTransform)shopBtn.transform, new Vector2(1, 0), new Vector2(1, 0),
-                              new Vector2(1, 0), new Vector2(-20, 20), new Vector2(150, 56));
-            shopBtn.onClick.AddListener(() => shop.Toggle());
+            var catBtn = UiFactory.Button("CatalogBtn", bar.transform, L.Get("ui.pause.catalog"),
+                                          UiFactory.Wood, UiFactory.Cream, out var catLbl);
+            catLbl.horizontalOverflow = HorizontalWrapMode.Overflow;
+            UiFactory.SetRect((RectTransform)catBtn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f),
+                              new Vector2(1, 0.5f), new Vector2(-122, 0), new Vector2(104, 48));
+            catBtn.onClick.AddListener(() => { shop.Hide(); catalog.Toggle(); });
 
-            var catBtn = UiFactory.Button("CatalogBtn", parent, "📖 " + L.Get("ui.pause.catalog"),
-                                          UiFactory.Wood, UiFactory.Cream, out _);
-            UiFactory.SetRect((RectTransform)catBtn.transform, new Vector2(1, 0), new Vector2(1, 0),
-                              new Vector2(1, 0), new Vector2(-180, 20), new Vector2(150, 56));
-            catBtn.onClick.AddListener(() => catalog.Toggle());
+            // 주방(1인칭 조리) ↔ 홀 전환 — 가장 자주 누르는 버튼이라 가운데 왼쪽에 크게
+            var kitBtn = UiFactory.Button("KitchenBtn", bar.transform, L.Get("ui.kitchen.open"),
+                                          UiFactory.Green, UiFactory.Ink, out kitchenBtnLabel);
+            kitchenBtnLabel.horizontalOverflow = HorizontalWrapMode.Overflow;
+            UiFactory.SetRect((RectTransform)kitBtn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f),
+                              new Vector2(1, 0.5f), new Vector2(-232, 0), new Vector2(104, 48));
+            kitBtn.onClick.AddListener(ToggleKitchen);
+
+            // 오늘의 의뢰(왼쪽, 손님 수 옆)
+            var qBtn = UiFactory.Button("QuestBtn", bar.transform, L.Get("ui.quest.btn"), UiFactory.YellowLight, UiFactory.Ink, out questBtnLabel);
+            questBtnLabel.horizontalOverflow = HorizontalWrapMode.Overflow;
+            UiFactory.SetRect((RectTransform)qBtn.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
+                              new Vector2(0, 0.5f), new Vector2(278, 0), new Vector2(112, 44));
+            qBtn.onClick.AddListener(ToggleQuests);
+
+            // 가구 배치(끌어서 옮기기)
+            var editBtn = UiFactory.Button("EditBtn", bar.transform, L.Get("ui.edit.open"),
+                                           UiFactory.Wood, UiFactory.Cream, out var editLbl);
+            editLbl.horizontalOverflow = HorizontalWrapMode.Overflow;
+            UiFactory.SetRect((RectTransform)editBtn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f),
+                              new Vector2(1, 0.5f), new Vector2(-342, 0), new Vector2(104, 48));
+            editBtn.onClick.AddListener(() => { shop.Hide(); catalog.Hide(); CloseKitchen(); editMode.Toggle(); });
+
+            // 설정 — 의뢰 버튼 오른쪽(가운데 시간 표시와 겹치지 않게 작게). ESC로도 열림
+            var optBtn = UiFactory.Button("OptBtn", bar.transform, L.Get("opt.btn"), UiFactory.CreamDim, UiFactory.WoodDark, out var optLbl);
+            optLbl.fontSize = 18; optLbl.horizontalOverflow = HorizontalWrapMode.Overflow;
+            UiFactory.SetRect((RectTransform)optBtn.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
+                              new Vector2(0, 0.5f), new Vector2(396, 0), new Vector2(64, 44));
+            optBtn.onClick.AddListener(() => settings.Toggle());
+
+            // 포토 모드(P) — 오른쪽 아래 작은 버튼
+            var photoBtn = UiFactory.Button("PhotoBtn", parent, L.Get("photo.btn"), UiFactory.CreamDim, UiFactory.Ink, out var photoLbl);
+            photoLbl.fontSize = 17; photoLbl.horizontalOverflow = HorizontalWrapMode.Overflow;
+            UiFactory.SetRect((RectTransform)photoBtn.transform, new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0), new Vector2(-14, 14), new Vector2(132, 40));
+            photoBtn.onClick.AddListener(TryEnterPhoto);
+
+            // (구) 하단 서술 텍스트는 고양이 머리 위 말풍선(BubbleLayer)으로 대체. 필드는 호환용으로 유지.
+            narrationText = null;
         }
 
         void HookEvents()
         {
             if (economy != null) economy.OnGoldChanged += _ => RefreshHud();
+            if (economy != null) economy.OnGoldDelta += ShowGoldDelta;
             if (day != null)
             {
-                day.OnPhaseChanged += p =>
-                {
-                    RefreshHud();
-                    if (p == DayPhase.Settlement) settlement.Show();
-                };
+                day.OnPhaseChanged += _ => RefreshHud();
+                day.OnPhaseChanged += p => { if (p == DayPhase.Morning) YeogiCafe.DevTools.PlaytestLog.DayStart(day.CurrentDay); };
             }
-            if (flow != null && flow.Observation != null)
-                flow.Observation.OnBehaviorNarration += ShowNarration;
+            if (flow != null)
+            {
+                flow.OnSettlementReady += () =>
+                {
+                    if (economy != null) YeogiCafe.DevTools.PlaytestLog.DayEnd(day != null ? day.CurrentDay : 0, economy.TodayRevenue, economy.TodayCost, economy.Gold);
+                    shop.Hide(); catalog.Hide(); CloseKitchen(); editMode.Exit(); questPanel.SetActive(false);
+                    // 마감 직전: 마지막 손님과 놀아주기 → 끝나면 밤 정산(도감)
+                    var guest = flow.ClosingGuestId != null ? LookupCat(flow.ClosingGuestId) : null;
+                    if (guest != null && Save != null) { closing.Show(guest, Save.GetOrCreateCat(guest.catId), () => { settlement.Show(); guide?.OnSettlement(); RefreshHud(); }); guide?.OnClosing(); }
+                    else { settlement.Show(); guide?.OnSettlement(); }
+                };
+                TryHookObservation();
+            }
+        }
+
+        // GameFlowController.Start(세이브 로드·관찰 매니저 생성)가 이 컴포넌트보다 늦게 돌 수 있어
+        // 관찰 이벤트는 준비될 때까지 매 프레임 재시도해서 연결한다(말풍선이 안 뜨던 원인).
+        bool ordersHooked;
+        void TryHookOrders()
+        {
+            var os = bootstrap != null ? bootstrap.orderSystem : null;
+            if (ordersHooked || os == null) return;
+            os.OnTicketPlaced += t => { if (!YeogiCafe.Food.DeliveryCat.IsDelivery(t.catId)) ShowCatBubble(t.catId, t.vague
+                ? L.Get("ui.order.askhint", ("hint", L.Get(t.hintKey)))
+                : L.Get("ui.order.ask", ("menu", t.menu != null ? L.Get($"menu.{t.menu.menuId}") : ""))); };
+            os.OnTicketCancelled += t => ShowCatBubble(t.catId, L.Get("ui.order.gaveup"));
+            os.OnTicketPlaced += _ => guide?.OnOrderPlaced();
+            os.OnTicketServed += _ => guide?.OnServed();
+            os.OnTicketReady += _ => YeogiCafe.Audio.SoundManager.Sfx("sfx_bell", 0.45f, 0.02f);
+            ordersHooked = true;
+        }
+
+        public void ShowCatBubble(string catId, string text) => bubbles?.Show(catId, text);
+
+        // 화면 위쪽 알림(선물·의뢰 완료 등) — 3.5초 뒤 사라짐
+        Text toastText; CanvasGroup toastCg; float toastT;
+        readonly Queue<string> toastQueue = new();
+        // 창(상점·도감·설정·마감 놀아주기·정산)이 떠 있으면 알림은 기다렸다가 닫힌 뒤에 — 창 제목·탭을 가리지 않게
+        bool ModalOpen => (shop != null && shop.IsOpen) || (catalog != null && catalog.IsOpen) || (settings != null && settings.IsOpen)
+                          || (closing != null && closing.IsOpen) || (settlement != null && settlement.IsOpen) || DemoEndPanel.IsOpen;
+
+        public void ShowToast(string text) => ShowToast(text, false);
+        // force: 창이 열려 있어도 바로(설정 창 안에서 누른 버튼의 안내 등)
+        public void ShowToast(string text, bool force)
+        {
+            if (!force && ((toastCg != null && toastT > 0.6f) || ModalOpen)) { toastQueue.Enqueue(text); return; }   // 앞 알림이 끝나면 / 창이 닫히면 차례로
+            if (toastText == null)
+            {
+                var bg = UiFactory.Panel("Toast", root.transform, new Color(1f, 0.98f, 0.93f, 0.97f));
+                UiFactory.SetRect(bg, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -76), new Vector2(720, 64));
+                UiFactory.Frame(bg, UiFactory.FrameStyle.Paper);
+                toastCg = bg.gameObject.AddComponent<CanvasGroup>(); toastCg.blocksRaycasts = false;
+                toastText = UiFactory.Label("T", bg.transform, "", 18, TextAnchor.MiddleCenter, UiFactory.Ink);
+                UiFactory.Anchor((RectTransform)toastText.transform, Vector2.zero, Vector2.one, new Vector2(20, 8), new Vector2(-20, -8));
+            }
+            toastText.text = text; toastT = 3.5f; toastCg.alpha = 1f;
+            // 화면 아래 가운데: 주방에서는 위쪽 주문표를, 홀에서는 천장 조명·창(빛의 출처)을 가리지 않게
+            var tbg = (RectTransform)toastText.transform.parent;
+            bool inKitchen = kitchen != null && kitchen.IsOpen;
+            tbg.anchorMin = tbg.anchorMax = tbg.pivot = new Vector2(0.5f, 0f);
+            float ty = inKitchen ? 40 : editMode != null && editMode.IsOn ? 92 : 22;      // 배치 모드는 아래 도구 막대 위로
+            // 왼쪽 아래 안내 카드가 떠 있으면 그 오른쪽 옆으로(위로 올리면 자리에 앉은 고양이를 가린다)
+            bool beside = !inKitchen && guide != null && guide.Visible && !(editMode != null && editMode.IsOn);
+            tbg.anchoredPosition = new Vector2(beside ? 160 : 0, ty);
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_boop", 0.35f, 0.04f, "toast", 0.4f);
+            var trt = (RectTransform)toastText.transform.parent;          // 긴 알림은 두 줄로 → 높이 맞춤
+            trt.sizeDelta = new Vector2(inKitchen || beside ? 600 : 720, Mathf.Max(64f, toastText.preferredHeight + 20f));   // 양손(좌우 끝 ~250)과 안 겹치는 폭
+            toastText.transform.parent.SetAsLastSibling();
+        }
+
+        // 플레이테스트 기록: 지금 보고 있는 화면·튜토리얼 단계·시간대가 바뀔 때마다 한 줄
+        void TrackPlaytest()
+        {
+            string scr = title != null && title.IsOpen ? "시작 화면"
+                       : opening != null ? "오프닝"
+                       : PhotoOpen ? "포토 모드"
+                       : settings != null && settings.IsOpen ? "설정"
+                       : ShelterOpen ? "보호소"
+                       : closing != null && closing.IsOpen ? "마감 놀아주기"
+                       : settlement != null && settlement.IsOpen ? "정산"
+                       : shop != null && shop.IsOpen ? "구매"
+                       : catalog != null && catalog.IsOpen ? "도감"
+                       : editMode != null && editMode.IsOn ? "배치"
+                       : kitchen != null && kitchen.IsOpen ? "주방"
+                       : "홀";
+            YeogiCafe.DevTools.PlaytestLog.Track("화면", scr);
+            if (guide != null) YeogiCafe.DevTools.PlaytestLog.Track("튜토리얼 단계", guide.Step.ToString());
+            if (day != null) YeogiCafe.DevTools.PlaytestLog.Track("시간대", day.CurrentDay + "일차 " + day.Phase);
+        }
+
+        // 구매·도감 창이 열려 있는 동안은 영업 시간을 멈춘다(고르는 사이 손님이 떠나지 않게).
+        // 다른 정지(설정·배치·포토·시작 화면)가 걸려 있으면 그쪽이 시간을 되돌리게 두고 건드리지 않는다.
+        bool menuPaused; float menuPrevScale = 1f;
+        void UpdateMenuPause()
+        {
+            bool want = (shop != null && shop.IsOpen) || (catalog != null && catalog.IsOpen);
+            if (want)
+            {
+                if (!menuPaused) { menuPaused = true; menuPrevScale = Time.timeScale > 0f ? Time.timeScale : 1f; }
+                Time.timeScale = 0f;      // 창 위에서 설정을 열고 닫아도(설정이 1로 되돌림) 계속 멈춰 있게
+            }
+            else if (!want && menuPaused)
+            {
+                menuPaused = false;
+                bool otherPause = (editMode != null && editMode.IsOn) || PhotoOpen || (settings != null && settings.IsOpen)
+                                  || (title != null && title.IsOpen) || opening != null || DemoEndPanel.IsOpen;
+                if (!otherPause && Time.timeScale == 0f) Time.timeScale = menuPrevScale;
+            }
+        }
+
+        // 구매·도감·배치 창이 시간을 멈춰도 주방 앞발·조명·커서는 계속 움직여서 '안 멈춘다'고 느꼈다(플레이테스트)
+        // → 멈춰 있는 동안 화면 위에 '일시정지 중' 표시.
+        GameObject pauseBadge;
+        void BuildPauseBadge(Transform parent)
+        {
+            var b = UiFactory.Panel("PauseBadge", parent, new Color(0.29f, 0.21f, 0.18f, 0.9f));
+            UiFactory.Frame(b, UiFactory.FrameStyle.Card, new Color(0.29f, 0.21f, 0.18f, 0.9f));
+            // 윗줄 가운데(날짜·시간대 글자 자리)만 덮는다 — 넓으면 '메뉴'·'배치' 버튼까지 가려졌다(영어 점검)
+            UiFactory.SetRect(b, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -12), new Vector2(360, 40));
+            b.GetComponent<Image>().raycastTarget = false;
+            var t = UiFactory.Label("T", b.transform, L.Get("ui.paused"), 17, TextAnchor.MiddleCenter, UiFactory.Cream);
+            UiFactory.Anchor((RectTransform)t.transform, Vector2.zero, Vector2.one, new Vector2(10, 0), new Vector2(-10, 0));
+            t.resizeTextForBestFit = true; t.resizeTextMinSize = 11; t.resizeTextMaxSize = 17;
+            foreach (var g in b.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;   // 표시만, 클릭은 통과
+            pauseBadge = b.gameObject;
+            pauseBadge.SetActive(false);
+        }
+
+        void UpdatePauseBadge()
+        {
+            if (pauseBadge == null) return;
+            bool show = Time.timeScale == 0f && flow != null && flow.InBusiness
+                        && ((shop != null && shop.IsOpen) || (catalog != null && catalog.IsOpen) || (editMode != null && editMode.IsOn))
+                        && !(settings != null && settings.IsOpen) && !(title != null && title.IsOpen);
+            if (show != pauseBadge.activeSelf) { pauseBadge.SetActive(show); if (show) pauseBadge.transform.SetAsLastSibling(); }
+        }
+
+        void ToggleKitchen()
+        {
+            shop.Hide(); catalog.Hide(); editMode.Exit();
+            kitchen.Toggle();
+            if (kitchenBtnLabel != null) kitchenBtnLabel.text = L.Get(kitchen.IsOpen ? "ui.kitchen.close" : "ui.kitchen.open");
+        }
+
+        void CloseKitchen()
+        {
+            if (kitchen == null || !kitchen.IsOpen) return;
+            kitchen.Close();
+            if (kitchenBtnLabel != null) kitchenBtnLabel.text = L.Get("ui.kitchen.open");
+        }
+
+        bool obsHooked;
+        void TryHookObservation()
+        {
+            if (obsHooked || flow == null || flow.Observation == null) return;
+            flow.Observation.OnCatNarration += (catId, text) => bubbles.Show(catId, text);
+            obsHooked = true;
+        }
+
+        // ── 골드 증감 표시: 보유 골드 오른쪽에 +60G(초록) / -350G(빨강)이 떠올랐다 사라진다 ──
+        class GoldPop { public RectTransform rt; public Text t; public float age; public int sum; }
+        readonly List<GoldPop> goldPops = new();
+        void ShowGoldDelta(int d)
+        {
+            if (goldText == null || d == 0) return;
+            // 같은 방향 변화가 연달아 오면 한 숫자로 합친다(재료비·팁 등 잔돈이 줄줄이 뜨지 않게)
+            var last = goldPops.Count > 0 ? goldPops[goldPops.Count - 1] : null;
+            if (last != null && last.age < 0.35f && Mathf.Sign(last.sum) == Mathf.Sign(d)) { last.sum += d; last.age = 0f; SetPopText(last); return; }
+            var t = UiFactory.Label("GoldPop", goldText.canvas.rootCanvas.transform, "", 24, TextAnchor.MiddleLeft, Color.white);   // 상단 바는 밖으로 나간 글자를 잘라서 캔버스에 직접
+            t.fontStyle = FontStyle.Bold;
+            t.horizontalOverflow = HorizontalWrapMode.Overflow; t.raycastTarget = false;
+            var o = t.gameObject.AddComponent<Outline>(); o.effectColor = new Color(0.2f, 0.1f, 0.08f, 0.8f); o.effectDistance = new Vector2(1.5f, -1.5f);
+            var rt = (RectTransform)t.transform;
+            UiFactory.SetRect(rt, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), Vector2.zero, new Vector2(140, 30));
+            var p = new GoldPop { rt = rt, t = t, sum = d };
+            SetPopText(p);
+            goldPops.Add(p);
+        }
+        static void SetPopText(GoldPop p)
+        {
+            p.t.text = (p.sum > 0 ? "+" : "-") + Mathf.Abs(p.sum) + "G";
+            p.t.color = p.sum > 0 ? new Color(0.35f, 0.78f, 0.35f) : new Color(0.92f, 0.32f, 0.32f);
+        }
+        void TickGoldPops()
+        {
+            if (goldText == null) return;
+            var grt = goldText.rectTransform;
+            Vector3 basePos = grt.TransformPoint(new Vector3(grt.rect.xMin + 2f, grt.rect.center.y, 0f));   // 골드 글자 왼쪽 가운데
+            float k = goldText.canvas.rootCanvas.scaleFactor;
+            for (int i = goldPops.Count - 1; i >= 0; i--)
+            {
+                var p = goldPops[i];
+                p.age += Time.unscaledDeltaTime;
+                if (p.rt == null || p.age > 1.6f) { if (p.rt != null) Destroy(p.rt.gameObject); goldPops.RemoveAt(i); continue; }
+                int stack = goldPops.Count - 1 - i;                       // 새 것일수록 아래(골드 옆), 이전 것은 위로 밀림
+                p.rt.position = basePos + new Vector3(0f, -(46f + p.age * 10f + stack * 26f) * k, 0f);   // 골드 바로 아래로 살짝 내려가며 사라짐
+                p.rt.SetAsLastSibling();
+                var c = p.t.color; c.a = p.age < 1.0f ? 1f : Mathf.Clamp01(1f - (p.age - 1.0f) / 0.6f); p.t.color = c;
+            }
         }
 
         void Update()
         {
+            TickGoldPops();
+            TryHookObservation();
+            if (Save != null) Weather.EnsureToday(Save);
+            if (quests != null && Save != null && Save.questDay != Save.currentDay && flow != null) { quests.EnsureToday(); RefreshQuests(); }
+            TryHookOrders();
+            kitchen?.Tick(Time.unscaledDeltaTime);
+            closing?.Tick(Time.unscaledDeltaTime);
+            settings?.Tick();
+            title?.Tick(Time.unscaledDeltaTime);
+            UpdateMenuPause();
+            UpdatePauseBadge();
+            UpdateHallCamera(Time.unscaledDeltaTime);
+            TrackPlaytest();
+            if (photo != null && photo.IsOpen) { photo.Tick(Time.unscaledDeltaTime); return; }   // 포토 모드: 다른 입력·HUD 멈춤
+            if (Input.GetKeyDown(KeyCode.Escape) && ShelterOpen) { shelter.Close(); return; }
+            if (Input.GetKeyDown(KeyCode.Escape) && opening == null && settings != null && (closing == null || !closing.IsOpen) && !DemoEndPanel.IsOpen) settings.Toggle();   // ESC = 설정
+            // 단축키: C 도감 · B 구매 · K 주방 (영업 중 화면에서만)
+            bool hotkeysOk = (title == null || !title.IsOpen) && (closing == null || !closing.IsOpen) && (settlement == null || !settlement.IsOpen)
+                             && (settings == null || !settings.IsOpen) && !EndingPanel.IsOpen && !DemoEndPanel.IsOpen;
+            if (hotkeysOk && Input.GetKeyDown(KeyCode.C)) { shop.Hide(); catalog.Toggle(); }
+            if (hotkeysOk && Input.GetKeyDown(KeyCode.B)) { catalog.Hide(); shop.Toggle(); }
+            if (hotkeysOk && Input.GetKeyDown(KeyCode.K)) { shop.Hide(); catalog.Hide(); ToggleKitchen(); }
+            if (hotkeysOk && Input.GetKeyDown(KeyCode.P)) TryEnterPhoto();
+            if (opening != null) { opening.Tick(Time.unscaledDeltaTime); return; }   // 오프닝 동안은 다른 입력·안내 멈춤
+            editMode?.Tick(Time.unscaledDeltaTime);
+            catalog?.Tick();
+            if (guide != null)
+            {
+                if (!guideBegun && Save != null && (title == null || !title.IsOpen)) { guideBegun = true; guide.Begin(); }
+                if (Demo.Finished(Save) && !DemoEndPanel.IsOpen && (title == null || !title.IsOpen)) ShowDemoEnd();   // 체험판을 다 한 세이브로 이어하기
+                guide.Tick(Time.unscaledDeltaTime);
+                guide.SetCompact(settlement != null && settlement.IsOpen);
+                guide.BringToFront();
+            }
             if (day != null && timeBarFill != null && bootstrap != null && bootstrap.balance != null)
                 timeBarFill.fillAmount = HudFormatter.TimeProgress(day.DayTimer, bootstrap.balance.dayLength);
+
+            photoTimer -= Time.unscaledDeltaTime;
+            if (photoTimer <= 0f)
+            {
+                photoTimer = 2f; PhotoMode.RefreshFrames(this); PhotoReactions();
+                if (Save != null) { YeogiCafe.Visual.ThemeView.Apply(Save.theme); ThemeReactions(); SeasonNotice(); }
+            }
+            bubbles?.Tick(Time.unscaledDeltaTime);
+            if (toastCg != null && toastT > 0f) { toastT -= Time.unscaledDeltaTime; toastCg.alpha = Mathf.Clamp01(toastT / 0.5f); }
+            if (toastCg != null && toastT <= 0.6f && toastQueue.Count > 0 && !ModalOpen) { toastT = 0f; ShowToast(toastQueue.Dequeue()); }
+            else if (toastCg == null && toastQueue.Count > 0 && !ModalOpen) ShowToast(toastQueue.Dequeue());
+            hudTimer -= Time.unscaledDeltaTime;
+            if (hudTimer <= 0f) { hudTimer = 0.5f; RefreshHud(); }   // 손님 수 등 이벤트 없는 값 주기 갱신
 
             if (narrationTimer > 0f)
             {
@@ -169,8 +563,14 @@ namespace YeogiCafe.UI
 
         public void RefreshHud()
         {
-            if (goldText != null && economy != null) goldText.text = HudFormatter.Gold(economy.Gold);
-            if (phaseText != null && day != null) phaseText.text = HudFormatter.Phase(day.Phase);
+            if (goldText != null && economy != null)
+            {
+                goldText.text = HudFormatter.Gold(economy.Gold);
+                goldText.color = economy.Gold < 0 ? UiFactory.PinkDeep : UiFactory.Ink;   // 빚(영업 중 종료로 되돌린 매출을 이미 쓴 경우)
+            }
+            if (phaseText != null && day != null)
+                phaseText.text = L.Get("season." + SeasonBook.Season(day.CurrentDay)) + " " + L.Get("ui.cafe.day", ("n", day.CurrentDay.ToString())) + "  " + HudFormatter.Phase(day.Phase)
+                                 + "  " + L.Get("weather." + (int)Weather.Current);
             if (guestText != null && cafe != null)
             {
                 int seated = cafe.SeatCount - cafe.FreeSeatCount;
@@ -179,24 +579,403 @@ namespace YeogiCafe.UI
         }
 
         // 정산 화면의 [다음 날] → 영업 재개. (재방문 큐 편성은 flow가 담당하지만 S1은 단순 재시작)
+        void ToggleQuests()
+        {
+            quests.EnsureToday();
+            questPanel.SetActive(!questPanel.activeSelf);
+            if (questPanel.activeSelf) { questPanel.transform.SetAsLastSibling(); RefreshQuests(); }
+        }
+
+        void RefreshQuests()
+        {
+            var s = Save; if (s == null || questList == null) return;
+            var sb = new System.Text.StringBuilder();
+            int done = 0;
+            foreach (var q in s.quests)
+            {
+                if (q.done) done++;
+                sb.Append(q.done ? "<color=#6F9A55>" + L.Get("quest.donetag") + "</color> " : $"[{q.progress}/{q.goal}] ").Append(L.Get(q.id))
+                  .Append($"  <color=#B8864E>+{q.reward}G</color>\n");
+            }
+            questList.text = sb.ToString().TrimEnd('\n');
+            float h = questList.preferredHeight;
+            var lrt = (RectTransform)questList.transform; lrt.sizeDelta = new Vector2(lrt.sizeDelta.x, h + 4);
+            var prt = (RectTransform)questPanel.transform; prt.sizeDelta = new Vector2(prt.sizeDelta.x, 42 + h + 22);
+            if (questBtnLabel != null) questBtnLabel.text = $"{L.Get("ui.quest.btn")} {done}/{s.quests.Count}";
+        }
+
+        public DayManager Day => day;
+        public CafeContext Cafe => cafe;
+        public CatManager Cats => bootstrap != null ? bootstrap.cats : null;
+        public YeogiCafe.Cafe.FurnitureManager Furniture => bootstrap != null ? bootstrap.furniture : null;
+        public IReadOnlyList<FurnitureData> AllFurniture => bootstrap != null && bootstrap.allFurniture != null ? (IReadOnlyList<FurnitureData>)bootstrap.allFurniture : new List<FurnitureData>();
+
+        // ── 냥냥 보호소 후원 ──
+        ShelterPanel shelter;
+        public void OpenShelter() => shelter?.Open();
+        public bool ShelterOpen => shelter != null && shelter.IsOpen;
+
+        // ── 포토 모드 ──
+        PhotoMode photo;
+        float photoTimer;
+        readonly HashSet<string> photoReacted = new();
+        // 캔버스를 끄면 Graphic.canvas가 null이 되어 HUD 코드가 깨진다 → 투명·클릭 무시로만 숨긴다
+        public void SetMainUiVisible(bool v)
+        {
+            if (root == null) return;
+            var cg = root.GetComponent<CanvasGroup>(); if (cg == null) cg = root.gameObject.AddComponent<CanvasGroup>();
+            cg.alpha = v ? 1f : 0f; cg.blocksRaycasts = v; cg.interactable = v;
+        }
+        public bool PhotoOpen => photo != null && photo.IsOpen;
+
+        void TryEnterPhoto()
+        {
+            if (photo == null || photo.IsOpen || kitchen.Busy || opening != null) return;
+            shop.Hide(); catalog.Hide(); settings.Hide(); editMode.Exit();
+            if (questPanel != null) questPanel.SetActive(false);
+            photo.Enter();
+        }
+
+        // 인테리어 테마가 좋아하는 분위기인 고양이: 하루 한 번 말풍선(분위기 취향 단서)
+        readonly HashSet<string> themeReacted = new();
+        void ThemeReactions()
+        {
+            var s = Save; var cm = Cats; if (s == null || cm == null || ThemeBook.Get(s.theme).none) return;
+            foreach (var b in cm.Active)
+            {
+                if (b == null || b.data == null || b.IsSpecialGuest) continue;
+                var st = b.State;
+                if (st != CatState.Sit && st != CatState.WaitFood && st != CatState.Idle) continue;
+                if (!ThemeBook.Matches(s.theme, b.data.atmospherePreference)) continue;
+                string key = s.currentDay + ":" + s.theme + ":" + b.data.catId;
+                if (themeReacted.Contains(key) || Random.value > 0.3f) continue;
+                themeReacted.Add(key);
+                ShowCatBubble(b.data.catId, L.Get("theme.react." + Random.Range(1, 4)));
+            }
+        }
+
+        // 계절이 바뀐 아침: 알림 한 번
+        int seasonShown = -1;
+        void SeasonNotice()
+        {
+            var s = Save; if (s == null || (title != null && title.IsOpen)) return;
+            int season = SeasonBook.Season(s.currentDay);
+            if (seasonShown == -1) { seasonShown = season; return; }      // 켜자마자는 알리지 않음
+            if (season == seasonShown) return;
+            seasonShown = season;
+            ShowToast(L.Get("season.toast." + season));
+        }
+
+        // 벽 액자 속 자기 사진을 본 고양이의 반응(하루 한 번) — 성격이 드러나는 작은 단서
+        void PhotoReactions()
+        {
+            var s = Save; var cm = Cats; if (s == null || cm == null) return;
+            var hung = new HashSet<string>();
+            foreach (var f in s.placedFurniture)
+            {
+                if (string.IsNullOrEmpty(f.photo)) continue;
+                var p = s.photos.Find(x => x.file == f.photo);
+                if (p != null) foreach (var c in p.cats) hung.Add(c);
+            }
+            if (hung.Count == 0) return;
+            foreach (var b in cm.Active)
+            {
+                if (b == null || b.data == null || b.IsSpecialGuest) continue;
+                var st = b.State;
+                if (st != CatState.Sit && st != CatState.WaitFood && st != CatState.Eat && st != CatState.Idle && st != CatState.FacilityAction) continue;
+                string id = b.data.catId;
+                if (!hung.Contains(id)) continue;
+                string key = s.currentDay + ":" + id;
+                if (photoReacted.Contains(key) || Random.value > 0.35f) continue;
+                photoReacted.Add(key);
+                var style = YeogiCafe.AI.CatTemperament.Style(b.data);
+                ShowCatBubble(id, L.Get("photo.react." + style.ToString().ToLowerInvariant()));
+                GameEvents.Raise(GameEvents.PhotoReact, id);
+            }
+        }
+
+        OpeningPanel opening;
+        public bool OpeningOpen => opening != null;
+        public void PlayOpening()
+        {
+            if (opening != null) return;
+            settings?.Hide();
+            opening = new OpeningPanel(root.transform, () => { opening = null; RefreshHud(); });
+        }
+
+        public void DebugTutorial() => guide?.DebugReplay();
+        public void DebugEnding() => new EndingPanel(root.transform, Save, AllCats, null, preview: true);
+
+        // ── 현지화 QA: 현재 언어로 화면을 하나씩 열어 스크린샷 + 글자 넘침 보고서를 Build/uicheck 에 남긴다 ──
+        public bool UiTourRunning { get; private set; }
+        public void DebugUiTour() { if (!UiTourRunning) StartCoroutine(UiTour()); }
+
+        // 개발용: 스토어 스크린샷 후보 — 같은 장면을 1920×1080으로 UI 포함/UI 없이 두 장 → Build/store/
+        // (화면 크기와 상관없이 카메라를 1920×1080 텍스처에 다시 그린다. UI는 잠깐 카메라 캔버스로 바꿔 같이 그린다)
+        public void DebugStoreShot() => StartCoroutine(StoreShot());
+        System.Collections.IEnumerator StoreShot()
+        {
+            string dir = System.IO.Path.GetFullPath(System.IO.Path.Combine(Application.dataPath, "..", "Build", "store"));
+            System.IO.Directory.CreateDirectory(dir);
+            string stamp = System.DateTime.Now.ToString("MMdd_HHmmss");
+            var cam = Camera.main; if (cam == null) yield break;
+            YeogiCafe.DevTools.DevConsole.Capturing = true;
+            yield return null;                                            // 개발 콘솔이 닫힌 뒤
+            // UI 있는 판: 화면 그대로 읽는다(메인 캔버스 렌더 모드를 바꾸면 이후 버튼 클릭이 먹통이 돼서 건드리지 않음).
+            // 1920x1080으로 받으려면 게임 뷰 해상도를 1920x1080으로 둘 것.
+            yield return new WaitForEndOfFrame();
+            var shot = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+            shot.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0); shot.Apply();
+            System.IO.File.WriteAllBytes(System.IO.Path.Combine(dir, stamp + "_ui.png"), shot.EncodeToPNG()); Destroy(shot);
+            if (Screen.width != 1920 || Screen.height != 1080) Debug.LogWarning($"[StoreShot] 화면이 {Screen.width}x{Screen.height} — 게임 뷰를 1920x1080으로 두면 상점 규격 그대로 나와요");
+            // UI 없는 판: 카메라만 1920x1080으로 렌더(오버레이 UI는 안 찍힘)
+            Save1080(cam, System.IO.Path.Combine(dir, stamp + "_clean.png"));
+            YeogiCafe.DevTools.DevConsole.Capturing = false;
+            Debug.Log("[StoreShot] " + dir + " / " + stamp);
+        }
+
+        static void Save1080(Camera cam, string file)
+        {
+            const int W = 1920, H = 1080;
+            var rt = new RenderTexture(W, H, 24, RenderTextureFormat.ARGB32);
+            var prevT = cam.targetTexture; var prevA = RenderTexture.active;
+            cam.targetTexture = rt; Canvas.ForceUpdateCanvases(); cam.Render(); cam.targetTexture = prevT;
+            RenderTexture.active = rt;
+            var tex = new Texture2D(W, H, TextureFormat.RGB24, false);
+            tex.ReadPixels(new Rect(0, 0, W, H), 0, 0); tex.Apply();
+            RenderTexture.active = prevA; rt.Release(); Object.Destroy(rt);
+            System.IO.File.WriteAllBytes(file, tex.EncodeToPNG()); Object.Destroy(tex);
+        }
+
+        System.Collections.IEnumerator UiTour()
+        {
+            UiTourRunning = true;
+            string lang = L.Current.ToString().ToLowerInvariant();
+            string dir = System.IO.Path.Combine(System.IO.Directory.GetParent(Application.dataPath).FullName, "Build", "uicheck");
+            System.IO.Directory.CreateDirectory(dir);
+            var report = new System.Text.StringBuilder();
+            report.Append($"# UI tour  lang={lang}  screen={Screen.width}x{Screen.height}  {System.DateTime.Now}\n");
+            int n = 0;
+            float prevScale = Time.timeScale;
+
+            System.Collections.IEnumerator Shot(string name)
+            {
+                yield return new WaitForSecondsRealtime(0.7f);
+                Canvas.ForceUpdateCanvases();
+                yield return new WaitForEndOfFrame();
+                string file = System.IO.Path.Combine(dir, $"{lang}_{n:00}_{name}.png");
+                var tex = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+                tex.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0); tex.Apply();
+                System.IO.File.WriteAllBytes(file, tex.EncodeToPNG()); Destroy(tex);
+                string rep = TextFitGuard.Report();
+                report.Append($"\n## {n:00} {name}\n").Append(string.IsNullOrEmpty(rep) ? "(ok)\n" : rep);
+                n++;
+                yield return new WaitForSecondsRealtime(0.3f);
+            }
+            void CloseAll()
+            {
+                shop.Hide(); catalog.Hide(); settings.Hide(); CloseKitchen(); editMode.Exit();
+                settlement.DebugCloseGuess(); settlement.DebugCloseStory(); settlement.Hide();
+                closing.DebugClose(); if (questPanel.activeSelf) questPanel.SetActive(false);
+                guide.DebugStep(-1);
+            }
+
+            CloseAll();
+            yield return Shot("hud");
+            ToggleQuests(); yield return Shot("quests"); questPanel.SetActive(false);
+            for (int m = 0; m < 6; m++) { shop.DebugTab(m); yield return Shot("shop" + m); }
+            shop.Hide();
+            catalog.DebugTab(false, false); yield return Shot("catalog_list");
+            catalog.DebugTab(true, false); yield return Shot("catalog_rel");
+            catalog.DebugTab(false, true); yield return Shot("catalog_review");
+            catalog.Hide();
+            settings.Show(); yield return Shot("settings"); settings.Hide();
+            ToggleKitchen(); yield return Shot("kitchen");
+            kitchen.DebugPicker(null); yield return Shot("kitchen_picker"); kitchen.DebugClosePicker();
+            CloseKitchen();
+            var cats = AllCats; CatData c0 = null; foreach (var c in cats) if (c != null) { c0 = c; break; }
+            settlement.Show(); settlement.DebugCloseStory(); yield return Shot("settle");
+            if (c0 != null)
+            {
+                settlement.DebugGuess(c0, PrefAxis.Food); yield return Shot("settle_guess"); settlement.DebugCloseGuess();
+                settlement.DebugStory(new StoryDTO { catId = c0.catId, kind = 2 }); yield return Shot("story_lv2"); settlement.DebugCloseStory();
+                settlement.DebugStory(new StoryDTO { catId = c0.catId, kind = 9 }); yield return Shot("story_grad"); settlement.DebugCloseStory();
+                settlement.DebugStory(new StoryDTO { catId = c0.catId, kind = 8 }); yield return Shot("story_memory"); settlement.DebugCloseStory();
+                settlement.DebugStory(new StoryDTO { kind = 7, note = 6 }); yield return Shot("story_note"); settlement.DebugCloseStory();
+            }
+            settlement.DebugReport(); yield return Shot("settle_report"); settlement.DebugCloseStory();
+            settlement.Hide();
+            if (c0 != null && Save != null)
+            {
+                closing.Show(c0, Save.GetOrCreateCat(c0.catId), null); yield return Shot("closing"); closing.DebugClose();
+            }
+            var end = new EndingPanel(root.transform, Save, AllCats, null, preview: true); yield return Shot("ending"); end.DebugClose();
+            var op = opening = new OpeningPanel(root.transform, () => { opening = null; });
+            for (int p = 0; p < 5; p++) { op.DebugPage(p); yield return Shot("opening" + (p + 1)); }
+            op.DebugFinish();
+            Time.timeScale = prevScale;
+            for (int st = 0; st < 5; st++) { guide.DebugStep(st); yield return Shot("tutorial" + st); }
+            guide.DebugStep(-1);
+            settlement.Show(); settlement.DebugCloseStory(); guide.SetCompact(true); guide.DebugStep(4); yield return Shot("tutorial_settle_compact");
+            guide.DebugStep(-1); guide.SetCompact(false); settlement.Hide();
+            editMode.Enter(); yield return Shot("editmode"); editMode.Exit();
+            settlement.Show(); settlement.DebugCloseStory(); shelter.Open(); yield return Shot("shelter"); shelter.Close(); settlement.Hide();
+            photo.Enter(); yield return Shot("photo_live");
+            photo.DebugShoot(); yield return new WaitForSecondsRealtime(0.5f); yield return Shot("photo_edit");
+            photo.OpenAlbum(); yield return Shot("photo_album"); photo.Exit();
+            CloseAll();
+
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, $"textfit_{lang}.txt"), report.ToString());
+            ShowToast($"UI check done: {n} shots → Build/uicheck");
+            UiTourRunning = false;
+        }
+
         public void StartNextDay()
         {
+            // 체험판: 마지막 날(7일차) 정산을 마치면 끝 화면(위시리스트 안내)
+            if (Demo.IsLastDay(Save))
+            {
+                Save.demoFinished = true;
+                if (flow != null) flow.SaveNow();
+                settlement.Hide();
+                ShowDemoEnd();
+                return;
+            }
+            // 최종 목표 달성(모두의 취향 기록) → 엔딩 편지 한 번, 닫으면 자유 영업
+            if (EndingPanel.Ready(Save, AllCats))
+            {
+                new EndingPanel(root.transform, Save, AllCats, StartNextDay);
+                return;
+            }
             settlement.Hide();
-            if (day != null) day.StartDay();
+            guide?.OnNextDay();
+            if (flow != null) flow.BeginNextDay();       // 일차 증가·오토세이브·영업 시작
+            else if (day != null) day.StartDay();
             RefreshHud();
+            if (Demo.IsLastDay(Save)) ShowToast(L.Get("demo.lastday"));
         }
+
+        DemoEndPanel demoEnd;
+        void ShowDemoEnd() { if (!DemoEndPanel.IsOpen) demoEnd = new DemoEndPanel(root.transform, Save, AllCats); }
+        public void DebugDemoEnd() => new DemoEndPanel(root.transform, Save, AllCats, preview: true);
 
         // ── 패널이 접근하는 헬퍼 ──
         public SaveGame Save => flow != null ? flow.Save : null;
         public ObservationManager Obs => flow != null ? flow.Observation : null;
         public EconomyManager Economy => economy;
+        public int LostToMice => flow != null ? flow.LostToMice : 0;
 
         public bool TryBuy(FurnitureData data)
         {
             bool ok = bootstrap != null && bootstrap.BuyFurniture(data);
+            LastBuyFailedForSpace = !ok && bootstrap != null && bootstrap.furniture != null &&
+                                    bootstrap.furniture.LastFail == YeogiCafe.Cafe.FurnitureManager.FailReason.NoSpace;
             if (ok) RefreshHud();
             return ok;
         }
+        public bool LastBuyFailedForSpace { get; private set; }
+
+        public GameFlowController Flow => flow;
+        public FurnitureData LookupFurniture(string id)
+        {
+            if (bootstrap == null) return null;
+            foreach (var f in bootstrap.allFurniture) if (f != null && f.furnitureId == id) return f;
+            return null;
+        }
+
+        // ── 레시피·음식 강화·가구 강화 ──
+        public bool TryBuyTool(string toolId, out string msg)
+        {
+            msg = null; var s = Save; if (s == null || economy == null) return false;
+            var t = System.Array.Find(YeogiCafe.Food.RecipeBook.Tools, x => x.id == toolId);
+            if (t.id == null || YeogiCafe.Food.RecipeBook.ToolOwned(s, toolId)) return false;
+            if (!YeogiCafe.Food.RecipeBook.ToolUnlocked(s, t)) { msg = L.Get("ui.recipe.locked", ("n", t.cafeLevel.ToString())); return false; }
+            if (!economy.TrySpend(t.price)) { msg = L.Get("ui.shop.insufficient"); return false; }
+            s.ownedTools.Add(toolId);
+            flow.SyncMenus();
+            msg = L.Get("ui.tool.bought", ("tool", L.Get(YeogiCafe.Order.CookingStations.NameKey(toolId))));
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
+            RefreshHud();
+            return true;
+        }
+
+        // ── 인테리어 테마 · 계절 한정 메뉴 ──
+        public bool TryTheme(string id, out string msg)
+        {
+            msg = null; var s = Save; if (s == null || economy == null) return false;
+            var t = ThemeBook.Get(id);
+            bool own = t.price == 0 || s.themesOwned.Contains(id);
+            if (!own)
+            {
+                if (!economy.TrySpend(t.price)) { msg = L.Get("ui.shop.insufficient"); return false; }
+                s.themesOwned.Add(id);
+                YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
+            }
+            s.theme = id;
+            YeogiCafe.Visual.ThemeView.Apply(id);
+            msg = L.Get("ui.theme.changed", ("name", L.Get("theme." + id)));
+            RefreshHud();
+            return true;
+        }
+
+        public bool TryResearchSeasonal(string menuId, out string msg)
+        {
+            msg = null; var s = Save; if (s == null || economy == null) return false;
+            var def = SeasonBook.Get(menuId); if (def == null || s.seasonResearched.Contains(menuId)) return false;
+            if (!economy.TrySpend(def.Value.research)) { msg = L.Get("ui.shop.insufficient"); return false; }
+            s.seasonResearched.Add(menuId);
+            flow.SyncMenus();
+            msg = L.Get("ui.season.learned", ("menu", L.Get("menu." + menuId)), ("season", L.Get("season." + def.Value.season)));
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
+            RefreshHud();
+            return true;
+        }
+
+        public bool TryUpgradeMenu(MenuData m, out string msg)
+        {
+            msg = null; var s = Save; if (s == null || m == null || economy == null) return false;
+            var st = s.GetMenuStat(m.menuId);
+            if (st.level >= YeogiCafe.Food.RecipeBook.MaxLevel) return false;
+            int need = YeogiCafe.Food.RecipeBook.NeedSold(st.level), cost = YeogiCafe.Food.RecipeBook.UpgradeCost(m, st.level);
+            if (st.sold < need) { msg = L.Get("ui.recipe.needsold", ("n", (need - st.sold).ToString())); return false; }
+            if (!economy.TrySpend(cost)) { msg = L.Get("ui.shop.insufficient"); return false; }
+            st.level++;
+            msg = L.Get("ui.recipe.upgraded", ("menu", L.Get("menu." + m.menuId)), ("n", (st.level + 1).ToString()));
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
+            RefreshHud();
+            return true;
+        }
+
+        public bool TryUpgradeFurniture(FurnitureData d, out string msg)
+        {
+            msg = null; var s = Save; if (s == null || d == null || economy == null) return false;
+            var st = s.GetFurnStat(d.furnitureId);
+            if (st.stars >= YeogiCafe.Food.FurnitureStars.Max) return false;
+            int need = YeogiCafe.Food.FurnitureStars.NeedUses(st.stars), cost = YeogiCafe.Food.FurnitureStars.Cost(d, st.stars);
+            if (st.uses < need) { msg = L.Get("ui.furnup.needuses", ("n", (need - st.uses).ToString())); return false; }
+            if (!economy.TrySpend(cost)) { msg = L.Get("ui.shop.insufficient"); return false; }
+            st.stars++;
+            msg = L.Get("ui.furnup.done", ("name", ShopPanel.FurnitureName(d)), ("s", YeogiCafe.Food.FurnitureStars.StarText(st.stars)));
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
+            RefreshHud();
+            return true;
+        }
+
+        // 정산 화면 [카페 넓히기] — 같은 방 확장(앞줄·가장자리 자리 개방). 실패 시 이유 문구 반환.
+        public bool TryExpandCafe(out string message)
+        {
+            message = null;
+            var cm = bootstrap != null ? bootstrap.cafeManager : null;
+            if (cm == null || cm.save == null) { message = ""; return false; }
+            if (!cm.CanUpgrade(out var hint)) { message = hint; return false; }
+            bool ok = cm.TryUpgrade();
+            message = ok ? L.Get("ui.settle.expanded") : hint;
+            if (ok) RefreshHud();
+            return ok;
+        }
+        public bool CafeAtMax => bootstrap != null && bootstrap.cafeManager != null && bootstrap.cafeManager.save != null && bootstrap.cafeManager.AtMaxLevel;
+        public int CafeLevel => bootstrap != null && bootstrap.cafeManager != null && bootstrap.cafeManager.save != null
+                                ? bootstrap.cafeManager.save.cafeLevel : 1;
 
         public IReadOnlyList<FurnitureData> ShopItems =>
             bootstrap != null ? bootstrap.shopFurniture : new List<FurnitureData>();

@@ -12,6 +12,16 @@ namespace YeogiCafe.AI
         bool IsFree { get; }
     }
 
+    // 실제 씬 시설(선택 구현): 고양이가 걸어갈 바닥 지점·올라앉는 높이·점유.
+    public interface IFacilitySpot
+    {
+        Vector3 BaseWorldPos { get; }      // 고양이가 서는 바닥 지점(벽걸이는 그 아래 바닥)
+        float PerchHeight { get; }         // 올라앉는 높이(0이면 바닥에서 이용)
+        bool WallMounted { get; }
+        void Use(object cat);
+        void Release();
+    }
+
     public struct FacilityDecision
     {
         public IFacility facility;   // null이면 Idle
@@ -45,6 +55,9 @@ namespace YeogiCafe.AI
         {
             float p = 0.15f; // base
             if (SharesTag(f.Tags, cat.facilityPreference)) p += 0.5f;      // 선호 시설
+            if (Contains(f.Tags, FacilityTag.Box)) p += 0.55f;             // 과일 박스: 고양이는 누구나 상자를 좋아한다
+            if (Contains(f.Tags, FacilityTag.Warm))
+                p += CatTemperament.LovesWarm(cat) ? (YeogiCafe.Core.Weather.Current == YeogiCafe.Core.WeatherKind.Rain ? 0.75f : 0.5f) : -0.05f;   // 따뜻한 자리
             if (cat.HasPersonality(PersonalityTag.Curious)) p += 0.3f;
             if (cat.HasPersonality(PersonalityTag.Playful) && Contains(f.Tags, FacilityTag.Play)) p += 0.3f;
             p -= recentPenalty;

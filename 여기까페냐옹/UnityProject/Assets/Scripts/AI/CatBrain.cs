@@ -36,11 +36,46 @@ namespace YeogiCafe.AI
 
         // ── 세션 추적 (OnLeave 파이프라인 §3.2/3.3 입력) ──
         public MenuData ServedMenu { get; private set; }
+        public int ServedStars { get; private set; }          // 받은 음식 별(0=못 받음)
+        public float ServeWait { get; private set; }           // 주문→서빙(초)
+        public string SeatFurnitureId => seat != null ? seat.SeatId.Split('#')[0] : null;
+        public readonly HashSet<string> UsedFacilityIds = new(); // 이용한 시설 가구 id(강화 사용 수)
+        public bool IsInspector => YeogiCafe.Food.NyanGuide.IsInspector(data.catId);
+        public bool IsDelivery => YeogiCafe.Food.DeliveryCat.IsDelivery(data.catId);
+        public bool IsSpecialGuest => IsInspector || IsDelivery;          // 도감·관계·마감 놀아주기와 무관한 손님
+        // 배달냥: 주문 여러 개 → 나온 것만 사 간다
+        readonly List<YeogiCafe.Order.OrderTicket> deliveryTickets = new();
+        public int DeliveryOrdered => deliveryTickets.Count;
+        public readonly List<(MenuData menu, int stars)> DeliveryServed = new();
         public bool ServedFavorite { get; private set; }
         public bool ForcedSecond { get; private set; }
         public bool UsedPreferredSeat { get; private set; }
         public bool UsedPreferredFacility { get; private set; }
+        public bool WrongDish { get; private set; }        // 모호 주문을 잘못 해석해 다른 메뉴가 나옴
+        public bool MindRead { get; private set; }         // 모호 주문을 정확히 맞힘
+        public System.Func<int> GetRegularStage;           // 매니저 주입(단골 단계)
+        public System.Func<int> GetCafeLevel;              // 매니저 주입(배달 주문 개수)
+        public float OrderPatienceRatio
+        {
+            get
+            {
+                if (state != CatState.WaitFood) return 1f;
+                if (IsDelivery)
+                {
+                    float r = 1f;
+                    foreach (var t in deliveryTickets) if (t.state == YeogiCafe.Order.TicketState.Queued) r = Mathf.Min(r, t.PatienceRatio);
+                    return r;
+                }
+                return currentTicket != null ? currentTicket.PatienceRatio : 1f;
+            }
+        }
         public CatState State => state;
+        // 이번 방문 중 쓰다듬기 기분(표현 레이어가 기록, 만족도에 반영). ±SessionMoodClamp
+        public int TouchMood { get; private set; }
+        public void AddTouchMood(int d) => TouchMood = UnityEngine.Mathf.Clamp(TouchMood + d, -CatTemperament.SessionMoodClamp, CatTemperament.SessionMoodClamp);
+        public ISeat CurrentSeat => seat;                                   // 표현(CatView)용 읽기 전용
+        public Vector3 CurrentSeatPos => seat != null ? seat.WorldPos : transform.position;
+        public System.Action<IFacility> OnFacilityUse;                      // 표현용: 시설 이용 순간
         public bool IsFinished => state == CatState.Leave ||
                                   state == CatState.LeaveDisappointed;
 
@@ -54,6 +89,7 @@ namespace YeogiCafe.AI
 
         void Update()
         {
+            if (IsChasing) { TickChase(Time.deltaTime); return; }   // 쥐 쫓는 중엔 주문·식사·결제가 멈춘다
             switch (state)
             {
                 case CatState.Enter:      state = CatState.FindSeat; break;
@@ -85,11 +121,66 @@ namespace YeogiCafe.AI
             for (int i = 0; i < seats.Count; i++) if (seats[i].IsFree) { anyFree = true; break; }
             if (anyFree) { waitOutsideTimer = 0; state = CatState.FindSeat; return; }
             // 오래 기다려도 자리 없음 → 귀가
-            if (waitOutsideTimer >= WaitOutsidePatience) state = CatState.LeaveDisappointed;
+            if (waitOutsideTimer >= WaitOutsidePatience) { state = CatState.LeaveDisappointed; YeogiCafe.DevTools.PlaytestLog.Count("자리 없어 귀가"); }
         }
+
+        // ── 대장냥이 자리 뺏기 ──
+        public System.Func<IReadOnlyList<CatBrain>> GetOthers;                // 매니저 주입
+        public static System.Action<CatBrain, CatBrain> OnSeatStolen;         // (대장, 쫓겨난 고양이) — 표현용
+        CatBrain stealFrom;
+        float fleeDelay = -1f;
+
+        // 밥을 다 먹고 자기 자리에 앉아 쉬는(그루밍 등) 고양이 중 하나를 고른다. 선호 좌석이면 우선.
+        ISeat TrySteal()
+        {
+            if (GetOthers == null || !CatTemperament.IsBoss(data) || Random.value > CatTemperament.BossStealChance) return null;
+            CatBrain pick = null; bool pickPref = false;
+            foreach (var o in GetOthers())
+            {
+                if (o == null || o == this || o.seat == null || o.state != CatState.Idle || !o.AtSeat) continue;
+                if (o.FacilityPhase != FacPhase.None || CatTemperament.IsBoss(o.data)) continue;
+                bool pref = HasTag(o.seat, data.seatPreference);
+                if (pick == null || (pref && !pickPref)) { pick = o; pickPref = pref; }
+            }
+            if (pick == null) return null;
+            var s = pick.seat;
+            pick.LoseSeat();
+            stealFrom = pick;
+            return s;
+        }
+
+        void LoseSeat()
+        {
+            if (seat == null) return;
+            SetOccupant?.Invoke(seat, null); seat.Vacate(); lostSeat = seat; seat = null;
+        }
+
+        // 대장이 도착해 하악하면 잠시 뒤 슬금슬금 다른 데로
+        public void Flee(float delay) { fleeDelay = delay; }
 
         void DoFindSeat()
         {
+            if (IsDelivery)
+            {   // 배달냥은 자리에 앉지 않고 카운터 앞에 선다
+                if (Mover != null) { Mover.MoveTo(YeogiCafe.Food.DeliveryCat.WaitPoint); walkingToSeat = true; }
+                state = CatState.Sit;
+                return;
+            }
+            var stolen = TrySteal();
+            if (stolen != null)
+            {
+                seat = stolen; seatFallback = !HasTag(stolen, data.seatPreference);
+                seat.Occupy(this);
+                SetOccupant?.Invoke(seat, data.catId);
+                UsedPreferredSeat = !seatFallback;
+                Obs?.RecordClue(data.catId, ClueType.SeatUse, SeatKey(seat), seatFallback,
+                                Narrate(NarrationCatalog.SeatKey(seat.Tags, seatFallback)));
+                sitDuration = Mathf.Min(BaseSit() * PersonalityFactor(), cfg.maxSitDuration);
+                sitTimer = 0;
+                if (Mover != null) { Mover.MoveTo(seat.WorldPos); walkingToSeat = true; }
+                state = CatState.Sit;
+                return;
+            }
             var choice = SeatSelector.Choose(data, GetSeats(), Entrance, NearbyFriends, NearbyStrangers, cfg);
             if (choice.seat == null)
             {
@@ -120,24 +211,36 @@ namespace YeogiCafe.AI
             // 이동 중이면 도착 대기
             if (walkingToSeat && Mover != null && !Mover.HasArrived) return;
             walkingToSeat = false;
+            if (stealFrom != null)
+            {
+                if (stealFrom != null && !stealFrom.IsFinished) { OnSeatStolen?.Invoke(this, stealFrom); stealFrom.Flee(1.5f); }
+                stealFrom = null;
+            }
             state = CatState.DecideOrder;
         }
 
         void DoOrder()
         {
+            if (IsDelivery) { PlaceDelivery(); return; }
             var order = OrderDecider.Choose(data, GetAvailableMenus(), mvpMode: true);
             ServedMenu = order.primary;
             ServedFavorite = order.wasFavorite;
             ForcedSecond = order.wasForcedSecond;
-            if (order.primary != null)
+            if (IsInspector) Obs?.NarrateOnly(data.catId, Narrate("narr.inspector.order"));   // 심사원: 단서 없음, 수첩만
+            else if (order.primary != null)
                 Obs?.RecordClue(data.catId, ClueType.FoodEat, order.primary.menuId,
                                 isFallback: order.wasForcedSecond,
-                                order.wasFavorite ? $"{data.displayNameKey}가 맛있게 먹는다." : null);
+                                // 최애면 '순식간에 비움', 최애가 메뉴판에 없으면 '한참 보다 한숨', 그 외 '천천히'
+                                Narrate(order.wasFavorite ? "narr.food.fast" : order.wasForcedSecond ? "narr.food.nofav" : "narr.food.slow"));
 
             // [S2] OrderSystem 있으면 티켓 등록 후 서빙 대기, 없으면 S1 직행
             if (OrderSystem != null && order.primary != null)
             {
-                currentTicket = OrderSystem.Place(data.catId, order.primary);
+                // 단골(2단계↑)은 가끔 메뉴 이름 대신 힌트로 주문한다 → 주방에서 해석
+                int stage = GetRegularStage != null ? GetRegularStage() : 1;
+                bool vague = stage >= 2 && Random.value < 0.6f;
+                string hint = vague ? $"order.hint.{order.primary.menuId}.{Random.Range(1, 3)}" : null;
+                currentTicket = OrderSystem.Place(data.catId, order.primary, vague, hint);
                 state = CatState.WaitFood;
             }
             else state = CatState.Eat;
@@ -145,48 +248,330 @@ namespace YeogiCafe.AI
 
         YeogiCafe.Order.OrderTicket currentTicket;
 
+        void PlaceDelivery()
+        {
+            var menus = GetAvailableMenus != null ? GetAvailableMenus() : null;
+            if (OrderSystem == null || menus == null || menus.Count == 0) { state = CatState.Leave; return; }
+            int lv = GetCafeLevel != null ? GetCafeLevel() : 1;
+            int n = YeogiCafe.Food.DeliveryCat.RollCount(lv);
+            float pat = YeogiCafe.Food.DeliveryCat.Patience(n);
+            for (int i = 0; i < n; i++)
+            {
+                var t = OrderSystem.Place(data.catId, menus[Random.Range(0, menus.Count)]);
+                t.patience = t.maxPatience = pat;
+                deliveryTickets.Add(t);
+            }
+            Obs?.NarrateOnly(data.catId, YeogiCafe.Loc.L.Get("narr.delivery.order", ("name", YeogiCafe.Loc.L.Get($"cat.{data.catId}.name")), ("n", n.ToString())));
+            state = CatState.WaitFood;
+        }
+
+        // 남은 주문이 없으면(전부 나왔거나 취소) 나온 것만 챙겨 바로 떠난다
+        void DoWaitDelivery()
+        {
+            foreach (var t in deliveryTickets)
+                if (t.state == YeogiCafe.Order.TicketState.Queued || t.state == YeogiCafe.Order.TicketState.Cooking || t.state == YeogiCafe.Order.TicketState.Ready) return;
+            CollectDelivery();
+            state = CatState.Leave;
+        }
+
+        void CollectDelivery()
+        {
+            DeliveryServed.Clear();
+            foreach (var t in deliveryTickets)
+                if (t.state == YeogiCafe.Order.TicketState.Served && t.menu != null) DeliveryServed.Add((t.menu, t.stars));
+            ServedMenu = DeliveryServed.Count > 0 ? DeliveryServed[0].menu : null;
+            ServedStars = DeliveryServed.Count > 0 ? DeliveryServed[0].stars : 0;
+        }
+
         void DoWaitFood()
         {
+            if (IsDelivery) { DoWaitDelivery(); return; }
             if (currentTicket == null) { state = CatState.Eat; return; }
-            if (currentTicket.state == YeogiCafe.Order.TicketState.Served) { state = CatState.Eat; return; }
+            if (currentTicket.state == YeogiCafe.Order.TicketState.Served)
+            {
+                ServedStars = currentTicket.stars; ServeWait = currentTicket.ServeWait;
+                YeogiCafe.DevTools.PlaytestLog.Count("서빙");
+                // 다른 메뉴가 나왔으면 그걸 먹는다(결제는 나온 메뉴 기준, 최애 판정도 나온 메뉴)
+                if (currentTicket.menu != currentTicket.requested)
+                {
+                    WrongDish = true;
+                    ServedMenu = currentTicket.menu;
+                    ServedFavorite = currentTicket.menu != null && currentTicket.menu.menuId == data.foodFavoriteMenuId;
+                }
+                else if (currentTicket.vague) MindRead = true;
+                state = CatState.Eat; return;
+            }
             if (currentTicket.state == YeogiCafe.Order.TicketState.Cancelled)
             {
                 // 인내심 소진 → 불만 퇴장 (만족도·매출 페널티는 세션결과 orderFailed로)
                 ServedMenu = null;
+                YeogiCafe.DevTools.PlaytestLog.Count("주문 놓침");
                 if (seat != null) { SetOccupant?.Invoke(seat, null); seat.Vacate(); seat = null; }
                 state = CatState.Leave;
             }
         }
 
-        void DoEat() { decisionTimer = 0; state = CatState.Idle; }
+        void DoEat() { decisionTimer = 0; NewRest(); state = CatState.Idle; }
+
+        // ── 식사 후 자유 시간: 쉬기 / 아무 데나 돌아다니기 / 시설 이용(걸어가 올라가서 한참 쉬다 내려옴) / 자리로 돌아가기 ──
+        public enum FacPhase { None, Approach, Perched, Dismount }
+        public FacPhase FacilityPhase { get; private set; }
+        public IFacility CurrentFacility { get; private set; }
+        public float FacilityPerch => CurrentFacility is IFacilitySpot sp ? sp.PerchHeight : 0f;
+        public bool FacilityWall => CurrentFacility is IFacilitySpot sp && sp.WallMounted;
+        ISeat lostSeat;                                                     // 대장에게 뺏긴 자리(쫓겨날 때까지 그 위에 앉아 있는 모습 유지)
+        public ISeat VisualSeat => seat ?? lostSeat;
+        public bool AtSeat => VisualSeat != null && (transform.position - VisualSeat.WorldPos).sqrMagnitude < 0.03f;
+        public bool IsMoving => Mover != null && !Mover.HasArrived;
+        public System.Func<Vector3> RandomFloorPoint;                      // 매니저 주입(없으면 돌아다니지 않음)
+
+        float restTimer, restDuration = 6f, facTimer, facDuration;
+
+        // 우다다: 갑자기 카페를 몇 군데 전력질주
+        readonly Queue<Vector3> zoomPath = new();
+        public bool IsZooming { get; private set; }
+        float baseSpeed = -1f;
+
+        public void StartZoomies()
+        {
+            if (RandomFloorPoint == null || Mover == null) return;
+            zoomPath.Clear();
+            int n = Random.Range(3, 6);
+            for (int i = 0; i < n; i++) zoomPath.Enqueue(RandomFloorPoint());
+            IsZooming = true;
+            if (Mover is SimpleLerpMover m) { if (baseSpeed < 0f) baseSpeed = m.speed; m.speed = baseSpeed * 3.2f; }
+            lostSeat = null;
+            Mover.MoveTo(zoomPath.Dequeue());
+        }
+
+        // ── 쥐 소동: 쥐를 쫓아 뛰어다님. 이미 밥을 받은 고양이는 계산을 잊고 떠난다 ──
+        public bool IsChasing { get; private set; }
+        public bool ChaseSkippedPay { get; private set; }
+        System.Func<Vector3> chaseTarget; float chaseLeft, chaseRetarget;
+
+        public bool StartChase(System.Func<Vector3> target, float seconds)
+        {
+            if (Mover == null || IsChasing || IsFinished) return false;
+            if (state == CatState.Enter || state == CatState.FindSeat || state == CatState.WaitOutside || state == CatState.Pay) return false;
+            if (state == CatState.Sit && walkingToSeat) return false;
+            if (FacilityPhase != FacPhase.None) EndFacility();
+            if (state == CatState.WaitFood || state == CatState.Eat || state == CatState.Idle || state == CatState.FacilityAction)
+                ChaseSkippedPay = true;
+            fleeDelay = -1f; zoomPath.Clear(); lostSeat = null;
+            IsChasing = true; IsZooming = true;
+            if (Mover is SimpleLerpMover m) { if (baseSpeed < 0f) baseSpeed = m.speed; m.speed = baseSpeed * Random.Range(2.6f, 3.3f); }
+            chaseTarget = target; chaseLeft = seconds; chaseRetarget = Random.Range(0f, 0.3f);
+            return true;
+        }
+
+        void TickChase(float dt)
+        {
+            chaseLeft -= dt; chaseRetarget -= dt;
+            if (chaseRetarget <= 0f && chaseTarget != null)
+            {
+                chaseRetarget = Random.Range(0.3f, 0.5f);
+                var p = chaseTarget() + new Vector3(Random.Range(-0.7f, 0.7f), Random.Range(-0.4f, 0.4f), 0f);
+                Mover.MoveTo(YeogiCafe.Core.CafeLayout.ClampFloor(p));
+            }
+            if (chaseLeft <= 0f) EndChase();
+        }
+
+        public void EndChase()
+        {
+            if (!IsChasing) return;
+            IsChasing = false; IsZooming = false; chaseTarget = null;
+            if (Mover is SimpleLerpMover m && baseSpeed > 0f) m.speed = baseSpeed;
+            if (seat != null) Mover.MoveTo(seat.WorldPos); else Mover.Stop();
+            NewRest();
+        }
+
+        void TickZoomies()
+        {
+            if (IsMoving) return;
+            if (zoomPath.Count > 0) { Mover.MoveTo(zoomPath.Dequeue()); return; }
+            IsZooming = false;
+            if (Mover is SimpleLerpMover m && baseSpeed > 0f) m.speed = baseSpeed;
+            NewRest();
+        }
+        const float DismountTime = 0.55f;
 
         void DoActionLoop()
         {
-            sitTimer += Time.deltaTime; decisionTimer += Time.deltaTime;
+            float dt = Time.deltaTime;
+            sitTimer += dt;
+
+            // 시설 이용 중
+            if (FacilityPhase != FacPhase.None) { TickFacility(dt); return; }
+            if (fleeDelay >= 0f)
+            {
+                fleeDelay -= dt;
+                if (fleeDelay < 0f && RandomFloorPoint != null) GoTo(RandomFloorPoint());
+                return;
+            }
+
+            if (IsZooming) { TickZoomies(); return; }
             if (sitTimer >= sitDuration) { state = CatState.Pay; return; }
-            if (decisionTimer < DecisionInterval) return;
+            if (IsMoving) return;                                            // 걷는 중
+            state = CatState.Idle;
+            restTimer += dt; decisionTimer += dt;
+            if (restTimer < restDuration || decisionTimer < DecisionInterval) return;
             decisionTimer = 0;
 
+            // ① 시설: 선호·성격 기반 확률(사양 §2.5). 한 번 쓰면 오래(≈1분) 다시 안 감 → 왔다갔다 반복 방지
             var dec = FacilityDecider.Tick(data, GetFacilities(),
                         f => recentUse.TryGetValue(f.FacilityId, out var v) ? v : 0f, cfg);
-            if (!dec.isIdle && dec.facility != null)
+            DecayRecentUse();
+            if (!dec.isIdle && dec.facility != null && dec.facility.IsFree)
             {
-                recentUse[dec.facility.FacilityId] = 0.3f; // 반복 억제
-                bool pref = SharesFacilityPref(dec.facility);
-                if (pref) UsedPreferredFacility = true;
-                Obs?.RecordClue(data.catId, ClueType.FacilityUse, FacilityKey(dec.facility),
-                                isFallback: !pref,
-                                Narrate(NarrationCatalog.FacilityKey(dec.facility.Tags)));
+                StartFacility(dec.facility);
+                return;
             }
-            // recentUse 감쇠
+
+            // ② 돌아다니기 / 자리로 돌아가기 / 그대로 쉬기
+            float roam = 0.35f;
+            if (data.HasPersonality(PersonalityTag.Active) || data.HasPersonality(PersonalityTag.Playful)) roam += 0.25f;
+            if (data.HasPersonality(PersonalityTag.Curious)) roam += 0.15f;
+            if (data.HasPersonality(PersonalityTag.Relaxed) || data.HasPersonality(PersonalityTag.Introvert)) roam -= 0.2f;
+            if (Random.value < CatTemperament.ZoomiesChance(data) * YeogiCafe.Core.Weather.ZoomiesMult) { StartZoomies(); return; }   // 우다다!
+            roam += YeogiCafe.Core.Weather.RoamBonus;
+            float r = Random.value;
+            if (r < roam && RandomFloorPoint != null) GoTo(RandomFloorPoint());
+            else if (r < roam + 0.2f && seat != null && !AtSeat) GoTo(seat.WorldPos);
+            else NewRest();
+        }
+
+        void NewRest()
+        {
+            restTimer = 0f;
+            float k = data.HasPersonality(PersonalityTag.Relaxed) ? 1.6f : data.HasPersonality(PersonalityTag.Active) ? 0.7f : 1f;
+            restDuration = Random.Range(7f, 14f) * k * YeogiCafe.Core.Weather.RestMult;
+        }
+
+        void GoTo(Vector3 p)
+        {
+            lostSeat = null;
+            if (Mover != null) Mover.MoveTo(p);
+            NewRest();
+        }
+
+        // 다른 고양이에게 다가가기(표현 레이어의 상호작용 연출이 요청). 쉬는 중일 때만.
+        public bool RequestApproach(Vector3 p)
+        {
+            if (IsZooming) return false;
+            if (state != CatState.Idle || FacilityPhase != FacPhase.None || IsMoving || Mover == null) return false;
+            GoTo(p);
+            restDuration = Mathf.Max(restDuration, 6f);
+            return true;
+        }
+
+        // 개발용: 지금 바로 이 시설을 쓰러 가게
+        public void DebugUseFacility(IFacility f)
+        {
+            if (f == null || !f.IsFree || IsFinished || IsChasing) return;
+            if (FacilityPhase != FacPhase.None) EndFacility();
+            StartFacility(f);
+        }
+
+        void StartFacility(IFacility f)
+        {
+            recentUse[f.FacilityId] = 1.0f;                                  // 감쇠 0.05/결정 → 약 1분간 같은 시설 회피
+            CurrentFacility = f;
+            if (f is IFacilitySpot sp) sp.Use(this);
+            state = CatState.FacilityAction;
+            FacilityPhase = FacPhase.Approach;
+            Vector3 dest = f is IFacilitySpot spot ? spot.BaseWorldPos : (f is Component c ? c.transform.position : transform.position);
+            if (Mover != null) Mover.MoveTo(dest);
+
+            OnFacilityUse?.Invoke(f);
+        }
+
+        // 시설에 도착한 순간 기록(서술 말풍선이 실제로 올라앉을 때 뜨게)
+        void RecordFacilityClue(IFacility f)
+        {
+            UsedFacilityIds.Add(f.FacilityId.Split('#')[0]);
+            // 다락·캣워크(Lv3): 추리 보기에 없는 공간이라 단서 대신 말풍선만(높은 곳 좋아하는 고양이가 자주 올라간다)
+            if (f is YeogiCafe.Visual.LoftSpot) { Obs?.NarrateOnly(data.catId, Narrate("narr.facility.loft")); return; }
+            // 과일 박스·햇볕 자리: 누구나(또는 따뜻한 걸 좋아하는 아무나) 하는 행동이라 추리 단서가 아니다 → 말풍선만
+            foreach (var t in f.Tags)
+                if (t == FacilityTag.Box || t == FacilityTag.Warm)
+                {
+                    Obs?.NarrateOnly(data.catId, Narrate(t == FacilityTag.Box ? "narr.facility.box" : "narr.facility.warm"));
+                    return;
+                }
+            bool pref = SharesFacilityPref(f);
+            if (pref) UsedPreferredFacility = true;
+            if (IsInspector) return;
+            Obs?.RecordClue(data.catId, ClueType.FacilityUse, FacilityKey(f),
+                            isFallback: !pref,
+                            Narrate(NarrationCatalog.FacilityKey(f.FacilityId, f.Tags)));
+        }
+
+        void TickFacility(float dt)
+        {
+            switch (FacilityPhase)
+            {
+                case FacPhase.Approach:
+                    if (IsMoving) return;
+                    FacilityPhase = FacPhase.Perched; facTimer = 0f;
+                    RecordFacilityClue(CurrentFacility);
+                    // 선호 시설이면 더 오래, 느긋한 고양이는 더 오래
+                    facDuration = Random.Range(9f, 15f) * (SharesFacilityPref(CurrentFacility) ? 1.4f : 1f)
+                                  * (data.HasPersonality(PersonalityTag.Relaxed) ? 1.3f : 1f);
+                    break;
+                case FacPhase.Perched:
+                    facTimer += dt;
+                    if (facTimer >= facDuration || sitTimer >= sitDuration) { FacilityPhase = FacPhase.Dismount; facTimer = 0f; }
+                    break;
+                case FacPhase.Dismount:
+                    facTimer += dt;
+                    float down = CurrentFacility is YeogiCafe.Visual.LoftSpot ls ? ls.ClimbSeconds : FacilityPerch > 0.05f ? DismountTime : 0.1f;
+                    if (facTimer < down) return;
+                    EndFacility();
+                    state = CatState.Idle;
+                    decisionTimer = 0f;
+                    // 내려와서 바로 근처를 좀 걷다가 쉰다(또는 자리로)
+                    if (seat != null && Random.value < 0.5f) GoTo(seat.WorldPos);
+                    else if (RandomFloorPoint != null) GoTo(RandomFloorPoint());
+                    else NewRest();
+                    break;
+            }
+        }
+
+        void EndFacility()
+        {
+            if (CurrentFacility is IFacilitySpot sp) sp.Release();
+            CurrentFacility = null;
+            FacilityPhase = FacPhase.None;
+        }
+
+        void DecayRecentUse()
+        {
             var keys = new List<string>(recentUse.Keys);
             foreach (var k in keys) recentUse[k] = Mathf.Max(0, recentUse[k] - 0.05f);
         }
 
         void DoPay()
         {
+            if (IsZooming) { IsZooming = false; zoomPath.Clear(); if (Mover is SimpleLerpMover m && baseSpeed > 0f) m.speed = baseSpeed; }
+            EndFacility();
             if (seat != null) { SetOccupant?.Invoke(seat, null); seat.Vacate(); seat = null; } // 자리 반납(회전)
             state = CatState.Leave; /* 만족도·결제·세션확정은 매니저가 OnLeave에서 */
+        }
+
+        // 영업 종료 시 남은 손님 정리: 자리를 반납하고 세션을 즉시 확정(결제·만족 파이프라인 1회 실행).
+        public void ForceLeave()
+        {
+            if (sessionCompleted) return;
+            if (IsChasing) EndChase();
+            EndFacility();
+            if (IsZooming) { IsZooming = false; zoomPath.Clear(); if (Mover is SimpleLerpMover m && baseSpeed > 0f) m.speed = baseSpeed; }
+            if (seat != null) { SetOccupant?.Invoke(seat, null); seat.Vacate(); seat = null; }
+            if (OrderSystem != null) OrderSystem.DropForCat(data.catId);
+            if (IsDelivery) CollectDelivery();                  // 배달냥: 이미 나온 것은 가져간다
+            else if (state == CatState.WaitFood) ServedMenu = null;   // 못 받고 떠나면 결제 없음
+            state = CatState.Leave;
+            sessionCompleted = true;
+            OnSessionComplete?.Invoke(this);
         }
 
         // ── helpers ──

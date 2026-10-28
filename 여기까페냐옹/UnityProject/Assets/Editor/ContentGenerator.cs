@@ -5,7 +5,7 @@ using YeogiCafe.Data;
 
 namespace YeogiCafe.EditorTools
 {
-    // 메뉴 "여기까페냐옹/1.0 콘텐츠 에셋 생성"으로 8마리·8메뉴·18가구 SO를 자동 생성.
+    // 메뉴 "여기카페냐옹/1.0 콘텐츠 에셋 생성"으로 8마리·8메뉴·18가구 SO를 자동 생성.
     // CONTENT_AUTHORING.md 데이터표와 일치. 반복 수작업 제거.
     public static class ContentGenerator
     {
@@ -13,7 +13,7 @@ namespace YeogiCafe.EditorTools
         const string MenuDir = "Assets/Data/Menus";
         const string FurnDir = "Assets/Data/Furniture";
 
-        [MenuItem("여기까페냐옹/1.0 콘텐츠 에셋 생성")]
+        [MenuItem("여기카페냐옹/1.0 콘텐츠 에셋 생성")]
         public static void GenerateAll()
         {
             EnsureDir(CatDir); EnsureDir(MenuDir); EnsureDir(FurnDir);
@@ -29,15 +29,17 @@ namespace YeogiCafe.EditorTools
 
         static void GenerateMenus()
         {
-            // 기본 5종 Always, 확장 3종은 레벨 게이트(문서 06/32)
+            // 주방 기구 5종 × 메뉴 2개. 언제 쓸 수 있는지는 기구 소유(RecipeBook)로만 정한다 → 메뉴 자체는 모두 Always.
             CreateMenu("menu_americano", "아메리카노", 30, 8, 3f, new FoodTag[0], U(UnlockType.Always, 0));
+            CreateMenu("menu_latte", "카페라떼", 40, 12, 4f, new[] { FoodTag.Warm, FoodTag.Sweet }, U(UnlockType.Always, 0));
             CreateMenu("menu_milk", "우유", 30, 10, 3f, new[] { FoodTag.Warm }, U(UnlockType.Always, 0));
             CreateMenu("menu_fishcake", "생선케이크", 60, 20, 5f, new[] { FoodTag.Fish, FoodTag.Sweet }, U(UnlockType.Always, 0));
             CreateMenu("menu_parfait", "딸기파르페", 70, 25, 6f, new[] { FoodTag.Fruit, FoodTag.Sweet }, U(UnlockType.Always, 0));
             CreateMenu("menu_tuna_sand", "참치샌드위치", 80, 30, 6f, new[] { FoodTag.Fish, FoodTag.Meal }, U(UnlockType.Always, 0));
-            CreateMenu("menu_catnip_tea", "캣닢차", 40, 12, 4f, new[] { FoodTag.Warm }, U(UnlockType.CafeLevel, 2));
-            CreateMenu("menu_pudding", "푸딩", 50, 18, 5f, new[] { FoodTag.Sweet }, U(UnlockType.CafeLevel, 2));
-            CreateMenu("menu_grilled_fish", "구운생선", 90, 35, 8f, new[] { FoodTag.Fish, FoodTag.Meal, FoodTag.Warm }, U(UnlockType.CafeLevel, 3));
+            CreateMenu("menu_catnip_tea", "캣닢차", 40, 12, 4f, new[] { FoodTag.Warm }, U(UnlockType.Always, 0));
+            CreateMenu("menu_pudding", "푸딩", 50, 18, 5f, new[] { FoodTag.Sweet }, U(UnlockType.Always, 0));
+            CreateMenu("menu_grilled_fish", "구운생선", 90, 35, 8f, new[] { FoodTag.Fish, FoodTag.Meal, FoodTag.Warm }, U(UnlockType.Always, 0));
+            CreateMenu("menu_skewer", "새우꼬치", 85, 30, 7f, new[] { FoodTag.Fish, FoodTag.Meal }, U(UnlockType.Always, 0));
         }
 
         static void GenerateFurniture()
@@ -63,6 +65,18 @@ namespace YeogiCafe.EditorTools
                            A((AtmosphereAxis.Lively, 3)));
             CreateFacility("furn_fac_scratch", "스크래처", 250, new[] { FacilityTag.Play, FacilityTag.Active },
                            A((AtmosphereAxis.Lively, 1)));
+            // 과일 박스: 가장 비싼 가구. 누구나 좋아함(Box) → 추리 단서·보기에서는 빠진다
+            CreateFacility("furn_fac_fruitbox", "과일박스", 600, new[] { FacilityTag.Box },
+                           A((AtmosphereAxis.Lively, 2), (AtmosphereAxis.Warm, 2)));
+            // 온열 방석: 따뜻한 걸 좋아하는 고양이가 모인다(Warm, 단서 아님)
+            CreateFacility("furn_fac_heatpad", "온열방석", 280, new[] { FacilityTag.Warm, FacilityTag.Soft },
+                           A((AtmosphereAxis.Warm, 4)));
+            // 자동 낚싯대: 저절로 흔들리는 깃털 — 놀이 시설(놀이 선호 단서)
+            CreateFacility("furn_fac_wand", "자동낚싯대", 380, new[] { FacilityTag.Play, FacilityTag.Active },
+                           A((AtmosphereAxis.Lively, 3)));
+            // 캣휠: 안에서 달리면 바퀴가 돈다 — 활동적인 놀이 시설(놀이 선호 단서)
+            CreateFacility("furn_fac_wheel", "캣휠", 450, new[] { FacilityTag.Play, FacilityTag.Active },
+                           A((AtmosphereAxis.Lively, 4)));
             CreateFacility("furn_fac_plant", "화분", 180, new[] { FacilityTag.Quiet, FacilityTag.Natural },
                            A((AtmosphereAxis.Natural, 3), (AtmosphereAxis.Quiet, 1)));
             CreateFacility("furn_fac_window", "창문", 150, new[] { FacilityTag.Natural },
@@ -98,12 +112,33 @@ namespace YeogiCafe.EditorTools
                       "menu_milk", SeatTag.Corner, FacilityTag.Natural, AtmosphereAxis.Quiet, U(UnlockType.CafeLevel, 2));
             CreateCat("cat_tuxedo", "턱시도냥", PersonalityTag.Active, PersonalityTag.Playful,
                       "menu_americano", SeatTag.Sofa, FacilityTag.Play, AtmosphereAxis.Lively, U(UnlockType.CafeLevel, 2));
-            CreateCat("cat_mackerel", "고등어냥", PersonalityTag.Glutton, PersonalityTag.Relaxed,
-                      "menu_fishcake", SeatTag.Sofa, FacilityTag.Soft, AtmosphereAxis.Warm, U(UnlockType.CafeLevel, 3));
-            CreateCat("cat_siamese", "샴냥", PersonalityTag.Fickle, PersonalityTag.Curious,
-                      "menu_parfait", SeatTag.Window, FacilityTag.Play, AtmosphereAxis.Luxury, U(UnlockType.CafeLevel, 3));
-            CreateCat("cat_gray", "회색냥", PersonalityTag.Lonely, PersonalityTag.Social,
-                      "menu_tuna_sand", SeatTag.TwoSeat, FacilityTag.Social, AtmosphereAxis.Warm, U(UnlockType.RecordedAxesTotal, 6));
+            // 짝꿍(치즈·삼색·젖소)과 메뉴·시설·성격이 겹치지 않게: 추리가 앞 고양이 답을 베끼면 안 된다
+            CreateCat("cat_mackerel", "고등어냥", PersonalityTag.Glutton, PersonalityTag.Playful,
+                      "menu_skewer", SeatTag.Sofa, FacilityTag.Warm, AtmosphereAxis.Warm, U(UnlockType.CafeLevel, 3));
+            CreateCat("cat_siamese", "샴냥", PersonalityTag.Fickle, PersonalityTag.Introvert,
+                      "menu_catnip_tea", SeatTag.BarTable, FacilityTag.Height, AtmosphereAxis.Luxury, U(UnlockType.CafeLevel, 3));
+            CreateCat("cat_gray", "회색냥", PersonalityTag.Relaxed, PersonalityTag.Lonely,
+                      "menu_pudding", SeatTag.TwoSeat, FacilityTag.Quiet, AtmosphereAxis.Warm, U(UnlockType.RecordedAxesTotal, 6));
+            // 숨은 9번째 고양이(네코아츠메 희귀 고양이 참고): 창가석 + 캣타워 + 카페 Lv3(구운생선 메뉴) 갖추면 찾아온다
+            CreateCat("cat_moon", "달냥", PersonalityTag.Curious, PersonalityTag.Relaxed,
+                      "menu_grilled_fish", SeatTag.Window, FacilityTag.Height, AtmosphereAxis.Quiet,
+                      new UnlockCondition { type = UnlockType.FurnitureSet, value = 3, requireFurniture = new[] { "furn_seat_window", "furn_fac_tower" } });
+            // 새 고양이 4종(AI 원화 시트): 다른 고양이와 취향이 두 칸 이상 겹치지 않게, 아무도 안 쓰던 답(라떼·일반석·늘어지기·어울리기 단독)을 채운다
+            CreateCat("cat_fold", "폴드냥", PersonalityTag.Relaxed, PersonalityTag.Introvert,
+                      "menu_latte", SeatTag.Normal, FacilityTag.Relax, AtmosphereAxis.Quiet, U(UnlockType.RecordedAxesTotal, 3));
+            CreateCat("cat_munchkin", "먼치냥", PersonalityTag.Active, PersonalityTag.Playful,
+                      "menu_americano", SeatTag.BarTable, FacilityTag.Social, AtmosphereAxis.Lively, U(UnlockType.CafeLevel, 2));
+            CreateCat("cat_persian", "페르냥", PersonalityTag.Introvert, PersonalityTag.Glutton,
+                      "menu_parfait", SeatTag.Sofa, FacilityTag.Soft, AtmosphereAxis.Luxury, U(UnlockType.RecordedAxesTotal, 12));
+            CreateCat("cat_tortie", "카오스냥", PersonalityTag.Fickle, PersonalityTag.Active,
+                      "menu_grilled_fish", SeatTag.TwoSeat, FacilityTag.Play, AtmosphereAxis.Natural, U(UnlockType.CafeLevel, 3));
+            // 냥냥 보호소 후원으로 찾아오는 고양이 3종(ShelterBook 단계 1~3) — 기존 13마리와 두 칸 이상 겹치지 않는 조합
+            CreateCat("cat_sphynx", "스핑냥", PersonalityTag.Lonely, PersonalityTag.Social,
+                      "menu_milk", SeatTag.Window, FacilityTag.Warm, AtmosphereAxis.Warm, U(UnlockType.Shelter, 1));
+            CreateCat("cat_kitten", "꼬물냥", PersonalityTag.Playful, PersonalityTag.Curious,
+                      "menu_tuna_sand", SeatTag.Normal, FacilityTag.Active, AtmosphereAxis.Lively, U(UnlockType.Shelter, 2));
+            CreateCat("cat_senior", "어르신냥", PersonalityTag.Relaxed, PersonalityTag.Introvert,
+                      "menu_pudding", SeatTag.Corner, FacilityTag.Warm, AtmosphereAxis.Quiet, U(UnlockType.Shelter, 3));
         }
 
         static UnlockCondition U(UnlockType t, int v) => new UnlockCondition { type = t, value = v };
@@ -144,6 +179,14 @@ namespace YeogiCafe.EditorTools
             CreateEpisode("ep_mackerel", "cat_mackerel", 60);
             CreateEpisode("ep_siamese", "cat_siamese", 70);
             CreateEpisode("ep_gray", "cat_gray", 70);
+            CreateEpisode("ep_moon", "cat_moon", 100);
+            CreateEpisode("ep_fold", "cat_fold", 50);
+            CreateEpisode("ep_munchkin", "cat_munchkin", 60);
+            CreateEpisode("ep_persian", "cat_persian", 80);
+            CreateEpisode("ep_tortie", "cat_tortie", 80);
+            CreateEpisode("ep_sphynx", "cat_sphynx", 80);
+            CreateEpisode("ep_kitten", "cat_kitten", 80);
+            CreateEpisode("ep_senior", "cat_senior", 100);
         }
 
         static void CreateEpisode(string epId, string catId, int gold)
@@ -197,6 +240,7 @@ namespace YeogiCafe.EditorTools
             var so = GetOrCreate<FurnitureData>($"{FurnDir}/{id}.asset");
             so.furnitureId = id; so.displayNameKey = name; so.type = FurnitureType.Facility;
             so.facilityTags = tags; so.price = price; so.atmosphere = atmo;
+            so.wallMounted = WallMountedIds.Contains(id);
             EditorUtility.SetDirty(so);
         }
         static void CreateDeco(string id, string name, int price, FurnitureData.AtmoContribution[] atmo)
@@ -204,8 +248,11 @@ namespace YeogiCafe.EditorTools
             var so = GetOrCreate<FurnitureData>($"{FurnDir}/{id}.asset");
             so.furnitureId = id; so.displayNameKey = name; so.type = FurnitureType.Decoration;
             so.price = price; so.atmosphere = atmo;
+            so.wallMounted = WallMountedIds.Contains(id);
             EditorUtility.SetDirty(so);
         }
+        static readonly System.Collections.Generic.HashSet<string> WallMountedIds = new()
+            { "furn_fac_window", "furn_deco_clock", "furn_deco_frame", "furn_deco_curtain" };
         static void CreateCat(string id, string name, PersonalityTag p1, PersonalityTag p2,
                               string fav, SeatTag seat, FacilityTag fac, AtmosphereAxis atmo,
                               UnlockCondition unlock)

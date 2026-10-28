@@ -1,0 +1,8 @@
+
+# 파이썬 캐시·중간 산출물
+__pycache__/
+*.pyc
+여기까페냐옹/UnityProject/Tools/catart/newcats/v3_frames.pkl
+walkW_frames.pkl
+cutout_frames.pkl
+parts_frames.pkl
