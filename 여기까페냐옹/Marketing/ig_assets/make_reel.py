@@ -36,6 +36,8 @@ brand_h = 56 + 44
 gap = 36
 if src in ('newcats', 'parade'):
     cw, ch = 1000, 584
+elif src.startswith('intro:'):
+    cw, ch = 1000, 860
 else:
     probe = subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', src], capture_output=True, text=True).stdout.strip().split(',')
     cw, ch = map(int, probe)
@@ -107,6 +109,39 @@ if src == 'parade':
             dd.text((x + F * k / 2 - w / 2, gy + 10), n, font=fn, fill=INK)
         can.convert('RGB').save(os.path.join(tmp, f'n{t}.png'))
     src = os.path.join(tmp, 'parade.mp4')
+    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-framerate', str(FPS), '-i', os.path.join(tmp, 'n%d.png'),
+                    '-c:v', 'libx264', '-crf', '12', '-pix_fmt', 'yuv420p', src], check=True)
+
+# 오늘의 손님(고양이 소개 시리즈, 10/29): 마감 클로즈업(고해상도 원화 포즈)으로 표정 바꾸기 + 아래에서 걷기 칸으로 실제로 걸어 지나가기
+#   intro:<catId>[:한 줄]  — 취향(정답)은 절대 안 보여 준다(게임의 추리 재미). 한 줄은 그 고양이의 평소 모습 정도만.
+if src.startswith('intro:'):
+    parts = src.split(':'); cat = parts[1]; line = parts[2] if len(parts) > 2 else ''
+    F, k, FPS = 56, 4, 12
+    step = 3.2 * k
+    CU = f'{ROOT}/CatCloseups/close_cat_{cat}_%s.bytes'
+    faces = {e: Image.open(CU % e).convert('RGBA') for e in ('open', 'happy', 'wide', 'half')}
+    sheet = Image.open(f'{ROOT}/CatSheets/cat_{cat}.bytes').convert('RGBA')
+    fl = ImageFont.truetype(FONT, 32)
+    N = int(secs * FPS) + 2
+    # 표정 순서(초): 보통 → 눈웃음 → 보통 → 동그란 눈 → 졸린 눈 → 보통
+    seq = [(0.0, 'open'), (1.6, 'happy'), (2.3, 'open'), (3.6, 'wide'), (4.6, 'open'), (5.8, 'half'), (6.8, 'happy'), (7.6, 'open')]
+    for t in range(N):
+        sec = t / FPS
+        e = [f for s0, f in seq if s0 <= sec][-1]
+        can = Image.new('RGBA', (cw, ch), (255, 248, 236, 255)); dd = ImageDraw.Draw(can)
+        face = faces[e]; fk3 = face.resize((int(face.width * 2.5), int(face.height * 2.5)), Image.NEAREST)
+        can.alpha_composite(fk3, ((cw - fk3.width) // 2, 20))
+        if line:
+            w = dd.textlength(line, font=fl); dd.text(((cw - w) / 2, 20 + fk3.height + 14), line, font=fl, fill=SOFT)
+        gy = ch - 24
+        dd.line((0, gy + 2, cw, gy + 2), fill=(232, 214, 190, 255), width=4)
+        span = cw + F * k
+        cell = 52 + t % 8
+        img = sheet.crop(((cell % 4) * F, (cell // 4) * F, (cell % 4 + 1) * F, (cell // 4 + 1) * F)).resize((F * k, F * k), Image.NEAREST)
+        x = (t * step) % span - F * k
+        can.alpha_composite(img, (int(round(x)), gy - F * k + 3 * k))
+        can.convert('RGB').save(os.path.join(tmp, f'n{t}.png'))
+    src = os.path.join(tmp, 'intro.mp4')
     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-framerate', str(FPS), '-i', os.path.join(tmp, 'n%d.png'),
                     '-c:v', 'libx264', '-crf', '12', '-pix_fmt', 'yuv420p', src], check=True)
 
