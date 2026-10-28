@@ -61,20 +61,28 @@ namespace YeogiCafe.Visual
             if (day == null) day = FindObjectOfType<DayManager>();
 
             var ph = day != null ? day.Phase : DayPhase.Morning;
-            bool night = ph == DayPhase.Evening || ph == DayPhase.Settlement;
+            bool night = ph == DayPhase.Evening || ph == DayPhase.Settlement || YeogiCafe.Cafe.FixtureManager.PrimaryGlass() == null;
             var w = Weather.Current;
             bool sunny = w == WeatherKind.Sunny && !night;
             float baseA = night ? 0.6f : sunny ? 0.52f : 0.38f;
-            bool sunOk = w == WeatherKind.Sunny && ph != DayPhase.Settlement;   // 저녁에도 햇살 자리엔 해 그림자
+            bool sunOk = w == WeatherKind.Sunny && ph != DayPhase.Settlement && YeogiCafe.Cafe.FixtureManager.PrimaryGlass() != null;   // 창이 있어야 해가 든다(통유리를 보관함에 넣으면 조명 그림자)
 
             for (int i = list.Count - 1; i >= 0; i--)
             {
                 var e = list[i];
                 if (e.target == null || e.src == null) { if (e.sh != null) Destroy(e.sh.gameObject); if (e.cast != null) { Destroy(e.cast.gameObject); Destroy(e.mesh); } list.RemoveAt(i); continue; }
-                bool hide = !e.src.enabled || e.src.sprite == null || !e.target.gameObject.activeInHierarchy
-                            || (e.cat != null && (e.cat.CurrentSeat != null || e.cat.CurrentFacility != null));
+                bool hide = !e.src.enabled || e.src.sprite == null || !e.target.gameObject.activeInHierarchy;
+                // 10/28 v5: 의자·시설에 앉은 고양이도 그림자를 만든다 — 그 가구의 바닥 줄을 땅으로 삼는다(높이가 있으니 그림자가 가구 그림자에 이어 붙는다)
+                float? seatBase = null;
+                if (!hide && e.cat != null && (e.cat.CurrentSeat != null || e.cat.CurrentFacility != null))
+                {
+                    var comp = (e.cat.CurrentSeat as Component) ?? (e.cat.CurrentFacility as Component);
+                    var csr = comp != null ? comp.GetComponent<SpriteRenderer>() : null;
+                    if (csr == null || csr.sprite == null || e.cat.FacilityWall || comp.transform.position.y > CafeLayout.FloorTop + 0.2f) hide = true;   // 벽 선반·다락 위는 바닥에 안 비친다
+                    else seatBase = csr.transform.position.y + BottomY(csr.sprite) * csr.transform.lossyScale.y;
+                }
                 if (hide) { e.sh.enabled = false; e.cast.enabled = false; continue; }
-                e.sh.enabled = true; e.cast.enabled = false;
+                e.cast.enabled = false;
 
                 var b = e.src.bounds;
                 Vector3 foot = new Vector3(b.center.x, e.target.position.y, 0f);
@@ -84,37 +92,34 @@ namespace YeogiCafe.Visual
                     if (Mathf.Abs(baseY - foot.y) < 0.12f) foot.y = baseY;
                 }
                 float width = Mathf.Clamp(b.size.x * 0.75f, 0.45f, 2.4f);
-                float a = baseA;
+                e.sh.enabled = seatBase == null;                                 // 앉아 있으면 발밑 타원은 가구가 대신
+                float a = 0.34f;
 
-                if (sunOk && InBeam(foot))
+                if (sunOk)
                 {
-                    // 햇살 안: 해는 하나라 그림자 방향도 하나 — 바닥 햇살이 기운 쪽(아침 왼쪽 앞, 점심 바로 앞, 저녁 오른쪽 앞)으로
-                    //  창이 뒷벽에 있으니 그림자는 화면 앞쪽(아래)으로 조금 내려오고, 키가 클수록 길다
-                    float slope = SunSlope(day != null ? day.Phase : DayPhase.Morning);
-                    float h = Mathf.Clamp(b.size.y, 0.4f, 2.2f);
-                    float len = h * 0.35f;
-                    // 10/28: 동그란 타원 대신 '자기 모양' 그림자 — 실루엣을 바닥에 눕혀(뒤집고 납작하게) 해 반대쪽으로 기울인다
-                    Cast(e, ground, 0.34f, slope * 0.3f, 0.3f);
-                    e.sh.transform.position = foot + new Vector3(0f, -0.02f, 0f);       // 발밑 접지(짧고 진하게)
-                    e.sh.transform.localScale = new Vector3(width * 0.8f, Mathf.Max(0.45f, width * 0.4f), 1f);
-                    a = 0.42f;
+                    // 해: 방 안 모든 것에 같은 방향 — 바닥 햇살 모양(SunbeamSpot)의 기울기·길이에서 그대로 가져온다
+                    //  아침 = 해가 낮고 왼쪽으로 길게 · 점심 = 높아서 짧고 바로 앞 · 저녁 = 낮고 오른쪽으로 더 길게
+                    SunShadow(day != null ? day.Phase : DayPhase.Morning, out float ky, out float kx);
+                    bool lit = InBeam(foot);
+                    Cast(e, ground, ky, kx, lit ? 0.34f : 0.17f, seatBase);       // 햇살 밖은 창빛이 퍼져서 연하게
+                    a = lit ? 0.42f : 0.32f;
                 }
                 else if (night)
                 {
-                    // 밤: 가장 가까운 천장 조명 반대쪽으로 살짝(조명 바로 아래면 똑바로 짧게)
+                    // 조명: 가장 가까운 천장 조명에서 멀어지는 쪽으로. 조명과 가로로 멀수록 옆으로 더 눕는다(kx = 가로거리/높이차)
                     Vector2 lamp = NearestLamp(foot.x);
-                    float lean = Mathf.Clamp((foot.x - lamp.x) * 0.05f, -0.35f, 0.35f);
-                    Cast(e, ground, 0.22f, lean * 0.9f, 0.24f);                               // 조명 아래: 짧은 자기 모양 그림자
-                    e.sh.transform.position = foot + new Vector3(0f, -0.03f, 0f);
-                    e.sh.transform.localScale = new Vector3(width * 0.85f, Mathf.Max(0.5f, width * 0.45f), 1f);
+                    float kx = Mathf.Clamp((foot.x - lamp.x) / Mathf.Max(1f, lamp.y - foot.y), -1.2f, 1.2f) * 0.45f;
+                    Cast(e, ground, 0.24f, kx, 0.26f, seatBase);
+                    a = 0.5f;
                 }
                 else
                 {
-                    // 햇살 밖·흐린 날: 방 전체의 은은한 빛 → 발밑에 동그랗고 연하게
-                    e.sh.transform.position = foot + new Vector3(0f, -0.03f, 0f);
-                    e.sh.transform.localScale = new Vector3(width, Mathf.Max(0.55f, width * 0.55f), 1f);
-                    a = sunny ? 0.34f : 0.38f;
+                    // 흐림·비 낮: 빛이 사방에서 퍼진다 → 짧고 연하게 바로 아래
+                    Cast(e, ground, 0.14f, 0f, 0.16f, seatBase);
+                    a = 0.36f;
                 }
+                e.sh.transform.position = foot + new Vector3(0f, -0.02f, 0f);   // 발밑 접지(짧고 진하게)
+                e.sh.transform.localScale = new Vector3(width * 0.85f, Mathf.Max(0.45f, width * 0.42f), 1f);
                 e.sh.color = new Color(ShadowColor.r, ShadowColor.g, ShadowColor.b, a);
             }
         }
@@ -193,14 +198,15 @@ namespace YeogiCafe.Visual
         //  물체의 점 (X, Y), 높이 h = Y − B.y  →  그림자 S = (X + kx·h,  B.y − ky·h)
         //  h = 0인 바닥 줄은 그대로 제자리 → 바닥 변 전체가 항상 물체에 붙는다. ky = 길이/키, kx = 옆으로 밀림/키(빛 반대쪽).
         static readonly int MainTexId = Shader.PropertyToID("_MainTex");
-        bool Cast(Entry e, Vector3 groundFoot, float ky, float kx, float alpha)
+        bool Cast(Entry e, Vector3 groundFoot, float ky, float kx, float alpha, float? baseOverride = null)
         {
             var c = e.cast; var sp = e.src.sprite;
             if (sp == null) return false;
             var st = e.src.transform; var ls = st.lossyScale; var pos = st.position;
             float yb = BottomY(sp);
             float baseY = pos.y + yb * ls.y;
-            if (baseY - groundFoot.y > 0.12f) { c.enabled = false; return false; }   // 점프 중: 그림자를 띄우지 않는다
+            if (baseOverride.HasValue) baseY = baseOverride.Value;                     // 가구 위: 가구 바닥이 땅
+            else if (baseY - groundFoot.y > 0.12f) { c.enabled = false; return false; }   // 점프 중: 그림자를 띄우지 않는다
             var solid = Solid(sp);
             var r = sp.textureRect; float ppu = sp.pixelsPerUnit;
             float x0 = -sp.pivot.x / ppu, x1 = (r.width - sp.pivot.x) / ppu;
@@ -225,6 +231,17 @@ namespace YeogiCafe.Visual
             c.SetPropertyBlock(e.mpb);
             c.enabled = true;
             return true;
+        }
+
+        // 해 그림자 길이(ky = 그림자 길이/키)·옆 밀림(kx). 바닥 햇살의 skew/depth와 같은 비율(아침 −1.6/2.3, 저녁 +1.9/2.5)
+        static void SunShadow(DayPhase ph, out float ky, out float kx)
+        {
+            switch (ph)
+            {
+                case DayPhase.Lunch:   ky = 0.16f; kx = 0f; break;                       // 해가 높다 → 짧게
+                case DayPhase.Evening: ky = 0.5f;  kx = 0.5f * 0.76f; break;             // 낮은 해 → 오른쪽 앞으로 길게
+                default:               ky = 0.44f; kx = 0.44f * -0.7f; break;            // 아침(준비 포함) → 왼쪽 앞으로
+            }
         }
 
         // 바닥 햇살(SunbeamSpot)과 같은 기울기: 아침 -1.6/2.3, 점심 0, 저녁 +1.9/2.5
