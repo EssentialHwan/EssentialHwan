@@ -13,9 +13,10 @@ namespace YeogiCafe.Visual
     //  저녁·밤   → 가장 가까운 천장 조명이 광원. 바로 아래 짧고 진하게.
     //  흐림·비   → 빛이 퍼져서 연하고 둥글게.
     // URP 2D 그림자(벽에 세워지는 다각형)는 이 정면 시점 도트에 어울리지 않아 쓰지 않는다.
+    [DefaultExecutionOrder(1000)]   // 고양이 그림이 다 움직인 뒤에
     public class ContactShadows : MonoBehaviour
     {
-        class Entry { public Transform target; public SpriteRenderer src, sh; public MeshRenderer cast; public Mesh mesh; public MaterialPropertyBlock mpb; public CatBrain cat; }
+        class Entry { public Transform target; public SpriteRenderer src, sh; public MeshRenderer cast; public Mesh mesh; public MaterialPropertyBlock mpb; public CatBrain cat; public CatView view; }
 
         readonly List<Entry> list = new();
         readonly HashSet<Transform> known = new();
@@ -54,7 +55,8 @@ namespace YeogiCafe.Visual
             return blob;
         }
 
-        void Update()
+        // 고양이 그림(CatView.LateUpdate)이 움직인 '뒤'에 계산 → 한 프레임 늦게 따라가며 끌리는 것 방지
+        void LateUpdate()
         {
             scanT -= Time.unscaledDeltaTime;
             if (scanT <= 0f) { scanT = 0.5f; Scan(); }
@@ -94,7 +96,10 @@ namespace YeogiCafe.Visual
                 e.cast.enabled = false;
 
                 var b = e.src.bounds;
-                Vector3 foot = new Vector3(b.center.x, e.target.position.y, 0f);
+                // 10/28 v7: 고양이는 상호작용(만날 지점까지 걸어가기)·자리 이동 때 몸(루트)은 그대로 두고 그림(Visual)만 옮긴다.
+                //  루트 y를 땅으로 쓰면 걷는 동안 그림자가 떨어져 있다가 돌아오면서 슬슬 붙었다 → 그림이 옮겨 간 만큼 땅도 같이 옮긴다.
+                float groundY = e.target.position.y + (e.view != null ? e.view.VisualOffset.y : 0f);
+                Vector3 foot = new Vector3(b.center.x, groundY, 0f);
                 Vector3 ground = foot;                                           // 바닥(점프 판정용)
                 {   // 발밑 타원도 그림의 실제 발바닥 줄에 붙인다(칸 아래 투명 여백만큼 떠 보이던 것 보정)
                     float baseY = e.src.transform.position.y + BottomY(e.src.sprite) * e.src.transform.lossyScale.y;
@@ -309,7 +314,7 @@ namespace YeogiCafe.Visual
             var cast = cgo.AddComponent<MeshRenderer>();
             if (mat != null) cast.sharedMaterial = mat;
             cast.sortingOrder = YSort.FlatOnFloor + 5; cast.enabled = false;
-            list.Add(new Entry { target = t, src = src, sh = sh, cast = cast, mesh = mesh, mpb = new MaterialPropertyBlock(), cat = cat });
+            list.Add(new Entry { target = t, src = src, sh = sh, cast = cast, mesh = mesh, mpb = new MaterialPropertyBlock(), cat = cat, view = t.GetComponent<CatView>() });
         }
     }
 }
