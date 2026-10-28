@@ -129,7 +129,7 @@ def warp_body(body, t, fx, hx, low_min, bottom, roll, tail_amp):
             out[:] = np.where(al, r, out)
     return out
 
-def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, front_fwd=0.10, gait=False, roll=0.0, tail=0.0, flex=0.0):
+def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, front_fwd=0.10, gait=False, roll=0.0, tail=0.0, flex=0.0, blend=0.0):
     bh, bw = body.shape[:2]
     if front.shape[0] != hind.shape[0]:   # 앞다리 길이를 뒷다리 기준으로(폭은 그대로)
         front = np.array(Image.fromarray(front).resize((front.shape[1], hind.shape[0]), Image.BICUBIC))
@@ -191,7 +191,28 @@ def make(body, front, hind, n=8, swing=17, lift=0.10, bob=0.012, sink=0.55, fron
         bodyin = np.zeros(c.shape[:2], bool)
         inner = ndimage.binary_erosion(body[..., 3] > 0, iterations=max(2, int(bh * 0.02)))
         iy, ix = np.nonzero(inner); bodyin[(iy - round(dy)).clip(0, c.shape[0] - 1), ix + pad] = True
-        L[bodyin] = 0
+        if blend > 0:
+            # 어깨·허벅지 살(10/28): 다리 윗부분을 배 위로 blend×다리길이만큼 남겨 몸에 겹쳐 그린다 → 다리가 배선 밑에서
+            # 뚝 튀어나오지 않고 살덩이가 몸에서 이어져 내려온다. 몸 안에 들어간 다리 외곽선은 진한 선 대신 털 그늘색으로(살 윤곽).
+            H_, W_ = bodyin.shape
+            bm = np.zeros((H_, W_), bool)
+            bys = np.nonzero(body[..., 3] > 0)
+            bm[(bys[0] - round(dy)).clip(0, H_ - 1), bys[1] + pad] = True
+            bot = np.full(W_, -1)
+            colany = bm.any(0); bot[colany] = H_ - 1 - np.argmax(bm[::-1, colany], axis=0)
+            keep_h = blend * hl_h
+            yy = np.arange(H_)[:, None]
+            keep = bodyin & (yy >= (bot[None, :] - keep_h))
+            L[bodyin & ~keep] = 0
+            la = L[..., 3] > 0
+            if (la & keep).any():
+                rgb = L[..., :3].astype(float); lum = rgb.mean(2)
+                fur = la & ~keep & (lum > np.percentile(lum[la], 40))
+                fc = np.median(rgb[fur], axis=0) if fur.any() else np.median(rgb[la], axis=0)
+                dark = la & keep & (lum < max(60.0, fc.mean() * 0.62))
+                L[dark, :3] = (fc * 0.82).astype(np.uint8)             # 살 윤곽: 털보다 조금 어두운 그늘
+        else:
+            L[bodyin] = 0
         clip_outside(L, body, pad, dy, ground, hl_h - hidden)
         al = L[..., 3:4] > 0
         c[:] = np.where(al, L, c)
