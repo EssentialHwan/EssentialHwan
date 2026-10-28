@@ -15,7 +15,8 @@ def bw(a):
 inst_w = max(bw(cell(52 + j)) for j in range(8))
 a, body, front, hind = P.parts(f'{cat}_parts_src.png')
 best = None
-for ff in (0.10, 0.16):
+FF = [float(x.split('=')[1]) for x in sys.argv if x.startswith('--front=')]
+for ff in (FF or [0.10, 0.16]):
     ref_hi = P.make(body, front, hind, 8, front_fwd=ff)
     union = np.zeros(ref_hi[0].shape[:2], bool)
     for f in ref_hi: union |= f[..., 3] > 0

@@ -36,7 +36,7 @@ def rot(img, ang, pivot):
 def darken(img, k=0.74):
     # 먼 쪽 다리: 털만 어둡게, 밝은 발끝(분홍)은 조금만 → 회색 발끝 방지
     o = img.copy(); rgb = o[..., :3].astype(float); lum = rgb.mean(2)
-    kk = np.where(lum > 150, 0.9, k)[..., None]
+    kk = np.where(lum > 205, 0.95, np.where(lum > 150, 0.9, k))[..., None]   # 흰 털은 거의 그대로(회색 조각처럼 보이지 않게)
     o[..., :3] = (rgb * kk).astype(np.uint8); return o
 
 def belly_y(body, x):
@@ -215,6 +215,37 @@ def to_game(hi, width_px=48, scale=None):
         s = scale
     return _down(hi, pal, (y0, y1, x0, x1), s)
 
+def fillet(d, olc, lo=0.45):
+    # 다리 이음새 둥글리기(10/28 형: '몸통과 다리가 분해된 느낌'): 배 아래선과 다리 옆선이 만나는 직각 안쪽 모서리를
+    # 1~2칸 계단으로 채워 다리가 몸에서 자연스럽게 뻗어 나오게 한다(겨드랑이·허벅지 살). 그림 아래쪽(배·다리)만.
+    al = d[..., 3] > 0
+    H, W = al.shape
+    ys = np.nonzero(al.any(1))[0]
+    if len(ys) == 0: return d
+    y0 = int(ys.min() + (ys.max() - ys.min()) * lo)
+    def nb(m, dy, dx):
+        o = np.zeros_like(m)
+        o[max(0, dy):H + min(0, dy), max(0, dx):W + min(0, dx)] = m[max(0, -dy):H - max(0, dy), max(0, -dx):W - max(0, dx)]
+        return o
+    up = nb(al, 1, 0); lf = nb(al, 0, 1); rt = nb(al, 0, -1)
+    rows = np.zeros_like(al); rows[y0:] = True
+    f1 = ~al & up & (lf ^ rt) & rows                     # 위(배)와 한쪽 옆(다리)이 막힌 안쪽 모서리 — 양옆 다 막힌 좁은 틈은 제외
+    f2 = ~al & ~f1 & nb(f1, 1, 0) & ((lf & nb(f1, 1, -1)) | (rt & nb(f1, 1, 1))) & rows
+    add = f1 | f2
+    if not add.any(): return d
+    o = d.copy(); al2 = al | add
+    # 새로 채운 칸: 가장 가까운 '털' 색(외곽선이 아닌 칸)
+    isol = (d[..., :3] == olc).all(-1) & al
+    fur = al & ~isol
+    _, (iy, ix) = ndimage.distance_transform_edt(~fur, return_indices=True)
+    o[add, :3] = d[iy[add], ix[add], :3]; o[add, 3] = 255
+    # 외곽선 다시: 새 실루엣의 경계만 외곽선, 안으로 들어간 옛 외곽선은 털색으로
+    edge = al2 & ~ndimage.binary_erosion(al2, structure=[[0, 1, 0], [1, 1, 1], [0, 1, 0]])
+    inner_ol = isol & ~edge & ndimage.binary_dilation(add, iterations=2)
+    o[inner_ol, :3] = d[iy[inner_ol], ix[inner_ol], :3]
+    o[edge & ndimage.binary_dilation(add, iterations=1), :3] = olc
+    return o
+
 def _down(hi, pal, box, s):
     y0, y1, x0, x1 = box
     out = []
@@ -233,6 +264,7 @@ def _down(hi, pal, box, s):
         # 외곽선 다시: 알파 경계
         e = al & ~ndimage.binary_erosion(al, structure=[[0, 1, 0], [1, 1, 1], [0, 1, 0]])
         d[e, :3] = pal[pal.sum(1).argmin()]; d[..., 3] = al * 255
+        d = fillet(d, pal[pal.sum(1).argmin()].astype(np.uint8))
         out.append(d)
     return out
 
