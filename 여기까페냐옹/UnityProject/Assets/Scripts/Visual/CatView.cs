@@ -241,9 +241,17 @@ namespace YeogiCafe.Visual
         float movedThisFrame;
         bool DistanceDriven => clip == "walk" && Data != null && CatSheet.HasCutoutWalk(Data.catId);
 
+        int hopFrame = -1, lastHopIdx = -1;     // 캣스텝 점프 중: 고정할 'jumpup' 프레임(웅크림 0 / 공중 2)
+
         void Tick(float dt)
         {
             if (clipFrames == null || clipFrames.Length == 0) return;
+            if (hopFrame >= 0 && clip == "jumpup")
+            {
+                int hf = Mathf.Min(hopFrame, clipFrames.Length - 1);
+                sr.sprite = clipFrames[hf]; lastFrame = hf; hopFrame = -1; return;
+            }
+            hopFrame = -1;
             if (DistanceDriven) clipT += Mathf.Min(movedThisFrame, 0.3f) / (WalkStepUnits * Mathf.Max(1f, clipDef.fps));
             else clipT += dt;
             int i = (int)(clipT * clipDef.fps);
@@ -314,13 +322,22 @@ namespace YeogiCafe.Visual
             bool loftMoving = false;
             if (!exiting && loft != null && (fp == CatBrain.FacPhase.Perched || fp == CatBrain.FacPhase.Dismount))
             {
-                // 다락: 사다리로 기어올라 선반 따라 걸어감(내려올 땐 거꾸로)
+                // 다락: 벽 캣스텝을 폴짝폴짝 뛰어 올라 선반 따라 걸어감(내려올 땐 거꾸로 뛰어내림)
                 float tt = facT / loft.ClimbSeconds;
-                float prog = fp == CatBrain.FacPhase.Perched ? tt : 1f - tt;
+                bool up = fp == CatBrain.FacPhase.Perched;
+                float prog = up ? tt : 1f - tt;
                 local = loft.PathOffset(prog);
                 loftMoving = tt < 1f;
                 loftClimb = loftMoving && loft.Climbing(prog);
-                if (loftMoving && !loftClimb && Mathf.Abs(loft.Run) > 0.01f) sr.flipX = (loft.Run < 0f) == (fp == CatBrain.FacPhase.Perched);
+                if (loftMoving && !loftClimb && Mathf.Abs(loft.Run) > 0.01f) sr.flipX = (loft.Run < 0f) == up;
+                if (loftClimb)
+                {
+                    sr.flipX = (loft.HopDir(prog) < 0f) == up;                          // 다음 발판 쪽을 보고 뛴다
+                    hopFrame = loft.HopFrame(prog);
+                    int hi = loft.HopIndex(prog);
+                    if (hi != lastHopIdx) { if (hi % 2 == 1) S("sfx_jump", 0.3f, 0.15f); else if (lastHopIdx >= 0) S("sfx_land", 0.25f, 0.15f); lastHopIdx = hi; }
+                }
+                else lastHopIdx = -1;
                 sortY = loft.BaseWorldPos.y - 0.02f;
             }
             else if (!exiting && perch > 0.05f && (fp == CatBrain.FacPhase.Perched || fp == CatBrain.FacPhase.Dismount))
@@ -400,7 +417,8 @@ namespace YeogiCafe.Visual
                 if (zoom && clip != "run" && !brain.IsChasing) { ShowEmote(EmoteDrawing.Kind.Exclaim); YeogiCafe.Core.GameEvents.Raise(YeogiCafe.Core.GameEvents.Zoomies, Data != null ? Data.catId : null); }
                 Play(zoom ? "run" : "walk"); idleTimer = 0f; rest = Rest.None;
             }
-            else if (loft != null && loftMoving) Play("walk");                                                // 사다리 오르내리기·선반 걷기
+            else if (loft != null && loftClimb) Play("jumpup");                                            // 캣스텝 점프(프레임은 hopFrame으로 고정)
+            else if (loft != null && loftMoving) Play("walk");                                                // 데크·선반 걷기
             else if (loft != null && fp == CatBrain.FacPhase.Perched) { if (clip != "loaf" && clip != "sleep") Play("loaf"); }   // 다락에서 식빵
             else if (fp == CatBrain.FacPhase.Dismount && perch > 0.05f) Play("jumpdown");
             else if (fp == CatBrain.FacPhase.Perched && brain.FacilityWall) Play("gaze");                      // 창밖 구경
@@ -473,7 +491,7 @@ namespace YeogiCafe.Visual
             if (fp == CatBrain.FacPhase.Perched)
             {
                 idleTimer = 0f;
-                if (brain.CurrentFacility is LoftSpot) rest = Rest.Loaf;                            // 다락: 사다리로(점프 없이)
+                if (brain.CurrentFacility is LoftSpot) rest = Rest.Loaf;                            // 다락: 캣스텝을 한 칸씩(CatView 위 경로)
                 else if (brain.FacilityPerch > 0.05f) { PlayThen("jumpup", "loaf"); rest = Rest.Loaf; }   // 올라가서 식빵 → (느긋하면) 잠
                 if (brain.CurrentFacility is Component c && !(brain.CurrentFacility is LoftSpot)) sr.flipX = c.transform.position.x > CafeCenterX;
                 if (IsWheel()) sr.flipX = false;                                       // 바퀴는 시계 방향으로 돈다 → 오른쪽 보고 달림

@@ -22,7 +22,7 @@ namespace YeogiCafe.Core
         // 고양이가 다니고 가구를 놓을 수 있는 오른쪽 끝(화면 오른쪽 가장자리에서 여유를 둠)
         public static float FloorMaxX(int lv) => lv <= 1 ? 12.6f : lv == 2 ? 14.3f : 15.6f;
         public static float WallMaxX(int lv) => lv <= 1 ? 13.2f : lv == 2 ? 14.6f : 15.9f;
-        // Lv3 다락: 벽 위쪽에 캣워크 선반(가로 전체) + 오른쪽 다락 데크, 사다리로 오른다
+        // Lv3 다락: 벽 위쪽에 캣워크 선반(가로 전체) + 오른쪽 다락 데크, 벽 캣스텝(LoftSpot.Steps)으로 오른다 · LadderX는 옛 사다리 자리(미사용)
         public const float LoftDeckY = 7.7f, LadderX = 12.4f, DeckLeft = 12.8f, DeckRight = 16.9f;   // 선반은 통유리 창틀 바로 위(상단 메뉴 바에 안 가리게)
         public static readonly float[] LoftSpotX = { 13.7f, 15.5f, 9.4f, 5.3f };   // 데크 2자리 + 캣워크(창 위 선반) 2자리
         public static float WallMaxY(int lv) => lv <= 1 ? 6.9f : CeilingY - 1.1f;      // Lv1은 화면 위쪽이 좁다

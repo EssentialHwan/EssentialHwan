@@ -166,6 +166,7 @@ namespace YeogiCafe.Visual
             if (parent == null) go.transform.position = pos; else go.transform.localPosition = pos;
             var l = go.AddComponent<Light2D>();
             l.lightType = type;
+            SetField(l, "m_ApplyToSortingLayers", AllLayers());          // 바닥 레이어(Floor)까지 모두 비춘다
             l.intensity = 0f;
             if (type != Light2D.LightType.Global)
             {
@@ -203,6 +204,8 @@ namespace YeogiCafe.Visual
                 beamSr = go.GetComponent<SpriteRenderer>();
                 if (beamSr == null) return;
                 beam = Make("FloorBeam", Light2D.LightType.Sprite, Vector3.zero, false, go.transform);
+                // 바닥 햇살은 '바닥'만 비춘다: 고양이·가구까지 비추면 창살 모양 빛이 몸을 뚫고 지나가는 것처럼 보였다(10/28 형)
+                if (FloorLayer != 0) SetField(beam, "m_ApplyToSortingLayers", new[] { FloorLayer });
             }
             if (beamSr.sprite != null && beamSr.sprite != beamFor)
             {
@@ -237,6 +240,7 @@ namespace YeogiCafe.Visual
                 if (sr.GetComponentInParent<Canvas>() != null) continue;
                 string nm = sr.gameObject.name;
                 if (nm == "LampHalo" || nm == "ContactShadow") continue;          // 직접 관리하는 것
+                if (FloorLayer != 0 && sr.sortingLayerID != FloorLayer && IsFloorLike(sr)) sr.sortingLayerID = FloorLayer;
                 var sh = sr.sharedMaterial != null ? sr.sharedMaterial.shader : null;
                 bool isDefault = sh == null || sh.name == "Sprites/Default";
                 if (IsEmitter(sr))
@@ -247,6 +251,29 @@ namespace YeogiCafe.Visual
                 if (litMat != null && isDefault) sr.sharedMaterial = litMat;
                 YeogiCafe.Art.LitSprites.Upgrade(sr);
             }
+        }
+
+        // 바닥 레이어: 바닥 타일·바닥에 깔리는 것(러그·햇살)만 Floor 정렬 레이어로 옮긴다(Default보다 먼저 그려짐 = 원래도 맨 뒤).
+        // ProjectSettings/TagManager에 'Floor'가 없으면 아무것도 안 한다(예전처럼 동작).
+        static int floorLayer = -1;
+        public static int FloorLayer
+        {
+            get
+            {
+                if (floorLayer < 0) { int id = SortingLayer.NameToID("Floor"); floorLayer = id != 0 && SortingLayer.IsValid(id) ? id : 0; }
+                return floorLayer;
+            }
+        }
+        static int[] AllLayers()
+        {
+            var ls = SortingLayer.layers; var ids = new int[ls.Length];
+            for (int i = 0; i < ls.Length; i++) ids[i] = ls[i].id;
+            return ids;
+        }
+        static bool IsFloorLike(SpriteRenderer sr)
+        {
+            int o = sr.sortingOrder;
+            return (o >= YSort.FloorTiles && o < YSort.WallTiles) || (o >= YSort.FlatOnFloor && o <= YSort.FlatOnFloor + 4);
         }
 
         static bool IsEmitter(SpriteRenderer sr)
