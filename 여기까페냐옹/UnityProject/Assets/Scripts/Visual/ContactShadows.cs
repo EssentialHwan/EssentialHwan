@@ -70,7 +70,7 @@ namespace YeogiCafe.Visual
             for (int i = list.Count - 1; i >= 0; i--)
             {
                 var e = list[i];
-                if (e.target == null || e.src == null) { if (e.sh != null) Destroy(e.sh.gameObject); if (e.cast != null) Destroy(e.cast.gameObject); list.RemoveAt(i); continue; }
+                if (e.target == null || e.src == null) { if (e.sh != null) Destroy(e.sh.gameObject); if (e.cast != null) Destroy(e.cast.transform.parent.gameObject); list.RemoveAt(i); continue; }
                 bool hide = !e.src.enabled || e.src.sprite == null || !e.target.gameObject.activeInHierarchy
                             || (e.cat != null && (e.cat.CurrentSeat != null || e.cat.CurrentFacility != null));
                 if (hide) { e.sh.enabled = false; e.cast.enabled = false; continue; }
@@ -78,6 +78,11 @@ namespace YeogiCafe.Visual
 
                 var b = e.src.bounds;
                 Vector3 foot = new Vector3(b.center.x, e.target.position.y, 0f);
+                Vector3 ground = foot;                                           // 바닥(점프 판정용)
+                {   // 발밑 타원도 그림의 실제 발바닥 줄에 붙인다(칸 아래 투명 여백만큼 떠 보이던 것 보정)
+                    float baseY = e.src.transform.position.y + BottomY(e.src.sprite) * e.src.transform.lossyScale.y;
+                    if (Mathf.Abs(baseY - foot.y) < 0.12f) foot.y = baseY;
+                }
                 float width = Mathf.Clamp(b.size.x * 0.75f, 0.45f, 2.4f);
                 float a = baseA;
 
@@ -89,7 +94,7 @@ namespace YeogiCafe.Visual
                     float h = Mathf.Clamp(b.size.y, 0.4f, 2.2f);
                     float len = h * 0.35f;
                     // 10/28: 동그란 타원 대신 '자기 모양' 그림자 — 실루엣을 바닥에 눕혀(뒤집고 납작하게) 해 반대쪽으로 기울인다
-                    Cast(e, foot, 0.34f, slope * 22f, 0.3f);
+                    Cast(e, ground, 0.34f, slope * 22f, 0.3f);
                     e.sh.transform.position = foot + new Vector3(0f, -0.02f, 0f);       // 발밑 접지(짧고 진하게)
                     e.sh.transform.localScale = new Vector3(width * 0.8f, Mathf.Max(0.45f, width * 0.4f), 1f);
                     a = 0.42f;
@@ -99,7 +104,7 @@ namespace YeogiCafe.Visual
                     // 밤: 가장 가까운 천장 조명 반대쪽으로 살짝(조명 바로 아래면 똑바로 짧게)
                     Vector2 lamp = NearestLamp(foot.x);
                     float lean = Mathf.Clamp((foot.x - lamp.x) * 0.05f, -0.35f, 0.35f);
-                    Cast(e, foot, 0.22f, lean * 50f, 0.24f);                               // 조명 아래: 짧은 자기 모양 그림자
+                    Cast(e, ground, 0.22f, lean * 50f, 0.24f);                               // 조명 아래: 짧은 자기 모양 그림자
                     e.sh.transform.position = foot + new Vector3(0f, -0.03f, 0f);
                     e.sh.transform.localScale = new Vector3(width * 0.85f, Mathf.Max(0.5f, width * 0.45f), 1f);
                 }
@@ -114,20 +119,48 @@ namespace YeogiCafe.Visual
             }
         }
 
-        // 자기 모양 그림자: 지금 그림(스프라이트)을 위아래로 뒤집어 납작하게 눌러 발밑에서 화면 앞쪽(아래)으로 눕힌다.
-        //  squash = 키 대비 그림자 길이, tilt = 기울기(도, +면 오른쪽 아래로), alpha = 진하기
-        void Cast(Entry e, Vector3 foot, float squash, float tilt, float alpha)
+        // 자기 모양 그림자(10/28 v2, Graveyard Keeper 방식): 그림자는 '접지점 B'를 축으로만 돈다 → 어떤 각도에서도 물체와 붙어 있다.
+        //  B = 그림의 가장 아래 불투명 줄(발바닥) · 스프라이트 기준점 x.  물체의 점 P(높이 h = P.y − B.y)는
+        //  S = B + R(tilt)·(Δx, −h·squash)  — 위아래로 뒤집어(−) 납작하게(squash) 눌러 B에 매단 뒤 B를 축으로 기울인다.
+        //  squash = 그림자 길이/키(해가 낮을수록 길다), tilt = 빛 반대 방향(도, +면 오른쪽 아래로).
+        static readonly Dictionary<Sprite, float> bottomCache = new();
+        // 스프라이트 기준점에서 가장 아래 불투명 줄까지의 거리(스프라이트 단위). 그림 칸 아래 투명 여백만큼 그림자가 떠 보이던 원인
+        static float BottomY(Sprite sp)
         {
-            var c = e.cast;
+            if (bottomCache.TryGetValue(sp, out var v)) return v;
+            var r = sp.textureRect; int row = 0;
+            try
+            {
+                var px = sp.texture.GetPixels32();
+                int W = sp.texture.width; bool found = false;
+                for (int y = 0; y < (int)r.height && !found; y++)
+                    for (int x = 0; x < (int)r.width; x++)
+                        if (px[((int)r.y + y) * W + (int)r.x + x].a > 8) { row = y; found = true; break; }
+            }
+            catch { row = 0; }                                       // 읽을 수 없는 그림이면 칸 아래 변
+            v = (row - sp.pivot.y) / sp.pixelsPerUnit;
+            bottomCache[sp] = v; return v;
+        }
+
+        // 반환: 그렸으면 true(공중에 뜬 순간 등엔 false → 타원만)
+        bool Cast(Entry e, Vector3 groundFoot, float squash, float tilt, float alpha)
+        {
+            var c = e.cast; var sp = e.src.sprite;
+            if (sp == null) return false;
+            var st = e.src.transform; var ls = st.lossyScale;
+            float yb = BottomY(sp);
+            Vector3 B = new Vector3(st.position.x, st.position.y + yb * ls.y, 0f);
+            if (B.y - groundFoot.y > 0.12f) { c.enabled = false; return false; }   // 점프 중: 그림자를 띄우지 않는다
+            var pivot = c.transform.parent;
+            pivot.position = B;
+            pivot.rotation = Quaternion.Euler(0f, 0f, tilt);
             c.enabled = true;
-            c.sprite = e.src.sprite; c.flipX = e.src.flipX;
-            var ls = e.src.transform.lossyScale;
-            c.transform.rotation = Quaternion.Euler(0f, 0f, tilt);
-            c.transform.localScale = new Vector3(ls.x, -Mathf.Abs(ls.y) * squash, 1f);
-            c.transform.position = foot;
-            var bb = c.bounds;                                          // 뒤집힌 그림의 윗변(=발)이 발 위치에 오게
-            c.transform.position += new Vector3(foot.x - bb.center.x + Mathf.Sin(tilt * Mathf.Deg2Rad) * bb.size.y * 0.5f, foot.y - bb.max.y + 0.02f, 0f);
+            c.sprite = sp; c.flipX = e.src.flipX;
+            float sy = Mathf.Abs(ls.y) * squash;
+            c.transform.localScale = new Vector3(ls.x, -sy, 1f);
+            c.transform.localPosition = new Vector3(0f, yb * sy, 0f);     // 뒤집힌 그림의 발바닥 줄이 정확히 B에 오게
             c.color = new Color(ShadowColor.r * 0.6f, ShadowColor.g * 0.6f, ShadowColor.b * 0.6f, alpha);
+            return true;
         }
 
         // 바닥 햇살(SunbeamSpot)과 같은 기울기: 아침 -1.6/2.3, 점심 0, 저녁 +1.9/2.5
@@ -179,8 +212,10 @@ namespace YeogiCafe.Visual
             sh.sprite = Blob();
             if (mat != null) sh.sharedMaterial = mat;                       // 조명을 받아 저녁엔 그림자도 같이 어두워진다
             sh.sortingOrder = YSort.FlatOnFloor + 6;                         // 러그·햇살 위, 모든 물건 아래
+            var piv = new GameObject("CastPivot");
+            piv.transform.SetParent(transform, false);
             var cgo = new GameObject("CastShadow");
-            cgo.transform.SetParent(transform, false);
+            cgo.transform.SetParent(piv.transform, false);
             var cast = cgo.AddComponent<SpriteRenderer>();
             if (mat != null) cast.sharedMaterial = mat;
             cast.sortingOrder = YSort.FlatOnFloor + 5; cast.enabled = false;
