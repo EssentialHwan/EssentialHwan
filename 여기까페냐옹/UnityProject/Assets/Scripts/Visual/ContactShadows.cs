@@ -15,7 +15,7 @@ namespace YeogiCafe.Visual
     // URP 2D 그림자(벽에 세워지는 다각형)는 이 정면 시점 도트에 어울리지 않아 쓰지 않는다.
     public class ContactShadows : MonoBehaviour
     {
-        class Entry { public Transform target; public SpriteRenderer src, sh, cast; public CatBrain cat; }
+        class Entry { public Transform target; public SpriteRenderer src, sh; public MeshRenderer cast; public Mesh mesh; public MaterialPropertyBlock mpb; public CatBrain cat; }
 
         readonly List<Entry> list = new();
         readonly HashSet<Transform> known = new();
@@ -70,7 +70,7 @@ namespace YeogiCafe.Visual
             for (int i = list.Count - 1; i >= 0; i--)
             {
                 var e = list[i];
-                if (e.target == null || e.src == null) { if (e.sh != null) Destroy(e.sh.gameObject); if (e.cast != null) Destroy(e.cast.transform.parent.gameObject); list.RemoveAt(i); continue; }
+                if (e.target == null || e.src == null) { if (e.sh != null) Destroy(e.sh.gameObject); if (e.cast != null) { Destroy(e.cast.gameObject); Destroy(e.mesh); } list.RemoveAt(i); continue; }
                 bool hide = !e.src.enabled || e.src.sprite == null || !e.target.gameObject.activeInHierarchy
                             || (e.cat != null && (e.cat.CurrentSeat != null || e.cat.CurrentFacility != null));
                 if (hide) { e.sh.enabled = false; e.cast.enabled = false; continue; }
@@ -94,7 +94,7 @@ namespace YeogiCafe.Visual
                     float h = Mathf.Clamp(b.size.y, 0.4f, 2.2f);
                     float len = h * 0.35f;
                     // 10/28: 동그란 타원 대신 '자기 모양' 그림자 — 실루엣을 바닥에 눕혀(뒤집고 납작하게) 해 반대쪽으로 기울인다
-                    Cast(e, ground, 0.34f, slope * 22f, 0.3f);
+                    Cast(e, ground, 0.34f, slope * 0.3f, 0.3f);
                     e.sh.transform.position = foot + new Vector3(0f, -0.02f, 0f);       // 발밑 접지(짧고 진하게)
                     e.sh.transform.localScale = new Vector3(width * 0.8f, Mathf.Max(0.45f, width * 0.4f), 1f);
                     a = 0.42f;
@@ -104,7 +104,7 @@ namespace YeogiCafe.Visual
                     // 밤: 가장 가까운 천장 조명 반대쪽으로 살짝(조명 바로 아래면 똑바로 짧게)
                     Vector2 lamp = NearestLamp(foot.x);
                     float lean = Mathf.Clamp((foot.x - lamp.x) * 0.05f, -0.35f, 0.35f);
-                    Cast(e, ground, 0.22f, lean * 50f, 0.24f);                               // 조명 아래: 짧은 자기 모양 그림자
+                    Cast(e, ground, 0.22f, lean * 0.9f, 0.24f);                               // 조명 아래: 짧은 자기 모양 그림자
                     e.sh.transform.position = foot + new Vector3(0f, -0.03f, 0f);
                     e.sh.transform.localScale = new Vector3(width * 0.85f, Mathf.Max(0.5f, width * 0.45f), 1f);
                 }
@@ -189,23 +189,41 @@ namespace YeogiCafe.Visual
         }
 
         // 반환: 그렸으면 true(공중에 뜬 순간 등엔 false → 타원만)
-        bool Cast(Entry e, Vector3 groundFoot, float squash, float tilt, float alpha)
+        // v4(10/28): 회전 대신 '기울임(shear)'. 회전하면 바닥 변도 같이 기울어 한쪽 끝이 물체에서 떨어졌다(형 빨간 표시).
+        //  물체의 점 (X, Y), 높이 h = Y − B.y  →  그림자 S = (X + kx·h,  B.y − ky·h)
+        //  h = 0인 바닥 줄은 그대로 제자리 → 바닥 변 전체가 항상 물체에 붙는다. ky = 길이/키, kx = 옆으로 밀림/키(빛 반대쪽).
+        static readonly int MainTexId = Shader.PropertyToID("_MainTex");
+        bool Cast(Entry e, Vector3 groundFoot, float ky, float kx, float alpha)
         {
             var c = e.cast; var sp = e.src.sprite;
             if (sp == null) return false;
-            var st = e.src.transform; var ls = st.lossyScale;
+            var st = e.src.transform; var ls = st.lossyScale; var pos = st.position;
             float yb = BottomY(sp);
-            Vector3 B = new Vector3(st.position.x, st.position.y + yb * ls.y, 0f);
-            if (B.y - groundFoot.y > 0.12f) { c.enabled = false; return false; }   // 점프 중: 그림자를 띄우지 않는다
-            var pivot = c.transform.parent;
-            pivot.position = B;
-            pivot.rotation = Quaternion.Euler(0f, 0f, tilt);
+            float baseY = pos.y + yb * ls.y;
+            if (baseY - groundFoot.y > 0.12f) { c.enabled = false; return false; }   // 점프 중: 그림자를 띄우지 않는다
+            var solid = Solid(sp);
+            var r = sp.textureRect; float ppu = sp.pixelsPerUnit;
+            float x0 = -sp.pivot.x / ppu, x1 = (r.width - sp.pivot.x) / ppu;
+            float y0 = -sp.pivot.y / ppu, y1 = (r.height - sp.pivot.y) / ppu;
+            bool fx = e.src.flipX;
+            var v = new Vector3[4]; var uv = new Vector2[4];
+            float[] lx = { x0, x1, x0, x1 }, ly = { y0, y0, y1, y1 };
+            for (int i = 0; i < 4; i++)
+            {
+                float X = pos.x + (fx ? -lx[i] : lx[i]) * ls.x, Y = pos.y + ly[i] * ls.y;
+                float h = Y - baseY;
+                v[i] = new Vector3(X + kx * h, baseY - ky * h, 0f);
+                uv[i] = new Vector2(i % 2 == 0 ? 0f : 1f, i < 2 ? 0f : 1f);
+            }
+            var m = e.mesh;
+            m.vertices = v; m.uv = uv;
+            var col = new Color(ShadowColor.r * 0.6f, ShadowColor.g * 0.6f, ShadowColor.b * 0.6f, alpha);
+            m.colors = new[] { col, col, col, col };
+            m.triangles = new[] { 0, 2, 1, 2, 3, 1 };
+            m.RecalculateBounds();
+            e.mpb.SetTexture(MainTexId, solid.texture);
+            c.SetPropertyBlock(e.mpb);
             c.enabled = true;
-            c.sprite = Solid(sp); c.flipX = e.src.flipX;
-            float sy = Mathf.Abs(ls.y) * squash;
-            c.transform.localScale = new Vector3(ls.x, -sy, 1f);
-            c.transform.localPosition = new Vector3(0f, yb * sy, 0f);     // 뒤집힌 그림의 발바닥 줄이 정확히 B에 오게
-            c.color = new Color(ShadowColor.r * 0.6f, ShadowColor.g * 0.6f, ShadowColor.b * 0.6f, alpha);
             return true;
         }
 
@@ -258,14 +276,14 @@ namespace YeogiCafe.Visual
             sh.sprite = Blob();
             if (mat != null) sh.sharedMaterial = mat;                       // 조명을 받아 저녁엔 그림자도 같이 어두워진다
             sh.sortingOrder = YSort.FlatOnFloor + 6;                         // 러그·햇살 위, 모든 물건 아래
-            var piv = new GameObject("CastPivot");
-            piv.transform.SetParent(transform, false);
-            var cgo = new GameObject("CastShadow");
-            cgo.transform.SetParent(piv.transform, false);
-            var cast = cgo.AddComponent<SpriteRenderer>();
+            var cgo = new GameObject("CastShadow");                         // 세계 좌표 메시(기울인 사각형 1장)
+            cgo.transform.SetParent(transform, false);
+            var mesh = new Mesh { name = "cast_shadow" }; mesh.MarkDynamic();
+            cgo.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var cast = cgo.AddComponent<MeshRenderer>();
             if (mat != null) cast.sharedMaterial = mat;
             cast.sortingOrder = YSort.FlatOnFloor + 5; cast.enabled = false;
-            list.Add(new Entry { target = t, src = src, sh = sh, cast = cast, cat = cat });
+            list.Add(new Entry { target = t, src = src, sh = sh, cast = cast, mesh = mesh, mpb = new MaterialPropertyBlock(), cat = cat });
         }
     }
 }
