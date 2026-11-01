@@ -10,9 +10,9 @@ function createPlaytestForm() {
 
   f.addTextItem().setTitle('닉네임').setRequired(true);
   f.addMultipleChoiceItem().setTitle('어디까지 했나요?')
-    .setChoiceValues(['1~2일차', '3~4일차', '5~6일차', '7일차(끝까지)']).setRequired(true);
+    .setChoiceValues(['1~3일차', '4~7일차', '8~14일차', '15일차 이상', '엔딩까지 봄']).setRequired(true);
   f.addMultipleChoiceItem().setTitle('플레이 시간은?')
-    .setChoiceValues(['30분 미만', '30분~1시간', '1~2시간', '2시간 이상']).setRequired(true);
+    .setChoiceValues(['1시간 미만', '1~2시간', '2~4시간', '4시간 이상']).setRequired(true);
 
   f.addSectionHeaderItem().setTitle('느낌');
   f.addParagraphTextItem().setTitle('친구한테 이 게임을 한 문장으로 설명한다면?').setRequired(true);
@@ -27,7 +27,8 @@ function createPlaytestForm() {
 
   f.addSectionHeaderItem().setTitle('막힌 곳');
   f.addParagraphTextItem().setTitle('뭘 해야 할지 몰라 막혔던 순간이 있었나요? (언제, 어디서)');
-  f.addParagraphTextItem().setTitle('지루해지거나 그만두고 싶었던 순간은?');
+  f.addParagraphTextItem().setTitle('지루해지거나 그만두고 싶었던 순간은? (몇 일차쯤)');
+  f.addParagraphTextItem().setTitle('중반 이후(카페 확장·다락·보호소·노트·졸업)에서 어색하거나 너무 느리거나 빨랐던 것');
   f.addParagraphTextItem().setTitle('버그나 이상한 화면 (고양이 깨짐, 그림자, 글자 겹침 등) — 몇 일차·어디서였는지도');
 
   f.addSectionHeaderItem().setTitle('마지막');
