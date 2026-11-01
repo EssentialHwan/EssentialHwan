@@ -140,6 +140,15 @@ if src.startswith('intro:'):
         img = sheet.crop(((cell % 4) * F, (cell // 4) * F, (cell % 4 + 1) * F, (cell // 4 + 1) * F)).resize((F * k, F * k), Image.NEAREST)
         x = (t * step) % span - F * k
         can.alpha_composite(img, (int(round(x)), gy - F * k + 3 * k))
+        # 11/02: 끝 1.4초에 '다음 손님' 안내 — 조회는 되는데 팔로우가 0이라, 시리즈라는 신호를 준다
+        if sec >= secs - 1.4:
+            fe2 = ImageFont.truetype(FONT, 40); fs2 = ImageFont.truetype(FONT, 26)
+            t1 = '팔로우하고 다음 손님 만나기'; t2 = 'Follow to meet the next guest'
+            bw = max(dd.textlength(t1, font=fe2), dd.textlength(t2, font=fs2)) + 60
+            bx0 = (cw - bw) / 2; by0 = 20 + fk3.height + 60
+            dd.rounded_rectangle((bx0, by0, bx0 + bw, by0 + 110), radius=22, fill=PINK)
+            dd.text(((cw - dd.textlength(t1, font=fe2)) / 2, by0 + 14), t1, font=fe2, fill=(255, 250, 244))
+            dd.text(((cw - dd.textlength(t2, font=fs2)) / 2, by0 + 66), t2, font=fs2, fill=(255, 236, 236))
         can.convert('RGB').save(os.path.join(tmp, f'n{t}.png'))
     src = os.path.join(tmp, 'intro.mp4')
     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-framerate', str(FPS), '-i', os.path.join(tmp, 'n%d.png'),
