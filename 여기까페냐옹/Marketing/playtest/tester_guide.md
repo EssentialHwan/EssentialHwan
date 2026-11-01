@@ -10,6 +10,6 @@
    (저장되니까 며칠에 나눠서 해도 돼)
 4. 끝나면 두 개만 보내 줘
    - 게임 폴더(exe 옆)에 생긴 **playtest_log.txt** 파일
-   - 설문 5분: [폼 링크]
+   - 설문 5분: https://docs.google.com/forms/d/e/1FAIpQLSeivauumqAX-UyUPdo42AsRHDU6am6EqbLOL3RQ9MwcV-b-ag/viewform
 
 솔직하게 까 줄수록 고마움 🙏 스포 싫으니까 아직 다른 사람한테 공유는 말아 줘!
