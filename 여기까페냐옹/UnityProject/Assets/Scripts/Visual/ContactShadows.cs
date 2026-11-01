@@ -210,7 +210,7 @@ namespace YeogiCafe.Visual
                         if (!shape || px[((int)r.y + y) * TW + (int)r.x + x].a > 8) outPx[y * W + x] = new Color32(255, 255, 255, 255);
                 }
             }
-            catch { return sp; }
+            catch { return null; }   // 11/02: 예전엔 원래 그림(sp)을 돌려줬는데, 고양이 그림은 아틀라스 한 장이라 UV 0~1이면 모든 프레임이 그림자에 겹쳐 찍혔다
             var tex = new Texture2D(W, H, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp, name = "shadow_solid" };
             tex.SetPixels32(outPx); tex.Apply();
             v = Sprite.Create(tex, new Rect(0, 0, W, H), new Vector2(sp.pivot.x / W, sp.pivot.y / H), sp.pixelsPerUnit, 0, SpriteMeshType.FullRect);
@@ -242,6 +242,7 @@ namespace YeogiCafe.Visual
             if (baseOverride.HasValue) baseY = baseOverride.Value;                     // 가구 위: 가구 바닥이 땅
             else if (baseY - groundFoot.y > 0.12f) { c.enabled = false; return false; }   // 점프 중: 그림자를 띄우지 않는다
             var solid = Solid(sp, e.cat != null);
+            if (solid == null) { c.enabled = false; return false; }
             var r = sp.textureRect; float ppu = sp.pixelsPerUnit;
             float x0 = -sp.pivot.x / ppu, x1 = (r.width - sp.pivot.x) / ppu;
             float y0 = -sp.pivot.y / ppu, y1 = (r.height - sp.pivot.y) / ppu;

@@ -266,7 +266,7 @@ namespace YeogiCafe.UI
             editLbl.horizontalOverflow = HorizontalWrapMode.Overflow;
             UiFactory.SetRect((RectTransform)editBtn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f),
                               new Vector2(1, 0.5f), new Vector2(-342, 0), new Vector2(104, 48));
-            editBtn.onClick.AddListener(() => { shop.Hide(); catalog.Hide(); CloseKitchen(); editMode.Toggle(); });
+            editBtn.onClick.AddListener(() => { shop.Hide(); catalog.Hide(); CloseKitchen(); questPanel.SetActive(false); editMode.Toggle(); });   // 의뢰 쪽지가 위쪽 배치 막대와 겹치지 않게
 
             // 설정 — 의뢰 버튼 오른쪽(가운데 시간 표시와 겹치지 않게 작게). ESC로도 열림
             var optBtn = UiFactory.Button("OptBtn", bar.transform, L.Get("opt.btn"), UiFactory.CreamDim, UiFactory.WoodDark, out var optLbl);
@@ -354,7 +354,7 @@ namespace YeogiCafe.UI
             var tbg = (RectTransform)toastText.transform.parent;
             bool inKitchen = kitchen != null && kitchen.IsOpen;
             tbg.anchorMin = tbg.anchorMax = tbg.pivot = new Vector2(0.5f, 0f);
-            float ty = inKitchen ? 40 : editMode != null && editMode.IsOn ? 92 : 22;      // 배치 모드는 아래 도구 막대 위로
+            float ty = inKitchen ? 40 : 22;      // 배치 모드 막대는 이제 위쪽(11/02)이라 알림은 그대로 아래
             // 왼쪽 아래 안내 카드가 떠 있으면 그 오른쪽 옆으로(위로 올리면 자리에 앉은 고양이를 가린다)
             bool beside = !inKitchen && guide != null && guide.Visible && !(editMode != null && editMode.IsOn);
             tbg.anchoredPosition = new Vector2(beside ? 160 : 0, ty);

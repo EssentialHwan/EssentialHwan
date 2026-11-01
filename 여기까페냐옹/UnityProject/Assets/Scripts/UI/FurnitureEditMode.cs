@@ -29,7 +29,8 @@ namespace YeogiCafe.UI
             var bar = UiFactory.Panel("EditBanner", parent, new Color(0.29f, 0.21f, 0.18f, 0.88f));
             bannerGo = bar.gameObject;
             UiFactory.Frame(bar, UiFactory.FrameStyle.Window);
-            UiFactory.SetRect(bar, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 16), new Vector2(820, 64));
+            // 11/02: 맨 아래 → 위 HUD(몇 일차·계절) 바로 아래. 가구를 끌 때 아래쪽 바닥 앞줄을 가리지 않게
+            UiFactory.SetRect(bar, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -70), new Vector2(820, 64));
             var t = UiFactory.Label("Hint", bar.transform, L.Get("ui.edit.hint"), 18, TextAnchor.MiddleLeft, UiFactory.Ink);
             UiFactory.SetRect((RectTransform)t.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 0.5f), new Vector2(30, 0), new Vector2(-390, -16));   // 테두리에 붙지 않게 안쪽 여백(위아래 8px)
             t.verticalOverflow = VerticalWrapMode.Truncate; t.resizeTextForBestFit = true; t.resizeTextMinSize = 12; t.resizeTextMaxSize = 18;
