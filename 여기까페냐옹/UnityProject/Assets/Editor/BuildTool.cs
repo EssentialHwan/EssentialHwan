@@ -73,7 +73,7 @@ namespace YeogiCafe.EditorTools
 
             PlayerSettings.productName = "여기카페냐옹";   // 바뀌면 저장 폴더도 바뀜 → SaveManager가 예전 폴더 세이브·사진을 가져옴
             PlayerSettings.companyName = "Wintery Studio";
-            PlayerSettings.bundleVersion = "0.9.7";   // 친구 플레이테스트 3차: 카페 확장·사물 옮기기·피드백 수정·이야기·새 고양이 그림 + 새 배경 음악 + 걷기·마감 클로즈업
+            PlayerSettings.bundleVersion = "0.9.8";   // 11/02: 빌드 조명 버그 수정(시작하기 후 NullReference) + 그림자·창밖 리디자인 + 리디자인 17마리 전부
             PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
             PlayerSettings.defaultScreenWidth = 1600;
             PlayerSettings.defaultScreenHeight = 900;

@@ -7,6 +7,14 @@ import convert2 as C2, build_v2 as V
 
 def parts(src):
     a, fg = fg_mask(src)
+    # 11/02 심사냥: 흰 셰프 모자 속이 배경색과 같고 외곽선에 틈이 있어 '배경'으로 빠졌다 → 걷기에서 모자가 사라짐.
+    #  외곽선(진한 선)을 3px 두껍게 해서 틈을 막은 뒤, 바깥 테두리와 이어지지 않는 밝은 영역(= 갇힌 흰 부분)을 다시 그림으로 넣는다.
+    lum = a.mean(2); outline = ndimage.binary_dilation(lum < 110, iterations=3)
+    light = ~fg & ~outline
+    lab2, n2 = ndimage.label(light)
+    border = set(np.unique(np.concatenate([lab2[0], lab2[-1], lab2[:, 0], lab2[:, -1]]))) - {0}
+    enclosed = (lab2 > 0) & ~np.isin(lab2, list(border))
+    fg = fg | ndimage.binary_dilation(enclosed, iterations=3) & ~(np.isin(lab2, list(border)) & (lab2 > 0))
     lab, n = ndimage.label(ndimage.binary_closing(fg, iterations=2))
     objs = []
     for i, sl in enumerate(ndimage.find_objects(lab), 1):

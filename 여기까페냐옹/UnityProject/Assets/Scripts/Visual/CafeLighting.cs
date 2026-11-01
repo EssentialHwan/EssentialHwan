@@ -165,11 +165,15 @@ namespace YeogiCafe.Visual
 
         Light2D Make(string n, Light2D.LightType type, Vector3 pos, bool normals, Transform parent = null)
         {
-            var go = new GameObject(n); go.transform.SetParent(parent != null ? parent : transform, false);
+            // 11/02 빌드 버그: 빌드에서는 AddComponent 직후 Light2D의 비추는 레이어 목록이 비어(null) 있어서,
+            //  lightType을 바꾸는 순간·매 프레임 그릴 때 NullReference가 수백 번 났다(에디터는 Reset이 채워 줘서 멀쩡).
+            //  → 꺼 둔 오브젝트에 붙여 레이어 목록부터 채운 뒤 켠다(켜질 때 OnEnable이 올바른 목록으로 등록).
+            var go = new GameObject(n); go.SetActive(false);
+            go.transform.SetParent(parent != null ? parent : transform, false);
             if (parent == null) go.transform.position = pos; else go.transform.localPosition = pos;
             var l = go.AddComponent<Light2D>();
-            l.lightType = type;
             SetField(l, "m_ApplyToSortingLayers", AllLayers());          // 바닥 레이어(Floor)까지 모두 비춘다
+            l.lightType = type;
             l.intensity = 0f;
             if (type != Light2D.LightType.Global)
             {
@@ -177,6 +181,7 @@ namespace YeogiCafe.Visual
                 SetField(l, "m_NormalMapQuality", normals ? Light2D.NormalMapQuality.Accurate : Light2D.NormalMapQuality.Disabled);
                 SetField(l, "m_NormalMapDistance", 2.2f);
             }
+            go.SetActive(true);
             return l;
         }
 
