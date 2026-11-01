@@ -222,6 +222,16 @@ namespace YeogiCafe.Visual
         //  물체의 점 (X, Y), 높이 h = Y − B.y  →  그림자 S = (X + kx·h,  B.y − ky·h)
         //  h = 0인 바닥 줄은 그대로 제자리 → 바닥 변 전체가 항상 물체에 붙는다. ky = 길이/키, kx = 옆으로 밀림/키(빛 반대쪽).
         static readonly int MainTexId = Shader.PropertyToID("_MainTex");
+        // 11/02 빌드 버그: 기울인 그림자(MeshRenderer)에 2D 조명 재질을 쓰면 빌드에서 그 셰이더 조합이 빠져 분홍색 사각형으로 나왔다(에디터는 정상).
+        //  → 항상 빌드에 포함되는 기본 스프라이트 셰이더(Sprites/Default, GraphicsSettings '항상 포함')로 그린다. 색은 정점 색으로 넣으므로 그대로.
+        static Material castMat;
+        static Material CastMat()
+        {
+            if (castMat != null) return castMat;
+            var sh = Shader.Find("Sprites/Default");
+            castMat = new Material(sh != null ? sh : Shader.Find("UI/Default")) { name = "CastShadow" };
+            return castMat;
+        }
         bool Cast(Entry e, Vector3 groundFoot, float ky, float kx, float alpha, float? baseOverride = null)
         {
             var c = e.cast; var sp = e.src.sprite;
@@ -322,7 +332,7 @@ namespace YeogiCafe.Visual
             var mesh = new Mesh { name = "cast_shadow" }; mesh.MarkDynamic();
             cgo.AddComponent<MeshFilter>().sharedMesh = mesh;
             var cast = cgo.AddComponent<MeshRenderer>();
-            if (mat != null) cast.sharedMaterial = mat;
+            cast.sharedMaterial = CastMat();
             cast.sortingOrder = YSort.FlatOnFloor + 5; cast.enabled = false;
             list.Add(new Entry { target = t, src = src, sh = sh, cast = cast, mesh = mesh, mpb = new MaterialPropertyBlock(), cat = cat, view = t.GetComponent<CatView>() });
         }
