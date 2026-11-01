@@ -15,7 +15,7 @@ namespace YeogiCafe.UI
     // 조리 대기 시간 = 관찰 시간. 홀 말풍선(행동 서술)도 이 화면에서 그대로 뜬다.
     public class KitchenView
     {
-        const float CounterHeightRatio = 0.40f;         // 전경이 차지하는 화면 비율
+        const float CounterHeightRatio = 0.32f;         // 전경이 차지하는 화면 비율(11/02 형: 0.40은 주방이 너무 높아 홀이 덜 보임 → 낮춤)
         const float TransitionSeconds = 0.35f;
 
         readonly GameUiController owner;

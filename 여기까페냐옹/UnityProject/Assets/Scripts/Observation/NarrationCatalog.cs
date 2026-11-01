@@ -31,6 +31,8 @@ namespace YeogiCafe.Observation
                 case "furn_fac_toybox":  return "narr.facility.toybox";
                 case "furn_fac_fruitbox": return "narr.facility.box";
                 case "furn_fac_heatpad": return "narr.facility.warm";
+                case "furn_fac_plant":   return "narr.facility.plant";
+                case "furn_fac_window":  return "narr.facility.window";   // 11/02: 창문(벽걸이)도 '자연' 꼬리표라 화분 문장이 나왔다 — 고양이는 좌석 뒤 창 아래 바닥에 있다
             }
             return FacilityKey(tags);
         }
@@ -42,7 +44,7 @@ namespace YeogiCafe.Observation
             if (Has(tags, FacilityTag.Soft) || Has(tags, FacilityTag.Relax)) return "narr.facility.cushion";
             if (Has(tags, FacilityTag.Social) && Has(tags, FacilityTag.Play)) return "narr.facility.toybox";
             if (Has(tags, FacilityTag.Play)) return "narr.facility.play";      // 어떤 놀이 기구인지 모를 땐 중립 문장
-            if (Has(tags, FacilityTag.Natural)) return "narr.facility.plant";
+            if (Has(tags, FacilityTag.Natural)) return "narr.facility.generic";   // 어떤 가구인지 모르면 화분이라고 단정하지 않는다
             return "narr.facility.generic";
         }
 

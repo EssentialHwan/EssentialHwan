@@ -133,6 +133,7 @@ narr.facility.toybox,{name}가 장난감을 굴리며 논다.,{name} plays with 
 narr.food.slow,{name}가 음미하듯 천천히 먹는다.,{name} savors the meal slowly.,{name}细细品味，慢慢地吃着。,{name}が味わうようにゆっくり食べている。
 narr.seat.generic,{name}가 자리에 앉았다.,{name} took a seat.,{name}找位置坐下了。,{name}が席に座った。
 narr.facility.scratch,{name}가 스크래처를 긁는다.,{name} scratches the post.,{name}在猫抓板上磨爪子。,{name}が爪とぎでガリガリしている。
+narr.facility.window,{name}가 창 아래에서 바깥을 가만히 올려다본다.,{name} gazes up at the window from below.,{name}在窗下静静地仰望着外面。,{name}が窓の下から外をじっと見上げている。
 narr.facility.plant,{name}가 화분 뒤에 몸을 숨긴다.,{name} hides behind the plant.,{name}躲到了盆栽后面。,{name}が観葉植物のうしろに隠れた。
 narr.facility.generic,{name}가 시설을 이용한다.,{name} is using a play spot.,{name}在使用设施。,{name}がスポットでくつろいでいる。
 narr.lonely,{name}가 주위를 두리번거린다.,{name} looks around restlessly.,{name}不安地东张西望。,{name}がきょろきょろとあたりを見回している。
