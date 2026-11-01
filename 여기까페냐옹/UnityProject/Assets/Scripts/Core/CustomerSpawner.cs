@@ -166,6 +166,10 @@ namespace YeogiCafe.Core
                 return;
             }
 
+            // 11/02: 마감 직전엔 새 손님(배달냥 포함)을 들이지 않는다 — 들어오자마자 문을 닫으면 손님을 내쫓는 기분이라.
+            //  남은 시간 < (가장 오래 걸리는 메뉴 조리 + 들어와 앉아 주문하기까지 여유) 이면 보류. 조리 시간은 실제 초, 하루 타이머는 Rate배로 흐른다.
+            if (TooCloseToClosing()) return;
+
             // 배달냥: 시간이 되면 들어온다(자리 필요 없음). 이미 와 있으면 다음 기회로.
             if (deliveryAt.Count > 0 && day.DayTimer >= deliveryAt[0] && day.Phase != DayPhase.Morning)
             {
@@ -197,6 +201,17 @@ namespace YeogiCafe.Core
 
             var data = NextNotInCafe(pool);
             if (data != null) { CountVisit(data); cats.Spawn(data); }
+        }
+
+        public const float ArriveToOrderSeconds = 12f;   // 문 → 자리 → 주문까지(실제 초, 대략)
+        bool TooCloseToClosing()
+        {
+            if (day.Phase != DayPhase.Evening) return false;
+            float end = day.cfg.phaseSeconds.x + day.cfg.phaseSeconds.y + day.cfg.phaseSeconds.z;
+            float maxCook = 0f;
+            var menus = cafe.GetAvailableMenus();
+            if (menus != null) foreach (var mm in menus) if (mm != null && mm.cookTime > maxCook) maxCook = mm.cookTime;
+            return end - day.DayTimer < (maxCook + ArriveToOrderSeconds) * day.Rate;
         }
 
         public const int MaxWaitingOrders = 3;
