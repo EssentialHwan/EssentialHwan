@@ -318,7 +318,9 @@ namespace YeogiCafe.UI
             FitList();
         }
 
-        // ── 관계도: 만난 고양이를 원으로 놓고 사이를 선으로(친구=분홍 굵게, 아는 사이=옅게, 앙숙=빨강) ──
+        // ── 관계도(11/02 v2): 위에 만난 고양이 버튼 줄 → 누른 고양이를 가운데, 그 고양이와 얽힌 고양이만 빙 둘러 놓고 선으로 잇는다.
+        //  예전(전원을 둘레에 놓고 모든 선을 그림)은 고양이가 늘면 선이 얽혀 누가 누구와 무슨 사이인지 읽을 수 없었다.
+        string relFocus;
         void RenderRelations()
         {
             for (int i = relRoot.childCount - 1; i >= 0; i--) Object.Destroy(relRoot.GetChild(i).gameObject);
@@ -326,30 +328,70 @@ namespace YeogiCafe.UI
             var met = new List<CatData>();
             foreach (var d in owner.AllCats) if (d != null && save.GetOrCreateCat(d.catId).visitCount > 0) met.Add(d);
             if (met.Count == 0) return;
-            // 타원에 놓으면 좌우 끝에서 세로로 몰려 겹친다 → 둥근 사각형 둘레를 같은 간격으로 나눠 판 전체를 쓴다.
-            float k = met.Count > 12 ? 0.8f : 1f;                       // 많아지면 아이콘을 조금 줄인다
-            var pos = new Dictionary<string, Vector2>();
-            for (int i = 0; i < met.Count; i++) pos[met[i].catId] = Perimeter(i / (float)met.Count, 272f, 128f) + new Vector2(0, 12f);   // 아래 범례 자리를 비워 둔다
-            // 관계는 색 선으로만(글자 배지는 선·아이콘을 가려서 뺐다) — 무슨 색이 무슨 관계인지는 아래 범례
-            // 앙숙·단짝은 굵게, 친구·티격태격은 보통, 아는 사이는 가늘고 옅게. 밝은 종이 위에서도 보이게 어두운 테두리를 한 겹 깐다.
+
+            // 고양이별 관계 목록
+            var links = new Dictionary<string, List<(string other, int kind)>>();
+            foreach (var d in met) links[d.catId] = new List<(string, int)>();
             foreach (var r in save.relations)
             {
-                if (!pos.ContainsKey(r.catA) || !pos.ContainsKey(r.catB)) continue;
-                var kind = RelKind(r);
-                if (kind < 0) continue;
-                Color col = RelColor(kind);
-                float th = kind == 0 || kind == 2 ? 7f : kind == 4 ? 4f : 5f;
-                Vector2 a = pos[r.catA], b = pos[r.catB], d = b - a;
-                // 아이콘 안으로 파고들지 않게 양끝을 자르고, 아래쪽(이름표 쪽)으로 들어오는 끝은 이름표까지 더 자른다
-                Vector2 dir = d.sqrMagnitude > 1e-4f ? d.normalized : Vector2.right;
-                float trimA = (32f + 20f * Mathf.Max(0f, -dir.y)) * k, trimB = (32f + 20f * Mathf.Max(0f, dir.y)) * k;
-                Vector2 pa = a + dir * trimA, pb = b - dir * trimB;
-                float len = Mathf.Max(0f, Vector2.Dot(pb - pa, dir));
-                float ang = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
-                RelLine(relRoot, (pa + pb) * 0.5f, len + 2f, th + 2f, ang, new Color(0.25f, 0.18f, 0.14f, kind == 4 ? 0.18f : 0.32f));
-                RelLine(relRoot, (pa + pb) * 0.5f, len, th, ang, kind == 4 ? new Color(col.r, col.g, col.b, 0.8f) : col);
+                if (!links.ContainsKey(r.catA) || !links.ContainsKey(r.catB)) continue;
+                int kind = RelKind(r); if (kind < 0) continue;
+                links[r.catA].Add((r.catB, kind)); links[r.catB].Add((r.catA, kind));
             }
-            // 범례(아래쪽)
+            if (relFocus == null || !links.ContainsKey(relFocus))
+            {   // 처음엔 관계가 가장 많은 고양이
+                relFocus = met[0].catId;
+                foreach (var d in met) if (links[d.catId].Count > links[relFocus].Count) relFocus = d.catId;
+            }
+
+            // ① 위: 고양이 버튼 줄(누르면 그 고양이 중심으로)
+            float bw = Mathf.Min(40f, 640f / met.Count), bx0 = -(met.Count - 1) * bw * 0.5f;
+            for (int i = 0; i < met.Count; i++)
+            {
+                string id = met[i].catId; bool on = id == relFocus;
+                var b = UiFactory.Button("Pick_" + id, relRoot, "", on ? UiFactory.Pink : UiFactory.Cream, UiFactory.Ink, out var bl);
+                bl.text = "";
+                var brt = (RectTransform)b.transform; brt.anchorMin = brt.anchorMax = new Vector2(0.5f, 0.5f); brt.pivot = new Vector2(0.5f, 0.5f);
+                brt.anchoredPosition = new Vector2(bx0 + i * bw, 178f); brt.sizeDelta = new Vector2(bw - 3f, 38f);
+                var ic = new GameObject("Icon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                ic.transform.SetParent(b.transform, false);
+                var im = ic.GetComponent<Image>(); im.sprite = YeogiCafe.Art.CatSpriteBank.Portrait(id); im.preserveAspect = true; im.raycastTarget = false;
+                UiFactory.Anchor((RectTransform)ic.transform, Vector2.zero, Vector2.one, new Vector2(2, 2), new Vector2(-2, -2));
+                b.onClick.AddListener(() => { relFocus = id; RenderRelations(); });
+            }
+
+            // ② 가운데 고양이 + 둘레의 관계 고양이(단짝·친구 → 아는 사이 → 티격태격·앙숙 순)
+            Vector2 c0 = new Vector2(0f, -8f);
+            var around = links[relFocus];
+            around.Sort((x, y) => Order(x.kind).CompareTo(Order(y.kind)));
+            static int Order(int q) => q == 2 ? 0 : q == 3 ? 1 : q == 4 ? 2 : q == 1 ? 3 : 4;
+            int n = around.Count;
+            float rx = 248f, ry = 100f, k = n > 10 ? 0.82f : 1f;
+            for (int i = 0; i < n; i++)
+            {
+                float ang = Mathf.PI * 0.5f - i * Mathf.PI * 2f / n;              // 위에서 시작, 시계 방향
+                Vector2 p = c0 + new Vector2(Mathf.Cos(ang) * rx, Mathf.Sin(ang) * ry);
+                int kind = around[i].kind; Color col = RelColor(kind);
+                float th = kind == 0 || kind == 2 ? 7f : kind == 4 ? 4f : 5f;
+                Vector2 d = p - c0, dir = d.normalized;
+                Vector2 pa = c0 + dir * (46f + 16f * Mathf.Max(0f, -dir.y)), pb = p - dir * (34f * k + 22f * Mathf.Max(0f, dir.y));
+                float len = Mathf.Max(0f, Vector2.Dot(pb - pa, dir)), deg = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
+                RelLine(relRoot, (pa + pb) * 0.5f, len + 2f, th + 2f, deg, new Color(0.25f, 0.18f, 0.14f, kind == 4 ? 0.18f : 0.32f));
+                RelLine(relRoot, (pa + pb) * 0.5f, len, th, deg, kind == 4 ? new Color(col.r, col.g, col.b, 0.8f) : col);
+                RelCat(around[i].other, p, 64f * k, 0.9f);
+                var t = UiFactory.Label("Kind", relRoot, L.Get(RelKey(kind)), 13, TextAnchor.UpperCenter, Color.Lerp(col, Color.black, 0.25f));
+                var trt = (RectTransform)t.transform; trt.anchorMin = trt.anchorMax = new Vector2(0.5f, 0.5f);
+                trt.anchoredPosition = p + new Vector2(0, -50f * k - 6f); trt.sizeDelta = new Vector2(96, 18);
+            }
+            RelCat(relFocus, c0, 96f, 1f);
+            if (n == 0)
+            {
+                var t = UiFactory.Label("None", relRoot, L.Get("ui.rel.none", ("name", L.Get($"cat.{relFocus}.name"))), 15, TextAnchor.MiddleCenter, UiFactory.WoodDark);
+                var trt = (RectTransform)t.transform; trt.anchorMin = trt.anchorMax = new Vector2(0.5f, 0.5f);
+                trt.anchoredPosition = c0 + new Vector2(0, -92f); trt.sizeDelta = new Vector2(520, 24);
+            }
+
+            // ③ 범례(아래쪽)
             {
                 int[] kinds = { 2, 3, 4, 1, 0 };
                 float lx = -((kinds.Length - 1) * 92f) / 2f;
@@ -363,18 +405,20 @@ namespace YeogiCafe.UI
                     lrt.anchoredPosition = new Vector2(lx + i * 92f - 20f, 10f); lrt.sizeDelta = new Vector2(70, 18);
                 }
             }
-            foreach (var d in met)
-            {
-                var g = new GameObject("Cat_" + d.catId, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-                g.transform.SetParent(relRoot, false);
-                var img = g.GetComponent<Image>(); img.sprite = YeogiCafe.Art.CatSpriteBank.Portrait(d.catId); img.preserveAspect = true; img.raycastTarget = false;
-                var rt = (RectTransform)g.transform; rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
-                rt.anchoredPosition = pos[d.catId]; rt.sizeDelta = new Vector2(84, 70) * k;
-                var n = UiFactory.Label("N", relRoot, L.Get($"cat.{d.catId}.name"), 14, TextAnchor.UpperCenter, UiFactory.Ink);
-                var nrt = (RectTransform)n.transform; nrt.anchorMin = nrt.anchorMax = new Vector2(0.5f, 0.5f);
-                nrt.anchoredPosition = pos[d.catId] + new Vector2(0, -44 * k - (k < 1f ? 4f : 0f)); nrt.sizeDelta = new Vector2(96, 20);
-                UiFactory.FitOneLine(n, 96, 11);
-            }
+        }
+
+        // 관계도의 고양이 하나(그림 + 이름)
+        void RelCat(string id, Vector2 at, float size, float nameScale)
+        {
+            var g = new GameObject("Cat_" + id, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            g.transform.SetParent(relRoot, false);
+            var img = g.GetComponent<Image>(); img.sprite = YeogiCafe.Art.CatSpriteBank.Portrait(id); img.preserveAspect = true; img.raycastTarget = false;
+            var rt = (RectTransform)g.transform; rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = at; rt.sizeDelta = new Vector2(size, size * 0.84f);
+            var nm = UiFactory.Label("N", relRoot, L.Get($"cat.{id}.name"), Mathf.RoundToInt(15 * nameScale), TextAnchor.UpperCenter, UiFactory.Ink);
+            var nrt = (RectTransform)nm.transform; nrt.anchorMin = nrt.anchorMax = new Vector2(0.5f, 0.5f);
+            nrt.anchoredPosition = at + new Vector2(0, -size * 0.42f - 4f); nrt.sizeDelta = new Vector2(110, 20);
+            UiFactory.FitOneLine(nm, 110, 11);
         }
 
         // 둥근 사각형(반폭 hw, 반높이 hh) 둘레 위 t(0~1) 지점. 위 가운데에서 시작해 시계 방향. 모서리는 반지름 r로 깎는다.
