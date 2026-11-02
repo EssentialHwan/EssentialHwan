@@ -65,6 +65,50 @@ namespace YeogiCafe.EditorTools
             if (s.result == BuildResult.Succeeded) EditorUtility.RevealInFinder(apk);
         }
 
+        // 스토브 빌드(11/02): 스토브 PC SDK를 넣은 판매용 빌드. YEOGI_STOVE 기호를 켜고, 스토브 Unity 모듈 요구대로 64비트 IL2CPP.
+        //  필요: ① Assets/Plugins/StovePCSDK/ 에 PCSDK_Studio_net46_CSharp_x64 압축 푼 파일 ② Resources/Stove/stove_config.json
+        //        ③ Unity Hub 'Windows Build Support (IL2CPP)' 모듈 + Visual Studio 'C++를 사용한 데스크톱 개발'
+        [MenuItem("여기카페냐옹/■ 스토브 빌드 (스토브 SDK 포함)", priority = 203)]
+        public static void BuildStove() => BuildStoveVariant(false);
+        [MenuItem("여기카페냐옹/■ 스토브 체험판 빌드", priority = 204)]
+        public static void BuildStoveDemo() => BuildStoveVariant(true);
+
+        static void BuildStoveVariant(bool demo)
+        {
+            string root = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Build"));
+            if (!File.Exists(Path.Combine(Application.dataPath, "Resources", "Stove", "stove_config.json")))
+            { EditorUtility.DisplayDialog("스토브 빌드", "Assets/Resources/Stove/stove_config.json 이 없어요.\n(게임 ID·앱 키 파일)", "확인"); return; }
+            if (!Directory.Exists(Path.Combine(Application.dataPath, "Plugins", "StovePCSDK")))
+            { EditorUtility.DisplayDialog("스토브 빌드", "Assets/Plugins/StovePCSDK 폴더가 없어요.\n스토브 개발자 사이트의 Unity용 PC SDK(x64)를 풀어 넣어 주세요.", "확인"); return; }
+            Branding.Apply();
+            string outDir = Path.Combine(root, demo ? "YeogiCafe_Stove_Demo" : "YeogiCafe_Stove");
+            if (Directory.Exists(outDir)) Directory.Delete(outDir, true);
+            Directory.CreateDirectory(outDir);
+            var prevBackend = PlayerSettings.GetScriptingBackend(BuildTargetGroup.Standalone);
+            PlayerSettings.SetScriptingBackend(BuildTargetGroup.Standalone, ScriptingImplementation.IL2CPP);
+            var scenes = EditorBuildSettings.scenes.Where(sc => sc.enabled).Select(sc => sc.path).ToArray();
+            if (scenes.Length == 0) scenes = new[] { "Assets/Scenes/Cafe.unity" };
+            var defs = demo ? new[] { "YEOGI_STOVE", "YEOGI_DEMO" } : new[] { "YEOGI_STOVE" };
+            BuildReport report;
+            try
+            {
+                report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+                {
+                    scenes = scenes, locationPathName = Path.Combine(outDir, ExeName), target = BuildTarget.StandaloneWindows64,
+                    options = BuildOptions.None, extraScriptingDefines = defs,
+                });
+            }
+            finally { PlayerSettings.SetScriptingBackend(BuildTargetGroup.Standalone, prevBackend); }   // 친구 테스트·일반 빌드는 그대로 Mono
+            var s = report.summary;
+            string log = $"result={s.result}\nerrors={s.totalErrors}\nsizeMB={s.totalSize / 1048576f:0.0}\ntime={s.totalTime}\nout={outDir}\n";
+            foreach (var step in report.steps)
+                foreach (var m in step.messages)
+                    if (m.type == LogType.Error || m.type == LogType.Exception) log += "ERR: " + m.content + "\n";
+            File.WriteAllText(Path.Combine(root, demo ? "build_log_stove_demo.txt" : "build_log_stove.txt"), log);
+            Debug.Log("[BuildTool] " + log);
+            if (s.result == BuildResult.Succeeded) EditorUtility.RevealInFinder(outDir);
+        }
+
         static void Build(bool demo)
         {
             Branding.Apply();                                    // 11/02: 아이콘·시작 화면(Unity 기본 → 우리 것)

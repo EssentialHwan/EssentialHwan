@@ -32,3 +32,10 @@ _ReSharper*/
 # 크래시 리포트
 sysinfo.txt
 crashlytics-build.properties
+
+# 스토브 상품키(게임 ID·앱 키) — 저장소에 올리지 않는다. PC에만 둔다.
+Assets/Resources/Stove/stove_config.json
+Assets/Resources/Stove/stove_config.json.meta
+# 스토브 PC SDK(배포 파일) — 받은 사람 PC에만
+Assets/Plugins/StovePCSDK/
+Assets/Plugins/StovePCSDK.meta
