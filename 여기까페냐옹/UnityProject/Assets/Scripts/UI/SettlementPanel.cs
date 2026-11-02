@@ -270,13 +270,15 @@ namespace YeogiCafe.UI
             owner.StartNextDay();
         }
 
-        public void Show()
+        public void Show() => Show(false);
+        // keepScroll: 추리 고르기·확인 뒤 다시 그릴 때 보던 자리 유지(11/02 — 매번 맨 위로 튀어 올라가던 것)
+        public void Show(bool keepScroll)
         {
             rootGo.SetActive(true);
             if (!busy && stampImg != null) { stampImg.sprite = null; stampImg.color = new Color(1, 1, 1, 0); stampLabel.text = ""; }
             if (expandInfo != null) expandInfo.text = "";
             RenderEconomy();
-            cardsContent.anchoredPosition = Vector2.zero;       // 새 밤 일지는 맨 위부터
+            if (!keepScroll) cardsContent.anchoredPosition = Vector2.zero;       // 새 밤 일지는 맨 위부터
             RenderCards();
             RenderLevel();
             if (storyGo == null && owner.Save != null && owner.Save.storyQueue.Count > 0) OpenStory(owner.Save.storyQueue[0]);
@@ -412,7 +414,7 @@ namespace YeogiCafe.UI
             yield return new WaitForSecondsRealtime(0.3f);
             busy = false;
             string keep = cardsInfo.text;
-            Show();
+            Show(true);
             cardsInfo.text = keep;
         }
 
@@ -601,7 +603,7 @@ namespace YeogiCafe.UI
             });
             CloseGuess();
             busy = false;
-            Show();
+            Show(true);
         }
     }
 }
