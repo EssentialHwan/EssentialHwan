@@ -361,34 +361,40 @@ namespace YeogiCafe.UI
             }
 
             // ② 가운데 고양이 + 둘레의 관계 고양이(단짝·친구 → 아는 사이 → 티격태격·앙숙 순)
-            Vector2 c0 = new Vector2(0f, -8f);
+            //  정확히 아래(가운데 이름표와 겹침)엔 놓지 않는다: 홀수면 맨 위에서, 짝수면 반 칸 돌려서 시작.
+            //  위쪽 고양이는 이름·관계를 그림 '위'에 써서, 가운데서 올라오는 선이 글자를 지나가지 않게 한다.
+            Vector2 c0 = new Vector2(0f, -22f);
             var around = links[relFocus];
             around.Sort((x, y) => Order(x.kind).CompareTo(Order(y.kind)));
             static int Order(int q) => q == 2 ? 0 : q == 3 ? 1 : q == 4 ? 2 : q == 1 ? 3 : 4;
             int n = around.Count;
-            float rx = 248f, ry = 100f, k = n > 10 ? 0.82f : 1f;
+            float k = n > 10 ? 0.82f : 1f;
             for (int i = 0; i < n; i++)
             {
-                float ang = Mathf.PI * 0.5f - i * Mathf.PI * 2f / n;              // 위에서 시작, 시계 방향
-                Vector2 p = c0 + new Vector2(Mathf.Cos(ang) * rx, Mathf.Sin(ang) * ry);
+                float ang = n <= 2 ? (i == 0 ? 0f : Mathf.PI) : Mathf.PI * 0.5f - i * Mathf.PI * 2f / n + (n % 2 == 0 ? Mathf.PI / n : 0f);
+                float sy = Mathf.Sin(ang);
+                Vector2 p = c0 + new Vector2(Mathf.Cos(ang) * 250f, sy * (sy > 0f ? 100f : 92f));
+                bool up = p.y > c0.y + 30f;
                 int kind = around[i].kind; Color col = RelColor(kind);
                 float th = kind == 0 || kind == 2 ? 7f : kind == 4 ? 4f : 5f;
                 Vector2 d = p - c0, dir = d.normalized;
-                Vector2 pa = c0 + dir * (46f + 16f * Mathf.Max(0f, -dir.y)), pb = p - dir * (34f * k + 22f * Mathf.Max(0f, dir.y));
+                float ax = Mathf.Abs(dir.x), ay = Mathf.Abs(dir.y);
+                Vector2 pa = c0 + dir * (ax * 50f + ay * (dir.y > 0f ? 42f : 66f));     // 가운데: 그림 + (아래쪽이면) 이름표
+                Vector2 pb = p - dir * ((ax * 36f + ay * 28f) * k + (up ? 0f : ay * 4f));
                 float len = Mathf.Max(0f, Vector2.Dot(pb - pa, dir)), deg = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
                 RelLine(relRoot, (pa + pb) * 0.5f, len + 2f, th + 2f, deg, new Color(0.25f, 0.18f, 0.14f, kind == 4 ? 0.18f : 0.32f));
                 RelLine(relRoot, (pa + pb) * 0.5f, len, th, deg, kind == 4 ? new Color(col.r, col.g, col.b, 0.8f) : col);
-                RelCat(around[i].other, p, 64f * k, 0.9f);
-                var t = UiFactory.Label("Kind", relRoot, L.Get(RelKey(kind)), 13, TextAnchor.UpperCenter, Color.Lerp(col, Color.black, 0.25f));
+                RelCat(around[i].other, p, 64f * k, 0.9f, up);
+                var t = UiFactory.Label("Kind", relRoot, L.Get(RelKey(kind)), 13, TextAnchor.MiddleCenter, Color.Lerp(col, Color.black, 0.25f));
                 var trt = (RectTransform)t.transform; trt.anchorMin = trt.anchorMax = new Vector2(0.5f, 0.5f);
-                trt.anchoredPosition = p + new Vector2(0, -50f * k - 6f); trt.sizeDelta = new Vector2(96, 18);
+                trt.anchoredPosition = p + new Vector2(0, up ? 64f * k * 0.42f + 34f : -64f * k * 0.42f - 34f); trt.sizeDelta = new Vector2(110, 18);
             }
-            RelCat(relFocus, c0, 96f, 1f);
+            RelCat(relFocus, c0, 96f, 1f, false);
             if (n == 0)
             {
                 var t = UiFactory.Label("None", relRoot, L.Get("ui.rel.none", ("name", L.Get($"cat.{relFocus}.name"))), 15, TextAnchor.MiddleCenter, UiFactory.WoodDark);
                 var trt = (RectTransform)t.transform; trt.anchorMin = trt.anchorMax = new Vector2(0.5f, 0.5f);
-                trt.anchoredPosition = c0 + new Vector2(0, -92f); trt.sizeDelta = new Vector2(520, 24);
+                trt.anchoredPosition = c0 + new Vector2(0, -80f); trt.sizeDelta = new Vector2(520, 24);
             }
 
             // ③ 범례(아래쪽)
@@ -408,7 +414,7 @@ namespace YeogiCafe.UI
         }
 
         // 관계도의 고양이 하나(그림 + 이름)
-        void RelCat(string id, Vector2 at, float size, float nameScale)
+        void RelCat(string id, Vector2 at, float size, float nameScale, bool nameAbove)
         {
             var g = new GameObject("Cat_" + id, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             g.transform.SetParent(relRoot, false);
@@ -417,7 +423,7 @@ namespace YeogiCafe.UI
             rt.anchoredPosition = at; rt.sizeDelta = new Vector2(size, size * 0.84f);
             var nm = UiFactory.Label("N", relRoot, L.Get($"cat.{id}.name"), Mathf.RoundToInt(15 * nameScale), TextAnchor.UpperCenter, UiFactory.Ink);
             var nrt = (RectTransform)nm.transform; nrt.anchorMin = nrt.anchorMax = new Vector2(0.5f, 0.5f);
-            nrt.anchoredPosition = at + new Vector2(0, -size * 0.42f - 4f); nrt.sizeDelta = new Vector2(110, 20);
+            nrt.anchoredPosition = at + new Vector2(0, nameAbove ? size * 0.42f + 14f : -size * 0.42f - 4f); nrt.sizeDelta = new Vector2(110, 20);
             UiFactory.FitOneLine(nm, 110, 11);
         }
 
