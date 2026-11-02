@@ -38,6 +38,7 @@ namespace YeogiCafe.Core
             if (view == null) view = go.AddComponent<YeogiCafe.Visual.CatView>();
 
             brain.data = data;
+            brain.ObserveOnly = save != null && GameOptions.ObserveActive(save.currentDay);
             brain.cfg = cfg;
             brain.Obs = obs;
             brain.Mover = mover;

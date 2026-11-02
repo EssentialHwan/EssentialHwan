@@ -42,7 +42,8 @@ namespace YeogiCafe.AI
         public readonly HashSet<string> UsedFacilityIds = new(); // 이용한 시설 가구 id(강화 사용 수)
         public bool IsInspector => YeogiCafe.Food.NyanGuide.IsInspector(data.catId);
         public bool IsDelivery => YeogiCafe.Food.DeliveryCat.IsDelivery(data.catId);
-        public bool IsSpecialGuest => IsInspector || IsDelivery;          // 도감·관계·마감 놀아주기와 무관한 손님
+        public bool IsSpecialGuest => IsInspector || IsDelivery;
+        public bool ObserveOnly;                                            // 관찰 모드 손님(11/02): 주문 없이 앉아 쉬고 놀다 간다          // 도감·관계·마감 놀아주기와 무관한 손님
         // 배달냥: 주문 여러 개 → 나온 것만 사 간다
         readonly List<YeogiCafe.Order.OrderTicket> deliveryTickets = new();
         public int DeliveryOrdered => deliveryTickets.Count;
@@ -216,6 +217,7 @@ namespace YeogiCafe.AI
                 if (stealFrom != null && !stealFrom.IsFinished) { OnSeatStolen?.Invoke(this, stealFrom); stealFrom.Flee(1.5f); }
                 stealFrom = null;
             }
+            if (ObserveOnly && !IsSpecialGuest) { ServedMenu = null; state = CatState.Eat; return; }   // 관찰 모드: 주문 건너뛰고 바로 자유 시간
             state = CatState.DecideOrder;
         }
 

@@ -187,7 +187,7 @@ namespace YeogiCafe.Core
             var data = brain.data;
             if (brain.IsDelivery) { HandleDelivery(brain); return; }
             var catSave = save.GetOrCreateCat(data.catId);
-            if (brain.State == CatState.Leave && brain.ServedMenu != null && !brain.IsSpecialGuest) lastLeftToday = data.catId;
+            if (brain.State == CatState.Leave && (brain.ServedMenu != null || brain.ObserveOnly) && !brain.IsSpecialGuest) lastLeftToday = data.catId;
             if (!brain.IsSpecialGuest) lastSeenToday = data.catId;      // 음식을 못 받았어도(마감 놀아주기 마지막 후보)
 
             // 만족도 계산 (§3.3). 분위기 승수는 cfg.atmosphereAffectsSatisfaction=true(정식)일 때만 반영.
@@ -201,7 +201,7 @@ namespace YeogiCafe.Core
                 usedPreferredFacility = brain.UsedPreferredFacility,
                 fastService = true,                  // S1: 서빙 즉시
                 totalWaitOver = 0f,     // TODO(밸런스): 주문~서빙 대기시간을 만족도에 반영할지 기획 결정 필요
-                orderFailed = brain.ServedMenu == null,
+                orderFailed = brain.ServedMenu == null && !brain.ObserveOnly,
                 hasDominant = cfg.atmosphereAffectsSatisfaction && atmo.hasDominant,
                 dominantAtmosphere = atmo.dominant,
                 touchMood = brain.TouchMood,
@@ -266,11 +266,13 @@ namespace YeogiCafe.Core
 
             // 한 줄 리뷰(먹은 것·자리·시설·쥐 소동)
             int mouse = brain.ChaseSkippedPay ? 2 : (save.mouseStateDay == day.CurrentDay ? save.mouseState : 0);
+            // 관찰 모드 손님은 먹은 게 없어서, 자리·시설 얘기가 없으면 리뷰를 남기지 않는다(빈 리뷰 방지)
+            if (brain.ObserveOnly && !brain.UsedPreferredSeat && !brain.UsedPreferredFacility) { cats.Despawn(brain, satisfaction); return; }
             var review = YeogiCafe.Food.ReviewBook.Write(save, new YeogiCafe.Food.ReviewBook.Visit
             {
                 cat = data, day = day.CurrentDay, satisfaction = satisfaction,
                 menu = brain.ServedMenu, stars = brain.ServedStars, favorite = brain.ServedFavorite, forcedSecond = brain.ForcedSecond,
-                wrongDish = brain.WrongDish, orderFailed = brain.ServedMenu == null,
+                wrongDish = brain.WrongDish, orderFailed = brain.ServedMenu == null && !brain.ObserveOnly,
                 preferredSeat = brain.UsedPreferredSeat, preferredFacility = brain.UsedPreferredFacility, mouse = mouse
             });
             OnReview?.Invoke(review);

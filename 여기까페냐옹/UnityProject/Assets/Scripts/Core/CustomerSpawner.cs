@@ -157,7 +157,8 @@ namespace YeogiCafe.Core
             if (rolledDay != day.CurrentDay) RollToday();
 
             // 심사원: 점심 시간에 빈자리가 있으면 한 번 들어온다
-            if (save != null && save.inspectorPlanDay == day.CurrentDay && !inspectorSpawned && day.Phase == DayPhase.Lunch
+            bool observe = save != null && GameOptions.ObserveActive(day.CurrentDay);   // 관찰 모드: 주방 손님(심사원·배달냥) 없음
+            if (!observe && save != null && save.inspectorPlanDay == day.CurrentDay && !inspectorSpawned && day.Phase == DayPhase.Lunch
                 && cafe.FreeSeatCount > 0 && !cats.IsInCafe(YeogiCafe.Food.NyanGuide.InspectorId))
             {
                 inspectorSpawned = true;
@@ -168,9 +169,10 @@ namespace YeogiCafe.Core
 
             // 11/02: 마감 직전엔 새 손님(배달냥 포함)을 들이지 않는다 — 들어오자마자 문을 닫으면 손님을 내쫓는 기분이라.
             //  남은 시간 < (가장 오래 걸리는 메뉴 조리 + 들어와 앉아 주문하기까지 여유) 이면 보류. 조리 시간은 실제 초, 하루 타이머는 Rate배로 흐른다.
-            if (TooCloseToClosing()) return;
+            if (!observe && TooCloseToClosing()) return;
 
             // 배달냥: 시간이 되면 들어온다(자리 필요 없음). 이미 와 있으면 다음 기회로.
+            while (deliveryAt.Count > 0 && (observe || (!GameOptions.DeliveryOn && !FirstWeek.Active(day.CurrentDay))) && day.DayTimer >= deliveryAt[0]) deliveryAt.RemoveAt(0);   // 꺼져 있으면 그 차례는 넘긴다(첫 주 배달 이벤트는 튜토리얼이라 그대로)
             if (deliveryAt.Count > 0 && day.DayTimer >= deliveryAt[0] && day.Phase != DayPhase.Morning)
             {
                 deliveryAt.RemoveAt(0);

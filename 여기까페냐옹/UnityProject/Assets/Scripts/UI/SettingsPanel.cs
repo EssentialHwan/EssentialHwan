@@ -41,10 +41,11 @@ namespace YeogiCafe.UI
             rootGo = scrim.gameObject;
             UiFactory.Anchor(scrim, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             box = UiFactory.Panel("Settings", scrim, UiFactory.PanelBg);
-            UiFactory.SetRect(box, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(560, 680));
+            UiFactory.SetRect(box, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(980, 600));   // 11/02: 두 줄(왼쪽 소리·화면 / 오른쪽 게임·놀이 방식) — 한 줄로는 720 높이에 안 들어감
             UiFactory.Frame(box, UiFactory.FrameStyle.Window);
             UiFactory.TitleTab(box, L.Get("opt.title"), 200);
 
+            col = Column(0f, 0.5f);
             float y = -50;
             Section(L.Get("opt.sound"), ref y);
             SliderRow(L.Get("opt.bgm"), "opt.bgm", 0.5f, v => SoundManager.BgmVolume = v, ref y);
@@ -67,6 +68,7 @@ namespace YeogiCafe.UI
                 }, ref y);
             }
 
+            col = Column(0.5f, 1f); y = -50;
             Section(L.Get("opt.game"), ref y);
             speedLabel = ButtonRow(L.Get("opt.speed"), "", () =>
             {
@@ -79,6 +81,20 @@ namespace YeogiCafe.UI
             langLabel = ButtonRow(L.Get("opt.lang"), L.Get("lang.name"), CycleLanguage, ref y);
             // 시작 화면으로(플레이테스트: 나갔다 다시 하려면 껐다 켜야 했음). 영업 중이면 한 번 더 눌러 확인.
             titleLabel = ButtonRow(L.Get("opt.totitle"), L.Get("opt.totitle.btn"), GoTitle, ref y);
+
+            // 놀이 방식(11/02): 관찰 모드 · 배달냥
+            Section(L.Get("opt.play"), ref y);
+            observeLabel = ButtonRow(L.Get("opt.observe"), "", () =>
+            {
+                var d = owner.Day;
+                if (d != null && YeogiCafe.Core.FirstWeek.Active(d.CurrentDay)) { owner.ShowToast(L.Get("opt.observe.firstweek"), true); return; }
+                YeogiCafe.Core.GameOptions.ObserveMode = !YeogiCafe.Core.GameOptions.ObserveMode;
+                Refresh();
+            }, ref y);
+            deliveryLabel = ButtonRow(L.Get("opt.delivery"), "", () => { YeogiCafe.Core.GameOptions.DeliveryOn = !YeogiCafe.Core.GameOptions.DeliveryOn; Refresh(); }, ref y);
+            var note = UiFactory.Label("PlayNote", col, L.Get("opt.observe.note"), 13, TextAnchor.UpperLeft, UiFactory.WoodDark);
+            UiFactory.SetRect((RectTransform)note.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(44, y + 4), new Vector2(-84, 40));
+            col = box;
 
             // 아래 버튼: 새 게임 / 게임 종료 / 닫기
             var newBtn = UiFactory.Button("NewGame", box, L.Get("opt.newgame"), UiFactory.Pink, UiFactory.Cream, out newGameLabel);
@@ -118,22 +134,31 @@ namespace YeogiCafe.UI
         int refreshLater;
         public void Tick() { if (refreshLater > 0 && --refreshLater == 0) Refresh(); }
 
+        RectTransform col;                       // 지금 줄을 넣는 칸(왼쪽/오른쪽 절반)
+        Text observeLabel, deliveryLabel;
+        RectTransform Column(float x0, float x1)
+        {
+            var g = new GameObject("Col", typeof(RectTransform)); g.transform.SetParent(box, false);
+            var rt = (RectTransform)g.transform; UiFactory.Anchor(rt, new Vector2(x0, 0), new Vector2(x1, 1), Vector2.zero, Vector2.zero);
+            return rt;
+        }
+
         void Section(string title, ref float y)
         {
-            var t = UiFactory.Label("Sec", box, title, 18, TextAnchor.MiddleLeft, UiFactory.WoodDark);
+            var t = UiFactory.Label("Sec", col, title, 18, TextAnchor.MiddleLeft, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)t.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(34, y), new Vector2(-68, 26));
-            var line = UiFactory.Panel("Line", box, new Color(0.59f, 0.43f, 0.29f, 0.35f));
+            var line = UiFactory.Panel("Line", col, new Color(0.59f, 0.43f, 0.29f, 0.35f));
             UiFactory.SetRect(line, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(34, y - 27), new Vector2(-68, 2));
             y -= 34;
         }
 
         void SliderRow(string label, string key, float def, System.Action<float> onChange, ref float y)
         {
-            var t = UiFactory.Label("L", box, label, 17, TextAnchor.MiddleLeft, UiFactory.Ink);
+            var t = UiFactory.Label("L", col, label, 17, TextAnchor.MiddleLeft, UiFactory.Ink);
             UiFactory.SetRect((RectTransform)t.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(44, y), new Vector2(150, 34));
-            var pct = UiFactory.Label("P", box, "", 16, TextAnchor.MiddleRight, UiFactory.WoodDark);
+            var pct = UiFactory.Label("P", col, "", 16, TextAnchor.MiddleRight, UiFactory.WoodDark);
             UiFactory.SetRect((RectTransform)pct.transform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1), new Vector2(-40, y), new Vector2(60, 34));
-            var s = UiFactory.Slider("S", box, PlayerPrefs.GetFloat(key, def));
+            var s = UiFactory.Slider("S", col, PlayerPrefs.GetFloat(key, def));
             UiFactory.SetRect((RectTransform)s.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(200, y - 9), new Vector2(-310, 16));
             pct.text = Mathf.RoundToInt(s.value * 100) + "%";
             s.onValueChanged.AddListener(v => { PlayerPrefs.SetFloat(key, v); pct.text = Mathf.RoundToInt(v * 100) + "%"; onChange(v); });
@@ -142,9 +167,9 @@ namespace YeogiCafe.UI
 
         Text ButtonRow(string label, string value, UnityEngine.Events.UnityAction onClick, ref float y)
         {
-            var t = UiFactory.Label("L", box, label, 17, TextAnchor.MiddleLeft, UiFactory.Ink);
+            var t = UiFactory.Label("L", col, label, 17, TextAnchor.MiddleLeft, UiFactory.Ink);
             UiFactory.SetRect((RectTransform)t.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(44, y), new Vector2(200, 34));
-            var b = UiFactory.Button("B", box, value, UiFactory.Cream, UiFactory.Ink, out var bl);
+            var b = UiFactory.Button("B", col, value, UiFactory.Cream, UiFactory.Ink, out var bl);
             bl.fontSize = 16;
             UiFactory.SetRect((RectTransform)b.transform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1), new Vector2(-40, y + 2), new Vector2(190, 36));
             b.onClick.AddListener(onClick);
@@ -212,6 +237,12 @@ namespace YeogiCafe.UI
             var day = owner.Day;
             speedLabel.text = day != null ? L.Get("opt.speedval", ("x", day.speed.ToString("0")), ("m", Mathf.RoundToInt(720f / day.Rate / 60f).ToString())) : "-";
             newGameLabel.text = L.Get("opt.newgame");
+            if (observeLabel != null)
+            {
+                bool fw = day != null && YeogiCafe.Core.FirstWeek.Active(day.CurrentDay);
+                observeLabel.text = fw ? L.Get("opt.observe.locked") : L.Get(YeogiCafe.Core.GameOptions.ObserveMode ? "opt.on" : "opt.off");
+            }
+            if (deliveryLabel != null) deliveryLabel.text = L.Get(YeogiCafe.Core.GameOptions.DeliveryOn ? "opt.on" : "opt.off");
         }
 
         public void Toggle() { if (IsOpen) Hide(); else Show(); }
