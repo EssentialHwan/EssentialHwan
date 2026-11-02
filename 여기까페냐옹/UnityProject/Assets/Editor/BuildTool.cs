@@ -29,6 +29,7 @@ namespace YeogiCafe.EditorTools
                     "이 Unity에는 안드로이드 빌드 모듈이 없어요.\nUnity Hub → 설치 → 2022.3.40f1 ⚙ → 모듈 추가 → Android Build Support(OpenJDK, Android SDK & NDK 포함)를 설치한 뒤 다시 눌러 주세요.", "확인");
                 return;
             }
+            Branding.Apply();
             string root = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Build"));
             string outDir = Path.Combine(root, "YeogiCafe_Android");
             Directory.CreateDirectory(outDir);
@@ -66,6 +67,7 @@ namespace YeogiCafe.EditorTools
 
         static void Build(bool demo)
         {
+            Branding.Apply();                                    // 11/02: 아이콘·시작 화면(Unity 기본 → 우리 것)
             string root = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Build"));
             string outDir = Path.Combine(root, demo ? "YeogiCafe_Demo" : "YeogiCafe_Windows");
             Directory.CreateDirectory(root);
