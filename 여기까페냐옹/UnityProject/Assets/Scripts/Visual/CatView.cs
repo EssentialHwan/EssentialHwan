@@ -252,7 +252,7 @@ namespace YeogiCafe.Visual
                 sr.sprite = clipFrames[hf]; lastFrame = hf; hopFrame = -1; return;
             }
             hopFrame = -1;
-            if (DistanceDriven) clipT += Mathf.Min(movedThisFrame, 0.3f) / (WalkStepUnits * Mathf.Max(1f, clipDef.fps));
+            if (DistanceDriven) clipT += Mathf.Min(movedThisFrame, 0.3f) / (WalkStepUnits * CatSpriteBank.SizeOf(Data.catId) * Mathf.Max(1f, clipDef.fps));   // 몸집이 다르면 한 걸음 길이도 같이
             else clipT += dt;
             int i = (int)(clipT * clipDef.fps);
             if (!clipDef.loop && i >= clipFrames.Length)

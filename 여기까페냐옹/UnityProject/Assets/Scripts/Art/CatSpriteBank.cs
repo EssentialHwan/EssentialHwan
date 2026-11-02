@@ -13,6 +13,9 @@ namespace YeogiCafe.Art
         public const float Scale = 40f / PPU;  // 예전 크기 대비 배율 — 머리 위 말풍선·감정 아이콘·클릭 범위가 따라 커진다
 
         static readonly Dictionary<string, Dictionary<string, Sprite[]>> bank = new();
+        // 11/02: 고양이별 몸집. 예전엔 시트 그림 자체를 0.8배·1.15배로 다시 그려 도트가 뭉개졌다 → 그림은 원본 그대로, 화면에 그릴 때만 크기를 바꾼다(PPU).
+        static readonly Dictionary<string, float> sizeOf = new() { ["cat_kitten"] = 0.8f, ["cat_inspector"] = 1.15f };
+        public static float SizeOf(string catId) => catId != null && sizeOf.TryGetValue(catId, out var k) ? k : 1f;
 
         public static Sprite[] Clip(string catId, string clip)
         {
@@ -57,7 +60,7 @@ namespace YeogiCafe.Art
                 var arr = new Sprite[Count(r)];
                 for (int i = 0; i < arr.Length; i++)
                 {
-                    arr[i] = LitSprites.Create(tex, new Rect(i * FW, (rows - 1 - r) * FH, FW, FH), pivot, PPU);
+                    arr[i] = LitSprites.Create(tex, new Rect(i * FW, (rows - 1 - r) * FH, FW, FH), pivot, PPU / SizeOf(catId));
                     arr[i].name = $"{catId}_{defs[r].name}{i}";
                 }
                 dict[defs[r].name] = arr;
