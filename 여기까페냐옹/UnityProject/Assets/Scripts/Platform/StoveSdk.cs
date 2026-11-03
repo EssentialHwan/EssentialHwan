@@ -46,11 +46,11 @@ namespace YeogiCafe.Platform
             // ① 런처 확인: exe를 직접 켰으면 스토브 런처로 다시 실행해야 한다 → 게임 종료
             Base_RestartAppIfNecessaryAsyncEx2(p, (CallbackResult r, bool restart) =>
             {
-                if (restart) { Debug.Log("[StoveSdk] 런처를 통해 다시 실행 → 종료"); Application.Quit(); return; }
+                if (restart) { Debug.Log($"[StoveSdk] 런처를 통해 다시 실행 → 종료 ({r.result.resultCode})"); Application.Quit(); return; }
                 Base_InitializeEx((CallbackResult cr) =>
                 {
                     if (cr.result.IsSuccessful()) { initialized = true; Ready = true; Debug.Log("[StoveSdk] 초기화 성공"); }
-                    else Debug.LogError($"[StoveSdk] 초기화 실패: {cr.result.resultCode} {cr.message}");
+                    else Debug.LogError($"[StoveSdk] 초기화 실패: {cr.result.resultCode} {cr.errorMessage}");
                 });
             });
         }
