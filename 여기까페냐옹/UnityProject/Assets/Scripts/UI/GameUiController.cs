@@ -341,7 +341,9 @@ namespace YeogiCafe.UI
             os.OnTicketPlaced += t => { if (!YeogiCafe.Food.DeliveryCat.IsDelivery(t.catId)) ShowCatBubble(t.catId, t.vague
                 ? L.Get("ui.order.askhint", ("hint", L.Get(t.hintKey)))
                 : L.Get("ui.order.ask", ("menu", t.menu != null ? L.Get($"menu.{t.menu.menuId}") : ""))); };
-            os.OnTicketCancelled += t => ShowCatBubble(t.catId, L.Get("ui.order.gaveup"));
+            os.OnTicketCancelled += t => ShowCatBubble(t.catId, L.Get(t.leftover ? "ui.order.gaveup.ready" : "ui.order.gaveup"));
+            os.OnTicketCooling += t => { if (!YeogiCafe.Food.DeliveryCat.IsDelivery(t.catId)) ShowCatBubble(t.catId, L.Get("ui.order.hurry")); };
+            os.OnLeftoverEaten += t => ShowToast(L.Get("ui.order.leftover", ("menu", t.menu != null ? L.Get($"menu.{t.menu.menuId}") : "")));
             os.OnTicketPlaced += _ => guide?.OnOrderPlaced();
             os.OnTicketServed += _ => guide?.OnServed();
             os.OnTicketReady += _ => YeogiCafe.Audio.SoundManager.Sfx("sfx_bell", 0.45f, 0.02f);

@@ -28,6 +28,8 @@ namespace YeogiCafe.Order
         // 별점: 완성 순간 업그레이드 단계 확률로 굴림 → 다 되고 오래 두면 서빙 때 하나 깎임(신선도)
         public int stars;
         public bool stale;            // 신선도 감점 받음
+        public bool coolWarned;       // 완성 후 20초 재촉 했음
+        public bool leftover;         // 완성품을 안 줘서 고양이가 포기(주인냥이 먹음)
         public float placedAt, readyAt, servedAt;   // Time.time
         public float ServeWait => servedAt - placedAt;
 
@@ -47,6 +49,8 @@ namespace YeogiCafe.Order
         public event Action<OrderTicket> OnTicketReady;
         public event Action<OrderTicket> OnTicketServed;
         public event Action<OrderTicket> OnTicketCancelled;
+        public event Action<OrderTicket> OnTicketCooling;     // 완성 후 오래 기다리는 중(재촉)
+        public event Action<OrderTicket> OnLeftoverEaten;     // 완성품 방치 → 고양이 포기, 주인냥이 먹고 기구 비움
 
         public OrderTicket Place(string catId, MenuData menu, bool vague = false, string hintKey = null)
         {
@@ -154,6 +158,18 @@ namespace YeogiCafe.Order
                             OnTicketReady?.Invoke(t);
                         }
                         break;
+                    case TicketState.Ready:
+                        // 11/04: 완성품을 안 주면 기구가 영원히 막히던 문제 → 식는 단계 + 포기
+                        float age = Time.time - t.readyAt;
+                        if (!t.coolWarned && age >= YeogiCafe.Food.RecipeBook.CoolSeconds) { t.coolWarned = true; OnTicketCooling?.Invoke(t); }
+                        if (age >= YeogiCafe.Food.RecipeBook.GiveUpSeconds)
+                        {
+                            t.state = TicketState.Cancelled; t.leftover = true;
+                            tickets.RemoveAt(i);
+                            OnTicketCancelled?.Invoke(t);
+                            OnLeftoverEaten?.Invoke(t);
+                        }
+                        break;
                 }
             }
         }
@@ -163,7 +179,8 @@ namespace YeogiCafe.Order
             if (t.state != TicketState.Ready) return;
             t.state = TicketState.Served;
             t.servedAt = Time.time;
-            if (t.stars > 1 && t.servedAt - t.readyAt > YeogiCafe.Food.RecipeBook.FreshSeconds) { t.stars--; t.stale = true; }
+            int after = YeogiCafe.Food.RecipeBook.StarsAfterWait(t.stars, t.servedAt - t.readyAt);
+            if (after < t.stars) { t.stars = after; t.stale = true; }
             tickets.Remove(t);
             OnTicketServed?.Invoke(t);
         }

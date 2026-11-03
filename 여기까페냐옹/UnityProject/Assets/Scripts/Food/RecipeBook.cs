@@ -61,6 +61,17 @@ namespace YeogiCafe.Food
         }
 
         public const float FreshSeconds = 8f;              // 다 되고 이만큼 지나 서빙하면 별 하나 깎임
+        public const float CoolSeconds = 20f;              // 11/04: 여기서 한 번 더 깎이고 고양이가 재촉
+        public const float GiveUpSeconds = 30f;            // 11/04: 완성품을 이만큼 안 주면 고양이가 포기 → 남은 음식은 주인냥이 먹음(기구 비움)
+        public static int StarsAfterWait(int stars, float age)
+        {
+            int cut = age > CoolSeconds ? 2 : age > FreshSeconds ? 1 : 0;
+            return stars <= 0 ? stars : Mathf.Max(1, stars - cut);
+        }
+        // 별 색: 1개 동 · 2개 은 · 3개 금(11/04)
+        public static Color StarColor(int stars) => stars >= 3 ? new Color(1f, 0.84f, 0.3f) : stars == 2 ? new Color(0.80f, 0.83f, 0.90f) : new Color(0.84f, 0.55f, 0.30f);
+        public static string StarHex(int stars) => stars >= 3 ? "FFD64D" : stars == 2 ? "CCD4E6" : "D68C4D";
+        public static string StarRich(int stars) => stars <= 0 ? "" : $"<color=#{StarHex(stars)}>{StarText(stars)}</color>";
 
         // 별 → 만족도·결제
         public static float StarSatisfaction(int stars) => stars switch { 1 => -6f, 2 => 4f, 3 => 12f, _ => 0f };

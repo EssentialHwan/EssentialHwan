@@ -398,9 +398,10 @@ namespace YeogiCafe.UI
         // 화면 왼쪽 아래 기준 위치(기구는 상판 높이에 붙어 있어 anchor y도 더해야 한다 — 빠지면 별점이 양손 사이 바닥에 떴다)
         Vector2 AbsPos(RectTransform p) => new Vector2(p.anchorMin.x * root.rect.width + p.anchoredPosition.x, p.anchorMin.y * root.rect.height + p.anchoredPosition.y);
 
-        void Float(Vector2 at, string text)
+        void Float(Vector2 at, string text) => Float(at, text, UiFactory.Cream);
+        void Float(Vector2 at, string text, Color col)
         {
-            var lbl = UiFactory.Label("Fx", root, text, 20, TextAnchor.MiddleCenter, UiFactory.Cream);
+            var lbl = UiFactory.Label("Fx", root, text, 20, TextAnchor.MiddleCenter, col);
             lbl.horizontalOverflow = HorizontalWrapMode.Overflow; lbl.raycastTarget = false;
             var o = lbl.gameObject.AddComponent<Outline>(); o.effectColor = new Color(0.29f, 0.21f, 0.18f, 0.9f); o.effectDistance = new Vector2(2, -2);
             var rt = (RectTransform)lbl.transform;
@@ -484,8 +485,8 @@ namespace YeogiCafe.UI
                     YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
                     YeogiCafe.Audio.SoundManager.Sfx("sfx_coin", 0.35f, 0.02f);
                     hint.text = L.Get("ui.kitchen.served", ("name", CatName(ticket)), ("menu", MenuName(ticket)))
-                              + "  " + YeogiCafe.Food.RecipeBook.StarText(ticket.stars) + (ticket.stale ? " " + L.Get("ui.kitchen.stale") : "");
-                    Float(AbsPos(w.rt) + new Vector2(0, 150), YeogiCafe.Food.RecipeBook.StarText(ticket.stars));
+                              + "  " + YeogiCafe.Food.RecipeBook.StarRich(ticket.stars) + (ticket.stale ? " " + L.Get("ui.kitchen.stale") : "");
+                    Float(AbsPos(w.rt) + new Vector2(0, 150), YeogiCafe.Food.RecipeBook.StarText(ticket.stars), YeogiCafe.Food.RecipeBook.StarColor(ticket.stars));
                     GameEvents.Raise(GameEvents.Serve, ticket.catId);
                     if (ticket.vague && ticket.IsCorrectDish)
                     { owner.ShowCatBubble(ticket.catId, L.Get("ui.order.mindread")); GameEvents.Raise(GameEvents.MindRead, ticket.catId); }
@@ -524,9 +525,11 @@ namespace YeogiCafe.UI
                 if (ready)
                 {
                     float age = Time.time - active.readyAt;
-                    bool cooling = age > YeogiCafe.Food.RecipeBook.FreshSeconds - 3f;
-                    w.stars.text = YeogiCafe.Food.RecipeBook.StarText(age > YeogiCafe.Food.RecipeBook.FreshSeconds && active.stars > 1 ? active.stars - 1 : active.stars);
-                    w.stars.color = cooling && Mathf.Repeat(Time.unscaledTime * 4f, 1f) < 0.5f ? new Color(0.75f, 0.75f, 0.8f) : new Color(1f, 0.84f, 0.3f);
+                    int nowStars = YeogiCafe.Food.RecipeBook.StarsAfterWait(active.stars, age);
+                    int nextStars = YeogiCafe.Food.RecipeBook.StarsAfterWait(active.stars, age + 3f);
+                    bool cooling = nextStars < nowStars || age > YeogiCafe.Food.RecipeBook.GiveUpSeconds - 5f;   // 곧 깎이거나 곧 포기 → 깜빡
+                    w.stars.text = YeogiCafe.Food.RecipeBook.StarText(nowStars);
+                    w.stars.color = cooling && Mathf.Repeat(Time.unscaledTime * 4f, 1f) < 0.5f ? new Color(0.6f, 0.6f, 0.66f) : YeogiCafe.Food.RecipeBook.StarColor(nowStars);
                     w.dish.sprite = DishSprite(active.menu != null ? active.menu.menuId : "");
                     var drt = (RectTransform)w.dish.transform;
                     drt.anchoredPosition = new Vector2(0, 22 + Mathf.Abs(Mathf.Sin(Time.unscaledTime * 5f)) * 10f);
@@ -579,7 +582,9 @@ namespace YeogiCafe.UI
                                             ? (tk.PatienceRatio > 0.35f ? UiFactory.Green : UiFactory.PinkDeep)
                                             : UiFactory.YellowLight).GetComponent<Image>();
                 fill.sprite = UiFactory.WhiteSprite; fill.type = Image.Type.Filled; fill.fillMethod = Image.FillMethod.Horizontal;
-                fill.fillAmount = tk.state == TicketState.Queued ? tk.PatienceRatio : tk.state == TicketState.Cooking ? tk.CookRatio : 1f;
+                fill.fillAmount = tk.state == TicketState.Queued ? tk.PatienceRatio : tk.state == TicketState.Cooking ? tk.CookRatio
+                                : Mathf.Clamp01(1f - (Time.time - tk.readyAt) / YeogiCafe.Food.RecipeBook.GiveUpSeconds);   // 완성: 남은 시간(줄어듦)
+                if (tk.state == TicketState.Ready) fill.color = YeogiCafe.Food.RecipeBook.StarColor(YeogiCafe.Food.RecipeBook.StarsAfterWait(tk.stars, Time.time - tk.readyAt));
                 UiFactory.Anchor((RectTransform)fill.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             }
         }

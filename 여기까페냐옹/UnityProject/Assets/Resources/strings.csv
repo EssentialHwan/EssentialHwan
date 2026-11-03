@@ -22,6 +22,9 @@ ui.kitchen.noorder,이 기구로 만들 주문이 없어요,No orders for this t
 ui.kitchen.thanks,냐아~ (꼬리를 흔든다),Mrrow~ (tail swish),喵~（摇了摇尾巴）,ニャ〜（しっぽをふりふり）
 ui.order.ask,{menu} 주세냥!,"{menu}, please!",请给我{menu}喵！,{menu}くださいニャ！
 ui.order.gaveup,기다리다 지쳐 나가버렸다…,Got tired of waiting and left…,等得不耐烦，走掉了…,待ちくたびれて帰っちゃった…
+ui.order.gaveup.ready,다 된 음식이 안 와서 나가버렸다…,The food was ready but never came… so they left.,饭做好了却一直没端来…走掉了。,できた料理が来なくて帰ってしまった…
+ui.order.hurry,아직이냥…?,Is it ready yet…?,好了没喵…?,まだかにゃ…?
+ui.order.leftover,식어 버린 {menu}… 주인냥이 냠냠 먹어 치웠다냥,The cold {menu}… the owner cat gobbled it up.,凉掉的{menu}…被店长猫吃光了喵,冷めた{menu}…店長ネコがぺろりと食べたにゃ
 tool.coffee,커피머신,Coffee Machine,咖啡机,コーヒーマシン
 tool.kettle,주전자,Kettle,水壶,ケトル
 tool.oven,오븐,Oven,烤箱,オーブン
