@@ -532,15 +532,17 @@ namespace YeogiCafe.UI
                     w.stars.color = cooling && Mathf.Repeat(Time.unscaledTime * 4f, 1f) < 0.5f ? new Color(0.6f, 0.6f, 0.66f) : YeogiCafe.Food.RecipeBook.StarColor(nowStars);
                     w.dish.sprite = DishSprite(active.menu != null ? active.menu.menuId : "");
                     var drt = (RectTransform)w.dish.transform;
-                    drt.anchoredPosition = new Vector2(0, 22 + Mathf.Abs(Mathf.Sin(Time.unscaledTime * 5f)) * 10f);
+                    drt.anchoredPosition = new Vector2(0, 22 + Bounce * 10f);   // 11/04: 기구·별과 같은 박자
                 }
                 // 누를 일이 있는 기구만 빛나게(완성품 서빙 or 대기 주문 조리)
                 bool actionable = ready || (active == null && hasQueued);
                 var g = w.glow.color; g.a = actionable ? pulse : 0f; w.glow.color = g;
-                float bounce = actionable ? 1f + 0.045f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 3.4f)) : 1f;   // 누를 일이 있으면 기구가 살짝 통통
+                float bounce = actionable ? 1f + 0.045f * Bounce : 1f;   // 누를 일이 있으면 기구가 살짝 통통
                 w.rt.localScale = new Vector3(bounce, bounce, 1f);
             }
         }
+
+        static float Bounce => Mathf.Abs(Mathf.Sin(Time.unscaledTime * 4f));   // 주방 통통 박자(음식·기구·별 공통)
 
         void RefreshRail(bool force)
         {
