@@ -31,34 +31,53 @@ namespace YeogiCafe.Platform
             inst = go.AddComponent<StoveSdk>();
         }
 
+        // 콜백 안에서 SDK를 다시 부르지 않는다(재진입 → 런처 실행 시 튕김, 11/03).
+        // 콜백은 상태만 바꾸고, 다음 SDK 호출은 콜백 루프(RunCallback 바깥)에서 한다.
+        // 델리게이트는 static으로 잡아 둔다(네이티브가 들고 있는 동안 GC되지 않게).
+        static Base.OnRestartAppIfNecessaryAsyncFinished onRestart;
+        static Base.OnInitializeFinished onInit;
+        enum Step { Idle, WaitRestart, NeedInit, WaitInit, Done, Quit }
+        Step step = Step.Idle;
+
         void Start()
         {
             var ta = Resources.Load<TextAsset>("Stove/stove_config");
             if (ta == null) { Debug.LogError("[StoveSdk] Resources/Stove/stove_config.json 없음 → 스토브 연동 안 함"); return; }
             var cfg = JsonUtility.FromJson<Config>(ta.text);
-            loop = StartCoroutine(RunCallbackLoop());                     // ② 런처 확인 콜백도 이 루프로 받는다
+
+            onRestart = (CallbackResult r, bool restart) =>
+            {
+                Debug.Log($"[StoveSdk] 런처 확인 결과: restart={restart} code={r.result.resultCode} {r.errorMessage}");
+                step = restart ? Step.Quit : Step.NeedInit;
+            };
+            onInit = (CallbackResult cr) =>
+            {
+                if (cr.result.IsSuccessful()) { initialized = true; Ready = true; Debug.Log("[StoveSdk] 초기화 성공"); }
+                else Debug.LogError($"[StoveSdk] 초기화 실패: {cr.result.resultCode} {cr.errorMessage}");
+                step = Step.Done;
+            };
 
             var p = new StovePCInitializeParamEx2
             {
                 environment = cfg.environment, gameId = cfg.gameId, applicationKey = cfg.applicationKey,
                 waitTimeMillisec = 60000, launchLauncher = true
             };
-            // ① 런처 확인: exe를 직접 켰으면 스토브 런처로 다시 실행해야 한다 → 게임 종료
-            Base_RestartAppIfNecessaryAsyncEx2(p, (CallbackResult r, bool restart) =>
-            {
-                if (restart) { Debug.Log($"[StoveSdk] 런처를 통해 다시 실행 → 종료 ({r.result.resultCode})"); Application.Quit(); return; }
-                Base_InitializeEx((CallbackResult cr) =>
-                {
-                    if (cr.result.IsSuccessful()) { initialized = true; Ready = true; Debug.Log("[StoveSdk] 초기화 성공"); }
-                    else Debug.LogError($"[StoveSdk] 초기화 실패: {cr.result.resultCode} {cr.errorMessage}");
-                });
-            });
+            Debug.Log($"[StoveSdk] ① 런처 확인 요청 ({cfg.environment})");
+            step = Step.WaitRestart;
+            Base_RestartAppIfNecessaryAsyncEx2(p, onRestart);   // ① exe를 직접 켰으면 런처로 다시 실행해야 함
+            loop = StartCoroutine(RunCallbackLoop());           // ② 콜백 루프는 요청 '뒤'에 시작
         }
 
         IEnumerator RunCallbackLoop()
         {
             var w = new WaitForSecondsRealtime(0.2f);                    // 일시정지(timeScale 0) 중에도 돈다
-            while (true) { Base_RunCallback(); yield return w; }
+            while (true)
+            {
+                yield return w;
+                Base_RunCallback();
+                if (step == Step.Quit) { Debug.Log("[StoveSdk] 런처를 통해 다시 실행 → 종료"); step = Step.Done; Application.Quit(); }
+                else if (step == Step.NeedInit) { step = Step.WaitInit; Debug.Log("[StoveSdk] ② 초기화 요청"); Base_InitializeEx(onInit); }
+            }
         }
 
         // ③ 종료 직전 정리
