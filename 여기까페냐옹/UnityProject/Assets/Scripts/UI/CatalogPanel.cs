@@ -423,7 +423,7 @@ namespace YeogiCafe.UI
             rt.anchoredPosition = at; rt.sizeDelta = new Vector2(size, size * 0.84f);
             var nm = UiFactory.Label("N", relRoot, L.Get($"cat.{id}.name"), Mathf.RoundToInt(15 * nameScale), TextAnchor.UpperCenter, UiFactory.Ink);
             var nrt = (RectTransform)nm.transform; nrt.anchorMin = nrt.anchorMax = new Vector2(0.5f, 0.5f);
-            nrt.anchoredPosition = at + new Vector2(0, nameAbove ? size * 0.42f + 14f : -size * 0.42f - 4f); nrt.sizeDelta = new Vector2(110, 20);
+            nrt.anchoredPosition = at + new Vector2(0, nameAbove ? size * 0.42f + 18f : -size * 0.42f - 12f);   // 11/04: 그림과 이름 사이를 조금 띄움 nrt.sizeDelta = new Vector2(110, 20);
             UiFactory.FitOneLine(nm, 110, 11);
         }
 
