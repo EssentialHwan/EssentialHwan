@@ -72,7 +72,7 @@ namespace YeogiCafe.UI
             lg.cellSize = new Vector2(374, 76); lg.spacing = new Vector2(10, 6);
             lg.constraint = GridLayoutGroup.Constraint.FixedColumnCount; lg.constraintCount = 2;
 
-            // 11/04 테스터 피드백: 탭을 '꾸미기'(가구·창조명·테마)와 '성장'(주방 기구·레시피·가구 강화) 두 묶음으로 나눠 보이게.
+            // 11/04 테스터 피드백: 탭을 '꾸미기'(가구·창조명·테마) | '성장'(주방 기구·레시피·가구 강화) 두 묶음으로 — 사이를 띄워서 구분.
             // mode 번호(0 가구, 1 창·조명, 2 주방 기구, 3 레시피, 4 가구 강화, 5 테마)는 그대로, 놓는 순서만 바꾼다.
             string[] tabKeys = { "ui.shop.tab.furn", "ui.shop.tab.fix", "ui.shop.tab.tool", "ui.shop.tab.recipe", "ui.shop.tab.furnup", "ui.shop.tab.theme" };
             int[] order = { 0, 1, 5, 2, 3, 4 };
@@ -89,18 +89,19 @@ namespace YeogiCafe.UI
                                   new Vector2(x, -22), new Vector2(tabW, 40));
                 t.onClick.AddListener(() => { mode = idx; Render(); });
                 tabs[idx] = t;
-                if (slot == 0 || slot == 3)   // 묶음 이름(탭 위 작은 글씨)
-                {
-                    var grpLbl = UiFactory.Label("Group" + slot, panel.transform, L.Get(slot == 0 ? "ui.shop.group.deco" : "ui.shop.group.grow"), 13, TextAnchor.LowerLeft, UiFactory.WoodDark);
-                    grpLbl.raycastTarget = false;
-                    UiFactory.SetRect((RectTransform)grpLbl.transform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, 1),
-                                      new Vector2(x + 4, -4), new Vector2(3 * tabW, 17));
-                }
             }
             rootGo.SetActive(false);
         }
 
         public static string FurnitureName(FurnitureData d) => L.Get($"furn.{d.furnitureId}.name");
+
+        static int TypeOrder(FurnitureData d) => d.type == FurnitureType.Seat ? 0 : d.type == FurnitureType.Facility ? 1 : 2;
+        static Color TypeColor(FurnitureData d) => d.type switch
+        {
+            FurnitureType.Seat => new Color(0.30f, 0.52f, 0.30f),       // 좌석: 초록
+            FurnitureType.Facility => new Color(0.74f, 0.33f, 0.43f),   // 놀이 시설: 분홍
+            _ => UiFactory.WoodDark,                                     // 장식: 갈색
+        };
 
         static string TypeLabel(FurnitureData d) => d.type switch
         {
@@ -111,7 +112,11 @@ namespace YeogiCafe.UI
 
         void BuildCards()
         {
-            foreach (var item in owner.ShopItems)
+            // 11/04: 좌석 → 놀이 시설 → 장식 순으로 묶고(같은 종류끼리 붙게), 종류 안에서는 가격순. 종류 글씨도 색으로 구분.
+            var sorted = new List<FurnitureData>();
+            foreach (var it in owner.ShopItems) if (it != null) sorted.Add(it);
+            sorted.Sort((x, y) => TypeOrder(x) != TypeOrder(y) ? TypeOrder(x).CompareTo(TypeOrder(y)) : x.price.CompareTo(y.price));
+            foreach (var item in sorted)
             {
                 if (item == null) continue;
                 var captured = item;
@@ -131,7 +136,7 @@ namespace YeogiCafe.UI
                 name.horizontalOverflow = HorizontalWrapMode.Overflow;
                 UiFactory.SetRect((RectTransform)name.transform, new Vector2(0, 1), new Vector2(1, 1),
                                   new Vector2(0, 1), new Vector2(66, -9), new Vector2(-72, 22));
-                var type = UiFactory.Label("Type", btn.transform, TypeLabel(item), 13, TextAnchor.UpperLeft, UiFactory.WoodDark);
+                var type = UiFactory.Label("Type", btn.transform, TypeLabel(item), 13, TextAnchor.UpperLeft, TypeColor(item));
                 UiFactory.SetRect((RectTransform)type.transform, new Vector2(0, 1), new Vector2(1, 1),
                                   new Vector2(0, 1), new Vector2(66, -31), new Vector2(-72, 18));
                 var price = UiFactory.Label("Price", btn.transform, $"{item.price}G", 17, TextAnchor.LowerRight, UiFactory.Ink);

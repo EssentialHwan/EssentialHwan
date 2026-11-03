@@ -136,11 +136,14 @@ namespace YeogiCafe.UI
         // 화면 모드 전환은 다음 프레임에 반영되므로 라벨은 살짝 늦게
         void Invoke(System.Action a) { refreshLater = 2; }
         int refreshLater;
-        int reopenWait = 3;
+        readonly int bornFrame = Time.frameCount;
         public void Tick()
         {
             if (refreshLater > 0 && --refreshLater == 0) Refresh();
-            if (ReopenAfterReload && --reopenWait <= 0) { ReopenAfterReload = false; if (!IsOpen) Show(); }   // 시작 화면이 다 만들어진 뒤에 위로
+            // 언어 변경 후 다시 열기: '새로 만들어진' 설정창만(옛 씬의 설정창이 마지막 프레임에 깃발을 먹어 버리던 문제, 11/04),
+            // 시작 화면이 다 만들어진 뒤(3프레임)에 맨 위로
+            if (ReopenAfterReload && bornFrame > reopenRequestFrame && Time.frameCount >= bornFrame + 3)
+            { ReopenAfterReload = false; if (!IsOpen) Show(); else rootGo.transform.SetAsLastSibling(); }
         }
 
         RectTransform col;                       // 지금 줄을 넣는 칸(왼쪽/오른쪽 절반)
@@ -210,10 +213,10 @@ namespace YeogiCafe.UI
             var flow = Object.FindObjectOfType<YeogiCafe.Core.GameFlowController>();
             if (flow != null) flow.SaveOnQuit();            // (영업 전·정산 중에만 여기 온다)
             Time.timeScale = 1f;
-            ReopenAfterReload = true;                       // 11/04: 언어를 바꾸면 설정창이 닫혀 버리던 문제 → 다시 열어 준다
+            ReopenAfterReload = true; reopenRequestFrame = Time.frameCount;   // 11/04: 언어를 바꾸면 설정창이 닫혀 버리던 문제 → 다시 열어 준다
             UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
         }
-        static bool ReopenAfterReload;
+        static bool ReopenAfterReload; static int reopenRequestFrame;
 
         void GoTitle()
         {
