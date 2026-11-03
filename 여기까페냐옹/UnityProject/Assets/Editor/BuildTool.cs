@@ -106,7 +106,56 @@ namespace YeogiCafe.EditorTools
                     if (m.type == LogType.Error || m.type == LogType.Exception) log += "ERR: " + m.content + "\n";
             File.WriteAllText(Path.Combine(root, demo ? "build_log_stove_demo.txt" : "build_log_stove.txt"), log);
             Debug.Log("[BuildTool] " + log);
-            if (s.result == BuildResult.Succeeded) EditorUtility.RevealInFinder(outDir);
+            if (s.result != BuildResult.Succeeded) return;
+            string up = MakeStoveUploadFolder(outDir);
+            File.AppendAllText(Path.Combine(root, demo ? "build_log_stove_demo.txt" : "build_log_stove.txt"), "upload=" + up + "\n");
+            EditorUtility.RevealInFinder(up);
+        }
+
+        // 스토브 업로드용 폴더: 디버그 폴더(…DoNotShip, …ButDontShipItWithYourGame) 빼고 + VC++ 런타임 DLL 동봉(스토브 문서: SDK 의존 DLL 필수)
+        static readonly string[] VcDlls = { "vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll", "msvcp140_atomic_wait.dll", "concrt140.dll" };
+        static string MakeStoveUploadFolder(string outDir)
+        {
+            string up = outDir + "_Upload";
+            if (Directory.Exists(up)) Directory.Delete(up, true);
+            Directory.CreateDirectory(up);
+            foreach (var f in Directory.GetFiles(outDir)) File.Copy(f, Path.Combine(up, Path.GetFileName(f)));
+            foreach (var d in Directory.GetDirectories(outDir))
+            {
+                string n = Path.GetFileName(d);
+                if (n.Contains("DoNotShip") || n.Contains("DontShip")) continue;
+                CopyDir(d, Path.Combine(up, n));
+            }
+            string crt = FindVcRuntimeDir();
+            if (crt == null) Debug.LogWarning("[BuildTool] VC++ 런타임 DLL 폴더를 못 찾음 → Tools/StoveRuntime/x64 에 5개 넣어 주세요: " + string.Join(", ", VcDlls));
+            else foreach (var n in VcDlls) { var src = Path.Combine(crt, n); if (File.Exists(src)) File.Copy(src, Path.Combine(up, n), true); else Debug.LogWarning("[BuildTool] 없음: " + src); }
+            return up;
+        }
+        static string FindVcRuntimeDir()
+        {
+            string manual = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Tools", "StoveRuntime", "x64"));
+            if (File.Exists(Path.Combine(manual, "vcruntime140.dll"))) return manual;
+            var roots = new System.Collections.Generic.List<string> { @"D:\visualstudio" };
+            foreach (var pf in new[] { System.Environment.GetEnvironmentVariable("ProgramFiles"), System.Environment.GetEnvironmentVariable("ProgramFiles(x86)") })
+                if (!string.IsNullOrEmpty(pf)) foreach (var ed in new[] { "Community", "Professional", "Enterprise", "BuildTools" })
+                    roots.Add(Path.Combine(pf, "Microsoft Visual Studio", "2022", ed));
+            foreach (var r in roots)
+            {
+                string redist = Path.Combine(r, "VC", "Redist", "MSVC");
+                if (!Directory.Exists(redist)) continue;
+                foreach (var ver in Directory.GetDirectories(redist).OrderByDescending(x => x))
+                {
+                    string c = Path.Combine(ver, "x64", "Microsoft.VC143.CRT");
+                    if (File.Exists(Path.Combine(c, "vcruntime140.dll"))) return c;
+                }
+            }
+            return null;
+        }
+        static void CopyDir(string src, string dst)
+        {
+            Directory.CreateDirectory(dst);
+            foreach (var f in Directory.GetFiles(src)) File.Copy(f, Path.Combine(dst, Path.GetFileName(f)));
+            foreach (var d in Directory.GetDirectories(src)) CopyDir(d, Path.Combine(dst, Path.GetFileName(d)));
         }
 
         static void Build(bool demo)
