@@ -39,3 +39,5 @@ Assets/Resources/Stove/stove_config.json.meta
 # 스토브 PC SDK(배포 파일) — 받은 사람 PC에만
 Assets/Plugins/StovePCSDK/
 Assets/Plugins/StovePCSDK.meta
+Assets/Resources/Stove/stove_config_demo.json
+Assets/Resources/Stove/stove_config_demo.json.meta

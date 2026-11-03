@@ -76,8 +76,9 @@ namespace YeogiCafe.EditorTools
         static void BuildStoveVariant(bool demo)
         {
             string root = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Build"));
-            if (!File.Exists(Path.Combine(Application.dataPath, "Resources", "Stove", "stove_config.json")))
-            { EditorUtility.DisplayDialog("스토브 빌드", "Assets/Resources/Stove/stove_config.json 이 없어요.\n(게임 ID·앱 키 파일)", "확인"); return; }
+            string cfgName = demo ? "stove_config_demo.json" : "stove_config.json";   // 체험판은 별도 상품 키
+            if (!File.Exists(Path.Combine(Application.dataPath, "Resources", "Stove", cfgName)))
+            { EditorUtility.DisplayDialog("스토브 빌드", $"Assets/Resources/Stove/{cfgName} 이 없어요.\n(게임 ID·앱 키 파일)", "확인"); return; }
             if (!Directory.Exists(Path.Combine(Application.dataPath, "Plugins", "StovePCSDK")))
             { EditorUtility.DisplayDialog("스토브 빌드", "Assets/Plugins/StovePCSDK 폴더가 없어요.\n스토브 개발자 사이트의 Unity용 PC SDK(x64)를 풀어 넣어 주세요.", "확인"); return; }
             Branding.Apply();

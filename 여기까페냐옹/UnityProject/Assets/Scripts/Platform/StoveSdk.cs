@@ -41,8 +41,13 @@ namespace YeogiCafe.Platform
 
         void Start()
         {
-            var ta = Resources.Load<TextAsset>("Stove/stove_config");
-            if (ta == null) { Debug.LogError("[StoveSdk] Resources/Stove/stove_config.json 없음 → 스토브 연동 안 함"); return; }
+#if YEOGI_DEMO
+            const string cfgPath = "Stove/stove_config_demo";   // 체험판은 별도 상품(게임 ID·앱 키가 다름)
+#else
+            const string cfgPath = "Stove/stove_config";
+#endif
+            var ta = Resources.Load<TextAsset>(cfgPath);
+            if (ta == null) { Debug.LogError($"[StoveSdk] Resources/{cfgPath}.json 없음 → 스토브 연동 안 함"); return; }
             var cfg = JsonUtility.FromJson<Config>(ta.text);
 
             onRestart = (CallbackResult r, bool restart) =>
