@@ -252,6 +252,7 @@ namespace YeogiCafe.UI
         {
             if (!open) return;
             open = false; t = 0f;
+            ClosePicker();   // 고르기 창이 캔버스에 있으니 주방을 닫을 때 같이 닫는다
         }
 
         // 홀 카메라 목표: 방(y 0~7.5)이 화면 위 60%에 들어오도록 뒤로 빠지고 아래로 내림
@@ -559,8 +560,8 @@ namespace YeogiCafe.UI
                     var captured = tk;
                     btn.onClick.AddListener(() =>
                     {
-                        if (!open) owner.OpenKitchen();
-                        if (captured.unresolved && open) OpenPicker(captured);
+                        if (captured.unresolved) OpenPicker(captured);   // 힌트 주문: 홀에서도 바로 추측(11/04)
+                        else if (!open) owner.OpenKitchen();
                     });
                 }
                 UiFactory.SetRect((RectTransform)nameT.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1),
@@ -596,8 +597,8 @@ namespace YeogiCafe.UI
         RectTransform BuildPickerBox(string title, string sub, int count, int cols, float cellW, float cellH)
         {
             ClosePicker();
-            var box = UiFactory.Panel("Picker", root, UiFactory.PanelBg);
-            pickerGo = box.gameObject;
+            var box = UiFactory.Panel("Picker", root.parent, UiFactory.PanelBg);   // 11/04: 홀에서도 추측(메뉴 고르기) 가능 → 주방 화면 밖(캔버스)에
+            pickerGo = box.gameObject; box.SetAsLastSibling();
             int rows = (count + cols - 1) / cols;
             float w = 48 + cols * (cellW + 8) - 8, h = 112 + rows * (cellH + 8) - 8 + 24;
             UiFactory.SetRect(box, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -130), new Vector2(Mathf.Max(w, 420), h));
@@ -699,7 +700,8 @@ namespace YeogiCafe.UI
                 b.onClick.AddListener(() =>
                 {
                     orders.Resolve(tk, mm);
-                    hint.text = L.Get("ui.order.picked", ("menu", L.Get("menu." + mm.menuId)));
+                    if (open) hint.text = L.Get("ui.order.picked", ("menu", L.Get("menu." + mm.menuId)));
+                    else owner.ShowToast(L.Get("ui.order.picked", ("menu", L.Get("menu." + mm.menuId))));
                     ClosePicker();
                     RefreshRail(true);
                 });
