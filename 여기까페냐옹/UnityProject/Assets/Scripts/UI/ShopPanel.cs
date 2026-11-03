@@ -91,9 +91,9 @@ namespace YeogiCafe.UI
                 tabs[idx] = t;
                 if (slot == 0 || slot == 3)   // 묶음 이름(탭 위 작은 글씨)
                 {
-                    var g = UiFactory.Label("Group" + slot, panel.transform, L.Get(slot == 0 ? "ui.shop.group.deco" : "ui.shop.group.grow"), 13, TextAnchor.LowerLeft, UiFactory.WoodDark);
-                    g.raycastTarget = false;
-                    UiFactory.SetRect((RectTransform)g.transform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, 1),
+                    var grpLbl = UiFactory.Label("Group" + slot, panel.transform, L.Get(slot == 0 ? "ui.shop.group.deco" : "ui.shop.group.grow"), 13, TextAnchor.LowerLeft, UiFactory.WoodDark);
+                    grpLbl.raycastTarget = false;
+                    UiFactory.SetRect((RectTransform)grpLbl.transform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, 1),
                                       new Vector2(x + 4, -4), new Vector2(3 * tabW, 17));
                 }
             }
