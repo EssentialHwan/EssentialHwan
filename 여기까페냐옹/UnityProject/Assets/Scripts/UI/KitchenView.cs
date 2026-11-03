@@ -152,7 +152,7 @@ namespace YeogiCafe.UI
 
             // 할 일 있음 표시(은은한 노란 테두리)
             w.glow = UiFactory.Panel("Glow", w.rt, new Color(1f, 0.86f, 0.58f, 0f)).GetComponent<Image>();
-            UiFactory.Anchor((RectTransform)w.glow.transform, Vector2.zero, Vector2.one, new Vector2(-3, -3), new Vector2(3, 3));
+            UiFactory.Anchor((RectTransform)w.glow.transform, Vector2.zero, Vector2.one, new Vector2(-5, -5), new Vector2(5, 5));
             w.glow.transform.SetAsFirstSibling(); w.glow.raycastTarget = false;
 
             w.label = UiFactory.Label("Name", w.rt, L.Get(st.nameKey), 16, TextAnchor.UpperCenter, UiFactory.Cream);
@@ -506,7 +506,7 @@ namespace YeogiCafe.UI
 
         void RefreshTools()
         {
-            float pulse = 0.22f + 0.10f * Mathf.Sin(Time.unscaledTime * 3.2f);   // 11/04: "노란 박스가 들뜬다" → 더 옅고 느리게
+            float pulse = 0.32f + 0.20f * Mathf.Sin(Time.unscaledTime * 4.5f);   // 11/04: 너무 옅었음 → 원래에 가깝게 + 기구가 통통 튀는 걸로 눈에 띄게
             foreach (var w in tools)
             {
                 var active = orders != null ? orders.CookingOrReadyAt(w.id) : null;
@@ -534,6 +534,8 @@ namespace YeogiCafe.UI
                 // 누를 일이 있는 기구만 빛나게(완성품 서빙 or 대기 주문 조리)
                 bool actionable = ready || (active == null && hasQueued);
                 var g = w.glow.color; g.a = actionable ? pulse : 0f; w.glow.color = g;
+                float bounce = actionable ? 1f + 0.045f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 3.4f)) : 1f;   // 누를 일이 있으면 기구가 살짝 통통
+                w.rt.localScale = new Vector3(bounce, bounce, 1f);
             }
         }
 
