@@ -39,7 +39,6 @@ namespace YeogiCafe.UI
         KitchenView kitchen;
         YeogiCafe.Progression.QuestBoard quests;
         GameObject questPanel; Text questList, questBtnLabel, questTotal; bool receiptOn = true;
-        RectTransform hallOrders; float hallOrdersT; string hallOrdersSig = "";
         FurnitureEditMode editMode;
         Text kitchenBtnLabel;
 
@@ -208,14 +207,6 @@ namespace YeogiCafe.UI
             UiFactory.SetRect((RectTransform)qd2.transform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 24), new Vector2(-16, 14));
             qd2.raycastTarget = false; qd2.horizontalOverflow = HorizontalWrapMode.Overflow;
             receiptOn = PlayerPrefs.GetInt("opt.receipt", 1) == 1;
-            // 홀에서도 주문이 보이게(11/04): 의뢰 영수증 바로 아래 작은 주문표 줄 — 누르면 주방으로
-            var stripGo = new GameObject("HallOrders", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-            stripGo.transform.SetParent(root.transform, false);
-            hallOrders = (RectTransform)stripGo.transform;
-            UiFactory.SetRect(hallOrders, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(10, -200), new Vector2(760, 50));
-            var shl = stripGo.GetComponent<HorizontalLayoutGroup>();
-            shl.spacing = 6; shl.childAlignment = TextAnchor.UpperLeft;
-            shl.childControlWidth = shl.childControlHeight = false; shl.childForceExpandWidth = shl.childForceExpandHeight = false;
             questPanel.SetActive(false);
 
             // 시작 화면(맨 위). 세이브가 있으면 '이어하기 · N일차'
@@ -540,7 +531,7 @@ namespace YeogiCafe.UI
             UpdateMenuPause();
             UpdatePauseBadge();
             UpdateReceipt();
-            UpdateHallOrders(Time.unscaledDeltaTime);
+            UpdateOrderRail(Time.unscaledDeltaTime);
             UpdateHallCamera(Time.unscaledDeltaTime);
             TrackPlaytest();
             if (photo != null && photo.IsOpen) { photo.Tick(Time.unscaledDeltaTime); return; }   // 포토 모드: 다른 입력·HUD 멈춤
@@ -631,79 +622,19 @@ namespace YeogiCafe.UI
             if (!show) return;
         }
 
-        // 홀 주문표 줄(영수증 아래): 주방이 닫혀 있을 때만(주방엔 원래 주문 레일이 있다). 0.25초마다 다시 그림.
-        void UpdateHallOrders(float dt)
+        // 주문표 줄(주방 레일과 같은 것): 홀·주방 모두, 의뢰 영수증이 펴져 있으면 그 오른쪽
+        void UpdateOrderRail(float dt)
         {
-            if (hallOrders == null) return;
-            var os = bootstrap != null ? bootstrap.orderSystem : null;
-            bool show = os != null && !(kitchen != null && kitchen.Busy)
-                        && (title == null || !title.IsOpen) && (closing == null || !closing.IsOpen) && (settlement == null || !settlement.IsOpen)
+            if (kitchen == null) return;
+            bool show = (title == null || !title.IsOpen) && (closing == null || !closing.IsOpen) && (settlement == null || !settlement.IsOpen)
                         && !(editMode != null && editMode.IsOn) && !PhotoOpen && opening == null && !EndingPanel.IsOpen && !DemoEndPanel.IsOpen;
-            if (hallOrders.gameObject.activeSelf != show) hallOrders.gameObject.SetActive(show);
-            if (!show) return;
-            // 영수증(왼쪽 위) 바로 아래. 영수증을 접었으면 그 자리로 올라감
-            float top = -68f;
-            if (questPanel != null && questPanel.activeSelf) top -= ((RectTransform)questPanel.transform).sizeDelta.y + 6f;
-            hallOrders.anchoredPosition = new Vector2(10, top);
-            hallOrdersT -= dt; if (hallOrdersT > 0f) return; hallOrdersT = 0.25f;
-            var sig = new System.Text.StringBuilder();
-            int n = 0;
-            foreach (var t in os.Tickets)
-            {
-                if (t.state == TicketState.Served || t.state == TicketState.Cancelled) continue;
-                if (++n > 6) break;
-                sig.Append(t.catId).Append(':').Append((int)t.state).Append(t.unresolved ? "?" : "").Append(t.menu != null ? t.menu.menuId : "").Append(';');
-            }
-            string sg = sig.ToString();
-            if (sg != hallOrdersSig)
-            {
-                hallOrdersSig = sg;
-                for (int i = hallOrders.childCount - 1; i >= 0; i--) Destroy(hallOrders.GetChild(i).gameObject);
-                hallOrderBars.Clear();
-                n = 0;
-                foreach (var t in os.Tickets)
-                {
-                    if (t.state == TicketState.Served || t.state == TicketState.Cancelled) continue;
-                    if (++n > 6) break;
-                    BuildHallChip(t);
-                }
-            }
-            // 막대만 매번 갱신(대기=인내심, 조리=진행)
-            foreach (var (t, bar) in hallOrderBars)
-            {
-                if (bar == null) continue;
-                float v = t.state == TicketState.Cooking ? t.CookRatio : t.state == TicketState.Ready ? 1f : (t.maxPatience > 0f ? t.patience / t.maxPatience : 1f);
-                bar.fillAmount = Mathf.Clamp01(v);
-                bar.color = t.state == TicketState.Ready ? UiFactory.Green : t.state == TicketState.Cooking ? new Color(0.95f, 0.72f, 0.35f) : (v < 0.3f ? UiFactory.PinkDeep : new Color(0.62f, 0.5f, 0.4f));
-            }
+            bool receipt = questPanel != null && questPanel.activeSelf;
+            kitchen.TickRail(dt, show, receipt ? ((RectTransform)questPanel.transform).sizeDelta.x + 20f : 20f);
         }
-        readonly List<(OrderTicket, Image)> hallOrderBars = new();
-
-        void BuildHallChip(OrderTicket t)
+        public void OpenKitchen()
         {
-            bool ready = t.state == TicketState.Ready;
-            var b = UiFactory.Button("Order_" + t.catId, hallOrders, "", ready ? UiFactory.Green : UiFactory.Cream, UiFactory.Ink, out var bl);
-            Destroy(bl.gameObject);
-            var rt = (RectTransform)b.transform; rt.sizeDelta = new Vector2(96, 48);
-            UiFactory.Frame(rt, UiFactory.FrameStyle.Card, ready ? (Color?)UiFactory.Green : null);
-            var cat = new GameObject("Cat", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            cat.transform.SetParent(rt, false);
-            var ci = cat.GetComponent<Image>(); ci.sprite = YeogiCafe.Art.CatSpriteBank.Portrait(t.catId); ci.preserveAspect = true; ci.raycastTarget = false;
-            UiFactory.SetRect((RectTransform)cat.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(4, 3), new Vector2(40, 40));
-            var dish = new GameObject("Dish", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            dish.transform.SetParent(rt, false);
-            var di = dish.GetComponent<Image>(); di.preserveAspect = true; di.raycastTarget = false;
-            di.sprite = t.unresolved ? YeogiCafe.Art.RuntimeSprites.Get("emote_Question", () => YeogiCafe.Art.EmoteDrawing.Draw(YeogiCafe.Art.EmoteDrawing.Kind.Question))
-                                     : KitchenView.DishSprite(t.menu != null ? t.menu.menuId : "");
-            UiFactory.SetRect((RectTransform)dish.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-6, 3), new Vector2(34, 34));
-            var barBg = UiFactory.Panel("BarBg", rt, new Color(0.3f, 0.22f, 0.18f, 0.25f));
-            UiFactory.SetRect(barBg, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 5), new Vector2(-14, 4));
-            var bar = UiFactory.Panel("Bar", barBg, UiFactory.Green).GetComponent<Image>();
-            UiFactory.Anchor((RectTransform)bar.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            bar.type = Image.Type.Filled; bar.fillMethod = Image.FillMethod.Horizontal; bar.sprite = UiFactory.WhiteSprite; bar.raycastTarget = false;
-            barBg.GetComponent<Image>().raycastTarget = false;
-            b.onClick.AddListener(() => { shop.Hide(); catalog.Hide(); if (kitchen != null && !kitchen.IsOpen) ToggleKitchen(); });
-            hallOrderBars.Add((t, bar));
+            if (kitchen == null || kitchen.IsOpen) return;
+            ToggleKitchen();
         }
 
         void RefreshQuests()

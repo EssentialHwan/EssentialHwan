@@ -86,12 +86,13 @@ namespace YeogiCafe.UI
 
             // ── 주문 레일(카운터 바로 위, 홀과의 경계) ──
             var railGo = new GameObject("TicketRail", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-            railGo.transform.SetParent(root, false);
+            railGo.transform.SetParent(canvas, false);   // 11/04: 홀에서도 같은 주문표가 보이게 → 주방 화면 밖(캔버스)에 둔다. 갱신은 TickRail
+            railGo.SetActive(false);
             ticketRail = (RectTransform)railGo.transform;
             // 주문 레일은 화면 왼쪽 위(HUD 바로 아래) — 카운터 위 기구를 가리지 않게
-            // 11/04: 왼쪽 끝은 '오늘의 의뢰' 영수증 자리(홀·주방 같은 위치) → 레일은 그 오른쪽(왼쪽 256 · 오른쪽 20 여백)부터
+            // 왼쪽 여백은 TickRail이 정한다: 의뢰 영수증이 펴져 있으면 그 오른쪽, 접혀 있으면 왼쪽 끝
             UiFactory.SetRect(ticketRail, new Vector2(0, 1), new Vector2(1, 1),
-                              new Vector2(0.5f, 1), new Vector2(118, -72), new Vector2(-276, 64));
+                              new Vector2(0.5f, 1), new Vector2(0, -68), new Vector2(-40, 64));
             var hl = railGo.GetComponent<HorizontalLayoutGroup>();
             hl.spacing = 8; hl.childAlignment = TextAnchor.UpperLeft;
             hl.childControlWidth = hl.childControlHeight = false; hl.childForceExpandWidth = hl.childForceExpandHeight = false;
@@ -227,7 +228,24 @@ namespace YeogiCafe.UI
             open = true; t = 0f;
             rootGo.SetActive(true);
             rootGo.transform.SetAsLastSibling();
+            ticketRail.SetAsLastSibling();               // 주문표는 주방 화면 위에
             RefreshRail(true);
+        }
+
+        // 주문표 줄: 홀·주방 공통(GameUiController가 매 프레임 부름). leftInset = 왼쪽 여백(영수증 폭)
+        float railInset = -1f;
+        public void TickRail(float dt, bool visible, float leftInset)
+        {
+            if (ticketRail.gameObject.activeSelf != visible) { ticketRail.gameObject.SetActive(visible); if (visible) RefreshRail(true); }
+            if (!visible) return;
+            if (!Mathf.Approximately(railInset, leftInset))
+            {
+                railInset = leftInset;
+                ticketRail.sizeDelta = new Vector2(-(leftInset + 20f), 64f);
+                ticketRail.anchoredPosition = new Vector2((leftInset - 20f) * 0.5f, -68f);
+            }
+            railTimer -= dt;
+            if (railTimer <= 0f) { railTimer = 0.25f; RefreshRail(false); }
         }
 
         public void Close()
@@ -271,8 +289,6 @@ namespace YeogiCafe.UI
 
             AnimatePaws(dt);
             RefreshTools();
-            railTimer -= dt;
-            if (railTimer <= 0f) { railTimer = 0.25f; RefreshRail(false); }
         }
 
         // 개발용: 딴짓 바로 보기(1 꾹꾹 · 2 그루밍 · 3 쭙쭙이)
@@ -537,12 +553,15 @@ namespace YeogiCafe.UI
                 var dish = Icon(card, tk.unresolved ? RuntimeSprites.Get("emote_Question", () => EmoteDrawing.Draw(EmoteDrawing.Kind.Question))
                                                     : DishSprite(tk.menu != null ? tk.menu.menuId : ""), new Vector2(52, 14), 38);
                 var nameT = UiFactory.Label("Menu", card, tk.unresolved ? L.Get(tk.hintKey) : MenuName(tk), tk.unresolved ? 15 : 17, TextAnchor.MiddleLeft, UiFactory.Ink);
-                if (tk.unresolved)
                 {
-                    // 힌트 주문: 카드를 눌러 메뉴를 고른다
+                    // 카드 누르기: 홀에서는 주방을 연다. 힌트 주문이면 (주방에서) 메뉴 고르기 창까지.
                     var btn = card.gameObject.AddComponent<Button>();
                     var captured = tk;
-                    btn.onClick.AddListener(() => OpenPicker(captured));
+                    btn.onClick.AddListener(() =>
+                    {
+                        if (!open) owner.OpenKitchen();
+                        if (captured.unresolved && open) OpenPicker(captured);
+                    });
                 }
                 UiFactory.SetRect((RectTransform)nameT.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1),
                                   new Vector2(94, -6), new Vector2(134, 52));
