@@ -10,7 +10,11 @@ namespace YeogiCafe.DevTools
     // 개인 정보는 남기지 않는다(시간·일차·화면 이름·이벤트 수·오류 메시지만).
     public static class PlaytestLog
     {
+#if YEOGI_STOVE
+        public static bool Enabled => false;                          // 스토브 빌드: 설치 폴더에 파일을 남기지 않는다
+#else
         public static bool Enabled => !YeogiCafe.Core.Demo.IsDemo;   // 친구 테스트용 기록: 체험판 빌드에서는 끈다(정식 출시 때는 여기를 false로)
+#endif
         static StreamWriter w;
         static float t0;
         static readonly Dictionary<string, string> last = new();
