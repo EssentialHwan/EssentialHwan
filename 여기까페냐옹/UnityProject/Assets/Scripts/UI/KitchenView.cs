@@ -89,8 +89,9 @@ namespace YeogiCafe.UI
             railGo.transform.SetParent(root, false);
             ticketRail = (RectTransform)railGo.transform;
             // 주문 레일은 화면 왼쪽 위(HUD 바로 아래) — 카운터 위 기구를 가리지 않게
+            // 11/04: 왼쪽 끝은 '오늘의 의뢰' 영수증 자리(홀·주방 같은 위치) → 레일은 그 오른쪽(왼쪽 256 · 오른쪽 20 여백)부터
             UiFactory.SetRect(ticketRail, new Vector2(0, 1), new Vector2(1, 1),
-                              new Vector2(0.5f, 1), new Vector2(0, -72), new Vector2(-40, 64));
+                              new Vector2(0.5f, 1), new Vector2(118, -72), new Vector2(-276, 64));
             var hl = railGo.GetComponent<HorizontalLayoutGroup>();
             hl.spacing = 8; hl.childAlignment = TextAnchor.UpperLeft;
             hl.childControlWidth = hl.childControlHeight = false; hl.childForceExpandWidth = hl.childForceExpandHeight = false;

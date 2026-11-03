@@ -208,13 +208,13 @@ namespace YeogiCafe.UI
             UiFactory.SetRect((RectTransform)qd2.transform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 24), new Vector2(-16, 14));
             qd2.raycastTarget = false; qd2.horizontalOverflow = HorizontalWrapMode.Overflow;
             receiptOn = PlayerPrefs.GetInt("opt.receipt", 1) == 1;
-            // 홀에서도 주문이 보이게(11/04): 오른쪽 위 작은 주문표 줄 — 누르면 주방으로
+            // 홀에서도 주문이 보이게(11/04): 의뢰 영수증 바로 아래 작은 주문표 줄 — 누르면 주방으로
             var stripGo = new GameObject("HallOrders", typeof(RectTransform), typeof(HorizontalLayoutGroup));
             stripGo.transform.SetParent(root.transform, false);
             hallOrders = (RectTransform)stripGo.transform;
-            UiFactory.SetRect(hallOrders, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1), new Vector2(-10, -68), new Vector2(760, 50));
+            UiFactory.SetRect(hallOrders, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(10, -200), new Vector2(760, 50));
             var shl = stripGo.GetComponent<HorizontalLayoutGroup>();
-            shl.spacing = 6; shl.childAlignment = TextAnchor.UpperRight;
+            shl.spacing = 6; shl.childAlignment = TextAnchor.UpperLeft;
             shl.childControlWidth = shl.childControlHeight = false; shl.childForceExpandWidth = shl.childForceExpandHeight = false;
             questPanel.SetActive(false);
 
@@ -629,17 +629,9 @@ namespace YeogiCafe.UI
                         && !(editMode != null && editMode.IsOn) && !PhotoOpen && opening == null && !EndingPanel.IsOpen && !DemoEndPanel.IsOpen;
             if (questPanel.activeSelf != show) { questPanel.SetActive(show); if (show) RefreshQuests(); }
             if (!show) return;
-            bool inKitchen = kitchen != null && kitchen.IsOpen;
-            var prt = (RectTransform)questPanel.transform;
-            var want = inKitchen ? new Vector2(1, 1) : new Vector2(0, 1);
-            if (prt.anchorMin != want)
-            {
-                prt.anchorMin = prt.anchorMax = prt.pivot = want;
-                prt.anchoredPosition = inKitchen ? new Vector2(-10, -68) : new Vector2(10, -68);
-            }
         }
 
-        // 홀 주문표 줄: 주방이 닫혀 있을 때만(주방엔 원래 주문 레일이 있다). 0.25초마다 다시 그림.
+        // 홀 주문표 줄(영수증 아래): 주방이 닫혀 있을 때만(주방엔 원래 주문 레일이 있다). 0.25초마다 다시 그림.
         void UpdateHallOrders(float dt)
         {
             if (hallOrders == null) return;
@@ -649,6 +641,10 @@ namespace YeogiCafe.UI
                         && !(editMode != null && editMode.IsOn) && !PhotoOpen && opening == null && !EndingPanel.IsOpen && !DemoEndPanel.IsOpen;
             if (hallOrders.gameObject.activeSelf != show) hallOrders.gameObject.SetActive(show);
             if (!show) return;
+            // 영수증(왼쪽 위) 바로 아래. 영수증을 접었으면 그 자리로 올라감
+            float top = -68f;
+            if (questPanel != null && questPanel.activeSelf) top -= ((RectTransform)questPanel.transform).sizeDelta.y + 6f;
+            hallOrders.anchoredPosition = new Vector2(10, top);
             hallOrdersT -= dt; if (hallOrdersT > 0f) return; hallOrdersT = 0.25f;
             var sig = new System.Text.StringBuilder();
             int n = 0;
