@@ -37,7 +37,7 @@ namespace YeogiCafe.UI
         BubbleLayer bubbles;
         KitchenView kitchen;
         YeogiCafe.Progression.QuestBoard quests;
-        GameObject questPanel; Text questList, questBtnLabel;
+        GameObject questPanel; Text questList, questBtnLabel, questTotal; bool receiptOn = true;
         FurnitureEditMode editMode;
         Text kitchenBtnLabel;
 
@@ -70,6 +70,7 @@ namespace YeogiCafe.UI
             var fm = YeogiCafe.Cafe.FixtureManager.Instance; if (fm != null) fm.ApplyLevel();   // 조명 높이
         }
 
+        float revealHold;
         void UpdateHallCamera(float dt)
         {
             var s = Save; if (s == null || !s.initialized) return;
@@ -82,19 +83,27 @@ namespace YeogiCafe.UI
                 return;
             }
             bool blocked = (settlement != null && settlement.IsOpen) || (title != null && title.IsOpen)
-                           || (closing != null && closing.IsOpen) || opening != null || EndingPanel.IsOpen;
+                           || (closing != null && closing.IsOpen) || opening != null || EndingPanel.IsOpen
+                           || (kitchen != null && kitchen.Busy) || PhotoOpen;   // 11/04: 주방을 열어 둔 채면 넓어지는 장면을 통째로 놓쳤음 → 홀로 돌아올 때까지 미룸
             if (lv != shownLevel && !blocked)
             {
                 revealFromPos = cam.transform.position; revealFromSize = cam.orthographicSize;
                 bool grew = lv > shownLevel;
                 shownLevel = lv; CafeLayout.ViewLevel = lv; ApplyLevelArt(lv);
-                revealT = 0.0001f;
-                if (grew) ShowToast(L.Get(lv >= 3 ? "ui.cafe.reveal3" : "ui.cafe.reveal"));
+                revealT = 0.0001f; revealHold = grew ? 0.8f : 0f;   // 넓어질 땐 예전 화면에서 잠깐 멈췄다가 천천히 빠진다
+                if (grew)
+                {
+                    revealFromSize *= 0.88f;                                  // 살짝 당겨 놓고 시작 → 넓어지는 폭이 더 크게 느껴지게
+                    cam.orthographicSize = revealFromSize;
+                    ShowToast(L.Get(lv >= 3 ? "ui.cafe.reveal3" : "ui.cafe.reveal"));
+                    YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.55f, 0f, "reveal", 0.5f);
+                }
             }
             if ((kitchen != null && kitchen.Busy) || PhotoOpen) { revealT = 0f; return; }   // 주방·사진은 닫힐 때 새 화면으로 돌아온다
+            if (revealT > 0f && revealHold > 0f) { revealHold -= dt; return; }
             if (revealT > 0f)
             {
-                revealT = Mathf.Min(1f, revealT + dt / 2.8f);
+                revealT = Mathf.Min(1f, revealT + dt / 3.4f);
                 float k = revealT * revealT * (3f - 2f * revealT);
                 cam.transform.position = Vector3.Lerp(revealFromPos, CafeLayout.CameraPos, k);
                 cam.orthographicSize = Mathf.Lerp(revealFromSize, CafeLayout.CameraSize, k);
@@ -175,16 +184,28 @@ namespace YeogiCafe.UI
             quests.addGold = g => { if (economy != null) economy.AddGold(g); RefreshHud(); };
             quests.toast = ShowToast;
             quests.OnChanged += RefreshQuests;
-            var qp = UiFactory.Panel("QuestPanel", root.transform, new Color(1f, 0.97f, 0.88f, 0.97f));
-            UiFactory.SetRect(qp, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(300, -74), new Vector2(480, 170));
+            // 오늘의 의뢰 = 화면 구석의 '영수증'(11/04 테스터 제안: 항상 보이게). [의뢰] 버튼은 접기/펴기.
+            //  홀에서는 왼쪽 위(HUD 아래), 주방에서는 오른쪽 위(주문표 레일은 왼쪽부터 쌓임).
+            var qp = UiFactory.Panel("QuestReceipt", root.transform, new Color(1f, 0.985f, 0.94f, 0.96f));
+            UiFactory.SetRect(qp, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(10, -68), new Vector2(236, 120));
             UiFactory.Frame(qp, UiFactory.FrameStyle.Paper);
             questPanel = qp.gameObject;
-            var qt = UiFactory.Label("T", qp.transform, L.Get("ui.quest.title"), 18, TextAnchor.UpperLeft, UiFactory.WoodDark);
-            UiFactory.SetRect((RectTransform)qt.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(18, -12), new Vector2(-36, 24));
-            // 의뢰 문장이 길어도 칸 안에서 줄바꿈 → 패널 높이를 글 길이에 맞춘다(RefreshQuests)
-            questList = UiFactory.Label("L", qp.transform, "", 16, TextAnchor.UpperLeft, UiFactory.Ink);
-            questList.lineSpacing = 1.15f;
-            UiFactory.SetRect((RectTransform)questList.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(18, -42), new Vector2(-36, 100));
+            var qt = UiFactory.Label("T", qp.transform, L.Get("ui.quest.title"), 15, TextAnchor.UpperCenter, UiFactory.WoodDark);
+            UiFactory.SetRect((RectTransform)qt.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -8), new Vector2(-20, 20));
+            qt.raycastTarget = false;
+            var qd = UiFactory.Label("Dash1", qp.transform, "- - - - - - - - - - - - - - - -", 11, TextAnchor.UpperCenter, new Color(0.6f, 0.48f, 0.38f));
+            UiFactory.SetRect((RectTransform)qd.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -27), new Vector2(-16, 14));
+            qd.raycastTarget = false; qd.horizontalOverflow = HorizontalWrapMode.Overflow;
+            questList = UiFactory.Label("L", qp.transform, "", 13, TextAnchor.UpperLeft, UiFactory.Ink);
+            questList.lineSpacing = 1.1f; questList.raycastTarget = false;
+            UiFactory.SetRect((RectTransform)questList.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(14, -40), new Vector2(-26, 60));
+            questTotal = UiFactory.Label("Total", qp.transform, "", 13, TextAnchor.LowerRight, UiFactory.WoodDark);
+            UiFactory.SetRect((RectTransform)questTotal.transform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 8), new Vector2(-26, 18));
+            questTotal.raycastTarget = false;
+            var qd2 = UiFactory.Label("Dash2", qp.transform, "- - - - - - - - - - - - - - - -", 11, TextAnchor.LowerCenter, new Color(0.6f, 0.48f, 0.38f));
+            UiFactory.SetRect((RectTransform)qd2.transform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 24), new Vector2(-16, 14));
+            qd2.raycastTarget = false; qd2.horizontalOverflow = HorizontalWrapMode.Overflow;
+            receiptOn = PlayerPrefs.GetInt("opt.receipt", 1) == 1;
             questPanel.SetActive(false);
 
             // 시작 화면(맨 위). 세이브가 있으면 '이어하기 · N일차'
@@ -508,6 +529,7 @@ namespace YeogiCafe.UI
             title?.Tick(Time.unscaledDeltaTime);
             UpdateMenuPause();
             UpdatePauseBadge();
+            UpdateReceipt();
             UpdateHallCamera(Time.unscaledDeltaTime);
             TrackPlaytest();
             if (photo != null && photo.IsOpen) { photo.Tick(Time.unscaledDeltaTime); return; }   // 포토 모드: 다른 입력·HUD 멈춤
@@ -582,25 +604,47 @@ namespace YeogiCafe.UI
         void ToggleQuests()
         {
             quests.EnsureToday();
-            questPanel.SetActive(!questPanel.activeSelf);
-            if (questPanel.activeSelf) { questPanel.transform.SetAsLastSibling(); RefreshQuests(); }
+            receiptOn = !receiptOn;
+            PlayerPrefs.SetInt("opt.receipt", receiptOn ? 1 : 0);
+            RefreshQuests();
+        }
+
+        // 영수증을 보여도 되는 때: 영업 화면(시작 화면·마감·정산·배치·사진·오프닝 중엔 숨김)
+        void UpdateReceipt()
+        {
+            if (questPanel == null) return;
+            bool show = receiptOn && Save != null && Save.quests != null && Save.quests.Count > 0
+                        && (title == null || !title.IsOpen) && (closing == null || !closing.IsOpen) && (settlement == null || !settlement.IsOpen)
+                        && !(editMode != null && editMode.IsOn) && !PhotoOpen && opening == null && !EndingPanel.IsOpen && !DemoEndPanel.IsOpen;
+            if (questPanel.activeSelf != show) { questPanel.SetActive(show); if (show) RefreshQuests(); }
+            if (!show) return;
+            bool inKitchen = kitchen != null && kitchen.IsOpen;
+            var prt = (RectTransform)questPanel.transform;
+            var want = inKitchen ? new Vector2(1, 1) : new Vector2(0, 1);
+            if (prt.anchorMin != want)
+            {
+                prt.anchorMin = prt.anchorMax = prt.pivot = want;
+                prt.anchoredPosition = inKitchen ? new Vector2(-10, -68) : new Vector2(10, -68);
+            }
         }
 
         void RefreshQuests()
         {
             var s = Save; if (s == null || questList == null) return;
             var sb = new System.Text.StringBuilder();
-            int done = 0;
+            int done = 0, sum = 0, all = 0;
             foreach (var q in s.quests)
             {
-                if (q.done) done++;
-                sb.Append(q.done ? "<color=#6F9A55>" + L.Get("quest.donetag") + "</color> " : $"[{q.progress}/{q.goal}] ").Append(L.Get(q.id))
-                  .Append($"  <color=#B8864E>+{q.reward}G</color>\n");
+                all += q.reward; if (q.done) { done++; sum += q.reward; }
+                // 영수증 한 줄: 의뢰 + 진행(끝낸 건 [완료]로 흐리게)
+                if (q.done) sb.Append("<color=#8FA87A>").Append(L.Get("quest.donetag")).Append(" ").Append(L.Get(q.id)).Append("</color>\n");
+                else sb.Append("- ").Append(L.Get(q.id)).Append($"  <color=#B8864E>{q.progress}/{q.goal}</color>\n");
             }
             questList.text = sb.ToString().TrimEnd('\n');
             float h = questList.preferredHeight;
             var lrt = (RectTransform)questList.transform; lrt.sizeDelta = new Vector2(lrt.sizeDelta.x, h + 4);
-            var prt = (RectTransform)questPanel.transform; prt.sizeDelta = new Vector2(prt.sizeDelta.x, 42 + h + 22);
+            var prt = (RectTransform)questPanel.transform; prt.sizeDelta = new Vector2(prt.sizeDelta.x, 40 + h + 34);
+            if (questTotal != null) questTotal.text = L.Get("ui.quest.total", ("g", sum.ToString()), ("t", all.ToString()));
             if (questBtnLabel != null) questBtnLabel.text = $"{L.Get("ui.quest.btn")} {done}/{s.quests.Count}";
         }
 

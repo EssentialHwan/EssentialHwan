@@ -303,6 +303,7 @@ ui.rel.friend,단짝,Besties,死党,親友
 ui.rel.rival,앙숙,Rivals,冤家,犬猿の仲
 ui.quest.btn,의뢰,Tasks,委托,依頼
 ui.quest.title,오늘의 의뢰,Today's Tasks,今日委托,今日の依頼
+ui.quest.total,보상 {g}G / {t}G,Reward {g}G / {t}G,奖励 {g}G / {t}G,報酬 {g}G / {t}G
 quest.done,의뢰 완료! {q} (+{g}G),Task done! {q} (+{g}G),委托完成！{q}（+{g}G）,依頼達成！{q}（+{g}G）
 q_petlove,쓰다듬어서 애교 3번 보기,Pet cats until 3 of them get cuddly,摸摸猫咪，看到3次撒娇,なでて3回甘えるしぐさを見る
 q_serve,음식 5번 내기,Serve 5 dishes,上菜5次,料理を5回出す
