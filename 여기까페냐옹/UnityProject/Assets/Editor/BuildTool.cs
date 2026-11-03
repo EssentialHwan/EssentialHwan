@@ -126,9 +126,17 @@ namespace YeogiCafe.EditorTools
                 if (n.Contains("DoNotShip") || n.Contains("DontShip")) continue;
                 CopyDir(d, Path.Combine(up, n));
             }
+            // 스토브 SDK 3.4.2는 VS 14.44 툴셋으로 빌드됨 → msvcp140 14.40 미만을 같이 넣으면 SDK 스레드에서 튕긴다(11/03 확인).
+            // 그래서 14.40 이상일 때만 동봉하고, 아니면 넣지 않는다(실행 설정의 'VC++ Redist 2022 x64'로 런처가 최신 런타임을 설치).
             string crt = FindVcRuntimeDir();
-            if (crt == null) Debug.LogWarning("[BuildTool] VC++ 런타임 DLL 폴더를 못 찾음 → Tools/StoveRuntime/x64 에 5개 넣어 주세요: " + string.Join(", ", VcDlls));
-            else foreach (var n in VcDlls) { var src = Path.Combine(crt, n); if (File.Exists(src)) File.Copy(src, Path.Combine(up, n), true); else Debug.LogWarning("[BuildTool] 없음: " + src); }
+            if (crt == null) Debug.LogWarning("[BuildTool] VC++ 런타임 DLL 폴더를 못 찾음 → 동봉 안 함(런처의 VC++ Redist 설정 사용)");
+            else
+            {
+                var vi = System.Diagnostics.FileVersionInfo.GetVersionInfo(Path.Combine(crt, "msvcp140.dll"));
+                if (vi.FileMajorPart > 14 || (vi.FileMajorPart == 14 && vi.FileMinorPart >= 40))
+                    foreach (var n in VcDlls) { var src = Path.Combine(crt, n); if (File.Exists(src)) File.Copy(src, Path.Combine(up, n), true); }
+                else Debug.LogWarning($"[BuildTool] VC++ 런타임 {vi.FileVersion} 은 너무 오래됨(14.40 미만) → 동봉 안 함");
+            }
             return up;
         }
         static string FindVcRuntimeDir()
