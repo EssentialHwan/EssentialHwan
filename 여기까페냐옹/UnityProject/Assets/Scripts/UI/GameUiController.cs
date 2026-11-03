@@ -217,7 +217,7 @@ namespace YeogiCafe.UI
             phaseText = UiFactory.Label("Phase", bar.transform, "", 24, TextAnchor.MiddleCenter, UiFactory.Ink);
             phaseText.horizontalOverflow = HorizontalWrapMode.Overflow;   // 한 줄 — 칸보다 길면 TextFitGuard가 줄인다
             UiFactory.SetRect((RectTransform)phaseText.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                              new Vector2(0.5f, 0.5f), new Vector2(4, 8), new Vector2(330, 36));      // 왼쪽 묶음(~452)과 오른쪽 버튼(~834) 사이
+                              new Vector2(0.5f, 0.5f), new Vector2(0, 8), new Vector2(256, 36));      // 왼쪽 묶음(~460)과 사진 버튼(~774) 사이 (11/04 사진 버튼 자리 확보)
 
             // 하루 진행 바(시간대 텍스트 바로 아래)
             var barBg = UiFactory.Panel("TimeBarBg", bar.transform, UiFactory.Wood);
@@ -275,10 +275,10 @@ namespace YeogiCafe.UI
                               new Vector2(0, 0.5f), new Vector2(396, 0), new Vector2(64, 44));
             optBtn.onClick.AddListener(() => settings.Toggle());
 
-            // 포토 모드(P) — 오른쪽 아래 작은 버튼
-            var photoBtn = UiFactory.Button("PhotoBtn", parent, L.Get("photo.btn"), UiFactory.CreamDim, UiFactory.Ink, out var photoLbl);
-            photoLbl.fontSize = 17; photoLbl.horizontalOverflow = HorizontalWrapMode.Overflow;
-            UiFactory.SetRect((RectTransform)photoBtn.transform, new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0), new Vector2(-14, 14), new Vector2(132, 40));
+            // 포토 모드(P) — 위쪽 막대, 가구 배치 왼쪽(11/04: 오른쪽 아래는 주방을 열어 두면 가려져 테스터가 못 찾았음)
+            var photoBtn = UiFactory.Button("PhotoBtn", bar.transform, L.Get("photo.btn.short"), UiFactory.CreamDim, UiFactory.Ink, out var photoLbl);
+            photoLbl.fontSize = 15; photoLbl.horizontalOverflow = HorizontalWrapMode.Overflow;
+            UiFactory.SetRect((RectTransform)photoBtn.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-450, 0), new Vector2(58, 44));
             photoBtn.onClick.AddListener(TryEnterPhoto);
 
             // (구) 하단 서술 텍스트는 고양이 머리 위 말풍선(BubbleLayer)으로 대체. 필드는 호환용으로 유지.
@@ -629,6 +629,22 @@ namespace YeogiCafe.UI
         public bool PhotoOpen => photo != null && photo.IsOpen;
 
         void TryEnterPhoto()
+        {
+            if (photo == null || photo.IsOpen || opening != null) return;
+            if (kitchen.Busy) { if (!photoAfterKitchen) StartCoroutine(PhotoAfterKitchen()); return; }   // 주방이 열려 있으면 닫고 이어서
+            EnterPhotoNow();
+        }
+        bool photoAfterKitchen;
+        System.Collections.IEnumerator PhotoAfterKitchen()
+        {
+            photoAfterKitchen = true;
+            CloseKitchen();
+            float t = 0f;
+            while (kitchen.Busy && t < 2f) { t += Time.unscaledDeltaTime; yield return null; }
+            photoAfterKitchen = false;
+            if (!kitchen.Busy) EnterPhotoNow();
+        }
+        void EnterPhotoNow()
         {
             if (photo == null || photo.IsOpen || kitchen.Busy || opening != null) return;
             shop.Hide(); catalog.Hide(); settings.Hide(); editMode.Exit();

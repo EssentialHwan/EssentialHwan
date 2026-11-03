@@ -459,6 +459,8 @@ title.hint,ESC 설정 · M 소리 · C 도감 · B 구매 · K 주방 · P 사�
 furn.furn_fac_wheel.name,캣휠,Cat Wheel,猫跑轮,ネコ回し車
 furn.furn_fac_wheel,캣휠,Cat Wheel,猫跑轮,ネコ回し車
 ui.shop.tab.furn,가구,Furniture,家具,家具
+ui.shop.group.deco,꾸미기,Decorate,装饰,飾る
+ui.shop.group.grow,성장,Upgrades,成长,成長
 ui.shop.tab.recipe,레시피 강화,Recipes ★,菜谱强化,レシピ強化
 ui.shop.tab.furnup,가구 강화,Furniture ★,家具强化,家具強化
 ui.recipe.odds,별 확률  ★{a}%  ★★{b}%  ★★★{c}%,Stars  ★{a}%  ★★{b}%  ★★★{c}%,星级概率  ★{a}%  ★★{b}%  ★★★{c}%,星の確率  ★{a}%  ★★{b}%  ★★★{c}%
@@ -657,6 +659,7 @@ quest.donetag,[완료],[Done],[完成],[達成]
 opt.lang,언어,Language,语言,言語
 lang.name,한국어,English,简体中文,日本語
 photo.btn,사진 (P),Photo (P),拍照 (P),写真 (P)
+photo.btn.short,사진,Photo,拍照,写真
 photo.hint,방향키·드래그: 이동 · 휠: 확대 · Space: 찰칵,Arrows/drag: move · Wheel: zoom · Space: snap,方向键/拖动：移动 · 滚轮：缩放 · 空格：拍照,矢印・ドラッグ：移動 · ホイール：ズーム · Space：パシャ
 photo.shoot,찰칵! (Space),Snap! (Space),咔嚓！(空格),パシャ！(Space)
 photo.album,앨범,Album,相册,アルバム

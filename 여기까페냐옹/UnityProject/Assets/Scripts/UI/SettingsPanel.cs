@@ -79,8 +79,7 @@ namespace YeogiCafe.UI
             }, ref y);
             ButtonRow(L.Get("opt.opening"), L.Get("opt.opening.btn"), () => owner.PlayOpening(), ref y);
             langLabel = ButtonRow(L.Get("opt.lang"), L.Get("lang.name"), CycleLanguage, ref y);
-            // 시작 화면으로(플레이테스트: 나갔다 다시 하려면 껐다 켜야 했음). 영업 중이면 한 번 더 눌러 확인.
-            titleLabel = ButtonRow(L.Get("opt.totitle"), L.Get("opt.totitle.btn"), GoTitle, ref y);
+            // (11/04) '시작 화면으로'는 아래 버튼 줄로 옮김 — 테스터가 '게임 종료' 옆에서 못 찾았음
 
             // 놀이 방식(11/02): 관찰 모드 · 배달냥
             Section(L.Get("opt.play"), ref y);
@@ -101,9 +100,14 @@ namespace YeogiCafe.UI
             newGameLabel.fontSize = 17;
             UiFactory.SetRect((RectTransform)newBtn.transform, new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0), new Vector2(28, 26), new Vector2(150, 48));
             newBtn.onClick.AddListener(NewGame);
+            // 시작 화면으로(게임 종료 바로 옆): "종료하면 다시 켜야 해서 피곤" 피드백(11/04)
+            var toTitle = UiFactory.Button("ToTitle", box, L.Get("opt.totitle.btn"), UiFactory.Wood, UiFactory.Cream, out titleLabel);
+            titleLabel.fontSize = 16;
+            UiFactory.SetRect((RectTransform)toTitle.transform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(-95, 26), new Vector2(170, 48));
+            toTitle.onClick.AddListener(GoTitle);
             var quit = UiFactory.Button("Quit", box, L.Get("opt.quit"), UiFactory.Wood, UiFactory.Cream, out quitLabel);
             quitLabel.fontSize = 17;
-            UiFactory.SetRect((RectTransform)quit.transform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 26), new Vector2(150, 48));
+            UiFactory.SetRect((RectTransform)quit.transform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(95, 26), new Vector2(170, 48));
             quit.onClick.AddListener(() =>
             {
                 // 영업 중(오늘 뭔가 했으면): 한 번 더 눌러야 종료 — 오늘은 아침부터 다시 한다고 알려 준다
@@ -111,7 +115,7 @@ namespace YeogiCafe.UI
                 if (fl != null && fl.HasProgressToday && !confirmQuit)
                 {
                     confirmQuit = true;
-                    quitLabel.text = L.Get("opt.quit.confirm"); UiFactory.FitOneLine(quitLabel, 140, 11);
+                    quitLabel.text = L.Get("opt.quit.confirm"); UiFactory.FitOneLine(quitLabel, 160, 11);
                     owner.ShowToast(L.Get("opt.quit.warn"), true);
                     return;
                 }
@@ -132,7 +136,12 @@ namespace YeogiCafe.UI
         // 화면 모드 전환은 다음 프레임에 반영되므로 라벨은 살짝 늦게
         void Invoke(System.Action a) { refreshLater = 2; }
         int refreshLater;
-        public void Tick() { if (refreshLater > 0 && --refreshLater == 0) Refresh(); }
+        int reopenWait = 3;
+        public void Tick()
+        {
+            if (refreshLater > 0 && --refreshLater == 0) Refresh();
+            if (ReopenAfterReload && --reopenWait <= 0) { ReopenAfterReload = false; if (!IsOpen) Show(); }   // 시작 화면이 다 만들어진 뒤에 위로
+        }
 
         RectTransform col;                       // 지금 줄을 넣는 칸(왼쪽/오른쪽 절반)
         Text observeLabel, deliveryLabel;
@@ -201,8 +210,10 @@ namespace YeogiCafe.UI
             var flow = Object.FindObjectOfType<YeogiCafe.Core.GameFlowController>();
             if (flow != null) flow.SaveOnQuit();            // (영업 전·정산 중에만 여기 온다)
             Time.timeScale = 1f;
+            ReopenAfterReload = true;                       // 11/04: 언어를 바꾸면 설정창이 닫혀 버리던 문제 → 다시 열어 준다
             UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
         }
+        static bool ReopenAfterReload;
 
         void GoTitle()
         {
@@ -210,7 +221,7 @@ namespace YeogiCafe.UI
             if (fl != null && fl.HasProgressToday && !confirmTitle)
             {
                 confirmTitle = true;
-                titleLabel.text = L.Get("opt.totitle.confirm"); UiFactory.FitOneLine(titleLabel, 180, 11);
+                titleLabel.text = L.Get("opt.totitle.confirm"); UiFactory.FitOneLine(titleLabel, 160, 11);
                 owner.ShowToast(L.Get("opt.quit.warn"), true);
                 return;
             }

@@ -72,18 +72,30 @@ namespace YeogiCafe.UI
             lg.cellSize = new Vector2(374, 76); lg.spacing = new Vector2(10, 6);
             lg.constraint = GridLayoutGroup.Constraint.FixedColumnCount; lg.constraintCount = 2;
 
+            // 11/04 테스터 피드백: 탭을 '꾸미기'(가구·창조명·테마)와 '성장'(주방 기구·레시피·가구 강화) 두 묶음으로 나눠 보이게.
+            // mode 번호(0 가구, 1 창·조명, 2 주방 기구, 3 레시피, 4 가구 강화, 5 테마)는 그대로, 놓는 순서만 바꾼다.
             string[] tabKeys = { "ui.shop.tab.furn", "ui.shop.tab.fix", "ui.shop.tab.tool", "ui.shop.tab.recipe", "ui.shop.tab.furnup", "ui.shop.tab.theme" };
-            const float tabW = 116, tabGap = 5;
-            float tabsW = tabKeys.Length * tabW + (tabKeys.Length - 1) * tabGap;
-            for (int i = 0; i < tabKeys.Length; i++)
+            int[] order = { 0, 1, 5, 2, 3, 4 };
+            const float tabW = 116, tabGap = 5, groupGap = 16;
+            float tabsW = 6 * tabW + 4 * tabGap + groupGap;
+            for (int i = 0; i < 6; i++) tabs.Add(null);
+            for (int slot = 0; slot < order.Length; slot++)
             {
-                int idx = i;
-                var t = UiFactory.Button("Tab" + i, panel.transform, L.Get(tabKeys[i]), UiFactory.Wood, UiFactory.Cream, out var tl);
+                int idx = order[slot];
+                float x = -tabsW / 2 - 18 + slot * (tabW + tabGap) + (slot >= 3 ? groupGap - tabGap : 0f);
+                var t = UiFactory.Button("Tab" + idx, panel.transform, L.Get(tabKeys[idx]), UiFactory.Wood, UiFactory.Cream, out var tl);
                 tl.fontSize = 18; UiFactory.FitOneLine(tl, tabW - 16, 12);
                 UiFactory.SetRect((RectTransform)t.transform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, 1),
-                                  new Vector2(-tabsW / 2 - 18 + i * (tabW + tabGap), -22), new Vector2(tabW, 40));
+                                  new Vector2(x, -22), new Vector2(tabW, 40));
                 t.onClick.AddListener(() => { mode = idx; Render(); });
-                tabs.Add(t);
+                tabs[idx] = t;
+                if (slot == 0 || slot == 3)   // 묶음 이름(탭 위 작은 글씨)
+                {
+                    var g = UiFactory.Label("Group" + slot, panel.transform, L.Get(slot == 0 ? "ui.shop.group.deco" : "ui.shop.group.grow"), 13, TextAnchor.LowerLeft, UiFactory.WoodDark);
+                    g.raycastTarget = false;
+                    UiFactory.SetRect((RectTransform)g.transform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, 1),
+                                      new Vector2(x + 4, -4), new Vector2(3 * tabW, 17));
+                }
             }
             rootGo.SetActive(false);
         }

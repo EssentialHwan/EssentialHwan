@@ -149,8 +149,8 @@ namespace YeogiCafe.UI
             btn.onClick.AddListener(() => OnToolPressed(id, w));
 
             // 할 일 있음 표시(은은한 노란 테두리)
-            w.glow = UiFactory.Panel("Glow", w.rt, new Color(1f, 0.9f, 0.5f, 0f)).GetComponent<Image>();
-            UiFactory.Anchor((RectTransform)w.glow.transform, Vector2.zero, Vector2.one, new Vector2(-6, -6), new Vector2(6, 6));
+            w.glow = UiFactory.Panel("Glow", w.rt, new Color(1f, 0.86f, 0.58f, 0f)).GetComponent<Image>();
+            UiFactory.Anchor((RectTransform)w.glow.transform, Vector2.zero, Vector2.one, new Vector2(-3, -3), new Vector2(3, 3));
             w.glow.transform.SetAsFirstSibling(); w.glow.raycastTarget = false;
 
             w.label = UiFactory.Label("Name", w.rt, L.Get(st.nameKey), 16, TextAnchor.UpperCenter, UiFactory.Cream);
@@ -408,7 +408,7 @@ namespace YeogiCafe.UI
             float bob = Mathf.Sin(Time.unscaledTime * 2.2f) * 6f;
             pawL.anchoredPosition = pawLHome + new Vector2(0, bob);
             pawR.anchoredPosition = pawRHome + new Vector2(0, -bob);
-            TickDistract(dt);
+            TickDistract(dt * Time.timeScale);          // 11/04: 일시정지(설정·ESC) 중엔 딴짓 시간도 멈춤 — "퍼즈컨" 방지
             AnimateDistract();
             if (pawPunch != null && pawPunchT >= 0f)
             {
@@ -488,7 +488,7 @@ namespace YeogiCafe.UI
 
         void RefreshTools()
         {
-            float pulse = 0.35f + 0.25f * Mathf.Sin(Time.unscaledTime * 6f);
+            float pulse = 0.22f + 0.10f * Mathf.Sin(Time.unscaledTime * 3.2f);   // 11/04: "노란 박스가 들뜬다" → 더 옅고 느리게
             foreach (var w in tools)
             {
                 var active = orders != null ? orders.CookingOrReadyAt(w.id) : null;
