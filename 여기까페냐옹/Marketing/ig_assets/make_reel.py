@@ -36,7 +36,7 @@ brand_h = 56 + 44
 gap = 36
 if src in ('newcats', 'parade'):
     cw, ch = 1000, 584
-elif src.startswith('intro:'):
+elif src.startswith('intro:') or src.startswith('acts:'):
     cw, ch = 1000, 860
 else:
     probe = subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', src], capture_output=True, text=True).stdout.strip().split(',')
@@ -154,8 +154,73 @@ if src.startswith('intro:'):
     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-framerate', str(FPS), '-i', os.path.join(tmp, 'n%d.png'),
                     '-c:v', 'libx264', '-crf', '12', '-pix_fmt', 'yuv420p', src], check=True)
 
+# 오늘의 손님 v2(11/05): 클로즈업(누끼 테두리가 거슬림) 대신 도트 시트로 행동 여러 개를 크게 보여 준다
+#   acts:<catId>[:한 줄] — 걸어 들어와 앉기 → 야옹 → 그루밍 → 식빵 → 꾹꾹이 → 덮치기 → 잠. 칸 번호는 Scripts/Art/CatSheet.cs Map2 기준.
+#   ACT_TIMES(초)를 효과음 타이밍에 같이 쓴다.
+ACT_PLAN = [  # (길이초, 칸들, 초당칸, 한국어, English, 말풍선)
+    (2.4, list(range(52, 60)), 12, '', '', ''),                        # 걸어 들어오기(이동)
+    (1.6, [0, 0, 0, 0, 34, 0, 32, 33], 5, '얌전히 앉아서', 'Sitting pretty', ''),
+    (1.1, [3, 3, 3, 0], 4, '', '', '냐아~'),
+    (1.9, [36, 37, 37, 38, 38, 37, 36, 39], 8, '그루밍', 'Grooming', ''),
+    (1.3, [8, 8, 46, 46, 8, 47], 5, '식빵 굽기', 'Loafing', ''),
+    (1.6, [42, 43], 6, '꾹꾹이', 'Kneading', ''),
+    (1.2, [48, 49, 48, 49, 50, 50, 51, 51], 8, '사냥 놀이!', 'Pounce!', ''),
+    (2.4, [44, 44, 44, 45, 45, 45], 4, '새근새근', 'Nap time', 'z z z'),
+]
+ACT_TIMES = []
+_t = 0.0
+for _a in ACT_PLAN: ACT_TIMES.append(_t); _t += _a[0]
+ACT_TOTAL = _t
+if src.startswith('acts:'):
+    parts = src.split(':'); cat = parts[1]; line = parts[2] if len(parts) > 2 else ''
+    F, k, FPS = 56, 9, 12
+    sheet = Image.open(f'{ROOT}/CatSheets/cat_{cat}.bytes').convert('RGBA')
+    cells = [sheet.crop(((i % 4) * F, (i // 4) * F, (i % 4 + 1) * F, (i // 4 + 1) * F)).resize((F * k, F * k), Image.NEAREST) for i in range(sheet.height // F * 4)]
+    fl = ImageFont.truetype(FONT, 34); fa = ImageFont.truetype(FONT, 48); fae = ImageFont.truetype(FONT, 28); fb = ImageFont.truetype(FONT, 40)
+    N = int(secs * FPS) + 2
+    gy = ch - 150                                   # 바닥선
+    cxm = cw // 2
+    for t in range(N):
+        sec = t / FPS
+        idx = max(i for i, s0 in enumerate(ACT_TIMES) if s0 <= sec) if sec < ACT_TOTAL else len(ACT_PLAN) - 1
+        dur, fr, rate, lk, le, bub = ACT_PLAN[idx]
+        lt = sec - ACT_TIMES[idx]
+        can = Image.new('RGBA', (cw, ch), (255, 248, 236, 255)); dd = ImageDraw.Draw(can)
+        dd.rectangle((0, gy, cw, ch), fill=(238, 222, 198, 255))
+        dd.line((0, gy, cw, gy), fill=(214, 192, 164, 255), width=4)
+        if line and sec < secs - 1.6:
+            w = dd.textlength(line, font=fl); dd.text(((cw - w) / 2, 40), line, font=fl, fill=SOFT)
+        img = cells[fr[int(lt * rate) % len(fr)]]
+        if idx == 0:   # 왼쪽에서 걸어 들어와 가운데에 멈춘다(보폭 3.2px×k/칸)
+            x = cxm - F * k / 2 - (dur - lt) * rate * 3.2 * k
+        else:
+            x = cxm - F * k / 2
+        dd.ellipse((x + F * k * 0.18, gy - 14, x + F * k * 0.82, gy + 14), fill=(222, 202, 176, 255))
+        can.alpha_composite(img, (int(round(x)), gy - F * k + 3 * k))
+        if bub:
+            bw = dd.textlength(bub, font=fb) + 48; bx = cxm + 150; by = gy - F * k + 10
+            dd.rounded_rectangle((bx, by, bx + bw, by + 70), radius=20, fill=(255, 255, 255, 255), outline=INK, width=4)
+            dd.polygon([(bx + 24, by + 66), (bx + 50, by + 66), (bx + 14, by + 100)], fill=(255, 255, 255, 255), outline=INK)
+            dd.line((bx + 26, by + 66, bx + 48, by + 66), fill=(255, 255, 255, 255), width=6)
+            dd.text((bx + 24, by + 12), bub, font=fb, fill=INK)
+        if lk:
+            w = dd.textlength(lk, font=fa); dd.text(((cw - w) / 2, gy + 26), lk, font=fa, fill=INK)
+            w = dd.textlength(le, font=fae); dd.text(((cw - w) / 2, gy + 86), le, font=fae, fill=SOFT)
+        if sec >= secs - 1.6:
+            fe2 = ImageFont.truetype(FONT, 40); fs2 = ImageFont.truetype(FONT, 26)
+            t1 = '팔로우하고 다음 손님 만나기'; t2 = 'Follow to meet the next guest'
+            bw = max(dd.textlength(t1, font=fe2), dd.textlength(t2, font=fs2)) + 60
+            bx0 = (cw - bw) / 2; by0 = 34
+            dd.rounded_rectangle((bx0, by0, bx0 + bw, by0 + 110), radius=22, fill=PINK)
+            dd.text(((cw - dd.textlength(t1, font=fe2)) / 2, by0 + 14), t1, font=fe2, fill=(255, 250, 244))
+            dd.text(((cw - dd.textlength(t2, font=fs2)) / 2, by0 + 66), t2, font=fs2, fill=(255, 236, 236))
+        can.convert('RGB').save(os.path.join(tmp, f'n{t}.png'))
+    src = os.path.join(tmp, 'acts.mp4')
+    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-framerate', str(FPS), '-i', os.path.join(tmp, 'n%d.png'),
+                    '-c:v', 'libx264', '-crf', '12', '-pix_fmt', 'yuv420p', src], check=True)
+
 # 소리
-inputs = ['-loop', '1', '-i', bgp, '-stream_loop', '-1', '-i', src, '-stream_loop', '-1', '-i', f'{AUD}/{bgm}.ogg']
+inputs =['-loop', '1', '-i', bgp, '-stream_loop', '-1', '-i', src, '-stream_loop', '-1', '-i', f'{AUD}/{bgm}.ogg']
 fc = [f'[1:v]scale={clip_w}:{clip_h}:flags=lanczos[c]', f'[0:v][c]overlay={cx}:{cy}:shortest=0,fps=30,format=yuv420p[v]',
       f'[2:a]volume=0.35,afade=t=in:d=0.6,afade=t=out:st={secs - 1.2}:d=1.2[a0]']
 mix = ['[a0]']
