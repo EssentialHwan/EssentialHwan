@@ -93,6 +93,7 @@ namespace YeogiCafe.DevTools
             if (day == startedDay) return;        // 시작 화면에서 언어를 바꾸면 장면을 다시 불러 같은 날이 또 시작됨 → 한 번만
             startedDay = day;
             dayStartT = Time.realtimeSinceStartup;
+            YeogiCafe.Platform.StoveStats.Max(YeogiCafe.Platform.StoveStats.MaxDay, day);   // 스토브 체험판 통계(다른 빌드는 아무것도 안 함)
             eventsToday.Clear();
             Line($"── {day}일차 영업 시작");
         }
@@ -100,6 +101,8 @@ namespace YeogiCafe.DevTools
         public static void DayEnd(int day, int revenue, int cost, int gold)
         {
             string dur = dayStartT >= 0 ? $"{(Time.realtimeSinceStartup - dayStartT) / 60f:0.0}분" : "?";
+            YeogiCafe.Platform.StoveStats.Max(YeogiCafe.Platform.StoveStats.DoneDay, day);
+            if (dayStartT >= 0) YeogiCafe.Platform.StoveStats.Add(YeogiCafe.Platform.StoveStats.PlayMin, Mathf.RoundToInt((Time.realtimeSinceStartup - dayStartT) / 60f));
             var sb = new StringBuilder();
             foreach (var kv in eventsToday) sb.Append(kv.Key).Append('=').Append(kv.Value).Append(' ');
             Line($"── {day}일차 영업 끝 · 걸린 시간 {dur} · 매출 {revenue}G 재료비 {cost}G 잔액 {gold}G · 이벤트 {sb}");

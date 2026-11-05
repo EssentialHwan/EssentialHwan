@@ -11,6 +11,7 @@ using System.Collections;
 using UnityEngine;
 using Stove.PCSDK;
 using static Stove.PCSDK.Base;
+using static Stove.PCSDK.GameSupport;
 
 namespace YeogiCafe.Platform
 {
@@ -36,6 +37,8 @@ namespace YeogiCafe.Platform
         // 델리게이트는 static으로 잡아 둔다(네이티브가 들고 있는 동안 GC되지 않게).
         static Base.OnRestartAppIfNecessaryAsyncFinished onRestart;
         static Base.OnInitializeFinished onInit;
+        static OnModifyStatFinished onModify;     // 스탯 갱신 결과(체험판 통계, 11/05)
+        bool gsReady, statBusy; string busyId; int busyVal; float nextStat;
         enum Step { Idle, WaitRestart, NeedInit, WaitInit, Done, Quit }
         Step step = Step.Idle;
 
@@ -49,6 +52,7 @@ namespace YeogiCafe.Platform
             var ta = Resources.Load<TextAsset>(cfgPath);
             if (ta == null) { Debug.LogError($"[StoveSdk] Resources/{cfgPath}.json 없음 → 스토브 연동 안 함"); return; }
             var cfg = JsonUtility.FromJson<Config>(ta.text);
+            StoveStats.Hook();   // 추리 정답 수는 SDK 준비 전에도 모아 둔다
 
             onRestart = (CallbackResult r, bool restart) =>
             {
@@ -82,7 +86,35 @@ namespace YeogiCafe.Platform
                 Base_RunCallback();
                 if (step == Step.Quit) { Debug.Log("[StoveSdk] 런처를 통해 다시 실행 → 종료"); step = Step.Done; Application.Quit(); }
                 else if (step == Step.NeedInit) { step = Step.WaitInit; Debug.Log("[StoveSdk] ② 초기화 요청"); Base_InitializeEx(onInit); }
+                else if (step == Step.Done && initialized) PumpStats();
             }
+        }
+
+        // 체험판 통계: 게임 서포트 초기화 → 모아 둔 스탯을 하나씩(2초 간격, 같은 스탯은 1분에 1번) 보낸다. 콜백 안에선 SDK를 안 부른다.
+        void PumpStats()
+        {
+            if (!gsReady)
+            {
+                if (Time.realtimeSinceStartup < nextStat) return;
+                var r = GameSupport_Initialize();
+                gsReady = r.IsSuccessful();
+                Debug.Log($"[StoveSdk] 게임 서포트 초기화: {r.resultCode}");
+                if (!gsReady) { nextStat = Time.realtimeSinceStartup + 30f; return; }   // 실패면 30초 뒤 다시
+                onModify = (CallbackResult cr, StovePCModifyStatValue v) =>
+                {
+                    if (!cr.result.IsSuccessful())
+                    {
+                        Debug.LogWarning($"[StoveSdk] 스탯 {busyId} 실패: {cr.result.resultCode} {cr.errorMessage}");
+                        StoveStats.Requeue(busyId, busyVal, StoveStats.IsAdd(busyId));
+                    }
+                    statBusy = false;
+                };
+            }
+            if (statBusy && Time.realtimeSinceStartup - nextStat > 30f) { statBusy = false; StoveStats.Requeue(busyId, busyVal, StoveStats.IsAdd(busyId)); }   // 응답이 안 오면 30초 뒤 다시
+            if (statBusy || Time.realtimeSinceStartup < nextStat) return;
+            if (!StoveStats.TryTake(out busyId, out busyVal)) return;
+            statBusy = true; nextStat = Time.realtimeSinceStartup + 2f;
+            GameSupport_ModifyStat(busyId, busyVal, onModify);
         }
 
         // ③ 종료 직전 정리
@@ -93,6 +125,7 @@ namespace YeogiCafe.Platform
             if (loop != null) { StopCoroutine(loop); loop = null; }
             if (!initialized) return;
             initialized = false; Ready = false;
+            if (gsReady) { GameSupport_UnInitialize(); gsReady = false; }
             var res = Base_UnInitialize();
             Debug.Log($"[StoveSdk] 정리: {res.resultCode}");
         }

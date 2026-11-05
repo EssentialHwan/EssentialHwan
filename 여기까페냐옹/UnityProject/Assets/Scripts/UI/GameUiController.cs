@@ -927,7 +927,7 @@ namespace YeogiCafe.UI
         }
 
         DemoEndPanel demoEnd;
-        void ShowDemoEnd() { if (!DemoEndPanel.IsOpen) demoEnd = new DemoEndPanel(root.transform, Save, AllCats); }
+        void ShowDemoEnd() { if (!DemoEndPanel.IsOpen) { demoEnd = new DemoEndPanel(root.transform, Save, AllCats); YeogiCafe.Platform.StoveStats.Max(YeogiCafe.Platform.StoveStats.DemoDone, 1); } }
         public void DebugDemoEnd() => new DemoEndPanel(root.transform, Save, AllCats, preview: true);
 
         // ── 패널이 접근하는 헬퍼 ──
