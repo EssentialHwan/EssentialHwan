@@ -2,7 +2,7 @@
 #   python3 Marketing/ig_assets/make_reel.py <clip.mp4|newcats> <out.mp4> <seconds> "<한국어 큰 글씨>" "<English small>" <sfx1@sec,sfx2@sec,...> [bgm]
 # - 게임 화면 클립(가로 1000px)을 가운데에, 위에 한·영 문구, 아래에 게임 이름. 글꼴은 게임과 같은 Galmuri11.
 # - 소리: 게임 안 BGM(작게) + 고양이 효과음(합성음 · 골골은 BigSoundBank CC0).
-import sys, os, subprocess, tempfile
+import sys, os, subprocess, tempfile, math
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = 'UnityProject/Assets/Resources'
@@ -36,7 +36,7 @@ brand_h = 56 + 44
 gap = 36
 if src in ('newcats', 'parade'):
     cw, ch = 1000, 584
-elif src.startswith('intro:') or src.startswith('acts:'):
+elif src.startswith('intro:') or src.startswith('acts:') or src.startswith('acts2:'):
     cw, ch = 1000, 860
 else:
     probe = subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', src], capture_output=True, text=True).stdout.strip().split(',')
@@ -216,6 +216,100 @@ if src.startswith('acts:'):
             dd.text(((cw - dd.textlength(t2, font=fs2)) / 2, by0 + 66), t2, font=fs2, fill=(255, 236, 236))
         can.convert('RGB').save(os.path.join(tmp, f'n{t}.png'))
     src = os.path.join(tmp, 'acts.mp4')
+    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-framerate', str(FPS), '-i', os.path.join(tmp, 'n%d.png'),
+                    '-c:v', 'libx264', '-crf', '12', '-pix_fmt', 'yuv420p', src], check=True)
+
+# 오늘의 손님 v3(11/05 환 요청): 잠 대신 캣휠 달리기 + 2층 점프. acts2:<catId>[:한 줄]
+#   장면마다 고양이 크기(k)가 달라 컷이 바뀌는 느낌 — 캣휠·선반이 화면에 들어오게 작게 잡는다.
+ACT2 = [  # (길이초, 칸들, 초당칸, 한국어, English, 말풍선, 장면)
+    (2.4, list(range(52, 60)), 12, '', '', '', 'walkin'),
+    (1.4, [0, 0, 0, 0, 34, 0, 32, 33], 5, '얌전히 앉아서', 'Sitting pretty', '', 'floor'),
+    (1.0, [3, 3, 3, 0], 4, '', '', '냐아~', 'floor'),
+    (1.6, [36, 37, 37, 38, 38, 37, 36, 39], 8, '그루밍', 'Grooming', '', 'floor'),
+    (2.8, [28, 29, 30, 31], 12, '캣휠 달리기!', 'Wheel run!', '', 'wheel'),
+    (1.8, [14], 0, '2층으로 점프!', 'Jump to the loft!', '', 'jump'),
+    (2.2, [42, 43], 6, '2층에서 꾹꾹이', 'Kneading up top', '', 'loft'),
+]
+ACT2_T = []
+_t = 0.0
+for _a in ACT2: ACT2_T.append(_t); _t += _a[0]
+ACT2_TOTAL = _t
+if src.startswith('acts2:'):
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import reel_props as RP
+    parts = src.split(':'); cat = parts[1]; line = parts[2] if len(parts) > 2 else ''
+    F, FPS = 56, 12
+    sheet = Image.open(f'{ROOT}/CatSheets/cat_{cat}.bytes').convert('RGBA')
+    raw = [sheet.crop(((i % 4) * F, (i // 4) * F, (i % 4 + 1) * F, (i // 4 + 1) * F)) for i in range(sheet.height // F * 4)]
+    cache = {}
+    def cell(i, k):
+        if (i, k) not in cache: cache[(i, k)] = raw[i].resize((F * k, F * k), Image.NEAREST)
+        return cache[(i, k)]
+    wbase = RP.wheel_base(); wspin = [RP.wheel_spin(i) for i in range(4)]; shelf0 = RP.shelf()
+    fl = ImageFont.truetype(FONT, 32); fa = ImageFont.truetype(FONT, 48); fae = ImageFont.truetype(FONT, 28); fb = ImageFont.truetype(FONT, 40)
+    N = int(secs * FPS) + 2
+    gy = ch - 150; cxm = cw // 2
+    for t in range(N):
+        sec = t / FPS
+        idx = max(i for i, s0 in enumerate(ACT2_T) if s0 <= sec) if sec < ACT2_TOTAL else len(ACT2) - 1
+        dur, fr, rate, lk, le, bub, scene = ACT2[idx]
+        lt = min(sec - ACT2_T[idx], dur)
+        can = Image.new('RGBA', (cw, ch), (255, 248, 236, 255)); dd = ImageDraw.Draw(can)
+        dd.rectangle((0, gy, cw, ch), fill=(238, 222, 198, 255)); dd.line((0, gy, cw, gy), fill=(214, 192, 164, 255), width=4)
+        if line and sec < secs - 1.6:
+            w = dd.textlength(line, font=fl); dd.text(((cw - w) / 2, 34), line, font=fl, fill=SOFT)
+        def shadow(x0, w, y): dd.ellipse((x0 + w * 0.18, y - 12, x0 + w * 0.82, y + 12), fill=(222, 202, 176, 255))
+        if scene in ('walkin', 'floor'):
+            k = 9; img = cell(fr[int(lt * rate) % len(fr)], k)
+            x = cxm - F * k / 2 - ((dur - lt) * rate * 3.2 * k if scene == 'walkin' else 0)
+            shadow(x, F * k, gy); can.alpha_composite(img, (int(round(x)), gy - F * k + 3 * k)); bub_y = gy - F * k + 10
+        elif scene == 'wheel':
+            kw, k = 8, 6                                        # 바퀴 60×62 ×8, 고양이 56×6
+            wb = wbase.resize((60 * kw, 62 * kw), Image.NEAREST)
+            spin = min(1.0, lt / 0.6)                           # 서서히 빨라짐
+            ws = wspin[int(lt * 14 * spin) % 4].resize((60 * kw, 62 * kw), Image.NEAREST)
+            wx = cxm - 30 * kw; wy = gy - 62 * kw + 4 * kw
+            can.alpha_composite(wb, (wx, wy)); can.alpha_composite(ws, (wx, wy))
+            img = cell(fr[int(lt * rate) % len(fr)], k)
+            ccy = wy + (62 - 1 - 34) * kw                       # 바퀴 중심(이미지 좌표)
+            bottom = ccy + (26 - 4) * kw                        # 달리는 면
+            can.alpha_composite(img, (int(cxm - F * k / 2), int(bottom - F * k + 3 * k)))
+            bub_y = wy
+        else:
+            k = 6; shelf_w = 64 * 6; sx = cxm + 20; sy = 330    # 선반 윗면(캔버스 y)
+            sh = shelf0.resize((shelf0.width * 6, shelf0.height * 6), Image.NEAREST)
+            for px0 in (sx + 24, sx + shelf_w - 44):            # 선반 기둥
+                dd.rectangle((px0, sy + 60, px0 + 20, gy), fill=(184, 142, 100, 255), outline=INK, width=3)
+            can.alpha_composite(sh, (sx, sy))
+            x0, y0 = cxm - 360, gy                              # 바닥 출발점(고양이 발)
+            x1, y1 = sx + shelf_w / 2 - F * k / 2, sy + 4       # 선반 위 착지점
+            if scene == 'jump':
+                u = min(1.0, max(0.0, (lt - 0.6) / 0.7))          # 0.6초 웅크림 → 0.7초 비행 → 착지
+                fi = 14 if lt < 0.6 else (18 if u < 1 else 0)
+                x = x0 + (x1 - x0) * u; y = y0 + (y1 - y0) * u - math.sin(u * math.pi) * 170
+                img = cell(fi, k)
+                if u <= 0: shadow(x, F * k, gy)
+            else:
+                x, y = x1, y1; img = cell(fr[int(lt * rate) % len(fr)], k)
+            can.alpha_composite(img, (int(round(x)), int(round(y - F * k + 3 * k))))
+            bub_y = sy - F * k
+        if bub:
+            bw = dd.textlength(bub, font=fb) + 48; bx = cxm + 150; by = bub_y
+            dd.rounded_rectangle((bx, by, bx + bw, by + 70), radius=20, fill=(255, 255, 255, 255), outline=INK, width=4)
+            dd.text((bx + 24, by + 12), bub, font=fb, fill=INK)
+        if lk:
+            w = dd.textlength(lk, font=fa); dd.text(((cw - w) / 2, gy + 26), lk, font=fa, fill=INK)
+            w = dd.textlength(le, font=fae); dd.text(((cw - w) / 2, gy + 86), le, font=fae, fill=SOFT)
+        if sec >= secs - 1.6:
+            fe2 = ImageFont.truetype(FONT, 40); fs2 = ImageFont.truetype(FONT, 26)
+            t1 = '팔로우하고 다음 손님 만나기'; t2 = 'Follow to meet the next guest'
+            bw = max(dd.textlength(t1, font=fe2), dd.textlength(t2, font=fs2)) + 60
+            bx0 = (cw - bw) / 2; by0 = 34
+            dd.rounded_rectangle((bx0, by0, bx0 + bw, by0 + 110), radius=22, fill=PINK)
+            dd.text(((cw - dd.textlength(t1, font=fe2)) / 2, by0 + 14), t1, font=fe2, fill=(255, 250, 244))
+            dd.text(((cw - dd.textlength(t2, font=fs2)) / 2, by0 + 66), t2, font=fs2, fill=(255, 236, 236))
+        can.convert('RGB').save(os.path.join(tmp, f'n{t}.png'))
+    src = os.path.join(tmp, 'acts2.mp4')
     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-framerate', str(FPS), '-i', os.path.join(tmp, 'n%d.png'),
                     '-c:v', 'libx264', '-crf', '12', '-pix_fmt', 'yuv420p', src], check=True)
 
