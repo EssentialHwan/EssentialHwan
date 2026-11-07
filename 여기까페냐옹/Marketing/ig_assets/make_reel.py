@@ -230,6 +230,15 @@ ACT2 = [  # (길이초, 칸들, 초당칸, 한국어, English, 말풍선, 장면
     (1.8, [14], 0, '2층으로 점프!', 'Jump to the loft!', '', 'jump'),
     (2.2, [42, 43], 6, '2층에서 꾹꾹이', 'Kneading up top', '', 'loft'),
 ]
+# 첫 화면 실험(11/07): 걸어 들어오기 없이 캣휠 달리기 + 0초 울음으로 바로 시작. acts2:<catId>:<한 줄>:hook
+if src.startswith('acts2:') and src.endswith(':hook'):
+    ACT2 = [
+        (2.6, [28, 29, 30, 31], 12, '캣휠 달리기!', 'Wheel run!', '냐아~', 'wheel'),
+        (1.8, [14], 0, '2층으로 점프!', 'Jump to the loft!', '', 'jump'),
+        (1.6, [36, 37, 37, 38, 38, 37, 36, 39], 8, '2층에서 그루밍', 'Grooming up top', '', 'loft'),
+        (2.0, [42, 43], 6, '꾹꾹이', 'Kneading', '', 'loft'),
+    ]
+    src = src[:-5]
 ACT2_T = []
 _t = 0.0
 for _a in ACT2: ACT2_T.append(_t); _t += _a[0]
