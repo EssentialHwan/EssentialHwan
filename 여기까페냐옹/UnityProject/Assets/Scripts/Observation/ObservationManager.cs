@@ -23,19 +23,43 @@ namespace YeogiCafe.Observation
         readonly Dictionary<string, List<Clue>> stagedToday = new();
 
         public event Action<string> OnBehaviorNarration; // (narrationText) — UI 말풍선
+        public event Action<string, string> OnCatNarration; // (catId, narrationText) — 고양이 머리 위 말풍선
         public event Action<string, PrefAxis> OnPreferenceRecorded;
 
-        public ObservationManager(BalanceConfig cfg, SaveGame save) { this.cfg = cfg; this.save = save; }
+        public ObservationManager(BalanceConfig cfg, SaveGame save)
+        {
+            this.cfg = cfg; this.save = save;
+            if (save != null)
+                foreach (var c in save.cats)
+                    foreach (PrefAxis a in Enum.GetValues(typeof(PrefAxis)))
+                    {
+                        var r = c.observation.Get(a);
+                        if (r.state != ObsState.Recorded && !string.IsNullOrEmpty(r.recordedValue)) { r.state = ObsState.Recorded; r.pendingGuess = null; }
+                    }
+        }
 
         // §3.1 실시간 — 행동마다 호출
         public void RecordClue(string catId, ClueType type, string target, bool isFallback, string narration)
         {
+            if (YeogiCafe.Food.NyanGuide.IsInspector(catId) || YeogiCafe.Food.DeliveryCat.IsDelivery(catId)) return;     // 심사원·배달냥은 도감 대상이 아님
             float weight = isFallback ? cfg.clueFallback
                          : (type == ClueType.FoodEat) ? cfg.clueStrong
                          : cfg.clueMedium;
             if (!stagedToday.TryGetValue(catId, out var list)) { list = new(); stagedToday[catId] = list; }
             list.Add(new Clue { type = type, target = target, weight = weight, isFallback = isFallback });
-            if (!string.IsNullOrEmpty(narration)) OnBehaviorNarration?.Invoke(narration);
+            if (!string.IsNullOrEmpty(narration))
+            {
+                OnBehaviorNarration?.Invoke(narration);
+                OnCatNarration?.Invoke(catId, narration);
+            }
+        }
+
+        // 단서 없이 말풍선만(누구나 하는 행동 — 추리 재료가 아님)
+        public void NarrateOnly(string catId, string narration)
+        {
+            if (string.IsNullOrEmpty(narration)) return;
+            OnBehaviorNarration?.Invoke(narration);
+            OnCatNarration?.Invoke(catId, narration);
         }
 
         // §3.5 영업 종료 — 승격 (fallback cap → …/★, 강한 반증 강등)
@@ -65,12 +89,12 @@ namespace YeogiCafe.Observation
 
         void Promote(AxisRecord axisRec)
         {
-            if (axisRec.state == ObsState.Recorded)
+            // 이미 맞힌 취향은 다시 묻지 않는다. 기록은 고양이의 실제 취향(CatTruth)으로 채점된 정답이라
+            // 방문이 쌓여 다른 태그가 커져도 틀릴 수 없다. (예전엔 '강한 반증'으로 강등 → 다 맞힌 고양이를 또 추리하게 되던 버그)
+            // 그 강등을 이미 당한 세이브도 정답이 남아 있으면 되돌린다.
+            if (axisRec.state == ObsState.Recorded || !string.IsNullOrEmpty(axisRec.recordedValue))
             {
-                // 강한 반증 시 강등 (부록 J-F) — 확정값 외 태그가 임계 넘게 쌓이면
-                var topOther = axisRec.Second();
-                if (topOther != null && topOther.total >= cfg.refuteThreshold)
-                    axisRec.state = ObsState.Suspected;
+                axisRec.state = ObsState.Recorded;
                 return;
             }
             var top = axisRec.Top();
@@ -96,6 +120,72 @@ namespace YeogiCafe.Observation
             bonusGold = cfg.discoveryBonusGold;         // P9
             OnPreferenceRecorded?.Invoke(catId, axis);
             return true;
+        }
+
+        // ── 추리 기록: 플레이어가 선택지(메뉴/가구) 중 하나를 고른다 ──
+        // 짐작(…)부터 도전 가능, 하루 한 번. 정답이면 ✓ + 보너스(짐작 단계에서 맞히면 1.5배), 오답이면 기록되고 내일 다시.
+        public enum GuessResult { Correct, Wrong, NotReady, TriedToday, AlreadyRecorded }
+
+        public GuessResult CanGuess(string catId, PrefAxis axis, int day)
+        {
+            var rec = save.GetOrCreateCat(catId).observation.Get(axis);
+            if (rec.state == ObsState.Recorded) return GuessResult.AlreadyRecorded;
+            if (rec.state == ObsState.Unknown) return GuessResult.NotReady;
+            if (rec.lastGuessDay == day) return GuessResult.TriedToday;
+            return GuessResult.Correct;   // = 도전 가능
+        }
+
+        public GuessResult TryGuess(string catId, PrefAxis axis, string guessId, bool isCorrect, int day, out int bonusGold)
+        {
+            bonusGold = 0;
+            var can = CanGuess(catId, axis, day);
+            if (can != GuessResult.Correct) return can;
+            var rec = save.GetOrCreateCat(catId).observation.Get(axis);
+            rec.lastGuessDay = day;
+            if (!isCorrect)
+            {
+                if (!rec.wrongGuesses.Contains(guessId)) rec.wrongGuesses.Add(guessId);
+                return GuessResult.Wrong;
+            }
+            bool early = rec.state == ObsState.Suspected;
+            rec.state = ObsState.Recorded;
+            rec.recordedValue = guessId;
+            bonusGold = Mathf.RoundToInt(cfg.discoveryBonusGold * (early ? 1.5f : 1f));
+            OnPreferenceRecorded?.Invoke(catId, axis);
+            return GuessResult.Correct;
+        }
+
+        // ── 묶음 채점(오브라 딘식): 골라 둔 답을 한꺼번에 확인. 전부 맞아야 기록, 아니면 몇 개 맞았는지만 알려준다.
+        public struct BatchItem { public PrefAxis axis; public string guessId; public bool correct; }
+
+        public bool SubmitBatch(string catId, List<BatchItem> items, int day, out int correctCount, out int bonusGold)
+        {
+            correctCount = 0; bonusGold = 0;
+            if (items == null || items.Count == 0) return false;
+            foreach (var it in items)
+                if (CanGuess(catId, it.axis, day) != GuessResult.Correct) return false;
+            foreach (var it in items) if (it.correct) correctCount++;
+            bool all = correctCount == items.Count;
+            var obsRec = save.GetOrCreateCat(catId).observation;
+            if (all)
+            {
+                foreach (var it in items)
+                {
+                    TryGuess(catId, it.axis, it.guessId, true, day, out int b);
+                    bonusGold += b;
+                    obsRec.Get(it.axis).pendingGuess = null;
+                }
+                if (items.Count >= 2) bonusGold += cfg.discoveryBonusGold * (items.Count - 1);   // 한꺼번에 맞힌 보너스
+                return true;
+            }
+            foreach (var it in items)
+            {
+                var r = obsRec.Get(it.axis);
+                r.lastGuessDay = day;
+                // 한 칸만 냈을 때만 무엇이 틀렸는지 알 수 있다
+                if (items.Count == 1 && !r.wrongGuesses.Contains(it.guessId)) r.wrongGuesses.Add(it.guessId);
+            }
+            return false;
         }
 
         public IReadOnlyDictionary<string, List<Clue>> StagedToday => stagedToday;

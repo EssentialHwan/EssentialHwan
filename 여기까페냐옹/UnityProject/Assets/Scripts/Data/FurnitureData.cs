@@ -11,6 +11,7 @@ namespace YeogiCafe.Data
         public string displayNameKey;
         public FurnitureType type;
         public Sprite worldSprite;           // 씬 표시용
+        public bool wallMounted;             // 벽걸이(창문·시계·액자·커튼) → 벽 슬롯에 배치
 
         [Header("Seat (type==Seat)")]
         public SeatTag[] seatTags;

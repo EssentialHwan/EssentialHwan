@@ -61,7 +61,7 @@ namespace YeogiCafe.Tests
         }
 
         [Test]
-        public void Furniture_AllNonEmpty_32()
+        public void Furniture_AllNonEmpty_GridAligned()
         {
             var pieces = new List<PixelCanvas> {
                 FurnitureDrawing.SeatNormal(), FurnitureDrawing.SeatWindow(), FurnitureDrawing.SeatCorner(),
@@ -74,7 +74,9 @@ namespace YeogiCafe.Tests
             Assert.AreEqual(18, pieces.Count, "가구 18종");
             foreach (var c in pieces)
             {
-                Assert.AreEqual(32, c.W); Assert.AreEqual(32, c.H);
+                // 가로는 8px 격자 배수(바닥 칸 정렬). 세로는 바닥 기준 피벗이라 짝수면 된다(스크래처 32×46처럼 키 큰 가구 허용).
+                Assert.AreEqual(0, c.W % 8, "가로 8px 배수"); Assert.AreEqual(0, c.H % 2, "세로 짝수");
+                Assert.That(c.W, Is.InRange(32, 64)); Assert.That(c.H, Is.InRange(24, 48));
                 Assert.Greater(CountOpaque(c), 40, "가구 스프라이트가 비어있으면 안 됨");
             }
         }
@@ -145,7 +147,8 @@ namespace YeogiCafe.Tests
         [Test]
         public void BackgroundTiles_AreFullyOpaque_32()
         {
-            foreach (var t in new[] { SpriteDrawing.FloorTile(), SpriteDrawing.WallTile() })
+            foreach (var t in new[] { SpriteDrawing.FloorTile(), SpriteDrawing.WallTile(),
+                                      RoomDrawing.FloorTile(), RoomDrawing.WallTile(), RoomDrawing.WainscotTile() })
             {
                 Assert.AreEqual(32, t.W); Assert.AreEqual(32, t.H);
                 foreach (var p in t.Pixels) Assert.AreEqual((byte)255, p.a, "배경 타일은 완전 불투명(심리스)");

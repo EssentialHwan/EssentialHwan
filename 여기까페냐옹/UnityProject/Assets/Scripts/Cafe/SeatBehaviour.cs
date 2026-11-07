@@ -34,7 +34,17 @@ namespace YeogiCafe.Cafe
             var sr = GetComponent<SpriteRenderer>();
             if (sr == null) sr = gameObject.AddComponent<SpriteRenderer>();
             sr.sprite = source.worldSprite;
-            sr.sortingOrder = 0;                 // 가구는 바닥 위, 고양이 아래
+            sr.sortingOrder = YeogiCafe.Visual.YSort.Order(transform.position.y);   // 앞(아래)일수록 위에
+        }
+
+        // 고양이가 앉는 면의 높이(유닛). 아트 규격(FurnitureDrawing.SeatSitHeightPx)과 1:1.
+        public float SitHeight
+        {
+            get
+            {
+                string id = source != null ? source.furnitureId : "";
+                return YeogiCafe.Art.FurnitureDrawing.SeatSitHeightPx(id) / 32f;
+            }
         }
     }
 }

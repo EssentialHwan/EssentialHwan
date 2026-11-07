@@ -75,11 +75,27 @@ namespace YeogiCafe.Tests
         [Test]
         public void Buy_Fails_WhenNoFreeSlot()
         {
-            // 슬롯 1개를 채운 뒤 두 번째 구매는 공간 부족으로 실패
-            Assert.IsTrue(furniture.BuyAndPlace(Seat("furn_seat_window", 10)));
-            bool second = furniture.BuyAndPlace(Seat("furn_seat_corner", 10));
-            Assert.IsFalse(second, "빈 슬롯이 없으면 구매 실패");
-            Assert.AreEqual(1, cafe.SeatCount);
+            // 바닥 가구는 정해 둔 칸이 차면 빈 바닥을 찾아 놓는다 → '공간 부족'은 정해 둔 칸만 쓰는 벽 가구로 검사.
+            furniture.slots.Clear();
+            var wallGo = new GameObject("wallslot");
+            furniture.slots.Add(new FurnitureManager.SlotEntry { slot = wallGo.transform, kind = FurnitureManager.SlotKind.Wall });
+            Assert.IsTrue(furniture.BuyAndPlace(Wall("furn_deco_frame", 10)));
+            int gold = economy.Gold;
+            bool second = furniture.BuyAndPlace(Wall("furn_deco_clock", 10));
+            Assert.IsFalse(second, "빈 벽 칸이 없으면 구매 실패");
+            Assert.AreEqual(FurnitureManager.FailReason.NoSpace, furniture.LastFail);
+            Assert.AreEqual(gold, economy.Gold, "실패하면 골드는 안 빠진다");
+        }
+
+        static FurnitureData Wall(string id, int price)
+        {
+            var f = ScriptableObject.CreateInstance<FurnitureData>();
+            f.furnitureId = id;
+            f.displayNameKey = "furn." + id;
+            f.type = FurnitureType.Decoration;
+            f.wallMounted = true;
+            f.price = price;
+            return f;
         }
     }
 }
