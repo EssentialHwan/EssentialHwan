@@ -174,16 +174,24 @@ namespace YeogiCafe.Observation
                     TryGuess(catId, it.axis, it.guessId, true, day, out int b);
                     bonusGold += b;
                     obsRec.Get(it.axis).pendingGuess = null;
+                    obsRec.Get(it.axis).pencilOk = null;
                 }
                 if (items.Count >= 2) bonusGold += cfg.discoveryBonusGold * (items.Count - 1);   // 한꺼번에 맞힌 보너스
                 return true;
             }
+            // 11/09 연필 방식: 칸마다 결과를 알려 준다. 맞은 칸은 연필 ○(답은 그대로 둠), 틀린 칸은 ×(답을 비움).
+            // 기록·보상·이야기는 전부 맞힌 날 한꺼번에 — 하루 한 번 규칙은 그대로라 너무 빨리 끝나지 않는다.
             foreach (var it in items)
             {
                 var r = obsRec.Get(it.axis);
                 r.lastGuessDay = day;
-                // 한 칸만 냈을 때만 무엇이 틀렸는지 알 수 있다
-                if (items.Count == 1 && !r.wrongGuesses.Contains(it.guessId)) r.wrongGuesses.Add(it.guessId);
+                if (it.correct) r.pencilOk = it.guessId;
+                else
+                {
+                    if (!r.wrongGuesses.Contains(it.guessId)) r.wrongGuesses.Add(it.guessId);
+                    r.pendingGuess = null;
+                    if (r.pencilOk == it.guessId) r.pencilOk = null;
+                }
             }
             return false;
         }

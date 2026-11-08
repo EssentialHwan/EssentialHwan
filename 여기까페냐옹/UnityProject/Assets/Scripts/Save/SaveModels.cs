@@ -255,6 +255,7 @@ namespace YeogiCafe.Save
         public List<string> wrongGuesses = new();   // 틀린 추리(다시 고를 때 × 표시)
         public int lastGuessDay = -1;               // 하루 한 번만 추리 가능(찍기 방지)
         public string pendingGuess;                 // 묶음 채점 전 플레이어가 골라 둔 답
+        public string pencilOk;                     // 묶음 채점에서 맞은 칸(연필 ○, 11/09) — 전부 맞혀야 확정
 
         public ClueTally GetOrCreate(string target)
         {

@@ -982,3 +982,5 @@ opt.delivery,배달냥 손님,Delivery cat,外卖猫客人,配達ネコのお客
 opt.observe.note,"관찰 모드: 손님이 주문 없이 좋아하는 자리에 앉아 쉬고 놀다 가요. 매출·음식 단서·배달냥·심사원은 없어요.","Watch mode: guests come to sit and play without ordering. No sales, food clues, delivery cat or inspector.","观察模式：客人不点单，只来坐坐玩玩。没有收入、食物线索、外卖猫和评审员。","観察モード：お客は注文せず、好きな席で休んで遊んで帰ります。売上・食べ物の手がかり・配達ネコ・審査員はなし。"
 opt.observe.firstweek,첫 주가 지나면 켤 수 있어요.,Available after the first week.,第一周结束后可以开启。,最初の1週間が終わると使えます。
 opt.observe.locked,8일차부터,From day 8,第8天起,8日目から
+ui.guess.pencil,"{name}: {t}개 중 {n}개 맞았어요! ○는 그대로, × 칸만 다시 골라 내일 확인해요","{name}: {n} of {t} right! Keep the ○, re-pick the × and check again tomorrow","{name}：{t}个里答对了{n}个！○保留，只重选×的格子，明天再确认","{name}：{t}問中{n}問正解！○はそのまま、×だけ選び直して明日また確認"
+ui.guess.nofav,좋아하는 게 없나?,Nothing it likes yet?,没有喜欢的？,好きなのがない？

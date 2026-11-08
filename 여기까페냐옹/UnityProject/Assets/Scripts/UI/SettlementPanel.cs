@@ -22,7 +22,24 @@ namespace YeogiCafe.UI
         WheelList cardsList;
 
         // 밤의 관찰 일지 연출: 플레이어 고양이 앞발이 [기록]을 체크하고, 하루를 마칠 때 손도장을 찍는다.
-        RectTransform paw; Image pawImg; Sprite pawBack, pawPress, pawPads, checkSprite, stampSprite;
+        RectTransform paw; Image pawImg; Sprite pawBack, pawPress, pawPads, checkSprite, stampSprite, pencilSprite;
+
+        // 연필로 그린 듯한 점선 동그라미(맞은 칸, 아직 확정 전) — 11/09
+        static Sprite PencilRing()
+        {
+            const int N = 32; var tex = new Texture2D(N, N, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
+            var clear = new Color32(0, 0, 0, 0); var ink = new Color32(120, 92, 74, 230);
+            for (int y = 0; y < N; y++)
+                for (int x = 0; x < N; x++)
+                {
+                    float dx = x - 15.5f, dy = y - 15.5f, d = Mathf.Sqrt(dx * dx + dy * dy);
+                    float ang = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg + 180f;
+                    bool ring = d > 11.2f && d < 13.6f, dash = ((int)(ang / 22.5f)) % 2 == 0;
+                    tex.SetPixel(x, y, ring && dash ? ink : clear);
+                }
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, N, N), new Vector2(0.5f, 0.5f), 32f);
+        }
         RectTransform stampBox; Image stampImg; Text stampLabel;
         bool busy;
         public SettlementPanel(GameUiController owner, Transform parent)
@@ -113,6 +130,7 @@ namespace YeogiCafe.UI
             pawPads = art ? PawArt.Get(PawArt.Groom0, false) : RuntimeSprites.Get("paw_pads", PawDrawing.Pads);
             checkSprite = RuntimeSprites.Get("ui_check", PawDrawing.Check);
             stampSprite = RuntimeSprites.Get("ui_pawstamp", PawDrawing.Stamp);
+            pencilSprite = PencilRing();
 
             // 앞발(화면 아래에서 올라옴). 피벗 = 발가락 끝 → 목표 지점에 발끝이 닿는다.
             var pg = new GameObject("PlayerPaw", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
@@ -403,6 +421,8 @@ namespace YeogiCafe.UI
                 if (all) owner.StartCoroutine(PopCheck(btnRt));
             });
             string catName = L.Get($"cat.{cat.catId}.name");
+            if (all) yield return StampCells(cat.catId, items);
+            else YeogiCafe.Audio.SoundManager.Sfx("sfx_mrrng", 0.45f, 0.03f);
             if (all)
             {
                 if (bonus > 0 && owner.Economy != null) owner.Economy.AddGold(bonus);
@@ -410,12 +430,45 @@ namespace YeogiCafe.UI
                 cardsInfo.text = L.Get("ui.guess.allok", ("name", catName), ("g", bonus.ToString()));
                 YeogiCafe.Core.GameEvents.Raise(YeogiCafe.Core.GameEvents.GuessCorrect, cat.catId);
             }
-            else cardsInfo.text = L.Get("ui.guess.partial", ("name", catName), ("n", n.ToString()), ("t", items.Count.ToString()));
+            else cardsInfo.text = L.Get("ui.guess.pencil", ("name", catName), ("n", n.ToString()), ("t", items.Count.ToString()));
             yield return new WaitForSecondsRealtime(0.3f);
             busy = false;
             string keep = cardsInfo.text;
             Show(true);
             cardsInfo.text = keep;
+        }
+
+        // 전부 맞힌 날: 칸마다 분홍 손도장이 쾅쾅 — 정답 연출의 중심(11/09)
+        IEnumerator StampCells(string catId, List<ObservationManager.BatchItem> items)
+        {
+            var row = cardsContent.Find("Card_" + catId);
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.7f);
+            foreach (var it in items)
+            {
+                var cell = row != null ? row.Find($"Cell_{it.axis}") : null;
+                if (cell == null) continue;
+                var go = new GameObject("Stamp", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                go.transform.SetParent(rootGo.transform, false);
+                var rt = (RectTransform)go.transform; var img = go.GetComponent<Image>();
+                img.sprite = stampSprite; img.preserveAspect = true; img.raycastTarget = false; img.color = new Color(1f, 0.62f, 0.72f, 0.95f);
+                rt.position = cell.position + new Vector3(-((RectTransform)cell).rect.width * cell.lossyScale.x * 0.32f, 0, 0);
+                rt.localEulerAngles = new Vector3(0, 0, Random.Range(-16f, 16f));
+                YeogiCafe.Audio.SoundManager.Sfx("sfx_stamp", 0.6f, 0.05f);
+                for (float t = 0; t < 0.12f; t += Time.unscaledDeltaTime) { float s = Mathf.Lerp(2.2f, 1f, t / 0.12f); rt.sizeDelta = new Vector2(40, 40) * s; yield return null; }
+                rt.sizeDelta = new Vector2(40, 40);
+                yield return new WaitForSecondsRealtime(0.16f);
+                owner.StartCoroutine(FadeOut(go, 0.9f));
+            }
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_trill", 0.6f);
+            yield return new WaitForSecondsRealtime(0.25f);
+        }
+
+        IEnumerator FadeOut(GameObject go, float hold)
+        {
+            yield return new WaitForSecondsRealtime(hold);
+            var img = go != null ? go.GetComponent<Image>() : null;
+            for (float t = 0; img != null && t < 0.25f; t += Time.unscaledDeltaTime) { var c = img.color; c.a = 0.95f * (1f - t / 0.25f); img.color = c; yield return null; }
+            if (go != null) Object.Destroy(go);
         }
 
         static string AxisLabel(PrefAxis axis) =>
@@ -448,13 +501,26 @@ namespace YeogiCafe.UI
             }
 
             bool picked = !string.IsNullOrEmpty(rec.pendingGuess);
-            string stateText = picked
-                ? $"{AxisLabel(axis)} {ObservationCardBuilder.ValueName(axis, rec.pendingGuess)}?"
+            bool pencil = picked && rec.pencilOk == rec.pendingGuess;          // 어제 묶음 채점에서 맞은 칸(연필 ○)
+            // 좌석·시설이 '?'에 멈춘 이유: 좋아하는 게 카페에 없어 아쉬운 단서만 쌓인 경우 — 그렇다고 알려 준다(11/09)
+            bool noFav = !picked && rec.state == ObsState.Unknown && axis != PrefAxis.Food && rec.clueWeights.Exists(t => t.fallbackSum > 0f);
+            string stateText = pencil ? ObservationCardBuilder.ValueName(axis, rec.pendingGuess)
+                : picked ? $"{AxisLabel(axis)} {ObservationCardBuilder.ValueName(axis, rec.pendingGuess)}?"
+                : noFav ? L.Get("ui.guess.nofav")
                 : $"{AxisLabel(axis)} {ObservationCardBuilder.AxisText(rec)}";
+            float textX = 0f;
+            if (pencil)
+            {
+                var pg = new GameObject("Pencil", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                pg.transform.SetParent(cell.transform, false);
+                var pi = pg.GetComponent<Image>(); pi.sprite = pencilSprite; pi.raycastTarget = false;
+                UiFactory.SetRect((RectTransform)pg.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0), new Vector2(30, 30));
+                textX = 32f;
+            }
             var stateLbl = UiFactory.Label("State", cell.transform, stateText, 15, TextAnchor.MiddleLeft, picked ? UiFactory.Ink : UiFactory.WoodDark);
-            UiFactory.FitOneLine(stateLbl, cellW - 8 - 66 - 4, 11);                 // 버튼과 겹치지 않게 한 줄로
+            UiFactory.FitOneLine(stateLbl, cellW - 8 - 66 - 4 - textX, 11);                 // 버튼과 겹치지 않게 한 줄로
             UiFactory.SetRect((RectTransform)stateLbl.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 0.5f),
-                              new Vector2(0, 0), new Vector2(-66, 0));
+                              new Vector2(textX, 0), new Vector2(-66 - textX, 0));
 
             var obs = owner.Obs;
             int day = owner.Day != null ? owner.Day.CurrentDay : 0;

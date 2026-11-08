@@ -9,6 +9,8 @@ namespace YeogiCafe.AI
     // 이 스켈레톤은 컴파일·구조 검증용. 이동은 NavMeshAgent 연결 지점만 표시.
     public class CatBrain : MonoBehaviour
     {
+        // 취향 행동(최애 메뉴를 먹음·좋아하는 자리에 앉음·좋아하는 시설에서 놂) — 머리 위 핑크 하트(11/09). 0 음식 · 1 좌석 · 2 시설
+        public event System.Action<int> OnLikedSomething;
         [Header("주입")]
         public CatData data;
         public BalanceConfig cfg;
@@ -176,6 +178,7 @@ namespace YeogiCafe.AI
                 UsedPreferredSeat = !seatFallback;
                 Obs?.RecordClue(data.catId, ClueType.SeatUse, SeatKey(seat), seatFallback,
                                 Narrate(NarrationCatalog.SeatKey(seat.Tags, seatFallback)));
+                if (!seatFallback && !IsInspector) OnLikedSomething?.Invoke(1);
                 sitDuration = Mathf.Min(BaseSit() * PersonalityFactor(), cfg.maxSitDuration);
                 sitTimer = 0;
                 if (Mover != null) { Mover.MoveTo(seat.WorldPos); walkingToSeat = true; }
@@ -196,6 +199,7 @@ namespace YeogiCafe.AI
             // 관찰 훅: 좌석 이용 (fallback이면 약한 단서). 서술은 NarrationCatalog로 세분화.
             Obs?.RecordClue(data.catId, ClueType.SeatUse, SeatKey(seat), seatFallback,
                             Narrate(NarrationCatalog.SeatKey(seat.Tags, seatFallback)));
+            if (!seatFallback && !IsInspector) OnLikedSomething?.Invoke(1);
             // 창가 계열이면 응시 단서 (강한 좌석 신호)
             if (!seatFallback && HasTag(seat, SeatTag.OutsideView))
                 Obs?.RecordClue(data.catId, ClueType.IdleGaze, SeatKey(seat), false,
@@ -301,6 +305,7 @@ namespace YeogiCafe.AI
                     ServedFavorite = currentTicket.menu != null && currentTicket.menu.menuId == data.foodFavoriteMenuId;
                 }
                 else if (currentTicket.vague) MindRead = true;
+                if (ServedFavorite && !IsInspector) OnLikedSomething?.Invoke(0);   // 최애 메뉴를 받아 먹을 때 하트
                 state = CatState.Eat; return;
             }
             if (currentTicket.state == YeogiCafe.Order.TicketState.Cancelled)
@@ -506,6 +511,7 @@ namespace YeogiCafe.AI
             Obs?.RecordClue(data.catId, ClueType.FacilityUse, FacilityKey(f),
                             isFallback: !pref,
                             Narrate(NarrationCatalog.FacilityKey(f.FacilityId, f.Tags)));
+            if (pref) OnLikedSomething?.Invoke(2);
         }
 
         void TickFacility(float dt)

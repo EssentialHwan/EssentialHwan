@@ -164,12 +164,25 @@ namespace YeogiCafe.Visual
                              : (data.HasPersonality(PersonalityTag.Active) || data.HasPersonality(PersonalityTag.Playful)) ? 1.12f : 1f;
             Play("sit");
             brain.OnFacilityUse += HandleFacilityUse;
+            brain.OnLikedSomething += HandleLiked;
             lastPos = transform.position;
+        }
+
+        // 취향 행동 하트: 좌석은 걸어가서 앉은 뒤(1.6초), 음식·시설은 바로 뒤(0.5초)에 뜬다
+        float heartT = -1f;
+        void HandleLiked(int axis) => heartT = axis == 1 ? 1.6f : 0.5f;
+        void TickHeart(float dt)
+        {
+            if (heartT < 0f) return;
+            heartT -= dt;
+            if (heartT >= 0f) return;
+            ShowEmote(EmoteDrawing.Kind.Heart);
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_boop", 0.35f, 0.04f);
         }
 
         void OnDestroy()
         {
-            if (brain != null) brain.OnFacilityUse -= HandleFacilityUse;
+            if (brain != null) { brain.OnFacilityUse -= HandleFacilityUse; brain.OnLikedSomething -= HandleLiked; }
         }
 
         // 루프 클립 전환. 같은 클립이면 이어서 재생(끊김 방지).
@@ -457,6 +470,7 @@ namespace YeogiCafe.Visual
             if (!exiting && fp == CatBrain.FacPhase.Perched && FacHas(FacilityTag.Box) && facT > JumpUpTime * 0.6f)
                 sr.sortingOrder = YSort.Order(pos.y) - 2;
             if (clip == "sleep" && !acting) { zzzTimer -= dt; if (zzzTimer <= 0f) { zzzTimer = 3.5f; ShowEmote(EmoteDrawing.Kind.Zzz); } }
+            TickHeart(dt);
             TickEmote(dt);
 
             // ── 퇴장 처리 ──
