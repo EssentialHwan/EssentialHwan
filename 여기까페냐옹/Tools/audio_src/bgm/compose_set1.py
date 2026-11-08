@@ -3,16 +3,28 @@ import mido, sys
 BPM, TPB = 100, 480
 def T(b): return int(b * TPB)
 CH = { 'F':[53,57,60], 'Am':[57,60,64], 'Bb':[58,62,65], 'C':[48,52,55], 'Dm':[50,53,57], 'Gm7':[55,58,62,65], 'C7':[48,52,55,58], 'Gm':[55,58,62] }
-PROG = ['F','Am','Bb','C','F','Dm','Gm7','C7','Bb','C','Am','Dm','Gm','C','F','C7']
+PROG_A = ['F','Am','Bb','C','F','Dm','Gm7','C7','Bb','C','Am','Dm','Gm','C','F','C7']
+PROG_B = ['Dm','Bb','F','C','Dm','Gm','C','C7']
+PROG = PROG_A + PROG_B + PROG_A[8:]
 ROOT = {'F':41,'Am':45,'Bb':46,'C':48,'Dm':38,'Gm7':43,'C7':48,'Gm':43}
 MEL = [[(72,1),(69,.5),(72,.5),(77,1),(76,1)],[(74,1.5),(72,.5),(69,2)],[(70,1),(74,.5),(77,.5),(74,1),(70,1)],[(72,3),(None,1)],
        [(69,.5),(72,.5),(77,1),(79,.5),(77,.5),(76,1)],[(74,1),(77,1),(81,2)],[(79,1),(77,.5),(74,.5),(70,1),(74,1)],[(72,2),(70,1),(67,1)],
        [(74,1.5),(72,.5),(70,1),(74,1)],[(76,1.5),(74,.5),(72,2)],[(72,1),(76,1),(81,1),(79,1)],[(77,2),(74,2)],
        [(70,1),(74,1),(79,1),(77,1)],[(76,1),(74,1),(72,1),(70,1)],[(69,1),(72,1),(77,2)],[(76,1),(74,1),(72,2)]]
-BARS = 16
+MEL_B = [[(74,1),(76,.5),(77,.5),(81,2)],[(79,1),(77,1),(74,2)],[(72,.5),(74,.5),(77,1),(76,1),(72,1)],[(74,2),(72,1),(70,1)],
+         [(69,1),(74,1),(77,1),(76,1)],[(74,1.5),(70,.5),(67,2)],[(72,1),(74,1),(76,1),(79,1)],[(77,1),(76,1),(74,1),(72,1)]]
+MEL = MEL + MEL_B + MEL[8:]
+BARS = 32
+import random
 def build(version, loops=2):
     ev = []   # (tick, ch, note, vel, dur_ticks)
-    def note(t, ch, n, v, d): ev.append((T(t), ch, n, v, T(d)))
+    rnd = random.Random(sum(map(ord, version)))
+    swing = version == 'evening'
+    def note(t, ch, n, v, d):
+        if swing and abs((t % 1) - 0.5) < 1e-6: t += 0.08                 # 저녁: 뒷박을 살짝 늦춰 스윙
+        jitter = 0 if ch == 9 and version == 'noon' and t % 1 == 0 else rnd.randint(-8, 8)
+        v = max(1, min(127, int(v * (0.92 + rnd.random() * 0.16))))
+        ev.append((max(0, T(t) + jitter), ch, n, v, T(d)))
     progs = {}
     if version == 'morning':  progs = {0:9, 1:24, 2:32}            # 글로켄슈필 멜로디 · 나일론 기타 아르페지오 · 어쿠스틱 베이스
     if version == 'noon':     progs = {0:12, 1:24, 2:32, 3:9}      # 마림바 멜로디 · 기타 스트럼 · 베이스 · 글로켄 반짝
@@ -42,6 +54,10 @@ def build(version, loops=2):
                 walk = [r, r + 4 if ch not in ('Am','Dm','Gm','Gm7') else r + 3, r + 7, r + 5]
                 for k, n in enumerate(walk): note(t0 + k, 2, n, 70, .9)
                 if b % 2 == 0: note(t0, 3, tones[-1] + 24, 50, 1)
+                if 16 <= b < 24 and b % 2 == 1:                                    # B: 글로켄이 멜로디에 대답
+                    for k, n in enumerate([tones[2] + 24, tones[1] + 24, tones[0] + 24]): note(t0 + 2.5 + k * .5, 3, n, 56, .45)
+                if b in (7, 15, 23, 31):                                           # 드럼 필
+                    for k, n in enumerate([45, 45, 43, 43]): note(t0 + 3 + k * .25, 9, n, 48 + k * 4, .2)
                 for k in range(8): note(t0 + k * .5, 9, 42, 38 if k % 2 else 50, .25)       # 하이햇
                 note(t0, 9, 36, 60, .5); note(t0 + 2, 9, 36, 52, .5)                        # 킥
                 note(t0 + 1, 9, 37, 40, .25); note(t0 + 3, 9, 37, 40, .25)                  # 사이드스틱
@@ -58,7 +74,11 @@ def build(version, loops=2):
     tr = mido.MidiTrack(); mid.tracks.append(tr)
     tr.append(mido.MetaMessage('set_tempo', tempo=mido.bpm2tempo(BPM)))
     for c, p in progs.items(): tr.append(mido.Message('program_change', channel=c, program=p, time=0))
-    tr.append(mido.Message('control_change', channel=0, control=91, value=50, time=0))
+    for c, pan, rev, cho in [(0, 70, 62, 0), (1, 42, 48, 18), (2, 64, 20, 0), (3, 92, 70, 0), (9, 64, 30, 0)]:
+        tr.append(mido.Message('control_change', channel=c, control=10, value=pan, time=0))
+        tr.append(mido.Message('control_change', channel=c, control=91, value=rev, time=0))
+        tr.append(mido.Message('control_change', channel=c, control=93, value=cho, time=0))
+    tr.append(mido.Message('control_change', channel=0, control=91, value=62, time=0))
     tr.append(mido.Message('control_change', channel=1, control=91, value=40, time=0))
     tr.append(mido.Message('control_change', channel=2, control=7, value=95, time=0))
     msgs = []
