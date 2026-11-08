@@ -422,7 +422,7 @@ namespace YeogiCafe.UI
             });
             string catName = L.Get($"cat.{cat.catId}.name");
             if (all) yield return StampCells(cat.catId, items);
-            else YeogiCafe.Audio.SoundManager.Sfx("sfx_mrrng", 0.45f, 0.03f);
+            else { YeogiCafe.Audio.SoundManager.Sfx("sfx_wrong", 0.55f, 0.02f); YeogiCafe.Audio.SoundManager.Sfx("sfx_mrrng", 0.3f, 0.03f); }
             if (all)
             {
                 if (bonus > 0 && owner.Economy != null) owner.Economy.AddGold(bonus);
@@ -442,7 +442,7 @@ namespace YeogiCafe.UI
         IEnumerator StampCells(string catId, List<ObservationManager.BatchItem> items)
         {
             var row = cardsContent.Find("Card_" + catId);
-            YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.7f);
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_correct", 0.7f, 0f);
             foreach (var it in items)
             {
                 var cell = row != null ? row.Find($"Cell_{it.axis}") : null;

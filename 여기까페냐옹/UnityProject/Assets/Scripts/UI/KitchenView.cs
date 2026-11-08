@@ -482,8 +482,8 @@ namespace YeogiCafe.UI
                     hint.text = L.Get("ui.kitchen.cooking", ("menu", MenuName(ticket)));
                     break;
                 case OrderSystem.ToolResult.Served:
-                    YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
-                    YeogiCafe.Audio.SoundManager.Sfx("sfx_coin", 0.35f, 0.02f);
+                    YeogiCafe.Audio.SoundManager.Sfx("sfx_serve", 0.6f, 0.04f);      // 접시 딸깍
+                    YeogiCafe.Audio.SoundManager.Sfx("sfx_coin", 0.3f, 0.02f);
                     hint.text = L.Get("ui.kitchen.served", ("name", CatName(ticket)), ("menu", MenuName(ticket)))
                               + "  " + YeogiCafe.Food.RecipeBook.StarRich(ticket.stars) + (ticket.stale ? " " + L.Get("ui.kitchen.stale") : "");
                     Float(AbsPos(w.rt) + new Vector2(0, 150), YeogiCafe.Food.RecipeBook.StarText(ticket.stars), YeogiCafe.Food.RecipeBook.StarColor(ticket.stars));

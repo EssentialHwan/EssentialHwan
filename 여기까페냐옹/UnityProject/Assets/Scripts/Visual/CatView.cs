@@ -177,7 +177,7 @@ namespace YeogiCafe.Visual
             heartT -= dt;
             if (heartT >= 0f) return;
             ShowEmote(EmoteDrawing.Kind.Heart);
-            YeogiCafe.Audio.SoundManager.Sfx("sfx_boop", 0.35f, 0.04f);
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_heart", 0.45f, 0.03f, "heart", 0.25f);
         }
 
         void OnDestroy()

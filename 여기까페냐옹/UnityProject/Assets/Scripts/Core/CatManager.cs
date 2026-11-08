@@ -61,6 +61,7 @@ namespace YeogiCafe.Core
             go.transform.position = cafe.Entrance;
             view.Init(data);
             active.Add(brain);
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_enter", 0.4f, 0.03f, "enter", 0.8f);   // 문 종 딸랑(몰려 들어와도 0.8초에 한 번)
             OnCatSpawned?.Invoke(brain);
             return brain;
         }

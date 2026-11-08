@@ -7,7 +7,8 @@ namespace YeogiCafe.Audio
 {
     // 배경음악(시간대 × 날씨 9곡 + 밤 정산 1곡, 3초 크로스페이드) + 빗소리 환경음 + 효과음.
     // 음원: Resources/Audio/bgm_{시간대}_{날씨}.ogg (0 아침·1 점심·2 저녁 / 0 맑음·1 흐림·2 비), bgm_night, amb_rain, sfx_*.
-    // 지금 음원은 Tools/synth.py·sfx.py로 직접 합성한 임시음(저작권 문제 없음). 같은 이름으로 덮어쓰면 정식 음원으로 교체된다.
+    // 11/09 BGM 세트1(Tools/audio_src/bgm): 9곡이 같은 멜로디·화성·템포·길이(76.8초)의 다른 편곡이라
+    // 시간대·날씨가 바뀌면 듣던 마디에서 그대로 이어 받아 크로스페이드 → 노래가 끊기지 않고 악기만 바뀐다.
     public class SoundManager : MonoBehaviour
     {
         public static SoundManager I { get; private set; }
@@ -17,7 +18,7 @@ namespace YeogiCafe.Audio
         readonly List<AudioSource> pool = new();
         readonly Dictionary<string, AudioClip> clips = new();
         readonly Dictionary<string, float> lastPlayed = new();
-        string bgmKey; float xfade = 1f; bool aActive = true;
+        string bgmKey; float xfade = 1f, xfadeDur = 3f; bool aActive = true;
         DayManager day;
         public static bool Muted;
 
@@ -73,22 +74,23 @@ namespace YeogiCafe.Audio
                 if (clip != null)
                 {
                     var from = aActive ? bgmA : bgmB;
-                    bool sameSong = bgmKey != null && want.Length == bgmKey.Length && want.StartsWith(bgmKey.Substring(0, bgmKey.Length - 1));
                     bgmKey = want;
                     aActive = !aActive;
                     var to = aActive ? bgmA : bgmB;
                     to.clip = clip; to.volume = 0f;
-                    // 같은 시간대에서 날씨만 바뀌면(bgm_1_0 → bgm_1_2) 같은 노래의 다른 편곡이라 길이가 같다 → 듣던 자리에서 이어 튼다
+                    // 길이가 같으면 같은 노래의 다른 편곡 → 듣던 자리에서 이어 튼다(아침→점심, 맑음→비 모두)
                     to.Play();
-                    if (sameSong && from.isPlaying && from.clip != null && from.clip.samples == clip.samples) to.timeSamples = from.timeSamples;
+                    bool sync = from.isPlaying && from.clip != null && from.clip.samples == clip.samples;
+                    if (sync) to.timeSamples = from.timeSamples;
+                    xfadeDur = sync ? 6f : 3f;          // 편곡만 바뀔 땐 6초에 걸쳐 천천히 섞는다
                     xfade = 0f;
                 }
                 else bgmKey = want;
             }
-            xfade = Mathf.Min(1f, xfade + Time.unscaledDeltaTime / 3f);
+            xfade = Mathf.Min(1f, xfade + Time.unscaledDeltaTime / xfadeDur);
             var on = aActive ? bgmA : bgmB; var off = aActive ? bgmB : bgmA;
-            on.volume = BgmVolume * xfade;
-            off.volume = BgmVolume * (1f - xfade);
+            on.volume = BgmVolume * Mathf.Sin(xfade * Mathf.PI * 0.5f);          // 등전력: 중간에 소리가 꺼지지 않게
+            off.volume = BgmVolume * Mathf.Cos(xfade * Mathf.PI * 0.5f);
             if (xfade >= 1f && off.isPlaying) off.Stop();
 
             // 환경음: 비 오는 날 빗소리 / 비 안 오는 여름 낮 매미(살짝, 저녁엔 더 작게). 바뀔 땐 줄였다가 갈아 끼운다.

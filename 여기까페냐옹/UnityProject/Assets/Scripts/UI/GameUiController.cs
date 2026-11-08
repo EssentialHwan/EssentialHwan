@@ -346,7 +346,7 @@ namespace YeogiCafe.UI
             os.OnLeftoverEaten += t => ShowToast(L.Get("ui.order.leftover", ("menu", t.menu != null ? L.Get($"menu.{t.menu.menuId}") : "")));
             os.OnTicketPlaced += _ => guide?.OnOrderPlaced();
             os.OnTicketServed += _ => guide?.OnServed();
-            os.OnTicketReady += _ => YeogiCafe.Audio.SoundManager.Sfx("sfx_bell", 0.45f, 0.02f);
+            os.OnTicketReady += _ => YeogiCafe.Audio.SoundManager.Sfx("sfx_cookdone", 0.5f, 0.01f, "cookdone", 0.3f);   // 요리 완성 '띵!'
             ordersHooked = true;
         }
 
