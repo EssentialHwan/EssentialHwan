@@ -88,7 +88,7 @@ namespace YeogiCafe.AI
 
         // 이동(선택). null이면 즉시 도착으로 간주(테스트/프로토).
         public ICatMover Mover;
-        bool walkingToSeat;
+        bool walkingToSeat, likedSeatPending;
 
         void Update()
         {
@@ -178,7 +178,7 @@ namespace YeogiCafe.AI
                 UsedPreferredSeat = !seatFallback;
                 Obs?.RecordClue(data.catId, ClueType.SeatUse, SeatKey(seat), seatFallback,
                                 Narrate(NarrationCatalog.SeatKey(seat.Tags, seatFallback)));
-                if (!seatFallback && !IsInspector) OnLikedSomething?.Invoke(1);
+                likedSeatPending = !seatFallback && !IsInspector;   // 하트는 자리에 도착해 앉을 때
                 sitDuration = Mathf.Min(BaseSit() * PersonalityFactor(), cfg.maxSitDuration);
                 sitTimer = 0;
                 if (Mover != null) { Mover.MoveTo(seat.WorldPos); walkingToSeat = true; }
@@ -199,7 +199,7 @@ namespace YeogiCafe.AI
             // 관찰 훅: 좌석 이용 (fallback이면 약한 단서). 서술은 NarrationCatalog로 세분화.
             Obs?.RecordClue(data.catId, ClueType.SeatUse, SeatKey(seat), seatFallback,
                             Narrate(NarrationCatalog.SeatKey(seat.Tags, seatFallback)));
-            if (!seatFallback && !IsInspector) OnLikedSomething?.Invoke(1);
+            likedSeatPending = !seatFallback && !IsInspector;   // 하트는 자리에 도착해 앉을 때
             // 창가 계열이면 응시 단서 (강한 좌석 신호)
             if (!seatFallback && HasTag(seat, SeatTag.OutsideView))
                 Obs?.RecordClue(data.catId, ClueType.IdleGaze, SeatKey(seat), false,
@@ -216,6 +216,7 @@ namespace YeogiCafe.AI
             // 이동 중이면 도착 대기
             if (walkingToSeat && Mover != null && !Mover.HasArrived) return;
             walkingToSeat = false;
+            if (likedSeatPending) { likedSeatPending = false; OnLikedSomething?.Invoke(1); }
             if (stealFrom != null)
             {
                 if (stealFrom != null && !stealFrom.IsFinished) { OnSeatStolen?.Invoke(this, stealFrom); stealFrom.Flee(1.5f); }

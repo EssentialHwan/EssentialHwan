@@ -168,9 +168,9 @@ namespace YeogiCafe.Visual
             lastPos = transform.position;
         }
 
-        // 취향 행동 하트: 좌석은 걸어가서 앉은 뒤(1.6초), 음식·시설은 바로 뒤(0.5초)에 뜬다
+        // 취향 행동 하트: 좌석은 도착해 앉는 순간(CatBrain이 그때 알림), 음식·시설은 0.5초 뒤
         float heartT = -1f;
-        void HandleLiked(int axis) => heartT = axis == 1 ? 1.6f : 0.5f;
+        void HandleLiked(int axis) => heartT = axis == 1 ? 0.35f : 0.5f;
         void TickHeart(float dt)
         {
             if (heartT < 0f) return;
