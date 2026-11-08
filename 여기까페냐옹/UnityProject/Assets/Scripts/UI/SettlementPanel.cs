@@ -183,7 +183,7 @@ namespace YeogiCafe.UI
                 var sm = Object.FindObjectOfType<YeogiCafe.Save.SaveManager>(); if (sm != null) sm.Save(s);
                 Object.Destroy(storyGo); storyGo = null;
             });
-            if (pass) YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.6f, 0.02f);
+            if (pass) YeogiCafe.Audio.SoundManager.Sfx("sfx_story", 0.55f, 0f);
         }
 
         void OpenStory(StoryDTO st)

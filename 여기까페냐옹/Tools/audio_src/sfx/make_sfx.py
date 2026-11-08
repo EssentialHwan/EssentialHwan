@@ -28,7 +28,7 @@ def inst(program, notes, length, vel=90, ch=0):
     for t, _, m in ev: m.time = t - last; last = t; tr.append(m)
     tr.append(mido.MetaMessage('end_of_track', time=int(length * 960) - last + 960))
     p = os.path.join(TMP, 'm.mid'); w = os.path.join(TMP, 'm.wav'); mid.save(p)
-    subprocess.run(['fluidsynth', '-ni', '-g', '0.8', '-r', str(SR), '-F', w, SF2, p], capture_output=True)
+    subprocess.run(['fluidsynth', '-ni', '-C', '0', '-g', '0.8', '-r', str(SR), '-F', w, SF2, p], capture_output=True)
     a, _ = sf.read(w, always_2d=True)
     return fit(a, length)
 
@@ -105,3 +105,56 @@ finish('sfx_heart', bank('pro_pop/bloop', L) * 0.6
 L = 0.6
 finish('sfx_coin', inst(9, [(0, 'E7', .25, .9), (0.07, 'A7', .4, 1)], L, vel=80)
        + bank('pro_click/tink', L) * 0.5 + at(bank('pro_click/tink', L, seed=7), 0.07, L) * 0.4, peak_db=-5)
+
+# ───────── 2차(11/09): 나머지 UI·주방 소리도 같은 결로 ─────────
+rng = np.random.default_rng(11)
+# 8) 구매(도구·테마·시즌 메뉴 연구): 동전 + 글로켄 C6→F6 '찰칵-딩'
+L = 0.9
+finish('sfx_buy', bank('pro_click/tink', L) * 0.5
+       + at(inst(9, [(0, 'C6', .3, .85), (0.08, 'F6', .6, 1)], L, vel=78), 0.03, L), peak_db=-4, fade=0.25)
+
+# 9) 강화(레시피·가구 별, 후원 단계): 마림바 F-A-C 빠르게 + 끝 글로켄 F7 반짝
+L = 1.1
+up = [(0, 'F5', .2, .8), (0.06, 'A5', .2, .9), (0.12, 'C6', .2, 1), (0.18, 'F6', .5, 1.05)]
+finish('sfx_upgrade', inst(12, up, L, vel=85) + at(inst(9, [(0, 'F7', .5, 1)], 0.8, vel=60), 0.2, L) * 0.6, peak_db=-3, fade=0.3)
+
+# 10) 카페 확장(공간이 넓어짐): 하프 글리산도 F장조 두 옥타브 + 은은한 쉬머
+L = 2.2
+gl = [(i * 0.045, n, 1.2, 0.7 + i * 0.03) for i, n in enumerate(['F4', 'A4', 'C5', 'F5', 'A5', 'C6', 'F6', 'A6', 'C7'])]
+finish('sfx_reveal', inst(46, gl, L, vel=88) + at(inst(9, [(0, 'F6', 1, 1), (0.02, 'C7', 1, .8)], 1.4, vel=55), 0.45, L) * 0.5
+       + bank('pro_shimmer/m4', L) * 0.18, peak_db=-3, fade=0.6)
+
+# 11) 이야기 카드: 오르골이 BGM 첫 소절(C·A·C·F)을 살짝
+L = 1.8
+finish('sfx_story', inst(10, [(0, 'C6', .4, .9), (0.18, 'A5', .4, .8), (0.36, 'C6', .4, .9), (0.6, 'F6', 1, 1)], L, vel=80),
+       peak_db=-5, fade=0.5)
+
+# 12) 엔딩·체험판 끝: 피아노 F장조 펼친화음 + 현 패드 + 멜로디 꼬리
+L = 3.2
+pno = [(0, 'F3', 2.8, .8), (0.08, 'C4', 2.7, .7), (0.16, 'A4', 2.6, .75), (0.24, 'F5', 2.5, .8), (0.6, 'A5', .5, .9), (1.0, 'C6', 2.0, 1)]
+finish('sfx_finale', inst(0, pno, L, vel=80) + inst(48, [(0, 'F4', 3, 1), (0, 'A4', 3, 1), (0, 'C5', 3, 1)], L, vel=45) * 0.6,
+       peak_db=-3, fade=0.8)
+
+# 13) 사진 찍기: 카메라 셔터
+L = 0.35
+finish('sfx_shutter', bank('shutter/film', L), peak_db=-4)
+
+# 14) 사진 저장: 칼림바 A5·C6 두 음
+L = 0.9
+finish('sfx_saved', inst(108, [(0, 'A5', .5, .9), (0.09, 'C6', .7, 1)], L, vel=80), peak_db=-5, fade=0.3)
+
+# 15) 버튼 클릭: 부드러운 딸깍(음정 없음 — 자주 나니까 귀에 안 걸리게)
+L = 0.12
+finish('sfx_click', bank('pro_click/soft', L) * 0.8 + bank('pro_pop/thup', L) * 0.3, peak_db=-6, fade=0.04)
+
+# 16) 알림 토스트: 뽁 + 첼레스타 F6 한 음(작게)
+L = 0.5
+finish('sfx_toast', bank('pro_pop/tink', L) * 0.5 + inst(8, [(0, 'F6', .3, 1)], L, vel=60) * 0.7, peak_db=-7, fade=0.2)
+
+# 17) 안 됨(바쁨·도구 없음·받을 손님 없음): 둔한 톡톡, 음정 낮게
+L = 0.45
+finish('sfx_no', bank('pro_pop/thup', L) * 0.7 + at(bank('pro_pop/thup', L, seed=3), 0.09, L) * 0.5
+       + inst(12, [(0, 'F3', .12, 1)], L, vel=70) * 0.4, peak_db=-7, fade=0.08)
+
+# 18~21) 종이 넘김·발도장·붓기·지글도 코드로 만들어 봤지만 earshot이 '글리치/스네어/휘익'으로 읽어서 버림.
+#   생활 소리(foley)는 합성으로는 한계 → 기존 소리 유지, 나중에 CC0 녹음(freesound 등)을 받아 교체할 것.

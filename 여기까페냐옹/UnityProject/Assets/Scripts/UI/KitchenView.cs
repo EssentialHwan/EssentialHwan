@@ -468,7 +468,7 @@ namespace YeogiCafe.UI
             if (!YeogiCafe.Food.RecipeBook.ToolOwned(owner.Save, id))
             {
                 hint.text = L.Get("ui.tool.notowned", ("tool", L.Get(CookingStations.NameKey(id))));
-                YeogiCafe.Audio.SoundManager.Sfx("sfx_boop", 0.4f);
+                YeogiCafe.Audio.SoundManager.Sfx("sfx_no", 0.5f, 0.03f);
                 return;
             }
             // 비어 있는 기구: 무엇을 만들지 고르는 창(완성품 서빙·조리 중이면 아래 기존 동작)
@@ -495,7 +495,7 @@ namespace YeogiCafe.UI
                     else owner.ShowCatBubble(ticket.catId, L.Get("ui.kitchen.thanks"));
                     break;
                 case OrderSystem.ToolResult.Busy:
-                    YeogiCafe.Audio.SoundManager.Sfx("sfx_boop", 0.4f);
+                    YeogiCafe.Audio.SoundManager.Sfx("sfx_no", 0.5f, 0.03f);
                     hint.text = L.Get("ui.kitchen.busy");
                     break;
                 default:
@@ -686,7 +686,7 @@ namespace YeogiCafe.UI
             if (tk == null)
             {
                 hint.text = L.Get("ui.tool.pick.nobody", ("menu", L.Get("menu." + m.menuId)));
-                YeogiCafe.Audio.SoundManager.Sfx("sfx_boop", 0.4f);
+                YeogiCafe.Audio.SoundManager.Sfx("sfx_no", 0.5f, 0.03f);
                 return;
             }
             Punch(w);

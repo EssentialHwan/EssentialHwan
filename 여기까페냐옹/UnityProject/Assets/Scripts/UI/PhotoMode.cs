@@ -230,7 +230,7 @@ namespace YeogiCafe.UI
                     if (vp.x > 0.02f && vp.x < 0.98f && vp.y > 0.02f && vp.y < 0.98f && !shotCats.Contains(b.data.catId)) shotCats.Add(b.data.catId);
                 }
             flashT = 0.35f;
-            YeogiCafe.Audio.SoundManager.Sfx("sfx_click", 0.9f, 0f);
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_shutter", 0.8f, 0.03f);
             busy = false;
             filter = "none";
             OpenEditor();
@@ -459,7 +459,7 @@ namespace YeogiCafe.UI
             if (shotCats.Count >= 1) GameEvents.Raise(GameEvents.Photo, shotCats[0]);
             if (shotCats.Count >= 2) GameEvents.Raise(GameEvents.PhotoGroup, shotCats[0]);
             Toast(L.Get("photo.saved", ("n", Save.photos.Count.ToString()), ("cap", Save.albumCap.ToString())));
-            YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f);
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_saved", 0.55f, 0f);
             busy = false;
             SetMode(Mode.Live);
         }

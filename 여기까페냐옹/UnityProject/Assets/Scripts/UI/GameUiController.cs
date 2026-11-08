@@ -97,7 +97,7 @@ namespace YeogiCafe.UI
                     revealFromSize *= 0.88f;                                  // 살짝 당겨 놓고 시작 → 넓어지는 폭이 더 크게 느껴지게
                     cam.orthographicSize = revealFromSize;
                     ShowToast(L.Get(lv >= 3 ? "ui.cafe.reveal3" : "ui.cafe.reveal"));
-                    YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.55f, 0f, "reveal", 0.5f);
+                    YeogiCafe.Audio.SoundManager.Sfx("sfx_reveal", 0.6f, 0f, "reveal", 0.5f);
                 }
             }
             if ((kitchen != null && kitchen.Busy) || PhotoOpen) { revealT = 0f; return; }   // 주방·사진은 닫힐 때 새 화면으로 돌아온다
@@ -382,7 +382,7 @@ namespace YeogiCafe.UI
             // 왼쪽 아래 안내 카드가 떠 있으면 그 오른쪽 옆으로(위로 올리면 자리에 앉은 고양이를 가린다)
             bool beside = !inKitchen && guide != null && guide.Visible && !(editMode != null && editMode.IsOn);
             tbg.anchoredPosition = new Vector2(beside ? 160 : 0, ty);
-            YeogiCafe.Audio.SoundManager.Sfx("sfx_boop", 0.35f, 0.04f, "toast", 0.4f);
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_toast", 0.4f, 0.02f, "toast", 0.4f);
             var trt = (RectTransform)toastText.transform.parent;          // 긴 알림은 두 줄로 → 높이 맞춤
             trt.sizeDelta = new Vector2(inKitchen || beside ? 600 : 720, Mathf.Max(64f, toastText.preferredHeight + 20f));   // 양손(좌우 끝 ~250)과 안 겹치는 폭
             toastText.transform.parent.SetAsLastSibling();
@@ -965,7 +965,7 @@ namespace YeogiCafe.UI
             s.ownedTools.Add(toolId);
             flow.SyncMenus();
             msg = L.Get("ui.tool.bought", ("tool", L.Get(YeogiCafe.Order.CookingStations.NameKey(toolId))));
-            YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_buy", 0.55f, 0.02f);
             RefreshHud();
             return true;
         }
@@ -980,7 +980,7 @@ namespace YeogiCafe.UI
             {
                 if (!economy.TrySpend(t.price)) { msg = L.Get("ui.shop.insufficient"); return false; }
                 s.themesOwned.Add(id);
-                YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
+                YeogiCafe.Audio.SoundManager.Sfx("sfx_buy", 0.55f, 0.02f);
             }
             s.theme = id;
             YeogiCafe.Visual.ThemeView.Apply(id);
@@ -997,7 +997,7 @@ namespace YeogiCafe.UI
             s.seasonResearched.Add(menuId);
             flow.SyncMenus();
             msg = L.Get("ui.season.learned", ("menu", L.Get("menu." + menuId)), ("season", L.Get("season." + def.Value.season)));
-            YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_buy", 0.55f, 0.02f);
             RefreshHud();
             return true;
         }
@@ -1012,7 +1012,7 @@ namespace YeogiCafe.UI
             if (!economy.TrySpend(cost)) { msg = L.Get("ui.shop.insufficient"); return false; }
             st.level++;
             msg = L.Get("ui.recipe.upgraded", ("menu", L.Get("menu." + m.menuId)), ("n", (st.level + 1).ToString()));
-            YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_upgrade", 0.55f, 0.02f);
             RefreshHud();
             return true;
         }
@@ -1027,7 +1027,7 @@ namespace YeogiCafe.UI
             if (!economy.TrySpend(cost)) { msg = L.Get("ui.shop.insufficient"); return false; }
             st.stars++;
             msg = L.Get("ui.furnup.done", ("name", ShopPanel.FurnitureName(d)), ("s", YeogiCafe.Food.FurnitureStars.StarText(st.stars)));
-            YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.5f, 0.02f);
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_upgrade", 0.55f, 0.02f);
             RefreshHud();
             return true;
         }

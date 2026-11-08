@@ -98,7 +98,7 @@ namespace YeogiCafe.UI
                 var act = b.act;
                 btn.onClick.AddListener(() => act());
             }
-            YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.7f, 0f);
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_finale", 0.7f, 0f);
         }
 
         static void Img(RectTransform parent, string name, Sprite sp, Vector2 pos, Vector2 size, Color tint)

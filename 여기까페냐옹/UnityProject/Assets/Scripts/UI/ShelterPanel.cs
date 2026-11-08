@@ -119,7 +119,7 @@ namespace YeogiCafe.UI
             int after = ShelterBook.TierOf(s.shelterDonated);
             if (after >= 4 && !s.photoFrames.Contains(ShelterBook.RewardFrame)) s.photoFrames.Add(ShelterBook.RewardFrame);
             owner.RefreshHud();
-            YeogiCafe.Audio.SoundManager.Sfx(after > before ? "sfx_chime" : "sfx_coin", 0.6f);
+            YeogiCafe.Audio.SoundManager.Sfx(after > before ? "sfx_upgrade" : "sfx_coin", 0.6f);
             YeogiCafe.Core.GameEvents.Raise(YeogiCafe.Core.GameEvents.Donate);
             Render(after > before ? after : -1);
         }

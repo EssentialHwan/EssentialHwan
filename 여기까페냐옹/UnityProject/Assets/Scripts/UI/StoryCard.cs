@@ -98,7 +98,7 @@ namespace YeogiCafe.UI
             UiFactory.SetRect((RectTransform)next.transform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 16), new Vector2(160, 46));
             var go = scrim.gameObject;
             next.onClick.AddListener(() => onNext?.Invoke());
-            if (memory || note) YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.45f, 0.02f);
+            if (memory || note) YeogiCafe.Audio.SoundManager.Sfx("sfx_story", 0.5f, 0f);
             return go;
         }
 

@@ -90,7 +90,7 @@ namespace YeogiCafe.UI
                 IsOpen = false;
                 onClose?.Invoke();
             });
-            YeogiCafe.Audio.SoundManager.Sfx("sfx_chime", 0.7f, 0f);
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_finale", 0.7f, 0f);
         }
     }
 }
