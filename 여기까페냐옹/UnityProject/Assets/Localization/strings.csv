@@ -24,7 +24,7 @@ ui.order.ask,{menu} 주세냥!,"{menu}, please!",请给我{menu}喵！,{menu}く
 ui.order.gaveup,기다리다 지쳐 나가버렸다…,Got tired of waiting and left…,等得不耐烦，走掉了…,待ちくたびれて帰っちゃった…
 ui.order.gaveup.ready,다 된 음식이 안 와서 나가버렸다…,The food was ready but never came… so they left.,饭做好了却一直没端来…走掉了。,できた料理が来なくて帰ってしまった…
 ui.order.hurry,아직이냥…?,Is it ready yet…?,好了没喵…?,まだかにゃ…?
-ui.order.leftover,식어 버린 {menu}… 주인냥이 냠냠 먹어 치웠다냥,The cold {menu}… the owner cat gobbled it up.,凉掉的{menu}…被店长猫吃光了喵,冷めた{menu}…店長ネコがぺろりと食べたにゃ
+ui.order.leftover,식어 버린 {menu}… 주인냥이 냠냠 먹어 치웠다냥,The {menu} went cold… so the owner cat gobbled it up.,凉掉的{menu}…被店长猫吃光了喵,冷めた{menu}…店長ネコがぺろりと食べたにゃ
 tool.coffee,커피머신,Coffee Machine,咖啡机,コーヒーマシン
 tool.kettle,주전자,Kettle,水壶,ケトル
 tool.oven,오븐,Oven,烤箱,オーブン
@@ -32,7 +32,7 @@ tool.board,도마,Prep Board,砧板,まな板
 tool.grill,그릴,Grill,烤架,グリル
 ui.shop.title,가구 상점,Furniture Shop,家具店,家具ショップ
 ui.shop.type.seat,좌석,Seat,座位,席
-ui.shop.type.facility,놀이 시설,Spot,设施,スポット
+ui.shop.type.facility,놀이 시설,Play Spots,设施,スポット
 ui.shop.type.deco,장식,Decor,装饰,インテリア
 furn.furn_seat_normal.name,일반석,Chair,普通座,ふつうの席
 furn.furn_seat_window.name,창가석,Window Seat,窗边座,窓ぎわ席
@@ -68,7 +68,7 @@ ui.catalog.goaldone,모두의 취향 완성! {a}/{b},Everyone's tastes found! {a
 ui.catalog.observing,관찰 중,Observing,观察中,観察中
 ui.axis.food,음식,Food,食物,ごはん
 ui.axis.seat,좌석,Seat,座位,席
-ui.axis.facility,시설,Spot,设施,スポット
+ui.axis.facility,시설,Play,设施,スポット
 ui.regular.stage,단골 {s}단계,Regular Lv.{s},熟客 {s}级,常連 Lv.{s}
 ui.discover.toast,{name}의 취향을 하나 알아냈어요!,You found one of {name}'s tastes!,发现了{name}的一个喜好！,{name}の好みをひとつ見つけた！
 ui.pause.resume,계속하기,Resume,继续,つづける
@@ -126,16 +126,16 @@ tut.step5.narr.02,카페를 바꾸면 못 보던 행동을 볼 수 있을지도 
 tut.step8.narr.01,봐요! 치즈냥이 창가석에 앉았어요!,Look! Cheddar took the window seat!,快看！芝士喵坐到窗边座了！,見て！チーズニャンが窓ぎわ席に座った！
 tut.step8.narr.02,"이게 이 게임의 전부예요. 관찰하고, 바꾸고, 발견하는 것.",That's the heart of this game: observe — change — discover.,这就是这个游戏的全部：观察、改变、发现。,これがこのゲームのすべて。観察して、変えて、発見する。
 tut.step9.narr.01,이제 당신의 카페예요. 더 많은 고양이를 이해해보세요.,Now it's your cafe. Get to know more cats.,现在这里是你的咖啡馆了。去了解更多猫咪吧。,ここからはあなたのカフェ。もっとたくさんのネコを知っていこう。
-narr.seat.window,{name}가 창밖을 오래 바라본다.,{name} gazes out the window.,{name}久久地望着窗外。,{name}が窓の外をじっと眺めている。
-narr.seat.fallback,{name}가 아무 자리에나 앉았다.,{name} sat down anywhere.,{name}随便找了个位置坐下。,{name}が適当な席に座った。
-narr.facility.tower,{name}가 캣타워 꼭대기에 올라갔다.,{name} climbed to the top of the cat tower.,{name}爬上了猫爬架的最顶端。,{name}がキャットタワーのてっぺんに登った。
-narr.facility.cushion,{name}가 쿠션에서 눈을 감았다.,{name} closed its eyes on the cushion.,{name}在软垫上闭上了眼睛。,{name}がクッションの上で目を閉じた。
-narr.food.fast,{name}가 순식간에 접시를 비웠다.,{name} cleared the plate in an instant.,{name}眨眼间就把盘子吃光了。,{name}があっという間にお皿を空にした。
-narr.seat.corner,{name}가 구석에 조용히 자리 잡았다.,{name} settled quietly in the corner.,{name}悄悄地在角落坐下。,{name}がすみっこに静かに落ち着いた。
+narr.seat.window,{name}가 창밖을 오래 바라본다.,{name} gazes out the window for a long while.,{name}久久地望着窗外。,{name}が窓の外をじっと眺めている。
+narr.seat.fallback,{name}가 아무 자리에나 앉았다.,{name} sits down wherever.,{name}随便找了个位置坐下。,{name}が適当な席に座った。
+narr.facility.tower,{name}가 캣타워 꼭대기에 올라갔다.,{name} climbs to the top of the cat tower.,{name}爬上了猫爬架的最顶端。,{name}がキャットタワーのてっぺんに登った。
+narr.facility.cushion,{name}가 쿠션에서 눈을 감았다.,{name} closes their eyes on the cushion.,{name}在软垫上闭上了眼睛。,{name}がクッションの上で目を閉じた。
+narr.food.fast,{name}가 순식간에 접시를 비웠다.,{name} clears the plate in a flash.,{name}眨眼间就把盘子吃光了。,{name}があっという間にお皿を空にした。
+narr.seat.corner,{name}가 구석에 조용히 자리 잡았다.,{name} settles quietly into the corner.,{name}悄悄地在角落坐下。,{name}がすみっこに静かに落ち着いた。
 narr.facility.toybox,{name}가 장난감을 굴리며 논다.,{name} plays with a toy.,{name}滚着玩具玩得正欢。,{name}がおもちゃを転がして遊んでいる。
 narr.food.slow,{name}가 음미하듯 천천히 먹는다.,{name} savors the meal slowly.,{name}细细品味，慢慢地吃着。,{name}が味わうようにゆっくり食べている。
-narr.seat.generic,{name}가 자리에 앉았다.,{name} took a seat.,{name}找位置坐下了。,{name}が席に座った。
-narr.facility.scratch,{name}가 스크래처를 긁는다.,{name} scratches the post.,{name}在猫抓板上磨爪子。,{name}が爪とぎでガリガリしている。
+narr.seat.generic,{name}가 자리에 앉았다.,{name} takes a seat.,{name}找位置坐下了。,{name}が席に座った。
+narr.facility.scratch,{name}가 스크래처를 긁는다.,{name} claws away at the scratcher.,{name}在猫抓板上磨爪子。,{name}が爪とぎでガリガリしている。
 narr.facility.window,{name}가 창 아래에서 바깥을 가만히 올려다본다.,{name} gazes up at the window from below.,{name}在窗下静静地仰望着外面。,{name}が窓の下から外をじっと見上げている。
 narr.facility.plant,{name}가 화분 뒤에 몸을 숨긴다.,{name} hides behind the plant.,{name}躲到了盆栽后面。,{name}が観葉植物のうしろに隠れた。
 narr.facility.generic,{name}가 시설을 이용한다.,{name} is using a play spot.,{name}在使用设施。,{name}がスポットでくつろいでいる。
@@ -145,15 +145,15 @@ ep.cat_cheese.regular3.01,…음냥. 여기 앉아 있으면 시간이 천천히
 ep.cat_cheese.regular3.02,"고마워냥. 이 자리, 나한테 딱이다냥.",Thanks. This spot is perfect for me.,谢谢喵。这个位置，跟我简直绝配喵。,ありがとニャ。この席、ぼくにぴったりだニャ。
 ep.cat_calico.regular3.01,"오늘은 저기, 내일은 여기냥! 매번 다른 게 재밌잖냥?","There today, here tomorrow! Isn't variety fun?",今天坐那边，明天坐这边喵！每次都不一样才好玩嘛喵？,今日はあっち、明日はこっちニャ！毎回ちがうのが楽しいでしょニャ？
 ep.cat_calico.regular3.02,"이 카페, 볼 게 자꾸 늘어나서 좋아냥.",I love that there's always something new to see here.,这家咖啡馆好看的东西越来越多，我好喜欢喵。,このカフェ、見るものがどんどん増えるから好きだニャ。
-ep.cat_cow.regular3.01,혼자 오는 날은 좀… 그래도 여긴 북적여서 덜 외로워냥.,"Coming alone is a bit… but it's lively here, so I feel less lonely.",一个人来的日子有点…不过这里热闹，就没那么寂寞了喵。,ひとりで来る日はちょっと…でもここはにぎやかだから寂しくないニャ。
+ep.cat_cow.regular3.01,혼자 오는 날은 좀… 그래도 여긴 북적여서 덜 외로워냥.,"Coming alone is kind of… but it's lively here, so I don't feel as lonely.",一个人来的日子有点…不过这里热闹，就没那么寂寞了喵。,ひとりで来る日はちょっと…でもここはにぎやかだから寂しくないニャ。
 ep.cat_cow.regular3.02,다음엔 친구 데려와도 돼냥?,Can I bring a friend next time?,下次可以带朋友来吗喵？,今度、友だち連れてきてもいいニャ？
 ep.cat_black.regular3.01,…조용하네냥. (작게) 이런 데가 편해냥.,…It's quiet. (softly) I like places like this.,…好安静喵。（小声）这种地方让我很自在喵。,…静かだニャ。（小声で）こういうところ、落ち着くニャ。
 ep.cat_black.regular3.02,너는 시끄럽게 안 굴어서 좋아냥.,I like that you're not noisy.,你不吵闹，这点我很喜欢喵。,あんたはうるさくしないから好きだニャ。
 ep.cat_tuxedo.regular3.01,여기 몸 풀기 딱 좋아냥! 하루 종일 뛰어도 안 질려냥.,Perfect place to stretch! I could run all day.,这里最适合活动筋骨了喵！跑一整天都不会腻喵。,ここ、体を動かすのにぴったりニャ！一日中走り回っても飽きないニャ。
-ep.cat_tuxedo.regular3.02,다음엔 더 재밌는 거 없냥? 기대할게냥!,Anything more fun next time? I'll be looking forward to it!,下次还有更好玩的吗喵？我会期待的喵！,次はもっとおもしろいのないニャ？楽しみにしてるニャ！
+ep.cat_tuxedo.regular3.02,다음엔 더 재밌는 거 없냥? 기대할게냥!,Got anything even more fun for next time? Can't wait!,下次还有更好玩的吗喵？我会期待的喵！,次はもっとおもしろいのないニャ？楽しみにしてるニャ！
 ep.cat_mackerel.regular3.01,"…또 왔어냥. 여기 그거, 진짜 못 잊겠더라냥.",…I'm back. I just can't forget this place.,…又来了喵。这里的那个，实在忘不掉喵。,…また来たニャ。ここのアレ、どうしても忘れられないニャ。
 ep.cat_mackerel.regular3.02,"온열방석에 새우꼬치라니… 이 가게, 뭘 좀 안다냥.",A heat pad and shrimp skewers… this place gets me.,暖垫加上虾串…这家店真懂我喵。,ホットマットにエビ串…この店、わかってるニャ。
-ep.cat_siamese.regular3.01,"흠, 오늘 기분은… 이쪽냥. 내일은 모르지냥.","Hmm, today's mood is… this way. Tomorrow, who knows.",哼，今天的心情是…这边喵。明天就不知道了喵。,ふむ、今日の気分は…こっちニャ。明日はわからないニャ。
+ep.cat_siamese.regular3.01,"흠, 오늘 기분은… 이쪽냥. 내일은 모르지냥.","Hmm, today I'm in the mood for… this spot. Tomorrow, who knows.",哼，今天的心情是…这边喵。明天就不知道了喵。,ふむ、今日の気分は…こっちニャ。明日はわからないニャ。
 ep.cat_siamese.regular3.02,이 카페는 고급스러운 구석이 있어서 마음에 들어냥.,This cafe has an elegant touch I like.,这家咖啡馆有种高级感，我很中意喵。,このカフェ、上品なところがあって気に入ってるニャ。
 ep.cat_gray.regular3.01,…자리에 누가 있으면 옆에 앉고 싶어져냥.,"…When someone's there, I want to sit beside them.",…有谁在的话，就想坐到旁边去喵。,…誰かがいると、となりに座りたくなるニャ。
 ep.cat_gray.regular3.02,"젖소 걔, 어쩐지 낯이 익어냥.",Moo… somehow looks familiar.,奶牛那家伙，总觉得很眼熟喵。,ウシのあいつ、なんだか見覚えがあるニャ。
@@ -227,7 +227,7 @@ ui.guess.none,고를 수 있는 게 아직 없어요,Nothing to choose from yet,
 ui.guess.cancel,닫기,Close,关闭,閉じる
 ui.order.askhint,{hint}… 부탁해냥!,{hint}… please!,{hint}…拜托啦喵！,{hint}…おねがいニャ！
 ui.order.pick,{name}의 주문 — 어떤 메뉴일까?,{name}'s order — which menu?,{name}的订单——会是哪道菜呢？,{name}の注文──どのメニューかな？
-ui.order.picked,{menu}로 정했어요. 맞는 기구를 눌러 조리하세요,Going with {menu}. Press its tool to cook.,就做{menu}吧。点击对应的厨具开始做,{menu}に決めたよ。合う道具を押して作ってね
+ui.order.picked,{menu}로 정했어요. 맞는 기구를 눌러 조리하세요,Going with {menu}. Tap its tool to cook.,就做{menu}吧。点击对应的厨具开始做,{menu}に決めたよ。合う道具を押して作ってね
 ui.order.mindread,딱 이거다냥! 어떻게 알았냥?,Exactly this! How did you know?,就是这个喵！你怎么知道的喵？,これこれニャ！なんでわかったニャ？
 ui.order.wrongdish,이게 아니다냥…,This isn't it…,不是这个喵…,これじゃないニャ…
 order.hint.menu_americano.1,잠이 깨는 쓴 거냥,something bitter that wakes me up,能提神的苦苦的东西喵,目が覚める苦いやつニャ
@@ -267,9 +267,9 @@ gift.window_leaf.name,창밖 나뭇잎,leaf from outside,窗外的叶子,窓の�
 gift.window_leaf.desc,창틈으로 들어온 잎. 창가 자리를 좋아하나?,Blew in through the window. Likes window seats?,从窗缝飘进来的叶子。喜欢窗边的位置？,窓のすき間から入った葉っぱ。窓ぎわの席が好き？
 gift.dust_bunny.name,먼지 뭉치,dust bunny,毛絮团,ほこりのかたまり
 gift.dust_bunny.desc,구석에서 굴려 온 먼지 뭉치. 구석 자리를 좋아하나?,Rolled out of a corner. Likes corner seats?,从角落滚出来的毛絮。喜欢角落的位置？,すみっこから転がってきたほこり。すみっこの席が好き？
-gift.two_hairs.name,두 가지 색 털,two-colored hairs,两种颜色的毛,二色の毛
+gift.two_hairs.name,두 가지 색 털,tuft of two-tone fur,两种颜色的毛,二色の毛
 gift.two_hairs.desc,누군가와 나란히 앉았던 흔적. 둘이 앉는 자리?,Signs of sitting side by side. Likes a two-seater?,和谁并排坐过的痕迹。喜欢两个人坐的位置？,誰かと並んで座ったあと。ふたりで座る席？
-gift.sofa_fluff.name,소파 솜털,sofa fluff,沙发绒毛,ソファの綿毛
+gift.sofa_fluff.name,소파 솜털,bit of sofa fluff,沙发绒毛,ソファの綿毛
 gift.sofa_fluff.desc,푹신한 소파에서 뜯어 온 솜털. 소파를 좋아하나?,Pulled from a soft sofa. Likes the sofa?,从软沙发上扯下来的绒毛。喜欢沙发？,ふかふかソファからむしった綿毛。ソファが好き？
 gift.bottle_cap.name,병뚜껑,bottle cap,瓶盖,びんのフタ
 gift.bottle_cap.desc,높은 바 테이블 위에 있던 병뚜껑. 높은 의자?,From the high bar table. Likes bar stools?,高高的吧台上的瓶盖。喜欢高脚椅？,高いバーカウンターにあったフタ。高いイスが好き？
@@ -339,7 +339,7 @@ ep.cat_cheese.grad.03,가끔 놀러 올게냥. 그때도 내 자리 남겨 둬�
 ep.cat_calico.regular2.01,오늘은 뭐가 바뀌었나 보러 왔지냥!,I came to see what changed today!,我是来看看今天又变了什么的喵！,今日は何が変わったか見に来たニャ！
 ep.cat_calico.regular2.02,"딸기 냄새 나는 거, 그거 또 있냥?","That strawberry-smelling thing, do you have it again?",有草莓香味的那个，今天还有吗喵？,いちごのにおいがするアレ、また置いてるニャ？
 ep.cat_calico.grad.01,점장냥! 나 새 집 생겼다냥! 구석구석 탐험할 데가 엄청 많대냥.,"Manager! Guess what, I have a new home! Tons of nooks to explore.",店长喵！我有新家了喵！听说有好多角落可以探险喵。,店長ニャ！新しいおうちができたニャ！すみずみまで探検するところがいっぱいあるんだってニャ。
-ep.cat_calico.grad.02,근데 여기만큼 매일 새로운 데는 없을 거다냥.,But nowhere will be as new every day as here.,不过，不会有哪里像这里一样每天都有新鲜事了喵。,でも、ここみたいに毎日新しい場所はないと思うニャ。
+ep.cat_calico.grad.02,근데 여기만큼 매일 새로운 데는 없을 거다냥.,But no place will ever be as full of surprises as here.,不过，不会有哪里像这里一样每天都有新鲜事了喵。,でも、ここみたいに毎日新しい場所はないと思うニャ。
 ep.cat_calico.grad.03,"구석 자리, 딸기파르페, 장난감… 다 고마웠어냥! — 삼색냥","The corner seat, the parfait, the toys… thank you for everything! — Patches",角落座、草莓芭菲、玩具…都谢谢你喵！— 三花喵,すみっこ席、いちごパフェ、おもちゃ…ぜんぶありがとニャ！— ミケニャン
 ep.cat_cow.regular2.01,여기 오면 아는 얼굴이 있어서 좋아냥.,I like that there are familiar faces here.,来这里能看到熟面孔，真好喵。,ここに来ると知ってる顔がいて安心するニャ。
 ep.cat_cow.regular2.02,2인석… 누구랑 같이 앉으면 좋겠다냥.,The two-seater… I wish someone would sit with me.,双人座…要是有谁陪我坐就好了喵。,ふたり席…誰かと一緒に座れたらいいニャ。
@@ -349,27 +349,27 @@ ep.cat_cow.grad.03,참치샌드위치는 거기서도 찾을 거다냥. — 젖�
 ep.cat_black.regular2.01,…(조용히 고개만 까딱한다),…(nods quietly),…（只是安静地点了点头）,…（静かにうなずくだけ）
 ep.cat_black.regular2.02,우유냥. 따뜻하게냥. …고마워냥.,Milk. Warm. …Thanks.,牛奶喵。要热的喵。…谢谢喵。,ミルクニャ。あったかいのニャ。…ありがとニャ。
 ep.cat_black.grad.01,…편지 같은 거 처음 써 봐냥.,…First time writing a letter.,…写信这种事，还是第一次喵。,…手紙なんて、はじめて書くニャ。
-ep.cat_black.grad.02,"시끄러운 데 싫어하는 거, 화분 옆이 좋은 거냥. 다 알아줘서… 편했어냥.","That I hate noise, that I like the spot by the plant. You knew. …It was comfortable.",讨厌吵闹、喜欢盆栽旁边…这些你都懂。…很自在喵。,うるさいのが苦手なこと、植物のそばが好きなこと。ぜんぶわかってくれて…居心地よかったニャ。
+ep.cat_black.grad.02,"시끄러운 데 싫어하는 거, 화분 옆이 좋은 거냥. 다 알아줘서… 편했어냥.","That I hate noise, that I like the spot by the plant. You knew. …I could relax here.",讨厌吵闹、喜欢盆栽旁边…这些你都懂。…很自在喵。,うるさいのが苦手なこと、植物のそばが好きなこと。ぜんぶわかってくれて…居心地よかったニャ。
 ep.cat_black.grad.03,대장 자리는 비워 둘게냥. 가끔 확인하러 올 거니까냥. — 까망냥,I'll leave the boss seat open. I'll check on it. — Shadow,老大的位置我会空着的喵。因为我会时不时回来检查喵。— 小黑喵,ボスの席は空けておくニャ。ときどき見に来るからニャ。— クロニャン
 ep.cat_tuxedo.regular2.01,우다다 하기 제일 좋은 카페 발견냥!,Found the best cafe for zoomies!,发现最适合疯跑的咖啡馆了喵！,運動会にいちばんいいカフェ、見つけたニャ！
 ep.cat_tuxedo.regular2.02,쓴 커피냥? 그게 어른의 맛이라던데냥!,Bitter coffee? They say it's the grown-up taste!,苦苦的咖啡喵？听说那是大人的味道喵！,苦いコーヒーニャ？それがオトナの味っていうらしいニャ！
 ep.cat_tuxedo.grad.01,새 집은 마당이 엄청 넓어냥! 하루 종일 뛸 수 있어냥!,My new home has a huge yard! I can run all day!,新家的院子超级大喵！可以跑一整天喵！,新しいおうちは庭がすっごく広いニャ！一日中走れるニャ！
-ep.cat_tuxedo.grad.02,근데 소파에서 덮치기 놀이는 여기가 최고였어냥. 다들 미안냥!,But pouncing from the sofa was best here. Sorry everyone!,不过从沙发上扑人的游戏，还是这里最棒喵。大家对不起喵！,でもソファからとびかかる遊びは、ここが最高だったニャ。みんなごめんニャ！
+ep.cat_tuxedo.grad.02,근데 소파에서 덮치기 놀이는 여기가 최고였어냥. 다들 미안냥!,"But this was the best place for sofa ambushes. Sorry, everyone!",不过从沙发上扑人的游戏，还是这里最棒喵。大家对不起喵！,でもソファからとびかかる遊びは、ここが最高だったニャ。みんなごめんニャ！
 ep.cat_tuxedo.grad.03,어른 되면 커피 마시러 올게냥. — 턱시도냥,I'll come back for coffee when I'm grown up. — Tux,等我长大了，就来喝咖啡喵。— 礼服喵,オトナになったらコーヒー飲みに来るニャ。— タキシードニャン
 ep.cat_mackerel.regular2.01,…또 왔어냥. 배고파서는 아니고냥.,…Back again. Not because I'm hungry.,…又来了喵。才不是因为肚子饿喵。,…また来たニャ。おなかがすいたからじゃないニャ。
 ep.cat_mackerel.regular2.02,소파가 딱 내 몸에 맞아냥.,The sofa fits me just right.,这个沙发刚好合我的身形喵。,このソファ、ぼくの体にぴったりだニャ。
-ep.cat_mackerel.grad.01,"나 데려간 집, 생선을 잘 굽는대냥. 근데 새우꼬치는 없겠지냥.","My new home grills fish well. But no shrimp skewers there, probably.",带我走的那家，听说很会烤鱼喵。不过应该没有虾串吧喵。,ぼくを迎えるおうち、魚を焼くのが上手なんだってニャ。でもエビ串はないだろうニャ。
+ep.cat_mackerel.grad.01,"나 데려간 집, 생선을 잘 굽는대냥. 근데 새우꼬치는 없겠지냥.","I hear my new family grills a mean fish. No shrimp skewers, though, I bet.",带我走的那家，听说很会烤鱼喵。不过应该没有虾串吧喵。,ぼくを迎えるおうち、魚を焼くのが上手なんだってニャ。でもエビ串はないだろうニャ。
 ep.cat_mackerel.grad.02,"따끈한 데서 녹아내리는 게 행복이라는 거, 여기서 다시 알았어냥.",Here I remembered that melting on something warm is happiness.,在暖乎乎的地方瘫着就是幸福——是在这里想起来的喵。,あったかいところでとろけるのが幸せだって、ここで思い出したニャ。
 ep.cat_mackerel.grad.03,온열방석 내 자리는 따뜻하게 남겨 둬냥. — 고등어냥,Keep my spot on the heat pad warm for me. — Tabby,暖垫上的位置，帮我留着喵。— 狸花喵,ホットマットの場所、取っといてニャ。— サバトラニャン
 ep.cat_siamese.regular2.01,"흠, 오늘은 기분이 나쁘지 않아냥.","Hmm, I'm not in a bad mood today.",哼，今天心情还不坏喵。,ふむ、今日は機嫌が悪くないニャ。
-ep.cat_siamese.regular2.02,"바 자리, 내 거로 해 줄 수 있냥?",Could the bar seat be mine?,吧台的位置，可以算我的吗喵？,バーの席、わたしのにしてくれるニャ？
-ep.cat_siamese.grad.01,"새 집은 고급스럽대냥. 당연하지, 나니까냥.","My new home is elegant. Naturally, it's me.",听说新家很高级喵。当然了，因为是我嘛喵。,新しいおうちは上品なんだってニャ。当然ニャ、わたしだもの。
+ep.cat_siamese.regular2.02,"바 자리, 내 거로 해 줄 수 있냥?",Could you save the bar seat just for me?,吧台的位置，可以算我的吗喵？,バーの席、わたしのにしてくれるニャ？
+ep.cat_siamese.grad.01,"새 집은 고급스럽대냥. 당연하지, 나니까냥.",My new home is elegant. Naturally — it's me we're talking about.,听说新家很高级喵。当然了，因为是我嘛喵。,新しいおうちは上品なんだってニャ。当然ニャ、わたしだもの。
 ep.cat_siamese.grad.02,…그래도 변덕 다 받아준 건 너뿐이었어냥.,"…Still, you were the only one who put up with all my moods.",…不过，能包容我所有小脾气的，只有你喵。,…それでも、気まぐれをぜんぶ受け止めてくれたのはキミだけだったニャ。
 ep.cat_siamese.grad.03,냥냥펀치는 애정 표현이었어냥. 진짜야냥. — 샴냥,The cat punches were affection. Really. — Sia,喵喵拳是爱的表现喵。真的喵。— 暹罗喵,ネコパンチは愛情表現だったニャ。ほんとニャ。— シャムニャン
 ep.cat_gray.regular2.01,…혼자 와도 여긴 괜찮더라냥.,…Even coming alone is okay here.,…就算一个人来，这里也还好喵。,…ひとりで来ても、ここは平気だったニャ。
 ep.cat_gray.regular2.02,단골이 되면… 말 걸어도 돼냥?,Now that I'm a regular… can I talk to you?,成了熟客的话…可以跟你说话吗喵？,常連になったら…話しかけてもいいニャ？
 ep.cat_gray.grad.01,처음엔 손만 봐도 무서웠는데냥.,At first even your hand scared me.,一开始，光看到手都觉得害怕喵。,はじめは手を見るだけでこわかったニャ。
-ep.cat_gray.grad.02,이제 쓰다듬어 주는 게 좋아냥. 새 집에서도 그럴 수 있을 것 같아냥.,Now I like being petted. I think I can at my new home too.,现在喜欢被摸摸了喵。在新家应该也可以的喵。,今はなでてもらうのが好きニャ。新しいおうちでも大丈夫な気がするニャ。
+ep.cat_gray.grad.02,이제 쓰다듬어 주는 게 좋아냥. 새 집에서도 그럴 수 있을 것 같아냥.,"Now I like being petted. I think I'll be okay with it at my new home, too.",现在喜欢被摸摸了喵。在新家应该也可以的喵。,今はなでてもらうのが好きニャ。新しいおうちでも大丈夫な気がするニャ。
 ep.cat_gray.grad.03,젖소 걔랑 같이 놀러 올게냥. — 회색냥,I'll visit with Moo. — Misty,我会和奶牛那家伙一起来玩的喵。— 灰灰喵,ウシのあいつと一緒に遊びに来るニャ。— グレーニャン
 ep.cat_moon.regular2.01,(창밖 높은 곳을 오래 올려다본다),(Gazes up at high places outside for a long time),（久久地仰望着窗外的高处）,（窓の外の高いところをじっと見上げている）
 ep.cat_moon.regular2.02,"구운 생선 냄새가 나면, 또 올게냥.","When I smell grilled fish, I'll come again.",闻到烤鱼的香味，我还会再来的喵。,焼き魚のにおいがしたら、また来るニャ。
@@ -386,7 +386,7 @@ ui.kitchen.busygroom,그쪽 앞발은 그루밍 중이에요! (반대쪽 기구�
 mouse.appear,찍찍! 쥐가 나타났다! 5초 안에 클릭해서 잡아요!,Squeak! A mouse! Click it within 5 seconds!,吱吱！出现老鼠了！5秒内点击抓住它！,チューチュー！ネズミが出た！5秒以内にクリックしてつかまえよう！
 mouse.chase,놓쳤다! 고양이들이 사냥 본능 폭발… 주문은 뒷전!,Missed it! The cats' hunting instinct kicks in… orders forgotten!,跑掉了！猫咪们狩猎本能大爆发…订单全忘了！,逃げられた！ネコたちの狩猟本能が爆発…注文どころじゃない！
 mouse.chase.pay,놓쳤다! 손님 {n}마리가 계산도 잊고 쥐를 쫓아간다…,Missed it! {n} guests ran after the mouse without paying…,跑掉了！{n}位客人连账都没结就去追老鼠了…,逃げられた！お客さん{n}匹がお会計も忘れてネズミを追いかけていく…
-mouse.caught,탁! 잡았다. 살살 밖에 놓아줬어요 (손님들이 감탄한다),Gotcha! Gently let it outside (the guests are impressed),啪！抓到了。轻轻放到外面去了（客人们发出赞叹）,パシッ！つかまえた。そっと外に逃がしてあげたよ（お客さんたちが感心してる）
+mouse.caught,탁! 잡았다. 살살 밖에 놓아줬어요 (손님들이 감탄한다),Gotcha! You gently let it go outside (the guests are impressed),啪！抓到了。轻轻放到外面去了（客人们发出赞叹）,パシッ！つかまえた。そっと外に逃がしてあげたよ（お客さんたちが感心してる）
 mouse.caught.late,탁! 겨우 잡았다… 소동이 가라앉는다,Gotcha! Finally… the commotion settles,啪！总算抓到了…骚动平息了,パシッ！やっとつかまえた…騒ぎがおさまっていく
 ui.settle.mice,쥐 소동으로 못 받은 음식값: {g}G,Lost to the mouse commotion: {g}G,因老鼠骚动没收到的餐费：{g}G,ネズミ騒ぎでもらえなかった代金：{g}G
 closing.title,마감 직전… {name}이 아직 안 갔어요,Closing time… {name} is still here,快打烊了…{name}还没走,閉店まぎわ…{name}がまだ残ってる
@@ -402,7 +402,7 @@ closing.play.2,깨물깨물,Nibble nibble,啃啃,カジカジ
 closing.ok.1,킁킁…,Sniff sniff…,嗅嗅…,クンクン…
 closing.ok.2,냥?,Mew?,喵？,ニャ？
 closing.annoyed.1,(움찔),(Flinch),（一哆嗦）,（ビクッ）
-closing.annoyed.2,…거긴 싫다냥,…not there,…那里不行喵,…そこはイヤだニャ
+closing.annoyed.2,…거긴 싫다냥,…Not there,…那里不行喵,…そこはイヤだニャ
 closing.hate.1,하악!,Hiss!,哈——！,シャーッ！
 closing.hate.2,냥펀치!,Paw swat!,喵喵拳！,ネコパンチ！
 closing.knead,꾹·꾹,knead·knead,踩·踩,ふみ・ふみ
@@ -433,8 +433,8 @@ furn.furn_fac_heatpad.name,온열 방석,Heat Pad,暖垫,ホットマット
 furn.furn_fac_heatpad,온열 방석,Heat Pad,暖垫,ホットマット
 furn.furn_fac_wand.name,자동 낚싯대,Auto Wand,自动逗猫棒,電動じゃらし
 furn.furn_fac_wand,자동 낚싯대,Auto Wand,自动逗猫棒,電動じゃらし
-narr.facility.box,{name}가 과일 박스에 쏙 들어갔다. 상자는 못 참지!,{name} squeezed into the fruit box. Can't resist a box!,{name}一下钻进了水果箱。看到箱子就忍不住！,{name}がフルーツ箱にすっぽり入った。箱にはあらがえない！
-narr.facility.warm,{name}가 따끈한 자리에서 녹아내렸다…,{name} melted into the warm spot…,{name}在暖和的地方化成了一滩…,{name}があったかい場所でとろけている…
+narr.facility.box,{name}가 과일 박스에 쏙 들어갔다. 상자는 못 참지!,{name} squeezes into the fruit box. Can't resist a box!,{name}一下钻进了水果箱。看到箱子就忍不住！,{name}がフルーツ箱にすっぽり入った。箱にはあらがえない！
+narr.facility.warm,{name}가 따끈한 자리에서 녹아내렸다…,{name} melts into the warm spot…,{name}在暖和的地方化成了一滩…,{name}があったかい場所でとろけている…
 opt.btn,설정,Menu,设置,設定
 opt.title,설정,Settings,设置,設定
 opt.sound,소리,Sound,声音,サウンド
@@ -489,7 +489,7 @@ ui.furnup.none,아직 배치한 가구가 없어요.,No furniture placed yet.,�
 ui.furnup.tabhint,손님이 많이 쓴 가구는 별을 올릴 수 있어요.,Well-used furniture can gain stars.,客人常用的家具可以升星。,お客さんがよく使う家具は星を上げられるよ。
 ui.furnup.needuses,손님이 {n}번 더 써야 해요,Needs {n} more uses by guests,还需要客人使用{n}次,あと{n}回お客さんが使う必要があります
 ui.furnup.done,{name} {s} 달성!,{name} reached {s}!,{name} 达成{s}！,{name} {s} 達成！
-ui.kitchen.stale, (식어서 ★-1), (got cold ★-1),（凉了 ★-1）,（冷めて ★-1）
+ui.kitchen.stale, (식어서 ★-1)," (went cold, ★-1)",（凉了 ★-1）,（冷めて ★-1）
 ui.nyan.hud,냥슐랭,Nyanchelin,喵其林,ニャシュラン
 ui.review.toast,{name} {paws} “{text}”,{name} {paws} “{text}”,{name} {paws} 「{text}」,{name} {paws} 「{text}」
 ui.review.header,평판 {rep} / 5   냥슐랭 {stars}   (다음 별 기준 {need}점),Rating {rep} / 5   Nyanchelin {stars}   (next star at {need}),评价 {rep} / 5   喵其林 {stars}   （下一颗星需 {need}分）,評判 {rep} / 5   ニャシュラン {stars}   （次の星まで {need}点）
@@ -505,7 +505,7 @@ nyan.report.total,종합 {n}점 / 통과 기준 {need}점,Total {n} / need {need
 nyan.report.pass,별 하나 추가다냥! 앞으로도 기대하겠다냥.,"One more star, meow! Keep it up.",再加一颗星喵！今后也很期待喵。,星をひとつ追加だニャ！これからも期待してるニャ。
 nyan.report.fail,이번엔 별을 줄 수 없다냥. 다음에 다시 오겠다냥.,"No star this time, meow. I shall return.",这次不能给星喵。下次再来喵。,今回は星をあげられないニャ。また来るニャ。
 narr.inspector.order,{name}가 모노클을 고쳐 쓰고 수첩을 펼친다.,{name} adjusts the monocle and opens a notebook.,{name}扶了扶单片眼镜，翻开了笔记本。,{name}がモノクルをかけ直し、手帳を開いた。
-narr.food.nofav,{name}가 메뉴판을 한참 뒤적이다 마지못해 고른다.,{name} flips the menu for ages and picks reluctantly.,{name}把菜单翻了半天，勉强选了一个。,{name}がメニューをしばらくめくって、しぶしぶ選んだ。
+narr.food.nofav,{name}가 메뉴판을 한참 뒤적이다 마지못해 고른다.,{name} flips through the menu for ages and reluctantly picks something.,{name}把菜单翻了半天，勉强选了一个。,{name}がメニューをしばらくめくって、しぶしぶ選んだ。
 cat.cat_inspector.name,냥슐랭 심사원,Nyanchelin Inspector,喵其林评审员,ニャシュラン審査員
 review.fail.1,주문한 게 끝내 안 나왔다냥…,My order never came…,点的东西到最后都没上喵…,頼んだものが結局来なかったニャ…
 review.fail.2,기다리다 그냥 나왔다냥. 배고프다냥.,Gave up waiting. Still hungry.,等不下去就走了喵。肚子好饿喵。,待ちくたびれて出てきたニャ。おなかすいたニャ。
@@ -530,7 +530,7 @@ review.seat.2,{seat}에 앉으니 마음이 편하다냥.,Sitting at the {seat} 
 review.seat.3,{seat} 자리 최고다냥!,Best {seat} seat!,{seat}的位置最棒了喵！,{seat}の席、最高ニャ！
 review.fac.1,{fac} 가구가 있어서 신났다냥.,Loved the {fac} furniture.,有{fac}的家具，好开心喵。,{fac}の家具があってうれしかったニャ。
 review.fac.2,"{fac}, 이 카페 취향 저격이다냥.",{fac} here hits the spot.,{fac}，这家店太懂我了喵。,{fac}、このカフェ好みどまんなかだニャ。
-review.fac.3,{fac} 공간 덕분에 오래 있었다냥.,Stayed long thanks to the {fac} spot.,多亏了{fac}的空间，待了好久喵。,{fac}スペースのおかげで長居しちゃったニャ。
+review.fac.3,{fac} 공간 덕분에 오래 있었다냥.,Stayed extra long thanks to the {fac}.,多亏了{fac}的空间，待了好久喵。,{fac}スペースのおかげで長居しちゃったニャ。
 review.mouse.caught,쥐가 나왔지만 금방 잡아줬다냥.,A mouse showed up but got caught fast.,出现了老鼠，不过马上就抓到了喵。,ネズミが出たけど、すぐつかまえてくれたニャ。
 review.mouse.escaped,쥐가 돌아다녔다냥… 찜찜하다냥.,A mouse ran loose… yuck.,老鼠到处乱跑喵…心里毛毛的喵。,ネズミがうろうろしてたニャ…落ち着かないニャ。
 review.nyan,역시 냥슐랭 카페답다냥.,Truly a Nyanchelin cafe.,不愧是喵其林咖啡馆喵。,さすがニャシュランのカフェだニャ。
@@ -549,7 +549,7 @@ ui.tool.bought,새 기구: {tool}! 메뉴 2개 추가,New tool: {tool}! +2 menus
 ui.tool.notowned,{tool}는 아직 없어요. 상점 [주방 기구]에서 살 수 있어요,No {tool} yet. You can buy it under [Kitchen Tools] in the shop.,还没有{tool}。可以在商店的【厨具】里购买,{tool}はまだありません。ショップの【キッチン道具】で買えるよ
 ui.tool.pick.title,{tool} — 무엇을 만들까?,{tool}: what to make?,{tool}——要做什么呢？,{tool}──何を作る？
 ui.tool.pick.sub,기다리는 주문이 있는 메뉴를 고르세요,Pick a menu someone ordered,请选择有客人在等的菜,注文待ちのメニューを選んでね
-ui.tool.pick.vague,힌트 주문 {n}개 — 고른 메뉴로 맞혀 봐요,Hint orders: {n} — your pick answers one,提示订单{n}个——用选的菜来猜猜看,ヒント注文{n}件──選んだメニューで当ててみよう
+ui.tool.pick.vague,힌트 주문 {n}개 — 고른 메뉴로 맞혀 봐요,{n} hint orders — your pick goes to one of them,提示订单{n}个——用选的菜来猜猜看,ヒント注文{n}件──選んだメニューで当ててみよう
 ui.tool.pick.waiting,주문 {n},{n} waiting,订单 {n},注文 {n}
 ui.tool.pick.guess,힌트 주문으로,for a hint order,当作提示订单,ヒント注文として
 ui.tool.pick.none,주문 없음,no orders,没有订单,注文なし
@@ -591,7 +591,7 @@ tut.welcome,곧 고양이 손님이 와요. 어디에 앉고 무엇을 하는지
 tut.order,주문이 들어왔어요! 위쪽 [주방]을 눌러 메뉴를 만들어 주세요.,An order! Tap [Kitchen] at the top to cook it.,来订单了！点击上方的【厨房】做菜吧。,注文が入ったよ！上の【キッチン】を押してメニューを作ろう。
 tut.served,잘했어요! 맛있게 먹는지 남기는지 봐 두세요. 고양이를 눌러 쓰다듬을 수도 있어요.,Nice! See whether it eats happily or leaves food. You can also tap a cat to pet it.,做得好！看看它是吃得香还是剩下了。也可以点猫咪摸摸它哦。,よくできました！おいしそうに食べるか、残すか見ておこう。ネコをクリックしてなでることもできるよ。
 tut.closing,마감 시간! 마지막 손님과 놀아 주세요. 좋아하는 곳을 쓰다듬으면 쭙쭙이를 할지도 몰라요.,Closing time! Play with the last guest. Pet its favorite spot and it might start suckling.,打烊时间！陪最后一位客人玩一会儿吧。摸到喜欢的地方，它说不定会开始嘬嘬哦。,閉店の時間！最後のお客さんと遊んであげよう。好きなところをなでると、ちゅぱちゅぱを始めるかも。
-tut.settle,오늘 본 단서로 고양이의 음식·좌석·시설 취향을 추리해 기록하세요. 모두의 취향을 알아내는 게 최종 목표예요!,"Use today's clues to guess each cat's favorite food, seat, and spot. Learning everyone's taste is the final goal!",用今天看到的线索，推理并记录猫咪对食物·座位·设施的喜好。找出所有猫咪的喜好就是最终目标！,今日見た手がかりから、ネコのごはん・席・スポットの好みを推理して記録しよう。みんなの好みを見つけるのが最終目標！
+tut.settle,오늘 본 단서로 고양이의 음식·좌석·시설 취향을 추리해 기록하세요. 모두의 취향을 알아내는 게 최종 목표예요!,"Use today's clues to guess each cat's favorite food, seat, and play spot. Figuring out everyone's tastes is the final goal!",用今天看到的线索，推理并记录猫咪对食物·座位·设施的喜好。找出所有猫咪的喜好就是最终目标！,今日見た手がかりから、ネコのごはん・席・スポットの好みを推理して記録しよう。みんなの好みを見つけるのが最終目標！
 ui.shop.slots,남은 자리  바닥 {f}곳 · 벽 {w}곳,Space left  floor {f} · wall {w},剩余位置  地面 {f}处 · 墙面 {w}处,空きスペース  床 {f}か所・壁 {w}か所
 ui.shop.slotsmany,남은 자리  바닥 넉넉 · 벽 {w}곳,Space left  floor plenty · wall {w},剩余位置  地面 充足 · 墙面 {w}处,空きスペース  床 たっぷり・壁 {w}か所
 cat.cat_fold.name,폴드냥,Mochi,折耳喵,オリミミニャン
@@ -690,10 +690,10 @@ photo.names.off,이름표 끔,Names: off,名字：关,名前：オフ
 photo.retake,다시 찍기,Retake,重拍,撮り直す
 photo.save,앨범에 저장,Save to album,存入相册,アルバムに保存
 photo.saved,앨범에 저장했어요 ({n}/{cap}),Saved to album ({n}/{cap}),已存入相册（{n}/{cap}）,アルバムに保存しました（{n}/{cap}）
-photo.full,앨범이 가득 찼어요. 사진을 지우거나 칸을 늘려 주세요,Album is full. Delete a photo or add pages.,相册满了。删掉照片或扩充页数吧,アルバムがいっぱいです。写真を消すかページを増やしてね
+photo.full,앨범이 가득 찼어요. 사진을 지우거나 칸을 늘려 주세요,Album is full. Delete a photo or add more slots.,相册满了。删掉照片或扩充页数吧,アルバムがいっぱいです。写真を消すかページを増やしてね
 photo.album.title,앨범  {n}/{cap},Album  {n}/{cap},相册  {n}/{cap},アルバム  {n}/{cap}
 photo.album.empty,아직 사진이 없어요. 포토 모드(P)에서 찰칵!,No photos yet. Press P and snap away!,还没有照片。按P进入拍照模式吧！,まだ写真がありません。Pで撮影モードへ！
-photo.album.expand,칸 늘리기 +12 · {g}G,+12 pages · {g}G,扩充 +12 · {g}G,ページ追加 +12 · {g}G
+photo.album.expand,칸 늘리기 +12 · {g}G,+12 slots · {g}G,扩充 +12 · {g}G,ページ追加 +12 · {g}G
 photo.album.max,앨범이 가장 커요,Album is at max size,相册已经最大了,アルバムは最大です
 photo.album.expanded,앨범이 {cap}칸이 됐어요!,Album now holds {cap} photos!,相册扩充到{cap}张了！,アルバムが{cap}枚になりました！
 photo.album.folder,폴더 열기,Open folder,打开文件夹,フォルダを開く
@@ -746,7 +746,7 @@ Apparently loves a warm spot.","没有毛、总是怕冷的{name}，
 shelter.news.cat_kitten,"보호소에서 태어난 아기 고양이 {name}가
 내일부터 카페에 놀러 와요.
 세상 모든 게 궁금한 나이래요.","{name}, a kitten born at the shelter,
-will visit the cafe from tomorrow.
+will start visiting the cafe tomorrow.
 Curious about absolutely everything.","在救助站出生的小猫{name}，
 明天起会来咖啡馆玩。
 正是对什么都好奇的年纪。","保護センターで生まれた子ネコの{name}が、
@@ -755,7 +755,7 @@ Curious about absolutely everything.","在救助站出生的小猫{name}，
 shelter.news.cat_senior,"보호소에서 가장 나이 많은 {name}가
 내일부터 카페에 들른대요.
 천천히, 조용히 대접해 주세요.","{name}, the shelter's oldest resident,
-will drop by the cafe from tomorrow.
+will start dropping by the cafe tomorrow.
 Treat them slowly and gently.","救助站里年纪最大的{name}，
 明天起会来咖啡馆坐坐。
 请慢慢地、安静地招待它。","保護センターでいちばん年上の{name}が、
@@ -892,7 +892,7 @@ ui.fix.store,보관함에 넣기 (무료로 다시 꺼낼 수 있어요),Store (
 ui.fix.stored,{name} — 보관함에 넣었어요. 상점 '창·조명'에서 다시 꺼낼 수 있어요,{name} stored. Take it out again from Shop › Windows & Lights.,{name} 已放进仓库。可在商店「窗户·灯」再拿出,{name}を保管したよ。ショップ「窓・照明」から戻せます
 ui.fix.plaque,냥슐랭 명판은 옮기기만 돼요,The plaque can only be moved,铭牌只能移动,看板は動かすだけです
 ui.fix.tabhint,처음부터 있던 창·조명은 빼도 보관함에 남아요. 다시 놓을 땐 무료,The original windows and lights stay in storage when removed. Placing them again is free.,原有的窗户和灯拿掉后会留在仓库，再次摆放免费,最初からある窓・照明は外しても保管され、置き直しは無料
-narr.facility.loft,{name}가 벽 선반을 폴짝폴짝 밟고 다락에 올라가 아래를 내려다본다.,{name} hopped up the wall shelves to the loft and is looking down.,{name}踩着墙上的小架子一跳一跳上了阁楼，正俯视下面。,{name}が壁の棚をぴょんぴょん登って屋根裏へ。下を見下ろしている。
+narr.facility.loft,{name}가 벽 선반을 폴짝폴짝 밟고 다락에 올라가 아래를 내려다본다.,{name} hops up the wall shelves to the loft and peers down.,{name}踩着墙上的小架子一跳一跳上了阁楼，正俯视下面。,{name}が壁の棚をぴょんぴょん登って屋根裏へ。下を見下ろしている。
 ui.cafe.reveal3,카페가 위로 넓어졌어요! 다락과 캣워크가 생겼어요,The cafe grew upward! A loft and catwalk appeared.,咖啡馆向上扩建啦！多了阁楼和猫步道,カフェが上に広がった！屋根裏とキャットウォークができたよ
 story.title.memory,{name}의 기억,{name}'s memory,{name}的回忆,{name}の思い出
 story.memory.sub,"뉴로냐 이전, 사람들이 있던 시절","Before NeuroNya, when people were still here",NeuroNya之前，人们还在的时候,NeuroNya以前、人間がいたころ
@@ -915,7 +915,7 @@ ep.cat_gray.memory.02,"대신 해 뜰 무렵, 조용한 공원에 산책 나온 
 ep.cat_gray.memory.03,"조용한 곳, 누군가의 옆자리, 달콤한 푸딩. 젖소 걔가 낯익은 것도 당연해요.","A quiet place, a seat beside someone, sweet pudding. No wonder Moo looks so familiar.",安静的地方、某个人身边的座位、甜甜的布丁。难怪会觉得奶牛那家伙眼熟。,静かな場所、だれかのとなりの席、あまいプリン。ウシのあいつに見覚えがあるのも当然です。
 ep.cat_black.memory.01,"{name}는 꽃집 뒤편, 화분들 사이에 숨어 살았어요.",{name} lived hidden among the flowerpots behind a flower shop.,{name}以前躲在花店后面的花盆之间生活。,{name}は、花屋さんの裏の植木鉢のあいだに隠れて暮らしていました。
 ep.cat_black.memory.02,"검은 고양이는 재수 없다는 손님들 때문에 늘 구석에만 있었지만, 꽃집 주인만은 매일 아침 데운 우유를 놓아 줬죠.","Some customers said black cats were bad luck, so {name} stayed in the corner. But every morning, the florist left out a dish of warm milk.",有些客人说黑猫不吉利，所以它总待在角落。但花店老板每天早上都会放一碟温牛奶。,黒ネコは縁起が悪いというお客さんがいて、いつもすみっこにいました。でも花屋の主人だけは、毎朝あたためたミルクを置いてくれたのです。
-ep.cat_black.memory.03,"구석과 화분 냄새가 편한 건, 거기가 처음으로 안전했던 곳이라서예요.",Corners and the smell of plants feel safe because that was the first place that ever was.,角落和盆栽的气味让它安心，因为那里是它第一次感到安全的地方。,すみっこと植物のにおいが落ち着くのは、そこがはじめて安心できた場所だから。
+ep.cat_black.memory.03,"구석과 화분 냄새가 편한 건, 거기가 처음으로 안전했던 곳이라서예요.",Corners and the smell of plants feel safe because that was the first place {name} ever felt safe.,角落和盆栽的气味让它安心，因为那里是它第一次感到安全的地方。,すみっこと植物のにおいが落ち着くのは、そこがはじめて安心できた場所だから。
 ep.cat_tuxedo.memory.01,{name}는 작은 회사 사무실에서 자란 '사무실 고양이'였어요.,{name} grew up as the office cat of a small company.,{name}是在一家小公司办公室里长大的“办公室猫”。,{name}は、小さな会社のオフィスで育った「オフィスネコ」でした。
 ep.cat_tuxedo.memory.02,"휴게실 소파 위에서, 직원들이 쉬는 시간마다 흔들어 주는 낚싯대 장난감을 덮치는 게 하루 일과였죠.","The break-room sofa was home base, and pouncing on the toy wand the staff waved during breaks was the daily job.",在休息室的沙发上，扑向员工们休息时晃动的逗猫棒，就是它每天的工作。,休憩室のソファの上で、休み時間にみんなが振ってくれるねこじゃらしに飛びかかるのが毎日のお仕事。
 ep.cat_tuxedo.memory.03,"쓴 커피를 '어른의 맛'이라고 믿는 건, 다들 아메리카노를 들고 {name}를 보며 웃어 줬기 때문이에요.",{name} believes bitter coffee is 'the grown-up taste' because everyone held an americano while laughing at those pounces.,它相信苦咖啡是“大人的味道”，是因为大家总是端着美式咖啡，看着它笑。,苦いコーヒーを「オトナの味」だと信じているのは、みんながアメリカーノを片手に笑ってくれたからです。
