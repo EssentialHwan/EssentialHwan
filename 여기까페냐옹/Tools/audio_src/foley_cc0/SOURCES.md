@@ -3,9 +3,9 @@
 
 | 번호 | 원제 | 게임에서 |
 |---|---|---|
-| 1478, 1475, 1479 | little meow of a cat 8 / 5 / 9 | sfx_meow_0 / 1 / 2 |
-| 0494 | little meow of a cat | sfx_meow_small |
-| 1890 | meow cat 2 | sfx_meow_demand |
+| 1478, 1475, 1479 | little meow of a cat 8 / 5 / 9 | (11/09 되돌림: 울음소리는 기존 합성음 유지) |
+| 0494 | little meow of a cat | (되돌림) |
+| 1890 | meow cat 2 | (되돌림) |
 | 1010 | cat purring 3 | sfx_purr (20초부터 4초 루프) |
 | 1155 | hot water in mug | sfx_pour |
 | 0144 | frying pan 2 | sfx_sizzle |

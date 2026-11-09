@@ -42,11 +42,16 @@ def save(name, a, peak_db=None, lufs=None):
     os.remove(wav); print(name, round(len(a) / SR, 2), 's')
 
 # ── 고양이 ── (짧은 건 피크 -4dB로 통일, 저역 웅웅거림은 100Hz 하이패스로)
-save('sfx_meow_0',     fades(hp(trim(load('1478', 0, 0.80)), 100)), peak_db=-4)
-save('sfx_meow_1',     fades(hp(trim(load('1475', 0, 0.82)), 100)), peak_db=-4)
-save('sfx_meow_2',     fades(hp(trim(load('1479', 0, 0.85)), 100)), peak_db=-4)
-save('sfx_meow_small', fades(hp(trim(load('0494', 0, 0.65)), 120)), peak_db=-5)
-save('sfx_meow_demand', fades(hp(trim(load('1890', 0, 2.05)), 100), fout=0.12), peak_db=-4)
+# (11/09 환 요청으로 되돌림 — 기존 합성 울음 유지)
+# save('sfx_meow_0',     fades(hp(trim(load('1478', 0, 0.80)), 100)), peak_db=-4)
+# (11/09 환 요청으로 되돌림 — 기존 합성 울음 유지)
+# save('sfx_meow_1',     fades(hp(trim(load('1475', 0, 0.82)), 100)), peak_db=-4)
+# (11/09 환 요청으로 되돌림 — 기존 합성 울음 유지)
+# save('sfx_meow_2',     fades(hp(trim(load('1479', 0, 0.85)), 100)), peak_db=-4)
+# (11/09 환 요청으로 되돌림 — 기존 합성 울음 유지)
+# save('sfx_meow_small', fades(hp(trim(load('0494', 0, 0.65)), 120)), peak_db=-5)
+# (11/09 환 요청으로 되돌림 — 기존 합성 울음 유지)
+# save('sfx_meow_demand', fades(hp(trim(load('1890', 0, 2.05)), 100), fout=0.12), peak_db=-4)
 # 골골: 4초 루프(마감 놀이에서 Loop으로 돈다)
 save('sfx_purr', fades(loop(hp(load('1010', 20, 4.6), 40), 0.6), fin=0.005, fout=0.005), lufs=-20)   # 양끝 5ms: 한 번 재생 시 딸깍 방지
 
