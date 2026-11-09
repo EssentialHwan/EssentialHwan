@@ -85,7 +85,7 @@ namespace YeogiCafe.UI
             full = TextFitGuard.Kinsoku(body, L.Get($"opening.{page + 1}"));   // 타자 효과 중 줄이 튀지 않게 미리 금칙 처리
             shown = 0; body.text = ""; inT = 0f;
             pageLabel.text = $"{page + 1} / {Pages}   ·   {L.Get("opening.hint")}";
-            YeogiCafe.Audio.SoundManager.Sfx("sfx_boop", 0.3f, 0.05f);
+            YeogiCafe.Audio.SoundManager.Sfx("sfx_page", 0.5f, 0.05f);
         }
 
         void Finish()
