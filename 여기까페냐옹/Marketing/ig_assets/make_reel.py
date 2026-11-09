@@ -54,7 +54,7 @@ for ln in en_l:
 cy = y + gap; cx = (W - clip_w) // 2
 d.rounded_rectangle((cx - 8, cy - 8, cx + clip_w + 8, cy + clip_h + 8), radius=18, fill=INK)
 yb = cy + clip_h + gap
-for t, f, c in (('Purrsonal Taste · 여기카페냐옹', fs, PINK), ('Steam 2027 · @winterystudio', fx, SOFT)):
+for t, f, c in (('Purrsonal Taste · 여기카페냐옹', fs, PINK), (os.environ.get('REEL_FOOTER', 'Steam 2027 · @winterystudio'), fx, SOFT)):
     w = d.textlength(t, font=f); d.text(((W - w) / 2, yb), t, font=f, fill=c); yb += 56
 bgp = os.path.join(tmp, 'bg.png'); bg.save(bgp)
 
@@ -206,9 +206,9 @@ if src.startswith('acts:'):
         if lk:
             w = dd.textlength(lk, font=fa); dd.text(((cw - w) / 2, gy + 26), lk, font=fa, fill=INK)
             w = dd.textlength(le, font=fae); dd.text(((cw - w) / 2, gy + 86), le, font=fae, fill=SOFT)
-        if sec >= secs - 1.6:
+        if sec >= secs - float(os.environ.get('REEL_CTA_SECS', '1.6')):
             fe2 = ImageFont.truetype(FONT, 40); fs2 = ImageFont.truetype(FONT, 26)
-            t1 = '팔로우하고 다음 손님 만나기'; t2 = 'Follow to meet the next guest'
+            t1 = os.environ.get('REEL_CTA1', '팔로우하고 다음 손님 만나기'); t2 = os.environ.get('REEL_CTA2', 'Follow to meet the next guest')
             bw = max(dd.textlength(t1, font=fe2), dd.textlength(t2, font=fs2)) + 60
             bx0 = (cw - bw) / 2; by0 = 34
             dd.rounded_rectangle((bx0, by0, bx0 + bw, by0 + 110), radius=22, fill=PINK)
@@ -309,9 +309,9 @@ if src.startswith('acts2:'):
         if lk:
             w = dd.textlength(lk, font=fa); dd.text(((cw - w) / 2, gy + 26), lk, font=fa, fill=INK)
             w = dd.textlength(le, font=fae); dd.text(((cw - w) / 2, gy + 86), le, font=fae, fill=SOFT)
-        if sec >= secs - 1.6:
+        if sec >= secs - float(os.environ.get('REEL_CTA_SECS', '1.6')):
             fe2 = ImageFont.truetype(FONT, 40); fs2 = ImageFont.truetype(FONT, 26)
-            t1 = '팔로우하고 다음 손님 만나기'; t2 = 'Follow to meet the next guest'
+            t1 = os.environ.get('REEL_CTA1', '팔로우하고 다음 손님 만나기'); t2 = os.environ.get('REEL_CTA2', 'Follow to meet the next guest')
             bw = max(dd.textlength(t1, font=fe2), dd.textlength(t2, font=fs2)) + 60
             bx0 = (cw - bw) / 2; by0 = 34
             dd.rounded_rectangle((bx0, by0, bx0 + bw, by0 + 110), radius=22, fill=PINK)
