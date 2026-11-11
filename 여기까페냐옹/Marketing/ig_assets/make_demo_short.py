@@ -12,7 +12,8 @@ tmp = tempfile.mkdtemp()
 fk = ImageFont.truetype(FONT, 62); fe = ImageFont.truetype(FONT, 34); fs = ImageFont.truetype(FONT, 40); fx = ImageFont.truetype(FONT, 30)
 
 # (seg, 길이, 한국어, English)
-SHOTS = [
+import json
+SHOTS = json.loads(os.environ['SHOTS_JSON']) if os.environ.get('SHOTS_JSON') else [
     (1, 2.8, '고양이 손님이 찾아오는 카페', 'A cafe where cats are the customers'),
     (2, 2.6, '앞발로 톡! 요리해서 내주고', 'Tap with your paw to cook & serve'),
     (3, 2.4, '무엇을 좋아하는지 지켜보고', 'Watch what each cat loves'),
@@ -39,9 +40,9 @@ parts = []
 for i, (s, dur, ko, en) in enumerate(SHOTS):
     bgp = os.path.join(tmp, f'bg{i}.png'); frame(ko, en, bgp)
     out = os.path.join(tmp, f'p{i}.mp4')
-    off = {5: 0.25}.get(s, 0)                                    # 체크 표시가 떠 있는 1초만 쓰고 멈춰 보여 준다
+    off = {5: 0.25}.get(s, 0) if not os.environ.get('SHOTS_JSON') else 0                                    # 체크 표시가 떠 있는 1초만 쓰고 멈춰 보여 준다
     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-loop', '1', '-i', bgp, '-ss', str(off), '-i', os.path.join(SEG, f'seg_{s}.mp4'),
-                    '-filter_complex', ('[1:v]trim=0:0.95,setpts=PTS-STARTPTS,tpad=stop_mode=clone:stop_duration=1.5,' if s == 5 else '[1:v]') + f'scale={CLIP_W}:{CLIP_H}:flags=lanczos[c];[0:v][c]overlay={(W - CLIP_W) // 2}:{CY},fps=30,format=yuv420p[v]',
+                    '-filter_complex', ('[1:v]trim=0:0.95,setpts=PTS-STARTPTS,tpad=stop_mode=clone:stop_duration=1.5,' if s == 5 and not os.environ.get('SHOTS_JSON') else '[1:v]') + f'scale={CLIP_W}:{CLIP_H}:flags=lanczos[c];[0:v][c]overlay={(W - CLIP_W) // 2}:{CY},fps=30,format=yuv420p[v]',
                     '-map', '[v]', '-t', str(dur), '-c:v', 'libx264', '-crf', '16', '-preset', 'fast', out], check=True)
     parts.append(out)
 
@@ -71,9 +72,9 @@ total = sum(s[1] for s in SHOTS) + END
 
 # 소리: 점심 BGM + 장면마다 게임 효과음 한두 개
 t0 = [sum(s[1] for s in SHOTS[:i]) for i in range(len(SHOTS))]
-SFX = [('sfx_enter', t0[0] + 0.2, 0.5), ('sfx_serve', t0[1] + 1.9, 0.8), ('sfx_meow_0', t0[2] + 0.5, 0.7),
+SFX = [tuple(x[:1]) + (t0[x[1]] + x[2], x[3]) for x in json.loads(os.environ['SFX_JSON'])] if os.environ.get('SFX_JSON') else [('sfx_enter', t0[0] + 0.2, 0.5), ('sfx_serve', t0[1] + 1.9, 0.8), ('sfx_meow_0', t0[2] + 0.5, 0.7),
        ('sfx_click', t0[3] + 0.8, 0.6), ('sfx_correct', t0[4] + 0.3, 0.8), ('sfx_purr', t0[5] + 0.3, 0.6), ('sfx_story', total - END + 0.1, 0.8)]
-inputs = ['-i', vid, '-stream_loop', '-1', '-i', f'{AUD}/bgm_1_0.ogg']
+inputs = ['-i', vid, '-stream_loop', '-1', '-i', f"{AUD}/{os.environ.get('BGM', 'bgm_1_0')}.ogg"]
 fc = [f'[1:a]volume=0.45,afade=t=in:d=0.5,afade=t=out:st={total - 1.2}:d=1.2[a0]']; mix = ['[a0]']
 for i, (n, at, v) in enumerate(SFX):
     inputs += ['-i', f'{AUD}/{n}.ogg']; ms = int(at * 1000)
