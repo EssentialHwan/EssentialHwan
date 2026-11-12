@@ -73,8 +73,15 @@ namespace YeogiCafe.EditorTools
         [MenuItem("여기카페냐옹/■ 스토브 체험판 빌드", priority = 204)]
         public static void BuildStoveDemo() => BuildStoveVariant(true);
 
+        // 11/12: 0.9.9 = 사운드 전면 교체·연필 ○ 추리·취향 하트·누끼 정리·세이브 안전장치·STOVE 통계·영어 다듬기
+        //  (예전엔 스토브 빌드가 버전을 안 넣어서 마지막 일반 빌드 버전을 따라갔음 → 두 빌드 모두 여기서 넣는다)
+        public const string Version = "0.9.9";
+
         static void BuildStoveVariant(bool demo)
         {
+            PlayerSettings.productName = "여기카페냐옹";
+            PlayerSettings.companyName = "Wintery Studio";
+            PlayerSettings.bundleVersion = Version;
             string root = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Build"));
             string cfgName = demo ? "stove_config_demo.json" : "stove_config.json";   // 체험판은 별도 상품 키
             if (!File.Exists(Path.Combine(Application.dataPath, "Resources", "Stove", cfgName)))
@@ -177,7 +184,7 @@ namespace YeogiCafe.EditorTools
 
             PlayerSettings.productName = "여기카페냐옹";   // 바뀌면 저장 폴더도 바뀜 → SaveManager가 예전 폴더 세이브·사진을 가져옴
             PlayerSettings.companyName = "Wintery Studio";
-            PlayerSettings.bundleVersion = "0.9.8";   // 11/02: 빌드 조명 버그 수정(시작하기 후 NullReference) + 그림자·창밖 리디자인 + 리디자인 17마리 전부
+            PlayerSettings.bundleVersion = Version;
             PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
             PlayerSettings.defaultScreenWidth = 1600;
             PlayerSettings.defaultScreenHeight = 900;
