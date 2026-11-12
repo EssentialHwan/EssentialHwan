@@ -309,8 +309,11 @@ namespace YeogiCafe.UI
             }
 
             int stamps = save != null ? save.pawStamps : 0;
-            var goal = EndingPanel.Progress(save, all);
-            header.text = L.Get(save != null && save.endingSeen ? "ui.catalog.goaldone" : "ui.catalog.goal", ("a", goal.done.ToString()), ("b", goal.total.ToString()))
+            // 목표 줄: 일반 엔딩 전 = 13마리, 일반 엔딩 후 = 보호소까지 16마리(진엔딩), 진엔딩 후 = 완성
+            bool afterEnding = save != null && save.endingSeen;
+            var goal = afterEnding ? EndingPanel.TrueProgress(save, all) : EndingPanel.Progress(save, all);
+            string goalKey = !afterEnding ? "ui.catalog.goal" : save.trueEndingSeen ? "ui.catalog.goal2done" : "ui.catalog.goal2";
+            header.text = L.Get(goalKey, ("a", goal.done.ToString()), ("b", goal.total.ToString()))
                           + "    " + L.Get("ui.catalog.stamps", ("n", stamps.ToString()))
                           + "    " + L.Get("ui.catalog.gifts", ("n", (save != null ? save.giftsCollected.Count : 0).ToString()),
                                            ("t", YeogiCafe.Data.GiftCatalog.All.Length.ToString()));

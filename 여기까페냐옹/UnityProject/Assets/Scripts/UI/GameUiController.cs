@@ -776,6 +776,8 @@ namespace YeogiCafe.UI
 
         public void DebugTutorial() => guide?.DebugReplay();
         public void DebugEnding() => new EndingPanel(root.transform, Save, AllCats, null, preview: true);
+        public void DebugTrueEnding(bool chained) => new EndingPanel(root.transform, Save, AllCats, null, preview: true, trueEnding: true, chained: chained);
+        bool endingShownTonight;   // 같은 밤 일반 엔딩 → 진엔딩이 이어지는지(전환 장면용)
 
         // ── 현지화 QA: 현재 언어로 화면을 하나씩 열어 스크린샷 + 글자 넘침 보고서를 Build/uicheck 에 남긴다 ──
         public bool UiTourRunning { get; private set; }
@@ -881,6 +883,8 @@ namespace YeogiCafe.UI
                 closing.Show(c0, Save.GetOrCreateCat(c0.catId), null); yield return Shot("closing"); closing.DebugClose();
             }
             var end = new EndingPanel(root.transform, Save, AllCats, null, preview: true); yield return Shot("ending"); end.DebugClose();
+            var tend = new EndingPanel(root.transform, Save, AllCats, null, preview: true, trueEnding: true); yield return Shot("ending_true"); tend.DebugClose();
+            var lend = new EndingPanel(root.transform, Save, AllCats, null, preview: true, trueEnding: true, chained: true); yield return Shot("ending_true_lead"); lend.DebugClose();
             var op = opening = new OpeningPanel(root.transform, () => { opening = null; });
             for (int p = 0; p < 5; p++) { op.DebugPage(p); yield return Shot("opening" + (p + 1)); }
             op.DebugFinish();
@@ -915,9 +919,19 @@ namespace YeogiCafe.UI
             // 최종 목표 달성(모두의 취향 기록) → 엔딩 편지 한 번, 닫으면 자유 영업
             if (EndingPanel.Ready(Save, AllCats))
             {
+                endingShownTonight = true;
                 new EndingPanel(root.transform, Save, AllCats, StartNextDay);
                 return;
             }
+            // 진엔딩(보호소까지 16마리): 일반 엔딩을 본 뒤에만. 같은 밤 일반 엔딩 바로 뒤면 전환 장면부터.
+            if (EndingPanel.TrueReady(Save, AllCats))
+            {
+                bool chained = endingShownTonight;
+                endingShownTonight = false;
+                new EndingPanel(root.transform, Save, AllCats, StartNextDay, trueEnding: true, chained: chained);
+                return;
+            }
+            endingShownTonight = false;
             settlement.Hide();
             guide?.OnNextDay();
             if (flow != null) flow.BeginNextDay();       // 일차 증가·오토세이브·영업 시작

@@ -65,6 +65,8 @@ ui.catalog.title,관찰 도감,Cat Journal,观察图鉴,観察図鑑
 ui.catalog.discovered,발견 {a}/{b},Discovered {a}/{b},已发现 {a}/{b},発見 {a}/{b}
 ui.catalog.goal,목표: 모두의 취향 {a}/{b},Goal: everyone's tastes {a}/{b},目标：大家的喜好 {a}/{b},目標：みんなの好み {a}/{b}
 ui.catalog.goaldone,모두의 취향 완성! {a}/{b},Everyone's tastes found! {a}/{b},大家的喜好全部找到啦！{a}/{b},みんなの好みコンプリート！{a}/{b}
+ui.catalog.goal2,다음 목표: 보호소 친구들까지 {a}/{b},Next goal: shelter friends too {a}/{b},下一个目标：连救助站的朋友也算上 {a}/{b},次の目標：保護センターの仲間まで {a}/{b}
+ui.catalog.goal2done,모든 고양이의 취향 완성! {a}/{b},Every cat's tastes found! {a}/{b},所有猫咪的喜好全部找到啦！{a}/{b},すべてのネコの好みコンプリート！{a}/{b}
 ui.catalog.observing,관찰 중,Observing,观察中,観察中
 ui.axis.food,음식,Food,食物,ごはん
 ui.axis.seat,좌석,Seat,座位,席
@@ -586,6 +588,18 @@ Tomorrow, the doors open again. For the other cats.","NeuroNya给了猫咪们聪
 好きなものを思い出させてあげたのは、この小さなカフェでした。
 明日も扉を開けます。ほかのネコたちのために。"
 ending.continue,계속 영업하기,Keep the cafe open,继续营业,営業をつづける
+ending.true.lead,"그날 밤, 보호소에서 편지 한 통이 도착했어요.","That night, a letter arrived from the shelter.",那天夜里，救助站寄来了一封信。,その夜、保護センターから一通の手紙が届きました。
+ending.true.title,다른 고양이들까지,"For the Other Cats, Too",连其他猫咪也一起,ほかのネコたちまで
+ending.true.sub,"보호소 친구들까지, {n}마리 모두의 마음을 알아냈어요","Shelter friends included, you learned the hearts of all {n} cats",连救助站的朋友们也算上，读懂了全部{n}只猫的心,保護センターの仲間まで、{n}匹みんなの心がわかりました
+ending.true.body,"갈 곳 없던 고양이들도 이제, 좋아하는 게 뭔지 알아요.
+옛 사장님이 바라던 날이 왔어요. 오늘 우유는 공짜예요.
+내일도 문을 열어요. 아직 만나지 못한 고양이들을 위해.","Even the cats who had nowhere to go now know what they love.
+The day the old owner hoped for has come. Milk's on the house today.
+Tomorrow, the doors open again. For the cats we haven't met yet.","那些无处可去的猫咪，现在也知道自己喜欢什么了。
+老店长盼望的那一天终于来了。今天的牛奶免费。
+明天也会开门。为了还没遇见的猫咪们。","行き場のなかったネコたちも、いまは好きなものを知っています。
+前の店長が願っていた日が来ました。今日のミルクは、おごりです。
+明日も扉を開けます。まだ会っていないネコたちのために。"
 tut.tag,처음 오셨나요?,First day tips,第一次来吗？,はじめてですか？
 tut.welcome,곧 고양이 손님이 와요. 어디에 앉고 무엇을 하는지 지켜보세요 — 모두 취향의 단서예요.,A cat guest is coming. Watch where it sits and what it does — every move is a clue.,猫咪客人马上就到。看看它坐在哪里、做些什么——这些都是喜好的线索。,もうすぐネコのお客さんが来るよ。どこに座って何をするか見ていてね──ぜんぶ好みの手がかりです。
 tut.order,주문이 들어왔어요! 위쪽 [주방]을 눌러 메뉴를 만들어 주세요.,An order! Tap [Kitchen] at the top to cook it.,来订单了！点击上方的【厨房】做菜吧。,注文が入ったよ！上の【キッチン】を押してメニューを作ろう。
