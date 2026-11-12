@@ -167,7 +167,7 @@ namespace YeogiCafe.Core
             int pay = 0, cost = 0;
             foreach (var (menu, stars) in brain.DeliveryServed)
             {
-                pay += Mathf.RoundToInt(menu.price * YeogiCafe.Food.DeliveryCat.PayRate
+                pay += Mathf.RoundToInt(menu.price * cfg.menuPayMult * YeogiCafe.Food.DeliveryCat.PayRate
                                         * YeogiCafe.Food.RecipeBook.StarPayMult(stars) * YeogiCafe.Food.NyanGuide.PayMult(save.nyanStars));
                 cost += menu.cost;
                 if (stars > 0) save.GetMenuStat(menu.menuId).sold++;
@@ -226,8 +226,8 @@ namespace YeogiCafe.Core
             // 결제 (§3.4)
             // 쥐 소동 때 쥐를 쫓아 뛰쳐나간 고양이는 계산을 잊는다(재료비는 그대로 나감)
             int price = brain.ServedMenu != null && !brain.ChaseSkippedPay ? brain.ServedMenu.price : 0;
-            if (brain.ServedMenu != null && brain.ChaseSkippedPay) LostToMice += brain.ServedMenu.price;
-            int pay = Mathf.RoundToInt(price * EconomyManager.TipMultiplier(satisfaction)
+            if (brain.ServedMenu != null && brain.ChaseSkippedPay) LostToMice += Mathf.RoundToInt(brain.ServedMenu.price * cfg.menuPayMult);
+            int pay = Mathf.RoundToInt(price * cfg.menuPayMult * EconomyManager.TipMultiplier(satisfaction)
                                        * YeogiCafe.Food.RecipeBook.StarPayMult(brain.ServedStars)
                                        * YeogiCafe.Food.NyanGuide.PayMult(save.nyanStars));
             economy.AddGold(pay);
