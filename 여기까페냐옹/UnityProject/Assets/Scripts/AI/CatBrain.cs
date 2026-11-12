@@ -500,8 +500,10 @@ namespace YeogiCafe.AI
             // 다락·캣워크(Lv3): 추리 보기에 없는 공간이라 단서 대신 말풍선만(높은 곳 좋아하는 고양이가 자주 올라간다)
             if (f is YeogiCafe.Visual.LoftSpot) { Obs?.NarrateOnly(data.catId, Narrate("narr.facility.loft")); return; }
             // 과일 박스·햇볕 자리: 누구나(또는 따뜻한 걸 좋아하는 아무나) 하는 행동이라 추리 단서가 아니다 → 말풍선만
+            // 단, 시설 취향 자체가 Warm인 고양이(고등어냥·스핑냥)는 따뜻한 자리가 유일한 정답 채널이라 단서를 남긴다.
+            // (예외가 없으면 이 고양이들의 시설 칸이 영원히 '?'로 남아 엔딩 조건을 채울 수 없었다)
             foreach (var t in f.Tags)
-                if (t == FacilityTag.Box || t == FacilityTag.Warm)
+                if (t == FacilityTag.Box || (t == FacilityTag.Warm && data.facilityPreference != FacilityTag.Warm))
                 {
                     Obs?.NarrateOnly(data.catId, Narrate(t == FacilityTag.Box ? "narr.facility.box" : "narr.facility.warm"));
                     return;
