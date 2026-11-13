@@ -451,7 +451,10 @@ namespace YeogiCafe.UI
                 go.transform.SetParent(rootGo.transform, false);
                 var rt = (RectTransform)go.transform; var img = go.GetComponent<Image>();
                 img.sprite = stampSprite; img.preserveAspect = true; img.raycastTarget = false; img.color = new Color(1f, 0.62f, 0.72f, 0.95f);
-                rt.position = cell.position + new Vector3(-((RectTransform)cell).rect.width * cell.lossyScale.x * 0.32f, 0, 0);
+                // 칸 피벗이 왼쪽 끝(0, 0.5)이라 예전 식(중심 − 0.32×폭)은 칸 밖 왼쪽(앞 칸 버튼·이름 자리)에 찍혔다(11/14).
+                // 피벗과 상관없이 '고른 답 글자' 영역(칸 왼쪽 ~ 오른쪽 버튼 66px 앞)의 가운데에 찍는다.
+                var crt = (RectTransform)cell; var r = crt.rect;
+                rt.position = crt.TransformPoint(new Vector3(r.xMin + (r.width - 66f) * 0.5f, r.center.y, 0f));
                 rt.localEulerAngles = new Vector3(0, 0, Random.Range(-16f, 16f));
                 YeogiCafe.Audio.SoundManager.Sfx("sfx_stamp", 0.6f, 0.05f);
                 for (float t = 0; t < 0.12f; t += Time.unscaledDeltaTime) { float s = Mathf.Lerp(2.2f, 1f, t / 0.12f); rt.sizeDelta = new Vector2(40, 40) * s; yield return null; }
