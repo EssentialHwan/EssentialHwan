@@ -13,20 +13,26 @@ namespace YeogiCafe.Core
         public Transform entrance;
 
         readonly List<SeatBehaviour> seats = new();
-        readonly List<FacilityBehaviour> facilities = new();
+        readonly List<IFacility> facilities = new();          // 가구 시설 + 다락 쉼터(LoftSpot) 등
         readonly List<MenuData> availableMenus = new();
 
         // ── 등록 (FurnitureManager가 배치/제거 시 호출) ──
         public void RegisterSeat(SeatBehaviour s)     { if (!seats.Contains(s)) seats.Add(s); }
         public void UnregisterSeat(SeatBehaviour s)   { seats.Remove(s); }
-        public void RegisterFacility(FacilityBehaviour f)   { if (!facilities.Contains(f)) facilities.Add(f); }
-        public void UnregisterFacility(FacilityBehaviour f) { facilities.Remove(f); }
-        public void SetMenu(IEnumerable<MenuData> menus) { availableMenus.Clear(); availableMenus.AddRange(menus); }
-        public void AddMenu(MenuData m) { if (!availableMenus.Contains(m)) availableMenus.Add(m); }
+        public void RegisterFacility(IFacility f)   { if (f != null && !facilities.Contains(f)) facilities.Add(f); }
+        public void UnregisterFacility(IFacility f) { facilities.Remove(f); }
+        public void SetMenu(IEnumerable<MenuData> menus)
+        {
+            availableMenus.Clear();
+            if (menus == null) return;
+            // 빈 칸(못 찾은 메뉴 에셋)이 섞이면 주문 고르기에서 매 프레임 NullReference → 걸러 낸다
+            foreach (var m in menus) if (m != null && !availableMenus.Contains(m)) availableMenus.Add(m);
+        }
+        public void AddMenu(MenuData m) { if (m != null && !availableMenus.Contains(m)) availableMenus.Add(m); }
 
         // ── 조회 (CatBrain 주입용) ──
         public IReadOnlyList<ISeat> GetSeats() => seats.ConvertAll(s => (ISeat)s);
-        public IReadOnlyList<IFacility> GetFacilities() => facilities.ConvertAll(f => (IFacility)f);
+        public IReadOnlyList<IFacility> GetFacilities() => facilities.FindAll(f => f != null && !(f is Object o && o == null));
         public IReadOnlyList<MenuData> GetAvailableMenus() => availableMenus;
         public Vector3 Entrance => entrance != null ? entrance.position : Vector3.zero;
 

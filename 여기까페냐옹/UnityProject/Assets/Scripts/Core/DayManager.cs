@@ -14,7 +14,10 @@ namespace YeogiCafe.Core
         public int CurrentDay { get; private set; } = 1;
 
         // [버그수정] 기본 배속 2x — 12분 하루가 1x면 스폰/이동이 느려 '멈춘 듯' 보이던 체감 문제 완화.
-        [Range(1, 3)] public float speed = 2f;   // 배속 1x/2x/3x
+        [Range(1, 3)] public float speed = 1f;   // 배속 1x/2x/3x
+        // 1배속 = 하루 6분(게임 720초를 2배로 흘림). 2배속 3분, 3배속 2분.
+        public const float BaseRate = 2f;
+        public float Rate => speed * BaseRate;
         bool running;
 
         public event Action<DayPhase> OnPhaseChanged;
@@ -29,7 +32,7 @@ namespace YeogiCafe.Core
         void Update()
         {
             if (!running) return;
-            DayTimer += Time.deltaTime * speed;
+            DayTimer += Time.deltaTime * Rate;
 
             float m = cfg.phaseSeconds.x;
             float l = cfg.phaseSeconds.x + cfg.phaseSeconds.y;
@@ -51,6 +54,13 @@ namespace YeogiCafe.Core
         }
 
         public void AdvanceToNextDay() => CurrentDay++;
+
+        // 세이브에서 일차 복원(이어하기)
+        public void RestoreDay(int dayNumber) { if (dayNumber > 0) CurrentDay = dayNumber; }
+
+        // 개발용: 남은 영업 시간을 건너뛰고 즉시 정산으로
+        public void DebugSkipDays(int n) { CurrentDay = Mathf.Max(1, CurrentDay + n); }
+        public void DebugEndDayNow() { if (running) { DayTimer = cfg.phaseSeconds.x + cfg.phaseSeconds.y + cfg.phaseSeconds.z; EndDay(); } }
 
         public float SpawnInterval => Phase switch
         {

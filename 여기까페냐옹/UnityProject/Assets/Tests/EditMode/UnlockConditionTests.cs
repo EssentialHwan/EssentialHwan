@@ -33,7 +33,10 @@ namespace YeogiCafe.Tests
             Assert.IsFalse(u.IsMet(save));
             save.GetOrCreateCat("a").visitCount = 1;
             save.GetOrCreateCat("b").visitCount = 3;
-            Assert.IsTrue(u.IsMet(save), "발견 2마리 → 해금");
+            Assert.IsFalse(u.IsMet(save), "방문만으로는 '발견' 아님(취향 1축 이상 기록해야 발견)");
+            save.GetOrCreateCat("a").observation.food.state = ObsState.Recorded;
+            save.GetOrCreateCat("b").observation.seat.state = ObsState.Recorded;
+            Assert.IsTrue(u.IsMet(save), "취향 기록 2마리 → 해금");
         }
 
         [Test]
@@ -55,6 +58,20 @@ namespace YeogiCafe.Tests
             var u = new UnlockCondition { type = UnlockType.DayReached, value = 5 };
             Assert.IsFalse(u.IsMet(Save(day: 4)));
             Assert.IsTrue(u.IsMet(Save(day: 5)));
+        }
+
+        [Test]
+        public void Shelter_TierGate_And_EndingExclusion()
+        {
+            var u = new UnlockCondition { type = UnlockType.Shelter, value = 2 };
+            var s = Save(day: 1);
+            s.shelterDonated = 1499; Assert.IsFalse(u.IsMet(s), "1단계만");
+            s.shelterDonated = 1500; Assert.IsTrue(u.IsMet(s), "2단계 도달");
+            Assert.AreEqual(4, ShelterBook.TierOf(9999));
+            Assert.AreEqual(500, ShelterBook.NextNeed(0));
+            Assert.AreEqual(-1, ShelterBook.NextNeed(5000));
+            Assert.IsTrue(ShelterBook.IsShelterCat("cat_sphynx"));
+            Assert.IsFalse(ShelterBook.IsShelterCat("cat_cheese"));
         }
 
         [Test]
