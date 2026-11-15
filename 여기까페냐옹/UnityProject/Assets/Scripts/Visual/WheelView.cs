@@ -33,9 +33,11 @@ namespace YeogiCafe.Visual
         void LateUpdate()
         {
             float dt = Time.deltaTime;
-            bool busy = fac != null && !fac.IsFree;
+            // 11/16: 예전엔 '예약됨(!IsFree)'만 봐서 고양이가 걸어오는 동안 바퀴가 먼저 돌았다 → 실제로 올라탄(Perched) 동안만 센다
+            var cat = fac != null ? fac.User as YeogiCafe.AI.CatBrain : null;
+            bool busy = cat != null && cat.FacilityPhase == YeogiCafe.AI.CatBrain.FacPhase.Perched;
             occupiedT = busy ? occupiedT + dt : 0f;
-            float target = busy && occupiedT > 0.7f ? 1f : 0f;              // 점프해 들어간 뒤부터 달림
+            float target = busy && occupiedT > 0.6f ? 1f : 0f;              // 점프해 들어간 뒤(CatView JumpUpTime 0.6초)부터 달림
             spin = Mathf.MoveTowards(spin, target, dt * (target > spin ? 0.9f : 0.45f));   // 가속·관성
             phase += spin * dt * 14f;                                       // 초당 최대 14프레임(≈1.6회전/초)
             wheelSr.sprite = frames[((int)phase) % 4];

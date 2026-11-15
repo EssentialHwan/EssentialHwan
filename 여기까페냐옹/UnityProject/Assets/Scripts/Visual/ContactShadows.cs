@@ -76,9 +76,14 @@ namespace YeogiCafe.Visual
                 bool hide = !e.src.enabled || e.src.sprite == null || !e.target.gameObject.activeInHierarchy;
                 // 10/28 v5: 의자·시설에 앉은 고양이도 그림자를 만든다 — 그 가구의 바닥 줄을 땅으로 삼는다(높이가 있으니 그림자가 가구 그림자에 이어 붙는다)
                 float? seatBase = null;
-                if (!hide && e.cat != null && (e.cat.CurrentSeat != null || e.cat.CurrentFacility != null))
+                // 11/16: 가구로 '걸어가는 중'에도 자리·시설이 잡혀 있어서, 그 가구 그림 범위를 지나갈 때 그림자가 가구 바닥으로 튀어 올라갔다 내려왔다
+                //  → 시설은 실제로 올라가 있을 때(Perched·Dismount), 의자는 자리에 도착했을 때(AtSeat)만 가구를 땅으로 본다
+                bool onFac = e.cat != null && e.cat.CurrentFacility != null
+                             && (e.cat.FacilityPhase == CatBrain.FacPhase.Perched || e.cat.FacilityPhase == CatBrain.FacPhase.Dismount);
+                bool onSeat = !onFac && e.cat != null && e.cat.CurrentSeat != null && e.cat.CurrentFacility == null && e.cat.AtSeat;
+                if (!hide && (onFac || onSeat))
                 {
-                    var comp = (e.cat.CurrentSeat as Component) ?? (e.cat.CurrentFacility as Component);
+                    var comp = onFac ? (e.cat.CurrentFacility as Component) : (e.cat.CurrentSeat as Component);
                     var csr = comp != null ? comp.GetComponent<SpriteRenderer>() : null;
                     if (csr == null || csr.sprite == null || e.cat.FacilityWall || comp.transform.position.y > CafeLayout.FloorTop + 0.2f) hide = true;   // 벽 선반·다락 위는 바닥에 안 비친다
                     else

@@ -16,6 +16,7 @@ namespace YeogiCafe.Cafe
         public bool IsFree => user == null;
 
         object user;
+        public object User => user;                 // 지금 쓰는(또는 쓰러 가는) 고양이 — 캣휠이 '올라탔는지' 볼 때 쓴다
         public void Use(object cat) => user = cat;
         public void Release() => user = null;
 
