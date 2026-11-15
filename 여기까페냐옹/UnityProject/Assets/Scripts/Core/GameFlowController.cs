@@ -36,7 +36,12 @@ namespace YeogiCafe.Core
         {
             save = saveManager != null ? saveManager.LoadOrNew() : new SaveGame();
             // 정산까지 끝낸 날에 껐다면(다음 날 버튼 전) 그날은 끝난 것으로 보고 다음 날 아침부터
-            if (save.initialized && save.settledDay == save.currentDay) save.currentDay++;
+            // 체험판(11/16 수정): 마지막 날(7일차)을 정산했으면 8일차로 넘기지 않고 '체험판 끝'으로 둔다.
+            //   예전엔 끝 화면 → [시작 화면으로] → 이어하기 하면 8일차가 열렸다. 정식판 세이브(8일차 이상)를 체험판으로 열어도 끝 화면.
+            if (Demo.IsDemo && save.initialized &&
+                (save.currentDay > Demo.LastDay || (save.currentDay >= Demo.LastDay && save.settledDay >= save.currentDay)))
+                save.demoFinished = true;
+            else if (save.initialized && save.settledDay == save.currentDay) save.currentDay++;
             obs = new ObservationManager(cfg, save);
             regular = new RegularManager();
 
