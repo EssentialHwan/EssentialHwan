@@ -521,6 +521,9 @@ namespace YeogiCafe.UI
 
         void Update()
         {
+            // 체험판을 다 한 세이브: 시작 화면이 닫히면 무조건 끝 화면(11/16). 예전엔 이 검사가 Update 아래쪽 '안내(guide)가 있을 때' 안에만 있어서
+            //  [끝 화면 → 시작 화면으로 → 이어하기]를 두 번째 하면 검사까지 못 가고 주문·의뢰 UI 없이 7일차가 돌아갔다. 맨 앞에서 먼저 막는다.
+            if (Demo.Finished(Save) && !DemoEndPanel.IsOpen && (title == null || !title.IsOpen) && root != null) ShowDemoEnd();
             TickGoldPops();
             TryHookObservation();
             if (Save != null) Weather.EnsureToday(Save);
@@ -552,7 +555,6 @@ namespace YeogiCafe.UI
             if (guide != null)
             {
                 if (!guideBegun && Save != null && (title == null || !title.IsOpen)) { guideBegun = true; guide.Begin(); }
-                if (Demo.Finished(Save) && !DemoEndPanel.IsOpen && (title == null || !title.IsOpen)) ShowDemoEnd();   // 체험판을 다 한 세이브로 이어하기
                 guide.Tick(Time.unscaledDeltaTime);
                 guide.SetCompact(settlement != null && settlement.IsOpen);
                 guide.BringToFront();
