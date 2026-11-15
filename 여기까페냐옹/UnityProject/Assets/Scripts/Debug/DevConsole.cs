@@ -113,6 +113,7 @@ namespace YeogiCafe.DevTools
                 }
                 if (GUILayout.Button("엔딩 미리보기")) { var ui = FindObjectOfType<YeogiCafe.UI.GameUiController>(); if (ui != null) ui.DebugEnding(); }
                 if (GUILayout.Button("진엔딩 미리보기(전환 장면 포함)")) { var ui = FindObjectOfType<YeogiCafe.UI.GameUiController>(); if (ui != null) ui.DebugTrueEnding(true); }
+                if (GUILayout.Button("로이에게(헌정 화면) 미리보기")) { var ui = FindObjectOfType<YeogiCafe.UI.GameUiController>(); if (ui != null) ui.DebugTribute(); }
                 if (GUILayout.Button("스토어 스샷(UI 있음/없음)")) { var ui = FindObjectOfType<YeogiCafe.UI.GameUiController>(); if (ui != null) { show = false; ui.DebugStoreShot(); } }
                 var fl0 = FindObjectOfType<GameFlowController>();
                 if (fl0 != null && fl0.Save != null && GUILayout.Button($"카페 레벨 바꾸기 (지금 Lv{fl0.Save.cafeLevel})"))

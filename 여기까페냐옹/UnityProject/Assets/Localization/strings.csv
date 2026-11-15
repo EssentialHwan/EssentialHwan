@@ -998,3 +998,14 @@ opt.observe.firstweek,첫 주가 지나면 켤 수 있어요.,Available after th
 opt.observe.locked,8일차부터,From day 8,第8天起,8日目から
 ui.guess.pencil,"{name}: {t}개 중 {n}개 맞았어요! ○는 그대로, × 칸만 다시 골라 내일 확인해요","{name}: {n} of {t} right! Keep the ○, re-pick the × and check again tomorrow","{name}：{t}个里答对了{n}个！○保留，只重选×的格子，明天再确认","{name}：{t}問中{n}問正解！○はそのまま、×だけ選び直して明日また確認"
 ui.guess.nofav,좋아하는 게 없나?,Nothing it likes yet?,没有喜欢的？,好きなのがない？
+tribute.title,로이에게,To Roy,致罗伊,ロイへ
+tribute.body,"내 가장 친한 친구였던 하얀 고양이, 로이.
+이 카페의 주인공은 처음부터 너였어.
+고양이 별에서도 좋아하는 자리에 앉아 있기를.","Roy, the white cat who was my best friend.
+The hero of this café was you, all along.
+I hope you found your favorite spot among the stars.","我最好的朋友，白猫罗伊。
+这家咖啡馆的主角，从一开始就是你。
+愿你在猫咪星球上，也坐在最喜欢的位置。","いちばんの友だちだった白い猫、ロイ。
+このカフェの主人公は、はじめから君だったよ。
+猫の星でも、お気に入りの場所でくつろいでいますように。"
+tribute.close,"고마워, 로이","Thank you, Roy",谢谢你，罗伊,ありがとう、ロイ

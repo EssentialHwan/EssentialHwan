@@ -15,6 +15,7 @@ namespace YeogiCafe.Save
         public int tutorialStep;                 // 1일차 안내 단계(TutorialGuide, 5=끝)
         public bool endingSeen;                  // 최종 목표(모두의 취향) 엔딩을 봤는지
         public bool trueEndingSeen;              // 진엔딩(보호소 고양이까지 16마리) 에필로그를 봤는지 — endingSeen 다음에만 열림
+        public bool tributeSeen;                 // 진엔딩 뒤 '로이에게' 헌정 화면을 봤는지(한 번만 자동으로)
         public bool demoFinished;                // 체험판 마지막 날을 마쳤는지(체험판 끝 화면)
         public bool initialized;                 // 새 게임 시작 처리 여부(골드 초기값 1회 지급)
         public int gold;

@@ -778,6 +778,7 @@ namespace YeogiCafe.UI
 
         public void DebugTutorial() => guide?.DebugReplay();
         public void DebugEnding() => new EndingPanel(root.transform, Save, AllCats, null, preview: true);
+        public void DebugTribute() => new TributePanel(root.transform, Save, null, preview: true);
         public void DebugTrueEnding(bool chained) => new EndingPanel(root.transform, Save, AllCats, null, preview: true, trueEnding: true, chained: chained);
         bool endingShownTonight;   // 같은 밤 일반 엔딩 → 진엔딩이 이어지는지(전환 장면용)
 
@@ -930,7 +931,12 @@ namespace YeogiCafe.UI
             {
                 bool chained = endingShownTonight;
                 endingShownTonight = false;
-                new EndingPanel(root.transform, Save, AllCats, StartNextDay, trueEnding: true, chained: chained);
+                // 진엔딩 편지를 닫으면 '로이에게'(처음 한 번) → 다음 날
+                new EndingPanel(root.transform, Save, AllCats, () =>
+                {
+                    if (Save != null && !Save.tributeSeen) new TributePanel(root.transform, Save, StartNextDay);
+                    else StartNextDay();
+                }, trueEnding: true, chained: chained);
                 return;
             }
             endingShownTonight = false;
