@@ -179,6 +179,7 @@ namespace YeogiCafe.UI
         void Begin()
         {
             if (closing) return;
+            if (hasSave && owner.TryBlockDemoContinue()) return;   // 체험판 끝난 세이브: 시작 화면은 그대로, 끝 화면만 위에
             closing = true; group.blocksRaycasts = false;
             Time.timeScale = 1f;
             YeogiCafe.Audio.SoundManager.Sfx("sfx_trill", 0.45f);

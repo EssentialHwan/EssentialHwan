@@ -943,6 +943,14 @@ namespace YeogiCafe.UI
         }
 
         DemoEndPanel demoEnd;
+        // 시작 화면 [이어하기]: 체험판을 다 한 세이브면 게임을 열지 않고 시작 화면 위에 끝 화면만 띄운다(11/16)
+        public bool TryBlockDemoContinue()
+        {
+            if (!Demo.Over(Save)) return false;
+            Save.demoFinished = true;
+            ShowDemoEnd();
+            return true;
+        }
         void ShowDemoEnd() { if (!DemoEndPanel.IsOpen) { demoEnd = new DemoEndPanel(root.transform, Save, AllCats); YeogiCafe.Platform.StoveStats.Max(YeogiCafe.Platform.StoveStats.DemoDone, 1); } }
         public void DebugDemoEnd() => new DemoEndPanel(root.transform, Save, AllCats, preview: true);
 

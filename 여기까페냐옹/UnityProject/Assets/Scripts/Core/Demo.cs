@@ -19,6 +19,9 @@ namespace YeogiCafe.Core
         public static string StoreUrl => SteamAppId > 0 ? $"https://store.steampowered.com/app/{SteamAppId}/" : "";
 
         public static bool Finished(SaveGame s) => IsDemo && s != null && s.demoFinished;
+        // 시작 화면 [이어하기]를 막을지(11/16): 끝 표시가 없어도 마지막 날을 정산했거나 그 뒤 일차면 끝난 것으로 본다
+        public static bool Over(SaveGame s) => IsDemo && s != null && s.initialized
+            && (s.demoFinished || s.currentDay > LastDay || (s.currentDay >= LastDay && s.settledDay >= s.currentDay));
         public static bool IsLastDay(SaveGame s) => IsDemo && s != null && s.currentDay >= LastDay;
     }
 }
