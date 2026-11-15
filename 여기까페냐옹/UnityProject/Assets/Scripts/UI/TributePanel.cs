@@ -37,7 +37,7 @@ namespace YeogiCafe.UI
                 if (!tex.LoadImage(ta.bytes)) continue;
                 var frame = UiFactory.Panel("Photo" + i, scrim, new Color(1f, 0.99f, 0.96f, 1f));
                 float x = (i - (PhotoCount - 1) * 0.5f) * 236f;
-                UiFactory.SetRect(frame, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(x, 70f), new Vector2(212, 252));
+                UiFactory.SetRect(frame, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(x, 92f), new Vector2(212, 252));
                 frame.localRotation = Quaternion.Euler(0, 0, tilt[i % tilt.Length]);
                 var g = new GameObject("Img", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
                 g.transform.SetParent(frame, false);
@@ -51,7 +51,7 @@ namespace YeogiCafe.UI
             UiFactory.SetRect((RectTransform)title.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -44), new Vector2(-80, 50));
             var body = UiFactory.Label("Body", scrim, L.Get("tribute.body"), 20, TextAnchor.UpperCenter, new Color(1f, 0.96f, 0.9f, 1f));
             body.lineSpacing = 1.3f;
-            UiFactory.SetRect((RectTransform)body.transform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 112), new Vector2(-160, 120));
+            UiFactory.SetRect((RectTransform)body.transform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 98), new Vector2(-160, 160));
             anim.title = title; anim.body = body;
 
             // 주인공의 하얀 앞발(= 로이): 사진 줄 오른쪽 아래에 살며시
