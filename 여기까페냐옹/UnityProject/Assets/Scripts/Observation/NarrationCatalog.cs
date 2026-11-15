@@ -17,14 +17,34 @@ namespace YeogiCafe.Observation
             return "narr.seat.generic";
         }
 
+        // 시설 서술 키: 가구 종류가 분명하면 그 가구의 행동(캣휠에서 '스크래처를 긁는다'가 뜨던 문제), 아니면 태그로 추정
+        public static string FacilityKey(string facilityId, IReadOnlyList<FacilityTag> tags)
+        {
+            string id = string.IsNullOrEmpty(facilityId) ? "" : facilityId.Split('#')[0];
+            switch (id)
+            {
+                case "furn_fac_wheel":   return "narr.facility.wheel";
+                case "furn_fac_wand":    return "narr.facility.wand";
+                case "furn_fac_scratch": return "narr.facility.scratch";
+                case "furn_fac_tower":   return "narr.facility.tower";
+                case "furn_fac_cushion": return "narr.facility.cushion";
+                case "furn_fac_toybox":  return "narr.facility.toybox";
+                case "furn_fac_fruitbox": return "narr.facility.box";
+                case "furn_fac_heatpad": return "narr.facility.warm";
+                case "furn_fac_plant":   return "narr.facility.plant";
+                case "furn_fac_window":  return "narr.facility.window";   // 11/02: 창문(벽걸이)도 '자연' 꼬리표라 화분 문장이 나왔다 — 고양이는 좌석 뒤 창 아래 바닥에 있다
+            }
+            return FacilityKey(tags);
+        }
+
         // 시설 서술 키 (시설 태그 → 대표 행동)
         public static string FacilityKey(IReadOnlyList<FacilityTag> tags)
         {
             if (Has(tags, FacilityTag.Height)) return "narr.facility.tower";
             if (Has(tags, FacilityTag.Soft) || Has(tags, FacilityTag.Relax)) return "narr.facility.cushion";
             if (Has(tags, FacilityTag.Social) && Has(tags, FacilityTag.Play)) return "narr.facility.toybox";
-            if (Has(tags, FacilityTag.Play)) return "narr.facility.scratch";
-            if (Has(tags, FacilityTag.Natural)) return "narr.facility.plant";
+            if (Has(tags, FacilityTag.Play)) return "narr.facility.play";      // 어떤 놀이 기구인지 모를 땐 중립 문장
+            if (Has(tags, FacilityTag.Natural)) return "narr.facility.generic";   // 어떤 가구인지 모르면 화분이라고 단정하지 않는다
             return "narr.facility.generic";
         }
 

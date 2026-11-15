@@ -29,6 +29,10 @@ namespace YeogiCafe.Tests
             Assert.AreEqual("narr.facility.cushion", NarrationCatalog.FacilityKey(new List<FacilityTag> { FacilityTag.Soft }));
             Assert.AreEqual("narr.facility.toybox", NarrationCatalog.FacilityKey(new List<FacilityTag> { FacilityTag.Play, FacilityTag.Social }));
             Assert.AreEqual("narr.facility.plant", NarrationCatalog.FacilityKey(new List<FacilityTag> { FacilityTag.Natural }));
+            // 가구 종류가 분명하면 그 가구 행동(캣휠·자동 낚싯대에 '스크래처를 긁는다'가 뜨던 버그)
+            Assert.AreEqual("narr.facility.wheel", NarrationCatalog.FacilityKey("furn_fac_wheel#2", new List<FacilityTag> { FacilityTag.Play }));
+            Assert.AreEqual("narr.facility.wand", NarrationCatalog.FacilityKey("furn_fac_wand", new List<FacilityTag> { FacilityTag.Play }));
+            Assert.AreEqual("narr.facility.play", NarrationCatalog.FacilityKey("unknown", new List<FacilityTag> { FacilityTag.Play }));
         }
 
         [Test]

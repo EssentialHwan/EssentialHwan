@@ -11,6 +11,7 @@ namespace YeogiCafe.Data
         public string displayNameKey;        // 로컬라이즈 키
         public Sprite portrait;              // 도감용
         public Sprite worldSprite;           // 씬 표시용(정지 스프라이트)
+        public Sprite[] animFrames;          // idle0,idle1,walk0,walk1,eat0,eat1,sleep (시트 슬라이스, SceneBuilder가 연결)
         public string species;
 
         [Header("성격 (부록 J-C: [0]=첫방문 즉시공개, [1]=관찰공개)")]

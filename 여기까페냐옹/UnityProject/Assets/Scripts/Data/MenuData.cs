@@ -15,6 +15,7 @@ namespace YeogiCafe.Data
         public int satiety = 50;
         public int satisfaction = 5;
         public UnlockCondition unlockCondition = new UnlockCondition();
+        [System.NonSerialized] public bool seasonal;     // 계절 한정 메뉴(SeasonBook이 런타임에 만든다)
 
         public bool HasTag(FoodTag t)
         {

@@ -19,7 +19,8 @@ namespace YeogiCafe.Core
         public List<MenuData> starterMenus = new();
         public List<FurnitureData> starterSeats = new(); // 최소 일반석
         public FurnitureData windowSeatData;             // 상점 구매 대상(창가석)
-        public List<FurnitureData> shopFurniture = new();// 상점 UI 판매 목록(가구/기물 전체)
+        public List<FurnitureData> shopFurniture = new();// 상점 UI 판매 목록(비면 allFurniture - 시작 좌석으로 자동 구성)
+        public List<FurnitureData> allFurniture = new(); // 18종 전체(세이브 복원·상점 목록 원천)
         public CafeLevelConfig cafeLevelConfig;          // 성장 조건 SO
 
         [Header("매니저 (비우면 자동 생성)")]
@@ -35,12 +36,33 @@ namespace YeogiCafe.Core
         public YeogiCafe.Progression.EventManager events;
         public List<CatEventData> allEvents = new();     // 에피소드+관계 이벤트
         public GameFlowController flow;
+        public YeogiCafe.Order.OrderSystem orderSystem;   // 주문·조리(주방 1인칭 화면)
+        public YeogiCafe.Visual.CatInteractionDirector interactions;   // 쓰다듬기·고양이끼리 상호작용
 
         void Awake()
         {
+            BuildShopListIfEmpty();
             EnsureManagers();
             WireReferences();
             SeedCafe();
+        }
+
+        void BuildShopListIfEmpty()
+        {
+            // 직렬화된 목록이 비었거나 전체 가구보다 이상하게 적으면(에디터 재임포트 타이밍 문제) 다시 구성
+            int expected = allFurniture.Count;
+            if (shopFurniture != null && shopFurniture.Count > 0 && (allFurniture.Count == 0 || shopFurniture.Count >= expected)) return;
+            shopFurniture = new List<FurnitureData>();
+            foreach (var f in allFurniture)
+                if (f != null) shopFurniture.Add(f);
+            // 가격 오름차순 → 초반에 살 수 있는 것부터 보이게
+            shopFurniture.Sort((a, b) => a.price.CompareTo(b.price));
+        }
+
+        FurnitureData LookupFurniture(string id)
+        {
+            foreach (var f in allFurniture) if (f != null && f.furnitureId == id) return f;
+            return null;
         }
 
         void EnsureManagers()
@@ -56,6 +78,12 @@ namespace YeogiCafe.Core
             if (relationships == null) relationships = gameObject.AddComponent<YeogiCafe.Progression.RelationshipManager>();
             if (events == null) events = gameObject.AddComponent<YeogiCafe.Progression.EventManager>();
             if (flow == null) flow = gameObject.AddComponent<GameFlowController>();
+            if (orderSystem == null) orderSystem = gameObject.AddComponent<YeogiCafe.Order.OrderSystem>();
+            if (interactions == null) interactions = gameObject.AddComponent<YeogiCafe.Visual.CatInteractionDirector>();
+            if (GetComponent<YeogiCafe.Visual.WeatherView>() == null) gameObject.AddComponent<YeogiCafe.Visual.WeatherView>();
+            if (GetComponent<YeogiCafe.Visual.MouseRaid>() == null) gameObject.AddComponent<YeogiCafe.Visual.MouseRaid>();
+            if (GetComponent<YeogiCafe.Visual.SunbeamSpot>() == null) gameObject.AddComponent<YeogiCafe.Visual.SunbeamSpot>();
+            if (GetComponent<YeogiCafe.Audio.SoundManager>() == null) gameObject.AddComponent<YeogiCafe.Audio.SoundManager>();
         }
 
         void WireReferences()
@@ -63,6 +91,7 @@ namespace YeogiCafe.Core
             day.cfg = balance;
             economy.cfg = balance;
             cats.cfg = balance; cats.cafe = cafe;
+            cats.orderSystem = orderSystem;          // 고양이가 주문 → 플레이어가 주방에서 조리·서빙
             spawner.cfg = balance; spawner.day = day; spawner.cats = cats; spawner.cafe = cafe;
             spawner.fixedQueue = new List<CatData>(starterCats);
             spawner.allCats = new List<CatData>(allCats);   // 해금 풀(비면 fixedQueue 사용)
@@ -73,56 +102,58 @@ namespace YeogiCafe.Core
             flow.economy = economy; flow.saveManager = saveManager; flow.furniture = furniture;
             events.allEvents = new List<CatEventData>(allEvents);
             flow.spawner = spawner; flow.cafeManager = cafeManager; flow.relationships = relationships; flow.events = events;
+            flow.furnitureLookup = LookupFurniture;
+            flow.orderSystem = orderSystem;
+            interactions.cats = cats; interactions.relationships = relationships; interactions.flow = flow;
         }
 
         [Header("씬 배치")]
-        public Transform entrance;              // 없으면 자동 생성(원점 근처)
+        public Transform entrance;              // 없으면 CafeLayout.Entrance에 자동 생성
         public Transform seatRoot;              // 좌석을 놓을 부모(없으면 자동)
-        public float seatSpacing = 2f;          // 좌석 간격
-        public int seatsPerRow = 3;
-        public int shopSlotCount = 6;           // 상점 구매 가구를 놓을 빈 슬롯 수
 
+        // 좌석·상점 슬롯은 CafeLayout(공간 배치표)을 따른다 → 벽·창·문 아트와 위치가 맞는다.
         void SeedCafe()
         {
             cafe.SetMenu(starterMenus);
 
-            // 입구 설정(없으면 생성)
             if (entrance == null)
             {
                 var e = new GameObject("Entrance");
-                e.transform.position = new Vector3(-4f, 0f, -4f);
+                e.transform.position = CafeLayout.Entrance;
                 entrance = e.transform;
             }
             cafe.entrance = entrance;
 
-            // 좌석 배치: 격자로 분산(겹침 방지)
             if (seatRoot == null) seatRoot = new GameObject("Seats").transform;
-            int i = 0;
-            foreach (var seatData in starterSeats)
+            for (int i = 0; i < starterSeats.Count; i++)
             {
+                var seatData = starterSeats[i];
+                if (seatData == null) continue;
                 var go = new GameObject("Seat_" + seatData.furnitureId);
                 go.transform.SetParent(seatRoot);
-                int col = i % seatsPerRow, row = i / seatsPerRow;
-                go.transform.position = new Vector3(col * seatSpacing, 0f, row * seatSpacing);
+                var p = i < CafeLayout.StarterSeats.Length ? CafeLayout.StarterSeats[i]
+                                                           : new Vector2(2f + i * 2.2f, 1.9f);
+                go.transform.position = new Vector3(p.x, p.y, 0f);
                 var sb = go.AddComponent<SeatBehaviour>();
                 sb.source = seatData;
                 cafe.RegisterSeat(sb);
-                i++;
+                furniture.RegisterStarter(go, i);          // 배치 모드에서 옮길 수 있게
             }
 
-            // 상점 구매 가구를 놓을 빈 슬롯 생성(없으면 BuyAndPlace가 '공간 부족'으로 실패).
-            // 기존 좌석 격자 다음 행부터 이어서 배치.
             if (furniture.slots.Count == 0)
             {
-                int startRow = (starterSeats.Count + seatsPerRow - 1) / seatsPerRow;
                 var slotRoot = new GameObject("FurnitureSlots").transform;
-                for (int s = 0; s < shopSlotCount; s++)
+                int n = 0;
+                foreach (var spec in CafeLayout.Slots)
                 {
-                    int col = s % seatsPerRow, row = startRow + s / seatsPerRow;
-                    var slotGo = new GameObject("Slot_" + s);
+                    var slotGo = new GameObject($"Slot_{n++}_{spec.kind}");
                     slotGo.transform.SetParent(slotRoot);
-                    slotGo.transform.position = new Vector3(col * seatSpacing, 0f, row * seatSpacing);
-                    furniture.slots.Add(new FurnitureManager.SlotEntry { slot = slotGo.transform });
+                    slotGo.transform.position = new Vector3(spec.pos.x, spec.pos.y, 0f);
+                    furniture.slots.Add(new FurnitureManager.SlotEntry
+                    {
+                        slot = slotGo.transform, kind = spec.kind,
+                        nearWindow = spec.nearWindow, minCafeLevel = spec.minLevel
+                    });
                 }
             }
         }

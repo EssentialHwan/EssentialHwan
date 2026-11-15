@@ -14,14 +14,32 @@ namespace YeogiCafe.Economy
         public int TodayCost { get; private set; }
 
         public event Action<int> OnGoldChanged;
+        public event Action<int> OnGoldDelta;          // 판매·구매로 늘고 준 양(HUD 골드 옆 +/- 표시용)
 
         public void Init() { Gold = cfg != null ? cfg.startGold : 300; OnGoldChanged?.Invoke(Gold); }
+
+        // 이어하기: 저장된 잔액 복원(매출 집계에는 포함하지 않음)
+        public void SetGold(int amount) { Gold = Mathf.Max(0, amount); OnGoldChanged?.Invoke(Gold); }
+
+        // 이어하기 전용: 영업 중 종료로 '오늘 번 돈'을 되돌렸는데 그 돈을 이미 썼다면 잔액이 마이너스로 남는다(빚).
+        // 0으로 막으면 '벌고→사고→끄고→같은 날 다시 벌기'로 공짜 구매가 되므로 빚을 그대로 들고 온다.
+        public void RestoreGold(int amount) { Gold = amount; OnGoldChanged?.Invoke(Gold); }
 
         public void AddGold(int amount)
         {
             Gold += amount;
             if (amount > 0) TodayRevenue += amount;
             OnGoldChanged?.Invoke(Gold);
+            if (amount != 0) OnGoldDelta?.Invoke(amount);
+        }
+
+        // 가구 판매 등 환급: 골드는 늘지만 오늘 매출에는 넣지 않는다
+        public void Refund(int amount)
+        {
+            if (amount <= 0) return;
+            Gold += amount;
+            OnGoldChanged?.Invoke(Gold);
+            OnGoldDelta?.Invoke(amount);
         }
 
         public bool TrySpend(int amount)
@@ -29,10 +47,19 @@ namespace YeogiCafe.Economy
             if (Gold < amount) return false;
             Gold -= amount;
             OnGoldChanged?.Invoke(Gold);
+            if (amount != 0) OnGoldDelta?.Invoke(-amount);
             return true;
         }
 
-        public void AddIngredientCost(int cost) => TodayCost += cost;
+        // 재료비: 정산 표시만 하던 것을 실제 골드에서도 뺀다(0 미만으로는 안 내려감)
+        public void AddIngredientCost(int cost)
+        {
+            TodayCost += cost;
+            int before = Gold;
+            Gold = Gold >= cost ? Gold - cost : Mathf.Min(Gold, 0);      // 모자라면 0까지만, 빚(마이너스)은 그대로
+            OnGoldChanged?.Invoke(Gold);
+            if (before != Gold) OnGoldDelta?.Invoke(Gold - before);
+        }
 
         public void ResetDaily() { TodayRevenue = 0; TodayCost = 0; }
         public int TodayNet => TodayRevenue - TodayCost;

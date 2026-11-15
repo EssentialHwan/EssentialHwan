@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace YeogiCafe.Art
 {
-    // 《여기까페냐옹》 통일 팔레트 — 모든 픽셀 리소스가 오직 이 색만 사용한다.
+    // 《여기카페냐옹》 통일 팔레트 — 모든 픽셀 리소스가 오직 이 색만 사용한다.
     // 톤: 파스텔 따뜻톤 코지 카페. 소프트 셰이딩(라이트/미드/셰이드 3톤 세트).
     // 이 파일이 게임 전체 색의 단일 소스. 새 색을 즉석에서 만들지 말 것.
     public static class PixelPalette
@@ -34,6 +34,25 @@ namespace YeogiCafe.Art
         public static readonly Color32 LilacLight= new(210, 196, 230, 255);
         public static readonly Color32 LilacMid  = new(176, 156, 208, 255);
 
+        // ── 3톤 셰이드(어두운 면) — 가구 입체감용. 위 라이트/미드와 한 세트 ──
+        public static readonly Color32 PinkDark  = new(196, 122, 140, 255);
+        public static readonly Color32 GreenDark = new(112, 148, 100, 255);
+        public static readonly Color32 BlueDark  = new(96, 138, 170, 255);
+        public static readonly Color32 LilacDark = new(140, 120, 176, 255);
+        public static readonly Color32 YellowDark= new(200, 160, 84, 255);
+        public static readonly Color32 WoodDeep  = new(116, 82, 58, 255);   // 바닥 이음새·문틀 깊은 갈색
+        public static readonly Color32 CreamDark = new(212, 186, 152, 255);
+
+        // ── 실내 환경(벽·창밖·칠판) ──
+        public static readonly Color32 WallLight = new(250, 238, 220, 255);
+        public static readonly Color32 WallMid   = new(240, 224, 200, 255);
+        public static readonly Color32 SkyTop    = new(150, 196, 226, 255);
+        public static readonly Color32 SkyLow    = new(196, 226, 238, 255);
+        public static readonly Color32 Chalk     = new(72, 92, 80, 255);
+        public static readonly Color32 ChalkLine = new(214, 226, 210, 255);
+        public static readonly Color32 Metal     = new(170, 168, 172, 255);
+        public static readonly Color32 MetalDark = new(120, 118, 126, 255);
+
         // ── 고양이 털색 (8종, 각 라이트/미드/셰이드 3톤 — 소프트 셰이딩 통일) ──
         public struct FurSet { public Color32 light, mid, shade; }
 
@@ -47,6 +66,13 @@ namespace YeogiCafe.Art
             "cat_mackerel" => Set(150, 168, 184,   118, 138, 156, 88, 106, 124),  // 고등어(블루그레이 태비)
             "cat_siamese"  => Set(240, 226, 200,   206, 182, 150, 120, 100, 82),  // 샴(크림+포인트)
             "cat_gray"     => Set(196, 198, 204,   162, 164, 172, 122, 124, 134), // 회색
+            "cat_fold"     => Set(236, 222, 204,   176, 128, 84,  120, 82, 52),   // 폴드(갈색 태비+흰)
+            "cat_munchkin" => Set(250, 236, 212,   236, 210, 172, 206, 172, 128), // 먼치킨(크림)
+            "cat_persian"  => Set(176, 124, 86,    136, 90, 60,   96, 60, 40),     // 페르시안(초콜릿 장모)
+            "cat_tortie"   => Set(214, 134, 60,    92, 60, 44,    56, 36, 30),     // 카오스(검정·갈색·주황)
+            "cat_sphynx"   => Set(238, 196, 188,   214, 162, 156, 168, 116, 114), // 스핑크스(털 없는 분홍빛 피부)
+            "cat_kitten"   => Set(168, 168, 176,   128, 128, 138,  88, 88, 98), // 아기 고양이(짙은 회색)
+            "cat_senior"   => Set(190, 168, 146,   154, 132, 112, 110, 92, 78), // 노묘(빛바랜 갈색)
             _              => Set(220, 200, 180,   190, 168, 146, 150, 128, 108),
         };
 
