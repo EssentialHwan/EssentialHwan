@@ -10,10 +10,10 @@ namespace YeogiCafe.DevTools
     // 개인 정보는 남기지 않는다(시간·일차·화면 이름·이벤트 수·오류 메시지만).
     public static class PlaytestLog
     {
-#if YEOGI_STOVE
-        public static bool Enabled => false;                          // 스토브 빌드: 설치 폴더에 파일을 남기지 않는다
+#if YEOGI_PLAYTEST && !YEOGI_STOVE
+        public static bool Enabled => !YeogiCafe.Core.Demo.IsDemo;   // 친구 테스트 빌드에서만(YEOGI_PLAYTEST 기호를 직접 켰을 때)
 #else
-        public static bool Enabled => !YeogiCafe.Core.Demo.IsDemo;   // 친구 테스트용 기록: 체험판 빌드에서는 끈다(정식 출시 때는 여기를 false로)
+        public static bool Enabled => false;                          // 정식 출시(1.0.0)부터 기본 꺼짐: 시작 화면 '플레이테스트 빌드' 표시·설치 폴더 기록 파일 없음
 #endif
         static StreamWriter w;
         static float t0;

@@ -75,7 +75,8 @@ namespace YeogiCafe.EditorTools
 
         // 11/12: 0.9.9 = 사운드 전면 교체·연필 ○ 추리·취향 하트·누끼 정리·세이브 안전장치·STOVE 통계·영어 다듬기
         //  (예전엔 스토브 빌드가 버전을 안 넣어서 마지막 일반 빌드 버전을 따라갔음 → 두 빌드 모두 여기서 넣는다)
-        public const string Version = "0.9.9";
+        // 11/18: 1.0.0 = 정식 출시(STOVE). 체험판 7일차 이어하기 막기·도장 위치·캣휠/그림자·'로이에게' 헌정 화면 포함
+        public const string Version = "1.0.0";
 
         static void BuildStoveVariant(bool demo)
         {
